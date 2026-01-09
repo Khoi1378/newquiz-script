@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Vocabulary Check</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#0b1220; --card:#111a2e; --muted:#8aa0c2; --text:#eaf1ff; --ok:#3ddc97; --bad:#ff5b7a; --line:#1f2a44; --btn:#2b66ff; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Montserrat,system-ui,Segoe UI,Arial;background:linear-gradient(180deg,#070b14,#0b1220);color:var(--text)}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px}
+    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .title{display:flex;flex-direction:column;gap:4px}
+    h1{margin:0;font-size:20px;font-weight:800}
+    .sub{color:var(--muted);font-size:12px}
+    .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .pill{padding:8px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.03);color:var(--muted);font-size:12px}
+    .btn{cursor:pointer;border:0;border-radius:10px;padding:10px 12px;font-weight:700;background:var(--btn);color:white}
+    .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+    .btn.danger{background:#ff2f57}
+    .grid{margin-top:14px;display:grid;grid-template-columns:1fr;gap:12px}
+    .card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:16px;padding:14px}
+    .table{width:100%;border-collapse:collapse}
+    .table th,.table td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+    .table th{color:var(--muted);font-size:12px;text-align:left;font-weight:700}
+    .w-word{font-weight:800}
+    .pos{color:var(--muted);font-size:12px}
+    input[type="text"]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0c1428;color:var(--text);outline:none}
+    input[type="text"]:focus{border-color:#3a66ff}
+    .mini{padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#0c1428;color:var(--text);font-weight:700;cursor:pointer}
+    .mini:disabled{opacity:.5;cursor:not-allowed}
+    .res{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .tag{padding:4px 8px;border-radius:999px;border:1px solid var(--line);font-weight:800;font-size:12px}
+    .tag.ok{border-color:rgba(61,220,151,.4);color:var(--ok)}
+    .tag.bad{border-color:rgba(255,91,122,.4);color:var(--bad)}
+    .expected{color:var(--text);font-size:12px}
+    .row-actions{display:flex;gap:8px;align-items:center}
+    .footer-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .score{font-weight:900;font-size:16px}
+    .muted{color:var(--muted)}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;padding:18px}
+    .modal{width:100%;max-width:420px;background:#0c1428;border:1px solid var(--line);border-radius:16px;padding:16px}
+    .modal h2{margin:0 0 8px;font-size:16px}
+    .modal p{margin:0 0 10px;color:var(--muted);font-size:12px;line-height:1.4}
+    .err{color:#ff9aaa;font-size:12px;margin-top:8px;min-height:18px}
+    .okmsg{color:var(--ok);font-size:12px;margin-top:8px;min-height:18px}
+    .lb{display:grid;grid-template-columns:1fr;gap:8px}
+    .lb-row{display:flex;justify-content:space-between;gap:8px;padding:10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02)}
+    .lb-row b{font-weight:900}
+    .small{font-size:12px;color:var(--muted)}
+    .hr{height:1px;background:var(--line);margin:12px 0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="title">
+        <h1>Vocabulary – CHECK từng câu</h1>
+        <div class="sub">Mở trang là lên liền (Vercel). Chấm/ghi Sheet chạy phía sau (Apps Script).</div>
+      </div>
+      <div class="bar">
+        <div class="pill" id="pillUser">Chưa đăng nhập</div>
+        <div class="pill" id="pillLast">Last: —</div>
+        <button class="btn ghost" id="btnRename">Đổi tên</button>
+        <button class="btn ghost" id="btnNew">Bài mới</button>
+        <button class="btn" id="btnFinalize">Nộp bài / Tính điểm</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="footer-actions">
+          <div class="score" id="scoreText">Score: —</div>
+          <div class="muted" id="statusText">Ready.</div>
+        </div>
+        <div class="hr"></div>
+        <div class="small">Tip: bấm “Check” từng câu để chấm AI + lưu Sheet. Reload (F5) không mất vì lưu localStorage.</div>
+      </div>
+
+      <div class="card">
+        <table class="table" id="tbl">
+          <thead>
+            <tr>
+              <th style="width:60px">#</th>
+              <th>Word</th>
+              <th>Trả lời (VN)</th>
+              <th style="width:220px">Kết quả</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <div>
+            <div style="font-weight:900">Sai / Chưa làm</div>
+            <div class="small">Danh sách sai sẽ hiện khi bạn “Nộp bài”.</div>
+          </div>
+          <button class="btn ghost" id="btnLeaderboard">Load Leaderboard</button>
+        </div>
+        <div class="hr"></div>
+        <div id="wrongBox" class="small muted">—</div>
+        <div class="hr"></div>
+        <div style="font-weight:900;margin-bottom:8px">Leaderboard</div>
+        <div class="lb" id="lb"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN / RENAME MODAL -->
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h2 id="modalTitle">Nhập username</h2>
+      <p id="modalDesc">
+        Chỉ nhập 1 lần. Username lưu theo domain và dùng cho mọi quiz sau này.
+        Xoá cache/localStorage là mất luôn (không khôi phục).
+      </p>
+      <input id="inpUsername" type="text" maxlength="15" placeholder="vd: tuankhoi123" autocomplete="off" />
+      <div class="err" id="modalErr"></div>
+      <div class="okmsg" id="modalOk"></div>
+      <div class="row-actions" style="margin-top:10px;justify-content:flex-end">
+        <button class="btn ghost" id="btnCancel">Hủy</button>
+        <button class="btn" id="btnConfirm">OK</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/***********************
+ * 1) EDIT THIS
+ ***********************/
+const API_URL = "https://script.google.com/macros/s/AKfycbwathB6XNqQ52tzgh-Ml-UmgObMrmgz0Ke9Lxw1ZDdv5CkCazSDNlzmc_YSSk9dDfqS/exec"; // vd: https://script.google.com/macros/s/xxxx/exec
+
+/***********************
+ * CONFIG (same rules frontend)
+ ***********************/
+const USER_KEY   = "tk_vocab_user_v1";
+const STATE_KEY  = "tk_vocab_state_v1";
+const HIST_KEY   = "tk_vocab_history_v1";
+
+const RENAME_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
+
+// Bad words (frontend)
+const BAD_SUBSTRINGS = ["du","dit","lon","cac","fuck","shit","dick","pussy"];
+const BAD_TOKENS = ["cho"];
+
+/***********************
+ * DATA (same as backend, for instant render)
+ ***********************/
+const VOCABS = [
+  { id: 1,  no: 1,  word: "(un)adaptable", pos: "adj", meaning: "có thể thích nghi (unadaptable: không thể thích nghi)" },
+  { id: 2,  no: 2,  word: "analytical", pos: "adj", meaning: "phân tích" },
+  { id: 3,  no: 3,  word: "assertive", pos: "adj", meaning: "quả quyết; quyết đoán" },
+  { id: 4,  no: 4,  word: "argumentative", pos: "adj", meaning: "thích tranh luận; hay cãi" },
+  { id: 5,  no: 5,  word: "compassionate", pos: "adj", meaning: "thương cảm; từ bi; nhân hậu" },
+  { id: 6,  no: 6,  word: "conscientious", pos: "adj", meaning: "tận tâm; chu đáo; có trách nhiệm" },
+  { id: 7,  no: 7,  word: "considerate", pos: "adj", meaning: "ân cần; chu đáo; biết nghĩ cho người khác" },
+  { id: 8,  no: 8,  word: "detail-oriented", pos: "adj", meaning: "chú ý đến chi tiết; tỉ mỉ" },
+  { id: 9,  no: 9,  word: "diligent", pos: "adj", meaning: "siêng năng; chăm chỉ" },
+  { id: 10, no: 10, word: "empathetic", pos: "adj", meaning: "có sự thông cảm; thấu cảm" },
+  { id: 11, no: 11, word: "gregarious", pos: "adj", meaning: "thích giao du; hòa đồng" },
+  { id: 12, no: 12, word: "idealistic", pos: "adj", meaning: "lý tưởng hóa; duy tâm" },
+  { id: 13, no: 13, word: "flexible", pos: "adj", meaning: "linh hoạt; mềm dẻo; dễ uốn" },
+  { id: 14, no: 14, word: "innovative", pos: "adj", meaning: "đổi mới; cải cách; sáng tạo" },
+  { id: 15, no: 15, word: "intolerant", pos: "adj", meaning: "không khoan dung; không chịu được" },
+  { id: 16, no: 16, word: "observant", pos: "adj", meaning: "tinh mắt; hay quan sát" },
+  { id: 17, no: 17, word: "(il)loyal", pos: "adj", meaning: "trung thành (illoyal/disloyal: không trung thành)" },
+  { id: 18, no: 18, word: "optimistic", pos: "adj", meaning: "lạc quan" },
+  { id: 19, no: 19, word: "objective", pos: "adj", meaning: "khách quan" },
+  { id: 20, no: 20, word: "persuasive", pos: "adj", meaning: "thuyết phục" },
+  { id: 21, no: 21, word: "reserved", pos: "adj", meaning: "dè dặt; kín đáo; ít nói" },
+  { id: 22, no: 22, word: "resourceful", pos: "adj", meaning: "tháo vát; giỏi xoay xở" },
+  { id: 23, no: 23, word: "spontaneous", pos: "adj", meaning: "tự nhiên; tự phát" },
+  { id: 24, no: 24, word: "counsellor", pos: "n", meaning: "người cố vấn; tư vấn" },
+  { id: 25, no: 25, word: "geologist", pos: "n", meaning: "nhà địa chất học" },
+  { id: 26, no: 26, word: "politician", pos: "n", meaning: "chính trị gia" },
+  { id: 27, no: 27, word: "bad-mannered", pos: "adj", meaning: "thô lỗ; cư xử kém" },
+  { id: 28, no: 28, word: "quick-witted", pos: "adj", meaning: "nhanh trí; lanh trí" },
+  { id: 29, no: 29, word: "light-hearted", pos: "adj", meaning: "vui vẻ; vô tư; nhẹ nhàng" },
+  { id: 30, no: 30, word: "open-minded", pos: "adj", meaning: "cởi mở; thoáng; dễ tiếp thu" },
+  { id: 31, no: 31, word: "well-behaved", pos: "adj", meaning: "cư xử tốt; ngoan" },
+  { id: 32, no: 32, word: "thick-skinned", pos: "adj", meaning: "mặt dày; trơ; không dễ bị tổn thương" },
+  { id: 33, no: 33, word: "single-minded", pos: "adj", meaning: "quyết tâm; chuyên tâm" },
+
+  { id: 34, no: 38, word: "interview", pos: "v,n", meaning: "phỏng vấn" },
+  { id: 35, no: 39, word: "candidate", pos: "n", meaning: "ứng viên" },
+  { id: 36, no: 40, word: "employee", pos: "n", meaning: "công nhân; nhân viên" },
+  { id: 37, no: 41, word: "fame", pos: "n", meaning: "danh tiếng" },
+
+  { id: 38, no: 44, word: "wage", pos: "n", meaning: "tiền lương" },
+  { id: 39, no: 45, word: "disability", pos: "n", meaning: "khuyết tật" },
+
+  { id: 40, no: 46, word: "manual", pos: "adj", meaning: "bằng tay; lao động chân tay" },
+  { id: 41, no: 47, word: "staff", pos: "n", meaning: "nhân viên" },
+  { id: 42, no: 48, word: "insight", pos: "n", meaning: "cái nhìn sâu sắc; sự thấu hiểu" },
+  { id: 43, no: 49, word: "goal", pos: "n", meaning: "mục tiêu" },
+  { id: 44, no: 50, word: "networking", pos: "n", meaning: "mạng lưới; xây dựng quan hệ" },
+  { id: 45, no: 51, word: "agility", pos: "n", meaning: "sự nhanh nhẹn; linh hoạt" },
+  { id: 46, no: 52, word: "management", pos: "n", meaning: "quản lý" },
+];
+
+/***********************
+ * DOM
+ ***********************/
+const pillUser = document.getElementById("pillUser");
+const pillLast = document.getElementById("pillLast");
+const statusText = document.getElementById("statusText");
+const scoreText = document.getElementById("scoreText");
+const tbody = document.getElementById("tbody");
+const wrongBox = document.getElementById("wrongBox");
+const lb = document.getElementById("lb");
+
+const btnFinalize = document.getElementById("btnFinalize");
+const btnNew = document.getElementById("btnNew");
+const btnRename = document.getElementById("btnRename");
+const btnLeaderboard = document.getElementById("btnLeaderboard");
+
+// modal
+const overlay = document.getElementById("overlay");
+const modalTitle = document.getElementById("modalTitle");
+const modalDesc = document.getElementById("modalDesc");
+const inpUsername = document.getElementById("inpUsername");
+const modalErr = document.getElementById("modalErr");
+const modalOk = document.getElementById("modalOk");
+const btnCancel = document.getElementById("btnCancel");
+const btnConfirm = document.getElementById("btnConfirm");
+
+/***********************
+ * STATE
+ ***********************/
+let user = loadUser();
+let state = loadState();
+if (!state || !state.attemptId) state = newAttemptState();
+
+renderTable();
+restoreInputs();
+
+updateTopBar();
+updateLastScorePill();
+
+ensureLogin().then(() => {
+  updateTopBar();
+  // load leaderboard lazily
+  setTimeout(() => loadLeaderboard().catch(()=>{}), 400);
+});
+
+/***********************
+ * API helper
+ * - Use text/plain to avoid preflight headaches
+ ***********************/
+async function api(action, payload) {
+  if (!API_URL || API_URL.includes("PASTE_")) throw new Error("Chưa set API_URL trong index.html");
+  const body = JSON.stringify({ action, ...payload });
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=UTF-8" },
+    body
+  });
+  const data = await res.json();
+  if (!data || data.ok === false) throw new Error(data && data.error ? data.error : "API error");
+  return data;
+}
+
+/***********************
+ * LOGIN / USER
+ ***********************/
+function loadUser() {
+  try { return JSON.parse(localStorage.getItem(USER_KEY) || "null"); } catch { return null; }
+}
+function saveUser(u) { localStorage.setItem(USER_KEY, JSON.stringify(u)); }
+function genId() {
+  if (crypto && crypto.randomUUID) return crypto.randomUUID();
+  return "u_" + Math.random().toString(16).slice(2) + "_" + Date.now();
+}
+
+function normalizeForFilter(s) {
+  let t = String(s||"").trim().toLowerCase();
+  t = t.replace(/iồn/g,"lồn");
+  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g,""); } catch {}
+  t = t.replace(/0/g,"o").replace(/1/g,"l").replace(/3/g,"e").replace(/4/g,"a").replace(/5/g,"s").replace(/7/g,"t");
+  t = t.replace(/\bion\b/g,"lon");
+  t = t.replace(/[^a-z0-9_]/g,"");
+  return t;
+}
+function isBadUsername(name) {
+  const t = normalizeForFilter(name);
+  for (const w of BAD_SUBSTRINGS) if (t.includes(w)) return true;
+  const tokens = t.split("_").filter(Boolean);
+  for (const tok of tokens) if (BAD_TOKENS.includes(tok)) return true;
+  return false;
+}
+function validateUsername(name) {
+  const u = String(name||"").trim();
+  if (!u) return "Thiếu username.";
+  if (u.length > 15) return "Username tối đa 15 ký tự.";
+  if (!/^[A-Za-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z A-Z 0-9 và dấu _";
+  if (isBadUsername(u)) return "Username có chứa từ không phù hợp.";
+  return null;
+}
+
+async function ensureLogin() {
+  if (user && user.userId && user.username) {
+    // refresh from server (optional)
+    try {
+      const me = await api("me", { userId: user.userId });
+      user = { ...user, ...me.user };
+      saveUser(user);
+      return;
+    } catch (e) {
+      // user lost -> force login
+      user = null;
+      saveUser(null);
+    }
+  }
+  await openLoginModal("login");
+}
+
+function canRenameClientSide(u) {
+  // server will enforce anyway; this is just UI hint
+  if (!u) return false;
+  if (!u.lastRenameAtMs) return true;
+  return (Date.now() - u.lastRenameAtMs) >= RENAME_COOLDOWN_MS;
+}
+
+/***********************
+ * MODAL
+ ***********************/
+let modalMode = "login"; // "login" | "rename"
+function openModal(mode, title, desc) {
+  modalMode = mode;
+  modalTitle.textContent = title;
+  modalDesc.textContent = desc;
+  modalErr.textContent = "";
+  modalOk.textContent = "";
+  inpUsername.value = "";
+  overlay.style.display = "flex";
+  setTimeout(() => inpUsername.focus(), 50);
+}
+function closeModal() {
+  overlay.style.display = "none";
+}
+
+async function openLoginModal(mode) {
+  openModal(
+    "login",
+    "Nhập username",
+    "Chỉ nhập 1 lần. Dùng cho mọi quiz trên domain. Xóa cache/localStorage là mất luôn (không khôi phục)."
+  );
+}
+
+btnCancel.addEventListener("click", () => {
+  if (user && user.userId) {
+    closeModal();
+  } else {
+    // chưa login thì không cho cancel
+    modalErr.textContent = "Bạn cần nhập username để vào.";
+  }
+});
+
+btnConfirm.addEventListener("click", async () => {
+  const name = inpUsername.value.trim();
+  const err = validateUsername(name);
+  if (err) { modalErr.textContent = err; modalOk.textContent = ""; return; }
+
+  modalErr.textContent = "";
+  modalOk.textContent = "Đang xử lý...";
+
+  try {
+    if (modalMode === "login") {
+      const userId = genId();
+      const resp = await api("register", { userId, username: name, ua: navigator.userAgent });
+      user = resp.user;
+      saveUser(user);
+      modalOk.textContent = "OK!";
+      closeModal();
+      updateTopBar();
+    } else if (modalMode === "rename") {
+      const resp = await api("rename", { userId: user.userId, newUsername: name, ua: navigator.userAgent });
+      user = { ...user, ...resp.user };
+      saveUser(user);
+      modalOk.textContent = "Đổi tên thành công!";
+      closeModal();
+      updateTopBar();
+      // refresh leaderboard display name
+      loadLeaderboard().catch(()=>{});
+    }
+  } catch (e) {
+    modalOk.textContent = "";
+    modalErr.textContent = e.message || String(e);
+  }
+});
+
+/***********************
+ * UI actions
+ ***********************/
+btnRename.addEventListener("click", async () => {
+  if (!user) return;
+  // UI hint only; server enforces true rule
+  if (!canRenameClientSide(user)) {
+    alert("Chưa đủ 30 ngày để đổi tên. (Server sẽ chặn)");
+    return;
+  }
+  openModal(
+    "rename",
+    "Đổi username",
+    "Lần đầu có thể đổi ngay. Sau đó mỗi 30 ngày mới đổi 1 lần. Tên cũ bị giữ chỗ vĩnh viễn."
+  );
+});
+
+btnNew.addEventListener("click", () => {
+  if (!confirm("Bắt đầu bài mới? (Không mất username, chỉ reset bài đang làm)")) return;
+  state = newAttemptState();
+  saveState();
+  renderTable();
+  restoreInputs();
+  scoreText.textContent = "Score: —";
+  wrongBox.textContent = "—";
+  status("Bắt đầu bài mới.");
+});
+
+btnFinalize.addEventListener("click", async () => {
+  if (!user) return;
+  try {
+    status("Đang tính điểm...");
+    const resp = await api("finalize", {
+      userId: user.userId,
+      cacheId: user.userId,
+      attemptId: state.attemptId,
+      ua: navigator.userAgent
+    });
+    const r = resp.result;
+    const sp = Math.round(r.scorePercent * 100) / 100;
+    scoreText.textContent = `Score: ${sp}% (${r.correctCount}/${r.totalCount})`;
+    status("OK. Đã chấm xong.");
+
+    // show wrong
+    if (r.wrong && r.wrong.length) {
+      wrongBox.innerHTML = r.wrong.map(x => {
+        const uans = escapeHtml(x.user || "(trống)");
+        const exp = escapeHtml(x.expected || "");
+        return `<div style="margin:6px 0">
+          <b>#${x.qid}</b> <span class="muted">${escapeHtml(x.word || "")}</span><br/>
+          <span class="muted">Bạn:</span> ${uans}<br/>
+          <span class="muted">Đúng:</span> ${exp}
+        </div>`;
+      }).join("");
+    } else {
+      wrongBox.textContent = "Không sai câu nào 🎉";
+    }
+
+    // save history local
+    pushHistory({ ts: Date.now(), scorePercent: r.scorePercent, correct: r.correctCount, total: r.totalCount });
+    updateLastScorePill();
+
+    // reload leaderboard
+    loadLeaderboard().catch(()=>{});
+  } catch (e) {
+    status("Lỗi: " + (e.message || e));
+    alert(e.message || String(e));
+  }
+});
+
+btnLeaderboard.addEventListener("click", () => loadLeaderboard().catch(err => alert(err.message || err)));
+
+/***********************
+ * TABLE RENDER + LOGIC
+ ***********************/
+function renderTable() {
+  tbody.innerHTML = VOCABS.map(v => {
+    const st = state.answers[String(v.id)] || {};
+    const tag = st.checked ? (st.ok ? `<span class="tag ok">✓</span>` : `<span class="tag bad">✗</span>`) : `<span class="tag">—</span>`;
+    const exp = st.checked ? `<div class="expected">${escapeHtml(st.expected || "")}</div>` : "";
+    return `
+      <tr data-vid="${v.id}">
+        <td><b>${v.no}</b></td>
+        <td>
+          <div class="w-word">${escapeHtml(v.word)}</div>
+          <div class="pos">${escapeHtml(v.pos)}</div>
+        </td>
+        <td>
+          <input type="text" id="ans_${v.id}" placeholder="Nhập nghĩa tiếng Việt..." value="${escapeAttr(st.answer || "")}">
+        </td>
+        <td>
+          <div class="row-actions">
+            <button class="mini" id="chk_${v.id}">Check</button>
+            ${tag}
+          </div>
+          <div class="res" id="res_${v.id}">
+            ${exp}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  // bind events
+  for (const v of VOCABS) {
+    const inp = document.getElementById("ans_" + v.id);
+    const btn = document.getElementById("chk_" + v.id);
+
+    inp.addEventListener("input", () => {
+      const a = inp.value;
+      ensureAnswerSlot(v.id);
+      state.answers[String(v.id)].answer = a;
+      // if user edits after checked, keep checked but do not auto re-check
+      saveStateDebounced();
+    });
+
+    btn.addEventListener("click", async () => {
+      if (!user) return;
+      btn.disabled = true;
+      try {
+        status(`Đang chấm câu #${v.no}...`);
+        const ans = (document.getElementById("ans_" + v.id).value || "").trim();
+        const resp = await api("gradeOne", {
+          userId: user.userId,
+          cacheId: user.userId,
+          attemptId: state.attemptId,
+          vocabId: v.id,
+          answer: ans,
+          ua: navigator.userAgent
+        });
+        const item = resp.item;
+
+        ensureAnswerSlot(v.id);
+        state.answers[String(v.id)].checked = true;
+        state.answers[String(v.id)].ok = !!item.ok;
+        state.answers[String(v.id)].expected = item.expected || "";
+        state.answers[String(v.id)].answer = item.user_answer || ans;
+
+        saveState();
+        // re-render only this row minimal
+        updateRow(v.id);
+        status(`OK câu #${v.no}.`);
+      } catch (e) {
+        status("Lỗi: " + (e.message || e));
+        alert(e.message || String(e));
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+}
+
+function ensureAnswerSlot(vocabId) {
+  const k = String(vocabId);
+  if (!state.answers[k]) state.answers[k] = { answer: "", checked: false, ok: false, expected: "" };
+}
+
+function updateRow(vocabId) {
+  const st = state.answers[String(vocabId)] || {};
+  const tr = document.querySelector(`tr[data-vid="${vocabId}"]`);
+  if (!tr) return;
+
+  // update tag + expected
+  const tagHost = tr.querySelector(".row-actions");
+  const resHost = tr.querySelector("#res_" + vocabId);
+  // rebuild tag area quickly
+  const oldTags = tagHost.querySelectorAll(".tag");
+  oldTags.forEach(x => x.remove());
+  const tag = document.createElement("span");
+  tag.className = "tag " + (st.checked ? (st.ok ? "ok" : "bad") : "");
+  tag.textContent = st.checked ? (st.ok ? "✓" : "✗") : "—";
+  tagHost.appendChild(tag);
+
+  resHost.innerHTML = st.checked ? `<div class="expected">${escapeHtml(st.expected || "")}</div>` : "";
+}
+
+function restoreInputs() {
+  // ensure attempt exists
+  if (!state || !state.attemptId) state = newAttemptState();
+  // render already happened in renderTable()
+}
+
+function status(msg) {
+  statusText.textContent = msg;
+}
+
+/***********************
+ * localStorage state + history
+ ***********************/
+function newAttemptState() {
+  return { attemptId: genAttemptId(), startedAt: Date.now(), answers: {} };
+}
+function genAttemptId() {
+  return "a_" + Math.random().toString(16).slice(2) + "_" + Date.now();
+}
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STATE_KEY) || "null"); } catch { return null; }
+}
+function saveState() {
+  localStorage.setItem(STATE_KEY, JSON.stringify(state));
+}
+let saveT = null;
+function saveStateDebounced() {
+  clearTimeout(saveT);
+  saveT = setTimeout(() => saveState(), 250);
+}
+
+function pushHistory(item) {
+  let arr = [];
+  try { arr = JSON.parse(localStorage.getItem(HIST_KEY) || "[]"); } catch {}
+  arr.unshift(item);
+  arr = arr.slice(0, 30);
+  localStorage.setItem(HIST_KEY, JSON.stringify(arr));
+}
+
+function updateLastScorePill() {
+  let arr = [];
+  try { arr = JSON.parse(localStorage.getItem(HIST_KEY) || "[]"); } catch {}
+  if (!arr.length) { pillLast.textContent = "Last: —"; return; }
+  const x = arr[0];
+  const sp = Math.round((x.scorePercent || 0) * 100) / 100;
+  pillLast.textContent = `Last: ${sp}%`;
+}
+
+/***********************
+ * Leaderboard
+ ***********************/
+async function loadLeaderboard() {
+  if (!user) return;
+  status("Đang tải leaderboard...");
+  const resp = await api("leaderboard", { limit: 30, ua: navigator.userAgent });
+  const rows = resp.rows || [];
+  lb.innerHTML = rows.length ? rows.map((r, i) => {
+    const name = escapeHtml(r.name || "—");
+    const sp = Math.round((r.scorePercent || 0) * 100) / 100;
+    return `<div class="lb-row"><div><b>#${i+1}</b> ${name}</div><div><b>${sp}%</b></div></div>`;
+  }).join("") : `<div class="small muted">Chưa có dữ liệu.</div>`;
+  status("OK leaderboard.");
+}
+
+/***********************
+ * Top bar
+ ***********************/
+function updateTopBar() {
+  if (!user || !user.username) {
+    pillUser.textContent = "Chưa đăng nhập";
+  } else {
+    pillUser.textContent = `User: ${user.username}`;
+  }
+}
+
+/***********************
+ * helpers
+ ***********************/
+function escapeHtml(s){
+  return String(s||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function escapeAttr(s){ return escapeHtml(s).replace(/"/g, "&quot;"); }
+</script>
+</body>
+</html>
