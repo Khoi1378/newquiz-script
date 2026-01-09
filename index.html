@@ -653,5 +653,240 @@ function escapeHtml(s){
 }
 function escapeAttr(s){ return escapeHtml(s).replace(/"/g, "&quot;"); }
 </script>
+  <script>
+/**
+ * TK Vercel Adapter
+ * - Injects mandatory username modal
+ * - Stores username forever (localStorage)
+ * - Polyfills google.script.run => fetch(API_URL)
+ * - Auto-adds: userId, name, cacheId, quizId, ua to payload
+ * - Keeps your original UI/CSS untouched
+ */
+
+// 1) SET THIS
+const API_URL = "https://script.google.com/macros/s/AKfycbyplOXDMjC8XzxwKZd_-F1BsjmE6NzMiOWNeSAPlyLQzBPFaZ9nlOjIF9I7A3jvUroj/exec"; // .../exec
+
+// storage keys
+const TK_USER_KEY = "tk_user_v1";
+
+// quizId by URL: ?quiz=vocab1
+function getQuizId() {
+  const u = new URL(location.href);
+  return (u.searchParams.get("quiz") || "vocab1").trim() || "vocab1";
+}
+
+function genId() {
+  if (crypto?.randomUUID) return crypto.randomUUID();
+  return "u_" + Math.random().toString(16).slice(2) + "_" + Date.now();
+}
+
+function loadUser() {
+  try { return JSON.parse(localStorage.getItem(TK_USER_KEY) || "null"); } catch { return null; }
+}
+function saveUser(u) { localStorage.setItem(TK_USER_KEY, JSON.stringify(u)); }
+
+// modal inject (không đụng CSS gốc của bạn)
+function injectModal() {
+  if (document.getElementById("tk_login_overlay")) return;
+
+  const css = `
+  #tk_login_overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999999;display:flex;align-items:center;justify-content:center;padding:16px}
+  #tk_login_box{width:100%;max-width:420px;background:#fff;border-radius:14px;padding:14px 14px 12px;box-shadow:0 10px 30px rgba(0,0,0,.35);font-family:inherit}
+  #tk_login_box h3{margin:0 0 8px;font-size:16px}
+  #tk_login_box p{margin:0 0 10px;font-size:12px;opacity:.75;line-height:1.4}
+  #tk_login_inp{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;outline:none}
+  #tk_login_err{min-height:18px;margin-top:8px;color:#c0392b;font-size:12px}
+  #tk_login_ok{min-height:18px;margin-top:8px;color:#2ecc71;font-size:12px}
+  #tk_login_row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+  #tk_login_btn{padding:10px 12px;border:0;border-radius:10px;background:#2b66ff;color:#fff;font-weight:700;cursor:pointer}
+  #tk_rename_btn{position:fixed;right:12px;bottom:12px;z-index:999998;padding:10px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.15);background:rgba(255,255,255,.85);backdrop-filter:blur(6px);cursor:pointer;font-weight:700;display:none}
+  `;
+  const style = document.createElement("style");
+  style.textContent = css;
+  document.head.appendChild(style);
+
+  document.body.insertAdjacentHTML("beforeend", `
+    <div id="tk_login_overlay" style="display:none">
+      <div id="tk_login_box">
+        <h3 id="tk_login_title">Nhập username</h3>
+        <p id="tk_login_desc">Bắt buộc nhập trước khi làm. Lưu vĩnh viễn theo trình duyệt. Xoá cache là mất luôn.</p>
+        <input id="tk_login_inp" maxlength="15" placeholder="vd: tuankhoi123" autocomplete="off" />
+        <div id="tk_login_err"></div>
+        <div id="tk_login_ok"></div>
+        <div id="tk_login_row">
+          <button id="tk_login_btn">OK</button>
+        </div>
+      </div>
+    </div>
+    <button id="tk_rename_btn">Đổi tên</button>
+  `);
+}
+
+function normalizeForFilter(s) {
+  let t = String(s||"").trim().toLowerCase();
+  t = t.replace(/iồn/g,"lồn");
+  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g,""); } catch {}
+  t = t.replace(/0/g,"o").replace(/1/g,"l").replace(/3/g,"e").replace(/4/g,"a").replace(/5/g,"s").replace(/7/g,"t");
+  t = t.replace(/[^a-z0-9_]/g,"");
+  return t;
+}
+function isBadUsername(u){
+  const BAD_SUBSTRINGS = ["du","dit","lon","ion","cac","fuck","shit","dick","pussy"];
+  const BAD_TOKENS = ["cho"];
+  const t = normalizeForFilter(u);
+  for (const w of BAD_SUBSTRINGS) if (t.includes(w)) return true;
+  const toks = t.split("_").filter(Boolean);
+  for (const tok of toks) if (BAD_TOKENS.includes(tok)) return true;
+  return false;
+}
+function validateUsername(u){
+  u = String(u||"").trim();
+  if (!u) return "Thiếu username.";
+  if (u.length > 15) return "Username tối đa 15 ký tự.";
+  if (!/^[A-Za-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z A-Z 0-9 và dấu _";
+  if (isBadUsername(u)) return "Username có chứa từ không phù hợp.";
+  return null;
+}
+
+async function apiCall(action, payload) {
+  const body = JSON.stringify({ action, ...payload });
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=UTF-8" },
+    body
+  });
+  const data = await res.json();
+  if (!data || data.ok === false) throw new Error(data?.error || "API error");
+  return data;
+}
+
+async function ensureLogin() {
+  injectModal();
+  let u = loadUser();
+
+  const overlay = document.getElementById("tk_login_overlay");
+  const inp = document.getElementById("tk_login_inp");
+  const err = document.getElementById("tk_login_err");
+  const ok = document.getElementById("tk_login_ok");
+  const btn = document.getElementById("tk_login_btn");
+  const renameBtn = document.getElementById("tk_rename_btn");
+
+  async function open(mode) {
+    overlay.style.display = "flex";
+    err.textContent = "";
+    ok.textContent = "";
+    inp.value = "";
+    inp.focus();
+    btn.textContent = (mode === "rename") ? "Đổi tên" : "OK";
+
+    btn.onclick = async () => {
+      const name = inp.value.trim();
+      const v = validateUsername(name);
+      if (v) { err.textContent = v; ok.textContent = ""; return; }
+      err.textContent = "";
+      ok.textContent = "Đang xử lý...";
+
+      try {
+        if (mode === "rename") {
+          const resp = await apiCall("renameUser", { userId: u.userId, newUsername: name, ua: navigator.userAgent });
+          u = { ...u, ...resp.user };
+          saveUser(u);
+          ok.textContent = "Đổi tên OK!";
+          overlay.style.display = "none";
+        } else {
+          const userId = genId();
+          const resp = await apiCall("registerUser", { userId, username: name, ua: navigator.userAgent });
+          u = resp.user;
+          saveUser(u);
+          ok.textContent = "OK!";
+          overlay.style.display = "none";
+        }
+        renameBtn.style.display = "block";
+      } catch (e) {
+        ok.textContent = "";
+        err.textContent = e.message || String(e);
+      }
+    };
+  }
+
+  // If already has user, verify exists server-side
+  if (u?.userId) {
+    try {
+      await apiCall("me", { userId: u.userId });
+      renameBtn.style.display = "block";
+    } catch {
+      u = null;
+      saveUser(null);
+    }
+  }
+
+  if (!u?.userId) await open("login");
+
+  // rename button
+  renameBtn.onclick = () => open("rename");
+
+  // expose
+  window.TK_USER = () => loadUser();
+}
+
+function polyfillGoogleScriptRun() {
+  // Create google.script.run polyfill that calls API_URL
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+
+  function makeRunner(success, failure) {
+    return new Proxy({}, {
+      get(_t, prop) {
+        if (prop === "withSuccessHandler") return (fn) => makeRunner(fn, failure);
+        if (prop === "withFailureHandler") return (fn) => makeRunner(success, fn);
+
+        // method call: google.script.run.someFunc(payload)
+        return async (arg) => {
+          try {
+            const user = loadUser();
+            const quizId = getQuizId();
+
+            // payload normalization
+            let payload = (arg && typeof arg === "object") ? { ...arg } : {};
+            // auto inject identity
+            if (user?.userId) {
+              payload.userId = user.userId;
+              payload.name = user.username;      // keep compatibility with your old code
+              payload.cacheId = user.userId;     // stable
+            }
+            payload.quizId = payload.quizId || quizId;
+            payload.ua = payload.ua || navigator.userAgent;
+
+            // map old calls where arg is primitive
+            if (typeof arg !== "object") {
+              if (prop === "getLeaderboard") payload.limit = arg;
+              if (prop === "getProgress") payload.cacheId = arg;
+              if (prop === "getQuizData") payload.quizId = quizId;
+            }
+
+            const data = await apiCall(String(prop), payload);
+            success && success(data);
+            return data;
+          } catch (e) {
+            failure && failure(e);
+            throw e;
+          }
+        };
+      }
+    });
+  }
+
+  window.google.script.run = makeRunner(null, null);
+}
+
+// Boot
+document.addEventListener("DOMContentLoaded", async () => {
+  if (!API_URL || API_URL.includes("PASTE_")) {
+    console.warn("Chưa set API_URL.");
+  }
+  await ensureLogin();
+  polyfillGoogleScriptRun();
+});
+</script>
 </body>
 </html>
