@@ -212,6 +212,19 @@
       white-space: nowrap;
     }
 
+    /* ADMIN badge */
+    .adminBadge{
+      margin-left: 8px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-weight: 950;
+      font-size: .78rem;
+      background: rgba(59,130,246,.14);
+      border: 1px solid rgba(59,130,246,.35);
+      color: #1d4ed8;
+      white-space: nowrap;
+    }
+
     /* Modal (Reset) */
     .modal-backdrop {
       position: fixed; inset: 0; background: rgba(0,0,0,.35);
@@ -280,6 +293,7 @@
     <div class="actionbar">
       <button class="btn" id="btnScrollTop">⬆️ Lên đầu</button>
       <button class="btn btn-reset" id="btnReset">🔁 Làm lại</button>
+      <button class="btn btn-primary" id="btnSubmit">📌 Nộp bài</button>
     </div>
 
     <div class="wrap">
@@ -332,7 +346,13 @@
 /********************
  * 0) SET API URL (Apps Script Web App)
  ********************/
-const API_URL = "https://script.google.com/macros/s/AKfycbxJNj1BWD563CvtpzFD65RNsn7XRfAy0RYlj6WdEq17X-582M0MnCFdd0bgmB_MDJrWEg/exec";
+// ✅ DÁN LINK CỦA BẠN Ở ĐÂY
+const API_URL = "https://script.google.com/macros/s/AKfycbyplOXDMjC8XzxwKZd_-F1BsjmE6NzMiOWNeSAPlyLQzBPFaZ9nlOjIF9I7A3jvUroj/exec";
+
+/********************
+ * 0.05) Admin username
+ ********************/
+const ADMIN_USERNAME = "tuankhoi";
 
 /********************
  * 0.1) Username rules
@@ -340,138 +360,10 @@ const API_URL = "https://script.google.com/macros/s/AKfycbxJNj1BWD563CvtpzFD65RN
 const USER_KEY = "tk_user_v1";
 const RENAME_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 
-// lọc bậy: cố tình bắt cả không dấu + biến thể hay gặp
-const BAD_SUBSTRINGS = [
-  "du","dit","lon","cac","cho",
-  "fuck","shit","dick","pussy"
-];
+const BAD_SUBSTRINGS = ["du","dit","lon","cac","cho","fuck","shit","dick","pussy"];
 
 /********************
- * Polyfill google.script.run (để code cũ chạy y nguyên)
- * Backend cần doPost nhận JSON {action,...}
- ********************/
-function getQuizId() {
-  try {
-    const u = new URL(location.href);
-    const q = (u.searchParams.get("quiz") || "").trim();
-    return q || "vocab1";
-  } catch { return "vocab1"; }
-}
-
-async function postJSON(payload) {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=UTF-8" },
-    body: JSON.stringify(payload),
-  });
-
-  const txt = await res.text();
-  let data;
-  try { data = JSON.parse(txt); }
-  catch {
-    throw new Error("API không trả JSON. (Bạn cần doPost JSON ở Apps Script)");
-  }
-
-  if (data && data.ok === false) throw new Error(data.error || "API error");
-  return data;
-}
-
-function installGoogleScriptRunPolyfill() {
-  window.google = window.google || {};
-  window.google.script = window.google.script || {};
-
-  function runner(success, failure) {
-    return new Proxy({}, {
-      get(_t, prop) {
-        if (prop === "withSuccessHandler") return (fn) => runner(fn, failure);
-        if (prop === "withFailureHandler") return (fn) => runner(success, fn);
-
-        return (arg) => {
-          const action = String(prop);
-
-          let payload = {};
-          if (arg && typeof arg === "object") payload = { ...arg };
-          else {
-            // map primitive calls from old code
-            if (action === "getLeaderboard") payload = { limit: arg };
-            else if (action === "getProgress") payload = { cacheId: arg };
-            else payload = {};
-          }
-
-          // add quizId (không phá backend cũ nếu ignore)
-          if (action === "getQuizData" && !payload.quizId) payload.quizId = getQuizId();
-
-          const p = postJSON({ action, ...payload })
-            .then((data) => {
-              // getQuizData: backend có thể trả thẳng object quiz hoặc bọc {data:...}
-              const out = (action === "getQuizData" && data && data.data) ? data.data : data;
-              success && success(out);
-              return out;
-            })
-            .catch((err) => {
-              const e = (err instanceof Error) ? err : new Error(String(err));
-              failure && failure(e);
-              throw e;
-            });
-
-          return p;
-        };
-      }
-    });
-  }
-
-  window.google.script.run = runner(null, null);
-}
-
-function gasAvailable() {
-  return !!(API_URL && API_URL.startsWith("http"));
-}
-
-/********************
- * User (username) local
- ********************/
-function loadUser() {
-  try { return JSON.parse(localStorage.getItem(USER_KEY) || "null"); } catch { return null; }
-}
-function saveUser(u) {
-  if (!u) localStorage.removeItem(USER_KEY);
-  else localStorage.setItem(USER_KEY, JSON.stringify(u));
-}
-
-function normalizeForFilter(s) {
-  let t = String(s || "").trim().toLowerCase();
-
-  // đổi đ -> d
-  t = t.replace(/đ/g, "d");
-
-  // gỡ dấu
-  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); } catch {}
-
-  // thay leet cơ bản
-  t = t.replace(/0/g, "o").replace(/1/g, "l").replace(/3/g, "e").replace(/4/g, "a").replace(/5/g, "s").replace(/7/g, "t");
-
-  // chỉ giữ chữ số _
-  t = t.replace(/[^a-z0-9_]/g, "");
-  return t;
-}
-function isBadUsername(u) {
-  const t = normalizeForFilter(u);
-  for (const w of BAD_SUBSTRINGS) {
-    if (t.includes(w)) return true;
-  }
-  return false;
-}
-function validateUsername(u) {
-  u = String(u || "").trim();
-  if (!u) return "Chưa nhập username.";
-  if (u.length > 15) return "Username tối đa 15 ký tự.";
-  if (!/^[A-Za-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z A-Z 0-9 và dấu _";
-  if (isBadUsername(u)) return "Username có chứa từ không phù hợp.";
-  return null;
-}
-
-/********************
- * Helpers (giữ nguyên)
+ * Helpers
  ********************/
 function escapeHtml(s) {
   return String(s ?? "")
@@ -498,96 +390,164 @@ function randId(prefix = "id") {
 function normalizeName(s){
   return String(s||"").trim().replace(/\s+/g," ").toLowerCase();
 }
+function isAdmin(name){
+  return normalizeName(name) === normalizeName(ADMIN_USERNAME);
+}
+function getQuizId() {
+  try {
+    const u = new URL(location.href);
+    const q = (u.searchParams.get("quiz") || "").trim();
+    return q || "vocab1";
+  } catch { return "vocab1"; }
+}
+function gasAvailable() {
+  return !!(API_URL && API_URL.startsWith("http"));
+}
 
 /********************
- * Persist (giữ nguyên)
+ * User local
+ ********************/
+function loadUser() {
+  try { return JSON.parse(localStorage.getItem(USER_KEY) || "null"); } catch { return null; }
+}
+function saveUser(u) {
+  if (!u) localStorage.removeItem(USER_KEY);
+  else localStorage.setItem(USER_KEY, JSON.stringify(u));
+}
+function normalizeForFilter(s) {
+  let t = String(s || "").trim().toLowerCase();
+  t = t.replace(/đ/g, "d");
+  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); } catch {}
+  t = t.replace(/0/g,"o").replace(/1/g,"l").replace(/3/g,"e").replace(/4/g,"a").replace(/5/g,"s").replace(/7/g,"t");
+  t = t.replace(/[^a-z0-9_]/g, "");
+  return t;
+}
+function isBadUsername(u) {
+  const t = normalizeForFilter(u);
+  for (const w of BAD_SUBSTRINGS) if (t.includes(w)) return true;
+  return false;
+}
+function validateUsername(u) {
+  u = String(u || "").trim();
+  if (!u) return "Chưa nhập username.";
+  if (u.length > 15) return "Username tối đa 15 ký tự.";
+  if (!/^[A-Za-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z A-Z 0-9 và dấu _";
+  if (isBadUsername(u)) return "Username có chứa từ không phù hợp.";
+  return null;
+}
+
+/********************
+ * POST JSON helper (timeout nhanh để khỏi “đơ”)
+ ********************/
+async function postJSON(payload, { timeoutMs = 12000 } = {}) {
+  if (!gasAvailable()) throw new Error("Thiếu API_URL Apps Script");
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+
+    const txt = await res.text();
+    let data;
+    try { data = JSON.parse(txt); }
+    catch {
+      // Apps Script chưa có doPost JSON => sẽ trả HTML
+      throw new Error("API không trả JSON. (Bạn cần doPost xử lý JSON action trong Apps Script)");
+    }
+
+    if (data && data.ok === false) throw new Error(data.error || "API error");
+    return data;
+  } catch (e) {
+    if (String(e && e.name) === "AbortError") throw new Error("API timeout. (Apps Script/AI đang chậm)");
+    throw e;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/********************
+ * google.script.run polyfill (giữ code cũ chạy y nguyên)
+ ********************/
+function installGoogleScriptRunPolyfill() {
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+
+  function runner(success, failure) {
+    return new Proxy({}, {
+      get(_t, prop) {
+        if (prop === "withSuccessHandler") return (fn) => runner(fn, failure);
+        if (prop === "withFailureHandler") return (fn) => runner(success, fn);
+
+        return (arg) => {
+          const action = String(prop);
+
+          let payload = {};
+          if (arg && typeof arg === "object") payload = { ...arg };
+          else {
+            if (action === "getLeaderboard") payload = { limit: arg };
+            else if (action === "getProgress") payload = { cacheId: arg };
+            else payload = {};
+          }
+
+          if (action === "getQuizData" && !payload.quizId) payload.quizId = getQuizId();
+
+          return postJSON({ action, ...payload })
+            .then((data) => {
+              const out = (action === "getQuizData" && data && data.data) ? data.data : data;
+              success && success(out);
+              return out;
+            })
+            .catch((err) => {
+              const e = (err instanceof Error) ? err : new Error(String(err));
+              failure && failure(e);
+              throw e;
+            });
+        };
+      }
+    });
+  }
+
+  window.google.script.run = runner(null, null);
+}
+
+/********************
+ * Persist (NHẸ: ưu tiên hiển thị, save từ từ)
  ********************/
 const STORAGE_KEY = "gs_vocab_check_progress_v2";
-const DB_NAME = "gs_vocab_check_db_v2";
-const STORE_NAME = "kv";
 const NAME_PREFIX = "GSV2::";
 
-const Persist = {
-  mode: { local: false, session: false, idb: false },
-  db: null,
-
-  async init() {
-    try { const k = "__t__"; localStorage.setItem(k, "1"); localStorage.removeItem(k); this.mode.local = true; } catch (e) {}
-    try { const k = "__t__"; sessionStorage.setItem(k, "1"); sessionStorage.removeItem(k); this.mode.session = true; } catch (e) {}
-    try {
-      this.db = await this.openDB();
-      await this.idbSet("__t__", "1");
-      await this.idbRemove("__t__");
-      this.mode.idb = true;
-    } catch (e) {
-      this.mode.idb = false;
-      this.db = null;
-    }
-  },
-
-  mirrorToWindowName(rawJson) {
-    try { window.name = NAME_PREFIX + rawJson; } catch (e) {}
-  },
+const PersistLite = {
+  mirrorToWindowName(rawJson) { try { window.name = NAME_PREFIX + rawJson; } catch {} },
   mirrorGet() {
     try {
       const n = window.name || "";
       if (n.startsWith(NAME_PREFIX)) return n.slice(NAME_PREFIX.length);
-    } catch (e) {}
+    } catch {}
     return null;
   },
-
-  async get(key) {
-    if (this.mode.local) {
-      try { const v = localStorage.getItem(key); if (v) return v; } catch (e) {}
-    }
-    if (this.mode.idb && this.db) {
-      try { const v = await this.idbGet(key); if (v) return v; } catch (e) {}
-    }
-    if (this.mode.session) {
-      try { const v = sessionStorage.getItem(key); if (v) return v; } catch (e) {}
-    }
-    return this.mirrorGet();
+  getFast() {
+    // nhanh: window.name -> localStorage -> sessionStorage
+    let raw = null;
+    try { raw = this.mirrorGet(); } catch {}
+    if (!raw) { try { raw = localStorage.getItem(STORAGE_KEY); } catch {} }
+    if (!raw) { try { raw = sessionStorage.getItem(STORAGE_KEY); } catch {} }
+    return raw;
   },
-
-  async set(key, value, { mirror = false } = {}) {
-    if (mirror) this.mirrorToWindowName(value);
-    let okAny = false;
-    if (this.mode.local) { try { localStorage.setItem(key, value); okAny = true; } catch (e) {} }
-    if (this.mode.idb && this.db) { try { await this.idbSet(key, value); okAny = true; } catch (e) {} }
-    if (this.mode.session) { try { sessionStorage.setItem(key, value); okAny = true; } catch (e) {} }
-    return okAny;
+  setDebounced(raw, { mirror=false }={}) {
+    if (mirror) this.mirrorToWindowName(raw);
+    try { localStorage.setItem(STORAGE_KEY, raw); } catch {}
+    try { sessionStorage.setItem(STORAGE_KEY, raw); } catch {}
   },
-
-  async remove(key) {
-    try { if ((window.name || "").startsWith(NAME_PREFIX)) window.name = ""; } catch (e) {}
-    try { localStorage.removeItem(key); } catch (e) {}
-    try { sessionStorage.removeItem(key); } catch (e) {}
-    if (this.mode.idb && this.db) { try { await this.idbRemove(key); } catch (e) {} }
-  },
-
-  openDB() {
-    return new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, 1);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  },
-  idbTx(mode, fn) {
-    return new Promise((resolve, reject) => {
-      const tx = this.db.transaction(STORE_NAME, mode);
-      const store = tx.objectStore(STORE_NAME);
-      const req = fn(store);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-  },
-  idbGet(key) { return this.idbTx("readonly", s => s.get(key)); },
-  idbSet(key, val) { return this.idbTx("readwrite", s => s.put(val, key)); },
-  idbRemove(key) { return this.idbTx("readwrite", s => s.delete(key)); },
+  remove() {
+    try { if ((window.name||"").startsWith(NAME_PREFIX)) window.name=""; } catch {}
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
+  }
 };
 
 /********************
@@ -617,43 +577,27 @@ let state = {
 
 let USER = null;
 
-function ensureCacheId() {
-  // ưu tiên userId để ổn định theo username
-  if (USER && USER.userId) {
-    state.cacheId = USER.userId;
-    try { location.hash = "cache=" + encodeURIComponent(state.cacheId); } catch (e) {}
-    return;
-  }
-  if (state.cacheId && String(state.cacheId).trim()) return;
-  state.cacheId = randId("cache");
-  try { location.hash = "cache=" + encodeURIComponent(state.cacheId); } catch (e) {}
-}
-
-function newAttempt() {
-  state.attemptId = randId("attempt");
-  state.order = shuffle(QUIZ.vocabs.map(v => v.id));
-  state.answers = {};
-  state.checked = {};
-  state.finalized = false;
-  state.result = null;
-}
-
+/********************
+ * Fast Save (ít lag)
+ ********************/
 let saveTimer = null;
-function scheduleSave({ mirror = false } = {}) {
-  if (saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
+function scheduleSave({ mirror=false } = {}) {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
     state.ts = Date.now();
     const raw = JSON.stringify(state);
-    await Persist.set(STORAGE_KEY, raw, { mirror });
-  }, 200);
+    PersistLite.setDebounced(raw, { mirror });
+  }, 1200);
 }
 
-// save progress to sheet (throttle)
+/********************
+ * Cloud save: CHỈ khi check / finalize / pagehide (đỡ lag)
+ ********************/
 let lastCloud = 0;
 function scheduleCloudSave() {
   if (!gasAvailable()) return;
   const now = Date.now();
-  if (now - lastCloud < 4000) return;
+  if (now - lastCloud < 12000) return;
   lastCloud = now;
 
   try {
@@ -665,14 +609,43 @@ function scheduleCloudSave() {
   } catch(e){}
 }
 
+/********************
+ * State helpers
+ ********************/
+function ensureCacheId() {
+  if (USER && USER.userId) {
+    state.cacheId = USER.userId;
+    try { location.hash = "cache=" + encodeURIComponent(state.cacheId); } catch {}
+    return;
+  }
+  if (state.cacheId && String(state.cacheId).trim()) return;
+  state.cacheId = randId("cache");
+  try { location.hash = "cache=" + encodeURIComponent(state.cacheId); } catch {}
+}
+
+function newAttempt() {
+  state.attemptId = randId("attempt");
+  state.order = shuffle(QUIZ.vocabs.map(v => v.id));
+  state.answers = {};
+  state.checked = {};
+  state.finalized = false;
+  state.result = null;
+}
+
 function checkedCount() { return Object.keys(state.checked || {}).length; }
-function totalCount() { return QUIZ.vocabs.length; }
+function totalCount() { return QUIZ.vocabs.length || 0; }
 
 function updateStats() {
   const who = document.getElementById("whoName");
-  who.textContent = state.name ? state.name : "—";
+  const name = state.name ? state.name : "—";
 
-  // không thêm UI, chỉ thêm hành vi: bấm tên để đổi username
+  // thêm admin badge (nhẹ, không đổi layout)
+  if (state.name) {
+    who.innerHTML = escapeHtml(name) + (isAdmin(name) ? ` <span class="adminBadge">admin</span>` : ``);
+  } else {
+    who.textContent = "—";
+  }
+
   who.style.cursor = state.name ? "pointer" : "default";
   who.title = state.name ? "Bấm để đổi username (30 ngày/lần)" : "";
 
@@ -687,6 +660,22 @@ function updateStats() {
  ********************/
 const content = document.getElementById("content");
 
+let nameDraft = { username:"", code:"" };
+
+function renderLoadingCard(msg) {
+  content.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">${escapeHtml(msg || "Đang tải...")}</p>
+        <div class="meta"><span class="idx">...</span></div>
+      </div>
+      <div class="muted" style="margin-top:8px; line-height:1.35">
+        Nếu đứng lâu: kiểm tra Apps Script Web App đã deploy và có doPost JSON.
+      </div>
+    </div>
+  `;
+}
+
 function renderNameView() {
   content.innerHTML = "";
   const c = document.createElement("div");
@@ -697,15 +686,22 @@ function renderNameView() {
       <div class="meta"><span class="idx">BẮT BUỘC</span></div>
     </div>
     <div class="muted" style="margin-top:6px; line-height:1.35">
-      Nhập 1 lần là dùng mãi. Xóa cache/localStorage là mất luôn (không khôi phục).<br/>
+      Nhập 1 lần là dùng mãi (theo trình duyệt). Xóa cache/localStorage là mất.<br/>
       Username tối đa 15 ký tự, chỉ a-z A-Z 0-9 và dấu _.
     </div>
-    ${QUIZ.requireAccessCode ? `<div style="margin-top:10px; display:grid; gap:10px;">
-      <input id="codeInput" class="input" placeholder="Mã truy cập" maxlength="32" />
-    </div>` : ``}
+
+    ${QUIZ.requireAccessCode ? `
+      <div style="margin-top:10px; display:grid; gap:10px;">
+        <input id="codeInput" class="input" placeholder="Mã truy cập" maxlength="32" />
+      </div>
+    ` : ``}
+
     <div style="margin-top:10px; display:grid; gap:10px;">
       <input id="nameInput" class="input" placeholder="vd: tuankhoi123" autocomplete="off" maxlength="15" />
       <button id="btnStart" class="btn btn-primary" style="justify-content:center;">➡️ Vào làm</button>
+      <div class="muted" style="font-size:.9rem; line-height:1.35">
+        * Nếu username trùng, hệ thống sẽ tự thêm số (vd: tuankhoi1, tuankhoi2...).
+      </div>
     </div>
   `;
   content.appendChild(c);
@@ -714,25 +710,57 @@ function renderNameView() {
   const btn = c.querySelector("#btnStart");
   const codeInput = c.querySelector("#codeInput");
 
-  input.value = "";
-  input.focus();
+  input.value = nameDraft.username || "";
+  if (codeInput) codeInput.value = nameDraft.code || "";
+
+  setTimeout(() => input.focus(), 50);
 
   const start = async () => {
-    let username = String(input.value || "").trim();
+    let base = String(input.value || "").trim();
+    nameDraft.username = base;
+    nameDraft.code = codeInput ? String(codeInput.value||"").trim() : "";
 
-    const err = validateUsername(username);
+    const err = validateUsername(base);
     if (err) { toast(err); return; }
 
-    // backend: registerUser(userId, username) -> {ok:true, user:{userId, username, lastRenameAtMs?...}}
+    btn.disabled = true;
+    btn.textContent = "⏳";
+
+    // thử đăng ký, nếu trùng thì auto cộng số
     try {
-      btn.disabled = true;
-      btn.textContent = "⏳";
+      let chosen = base;
+      let resp = null;
 
-      const userId = randId("u");
-      const res = await postJSON({ action: "registerUser", userId, username, ua: navigator.userAgent || "" });
+      for (let i = 0; i <= 20; i++) {
+        try {
+          const userId = randId("u");
+          resp = await postJSON({
+            action: "registerUser",
+            userId,
+            username: chosen,
+            ua: navigator.userAgent || ""
+          });
 
-      // chấp nhận backend trả {user:{...}} hoặc trả thẳng user
-      const u = res.user ? res.user : res;
+          // ok
+          break;
+        } catch (e) {
+          const msg = String(e && e.message ? e.message : e);
+
+          // nếu trùng thì thử +1 +2...
+          const looksDuplicate =
+            /exists|exist|taken|duplicate|đã tồn tại|trùng/i.test(msg);
+
+          if (!looksDuplicate) throw e;
+
+          const nextN = (i === 0) ? 1 : (i+1);
+          // đảm bảo <=15 ký tự
+          const suffix = String(nextN);
+          const trimmed = base.slice(0, Math.max(1, 15 - suffix.length));
+          chosen = trimmed + suffix;
+        }
+      }
+
+      const u = resp && (resp.user ? resp.user : resp);
       if (!u || !u.userId || !u.username) throw new Error("Backend registerUser trả thiếu user.");
 
       USER = { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
@@ -740,13 +768,18 @@ function renderNameView() {
 
       state.name = USER.username;
       state.cacheId = USER.userId;
-      if (codeInput) state.accessCode = String(codeInput.value || "").trim();
+      state.accessCode = nameDraft.code || "";
 
       if (!state.attemptId) newAttempt();
       scheduleSave({ mirror: true });
-      scheduleCloudSave();
 
-      renderQuizView();
+      // đợi quiz load xong thì show quiz, còn chưa thì show loading nhẹ
+      if (!QUIZ.vocabs || !QUIZ.vocabs.length) {
+        renderLoadingCard("Đang tải câu hỏi...");
+      } else {
+        renderQuizView();
+      }
+
       toast("OK");
     } catch (e) {
       toast((e && e.message) ? e.message : String(e));
@@ -774,7 +807,7 @@ function buildQuizHTML() {
     const locked = !!(checked && checked.locked);
 
     const resultHtml = checked ? `
-      <div class="resultRow">
+      <div class="resultRow" data-result="${id}">
         <div>${checked.ok ? `<span class="oktxt">ĐÚNG ✅</span>` : `<span class="badtxt">SAI ❌</span>`}</div>
         <div>${checked.ok ? `` : `<span class="muted">Đáp án:</span> <b>${escapeHtml(checked.expected || v.meaning || "")}</b>`}</div>
       </div>
@@ -814,6 +847,34 @@ function renderQuizView() {
   }
 }
 
+function updateOneCardAfterCheck(id) {
+  const card = content.querySelector(`[data-qcard="${id}"]`);
+  if (!card) return;
+
+  const checked = state.checked && state.checked[id];
+  if (!checked) return;
+
+  const input = card.querySelector(`.ansInput[data-qid="${id}"]`);
+  const btn = card.querySelector(`[data-check="${id}"]`);
+
+  if (input) input.disabled = true;
+  if (btn) { btn.disabled = true; btn.textContent = "ĐÃ CHECK"; }
+
+  // remove old result if any
+  const old = card.querySelector(`[data-result="${id}"]`);
+  if (old) old.remove();
+
+  const v = VMAP.get(id);
+  const box = document.createElement("div");
+  box.className = "resultRow";
+  box.setAttribute("data-result", String(id));
+  box.innerHTML = `
+    <div>${checked.ok ? `<span class="oktxt">ĐÚNG ✅</span>` : `<span class="badtxt">SAI ❌</span>`}</div>
+    <div>${checked.ok ? `` : `<span class="muted">Đáp án:</span> <b>${escapeHtml(checked.expected || (v ? v.meaning : "") || "")}</b>`}</div>
+  `;
+  card.appendChild(box);
+}
+
 function onInput(e) {
   const t = e.target;
   if (!t || !t.classList.contains("ansInput")) return;
@@ -826,8 +887,8 @@ function onInput(e) {
   }
 
   state.answers[id] = String(t.value || "");
+  // chỉ lưu local từ từ, KHÔNG cloud-save lúc gõ (đỡ lag + đỡ lỗi)
   scheduleSave();
-  scheduleCloudSave();
 }
 
 let checking = new Set();
@@ -857,7 +918,10 @@ function onClick(e) {
     .withSuccessHandler((res) => {
       checking.delete(id);
 
-      if (!res || !res.ok || !res.item) {
+      const item = res && (res.item || (res.data && res.data.item));
+      const okFlag = (res && typeof res.ok === "boolean") ? res.ok : !!item;
+
+      if (!okFlag || !item) {
         btn.disabled = false;
         btn.textContent = "✅ CHECK";
         toast("Lỗi check");
@@ -867,19 +931,17 @@ function onClick(e) {
       state.answers[id] = ans;
       state.checked[id] = {
         locked: true,
-        ok: !!res.item.ok,
-        expected: String(res.item.expected || "")
+        ok: !!item.ok,
+        expected: String(item.expected || "")
       };
 
       scheduleSave({ mirror: true });
       scheduleCloudSave();
 
-      renderQuizView();
-      toast(res.item.ok ? "ĐÚNG" : "SAI");
+      updateStats();
+      updateOneCardAfterCheck(id);
 
-      if (checkedCount() >= totalCount()) {
-        finalizeAndShow();
-      }
+      toast(item.ok ? "ĐÚNG" : "SAI");
     })
     .withFailureHandler((err) => {
       checking.delete(id);
@@ -899,7 +961,7 @@ function onClick(e) {
 }
 
 /********************
- * Result + Leaderboard (giữ nguyên)
+ * Result + Leaderboard
  ********************/
 const wrongBackdrop = document.getElementById("wrongBackdrop");
 const wrongBody = document.getElementById("wrongBody");
@@ -970,11 +1032,13 @@ function fetchLeaderboard() {
                                 rk === 2 ? "toprow2" :
                                 rk === 3 ? "toprow3" : "";
                 const isMe = normalizeName(r.name) === meNorm;
+                const isAdm = isAdmin(r.name);
+
                 const rowClass = `${trClass} ${isMe ? "meRow" : ""}`.trim();
 
-                const nameCell = isMe
-                  ? `<span class="meName">${escapeHtml(r.name)}</span><span class="meBadge">Bạn</span>`
-                  : `${escapeHtml(r.name)}`;
+                let nameCell = `${escapeHtml(r.name)}`;
+                if (isAdm) nameCell += ` <span class="adminBadge">admin</span>`;
+                if (isMe) nameCell = `<span class="meName">${escapeHtml(r.name)}</span>${isAdm ? ` <span class="adminBadge">admin</span>` : ""}<span class="meBadge">Bạn</span>`;
 
                 return `
                   <tr class="${rowClass}">
@@ -1008,8 +1072,8 @@ function renderResultView() {
       <div class="meta"><span class="idx">DONE</span></div>
     </div>
     <div style="margin-top:10px; display:grid; gap:8px;">
-      <div class="pill">Điểm: <strong>${r.scorePercent.toFixed(0)}%</strong> (${r.score10.toFixed(1)}/10)</div>
-      <div class="pill">Đúng: <strong>${r.correctCount}</strong>/${r.totalCount}</div>
+      <div class="pill">Điểm: <strong>${Number(r.scorePercent||0).toFixed(0)}%</strong> (${Number(r.score10||0).toFixed(1)}/10)</div>
+      <div class="pill">Đúng: <strong>${Number(r.correctCount||0)}</strong>/${Number(r.totalCount||0)}</div>
       <button class="btn btn-primary" id="btnShowWrong" style="justify-content:center;">📌 Xem câu sai</button>
     </div>
   `;
@@ -1041,11 +1105,16 @@ function finalizeAndShow() {
 
   google.script.run
     .withSuccessHandler((res) => {
-      if (!res || !res.ok || !res.result) {
+      const result = res && (res.result || (res.data && res.data.result));
+      const okFlag = (res && typeof res.ok === "boolean") ? res.ok : !!result;
+
+      if (!okFlag || !result) {
         toast("Finalize lỗi");
+        state.finalized = false;
         return;
       }
-      state.result = res.result;
+
+      state.result = result;
 
       state.history = Array.isArray(state.history) ? state.history : [];
       state.history.push({
@@ -1063,6 +1132,7 @@ function finalizeAndShow() {
       toast("Xong");
     })
     .withFailureHandler((err) => {
+      state.finalized = false;
       toast("Finalize lỗi: " + (err && err.message ? err.message : err));
     })
     .finalizeAttempt({
@@ -1074,7 +1144,7 @@ function finalizeAndShow() {
 }
 
 /********************
- * Reset (giữ nguyên)
+ * Reset
  ********************/
 const modal = document.getElementById("modalBackdrop");
 const openModal = () => { modal.classList.add("show"); modal.setAttribute("aria-hidden", "false"); };
@@ -1106,20 +1176,36 @@ document.getElementById("btnConfirmReset").addEventListener("click", () => {
   };
   newAttempt();
   scheduleSave({ mirror: true });
-  scheduleCloudSave();
   toast("Đã làm lại");
   renderQuizView();
 });
 
 /********************
- * Scroll top (giữ nguyên)
+ * Scroll top
  ********************/
 document.getElementById("btnScrollTop").addEventListener("click", () => {
   document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
 });
 
 /********************
- * Rename username (không thêm UI: bấm vào tên ở topbar)
+ * Submit button (Nộp bài)
+ ********************/
+document.getElementById("btnSubmit").addEventListener("click", () => {
+  if (!state.name) { renderNameView(); toast("Nhập username trước"); return; }
+  if (!QUIZ.vocabs || !QUIZ.vocabs.length) { toast("Chưa tải xong câu hỏi"); return; }
+  if (!state.attemptId) newAttempt();
+
+  const cc = checkedCount();
+  const tt = totalCount();
+  if (tt && cc < tt) {
+    const ok = confirm(`Bạn mới check ${cc}/${tt}. Nộp vẫn tính sai các câu chưa check. OK không?`);
+    if (!ok) return;
+  }
+  finalizeAndShow();
+});
+
+/********************
+ * Rename username (bấm vào tên ở topbar)
  ********************/
 document.getElementById("whoName").addEventListener("click", async () => {
   if (!USER || !USER.userId) return;
@@ -1157,107 +1243,95 @@ document.getElementById("whoName").addEventListener("click", async () => {
 });
 
 /********************
- * Boot
+ * Boot: HIỂN THỊ NGAY, load quiz chạy sau
  ********************/
-function parseHashCacheId() {
-  try {
-    const h = String(location.hash || "").replace(/^#/, "");
-    const m = h.match(/(?:^|&)cache=([^&]+)/);
-    return m ? decodeURIComponent(m[1]) : null;
-  } catch(e){ return null; }
-}
-
-async function verifyUserIfAny() {
-  USER = loadUser();
-  if (!USER || !USER.userId) return;
-
-  // hỏi server user còn tồn tại không (nếu backend có action me)
-  try {
-    await postJSON({ action: "me", userId: USER.userId });
-  } catch {
-    // nếu mất (hoặc backend không hỗ trợ), cho như user mất
-    // bạn có thể bỏ đoạn này nếu backend bạn chưa có "me"
-    // nhưng giữ vậy sẽ đúng ý “xóa cache là mất luôn”
-    USER = null;
-    saveUser(null);
-  }
-}
-
-async function bootWithQuizLoaded() {
-  document.getElementById("quizTitle").textContent = QUIZ.title || "Vocabulary";
-  document.getElementById("quizSub").textContent = (QUIZ.sub || "").trim();
-
-  VMAP = new Map((QUIZ.vocabs||[]).map(v => [v.id, v]));
-  await Persist.init();
-
-  let raw = null;
-  try { raw = Persist.mirrorGet ? Persist.mirrorGet() : null; } catch (e) {}
-  if (!raw && Persist.mode && Persist.mode.local) {
-    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {}
-  }
-  if (!raw && Persist.mode && Persist.mode.session) {
-    try { raw = sessionStorage.getItem(STORAGE_KEY); } catch (e) {}
-  }
-
-  // nếu mất local, thử kéo progress từ sheet theo hash cache
-  if (!raw && gasAvailable()) {
-    const fromHash = parseHashCacheId();
-    if (fromHash) {
-      try {
-        const res = await new Promise((resolve) => {
-          google.script.run
-            .withSuccessHandler(resolve)
-            .withFailureHandler(() => resolve({ ok:true, stateJson:null }))
-            .getProgress(fromHash);
-        });
-        if (res && res.stateJson) raw = res.stateJson;
-      } catch(e){}
-    }
-  }
-
+function fastLoadState() {
+  const raw = PersistLite.getFast();
   if (raw) {
-    try { state = JSON.parse(raw) || state; } catch (e) {}
+    try { state = JSON.parse(raw) || state; } catch {}
+  }
+}
+
+async function loadQuizDataInBackground() {
+  if (!gasAvailable()) {
+    renderLoadingCard("Thiếu API_URL Apps Script");
+    return;
   }
 
-  ensureCacheId();
-  if (!state.attemptId || !state.order || !state.order.length) newAttempt();
+  google.script.run
+    .withSuccessHandler((data) => {
+      QUIZ = data || QUIZ;
+      document.getElementById("quizTitle").textContent = QUIZ.title || "Vocabulary";
+      document.getElementById("quizSub").textContent = (QUIZ.sub || "").trim();
 
-  // nếu có USER thì ép state.name/cacheId theo USER để “nhập 1 lần dùng mãi”
+      VMAP = new Map((QUIZ.vocabs||[]).map(v => [v.id, v]));
+
+      if (!state.attemptId || !state.order || !state.order.length) {
+        ensureCacheId();
+        if (QUIZ.vocabs && QUIZ.vocabs.length) newAttempt();
+      } else {
+        ensureCacheId();
+      }
+
+      updateStats();
+
+      if (!USER || !USER.username) {
+        // nếu user đang nhập mà quiz vừa load requireAccessCode -> re-render nhẹ
+        renderNameView();
+      } else {
+        // có user rồi
+        state.name = USER.username;
+        state.cacheId = USER.userId;
+        updateStats();
+
+        if (state.finalized && state.result) renderResultView();
+        else renderQuizView();
+      }
+
+      scheduleSave({ mirror: true });
+    })
+    .withFailureHandler((err) => {
+      renderLoadingCard("Lỗi tải dữ liệu");
+      toast(err && err.message ? err.message : String(err));
+    })
+    .getQuizData();
+}
+
+// Start NOW (đừng đợi)
+(function startFast(){
+  installGoogleScriptRunPolyfill();
+
+  // set title ngay
+  document.getElementById("quizTitle").textContent = "Vocabulary";
+  document.getElementById("quizSub").textContent = " ";
+
+  // load user + state nhanh
+  USER = loadUser();
+  fastLoadState();
+
+  // ép state theo user nếu có
   if (USER && USER.userId && USER.username) {
     state.name = USER.username;
     state.cacheId = USER.userId;
   }
-
+  ensureCacheId();
   updateStats();
 
-  if (!USER || !USER.username) renderNameView();
-  else if (state.finalized && state.result) renderResultView();
-  else renderQuizView();
-
-  scheduleSave({ mirror: true });
-
-  window.addEventListener("pagehide", () => {
-    try { Persist.mirrorToWindowName(JSON.stringify(state)); } catch (e) {}
-    scheduleCloudSave();
-  }, { passive: true });
-}
-
-// Start
-(async function(){
-  if (!gasAvailable()) {
-    content.innerHTML = `<div class="card"><b>Thiếu API_URL Apps Script</b></div>`;
-    return;
+  // ✅ render ngay lập tức
+  if (!USER || !USER.username) {
+    renderNameView();
+  } else {
+    renderLoadingCard("Đang tải câu hỏi...");
   }
 
-  installGoogleScriptRunPolyfill();
-  await verifyUserIfAny();
+  // load quiz sau (không block UI)
+  setTimeout(() => loadQuizDataInBackground(), 10);
 
-  google.script.run
-    .withSuccessHandler((data) => { QUIZ = data || QUIZ; bootWithQuizLoaded(); })
-    .withFailureHandler((err) => {
-      content.innerHTML = `<div class="card"><b>Lỗi tải dữ liệu</b><div class="muted" style="margin-top:6px">${escapeHtml(err && err.message ? err.message : String(err))}</div></div>`;
-    })
-    .getQuizData();
+  // pagehide: mirror + cloud
+  window.addEventListener("pagehide", () => {
+    try { PersistLite.mirrorToWindowName(JSON.stringify(state)); } catch {}
+    scheduleCloudSave();
+  }, { passive: true });
 })();
 </script>
 </body>
