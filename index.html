@@ -4,889 +4,1261 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Vocabulary Check</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
+
   <style>
-    :root { --bg:#0b1220; --card:#111a2e; --muted:#8aa0c2; --text:#eaf1ff; --ok:#3ddc97; --bad:#ff5b7a; --line:#1f2a44; --btn:#2b66ff; }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Montserrat,system-ui,Segoe UI,Arial;background:linear-gradient(180deg,#070b14,#0b1220);color:var(--text)}
-    .wrap{max-width:1100px;margin:0 auto;padding:18px}
-    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-    .title{display:flex;flex-direction:column;gap:4px}
-    h1{margin:0;font-size:20px;font-weight:800}
-    .sub{color:var(--muted);font-size:12px}
-    .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .pill{padding:8px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.03);color:var(--muted);font-size:12px}
-    .btn{cursor:pointer;border:0;border-radius:10px;padding:10px 12px;font-weight:700;background:var(--btn);color:white}
-    .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
-    .btn.danger{background:#ff2f57}
-    .grid{margin-top:14px;display:grid;grid-template-columns:1fr;gap:12px}
-    .card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:16px;padding:14px}
-    .table{width:100%;border-collapse:collapse}
-    .table th,.table td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
-    .table th{color:var(--muted);font-size:12px;text-align:left;font-weight:700}
-    .w-word{font-weight:800}
-    .pos{color:var(--muted);font-size:12px}
-    input[type="text"]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0c1428;color:var(--text);outline:none}
-    input[type="text"]:focus{border-color:#3a66ff}
-    .mini{padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#0c1428;color:var(--text);font-weight:700;cursor:pointer}
-    .mini:disabled{opacity:.5;cursor:not-allowed}
-    .res{font-size:12px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .tag{padding:4px 8px;border-radius:999px;border:1px solid var(--line);font-weight:800;font-size:12px}
-    .tag.ok{border-color:rgba(61,220,151,.4);color:var(--ok)}
-    .tag.bad{border-color:rgba(255,91,122,.4);color:var(--bad)}
-    .expected{color:var(--text);font-size:12px}
-    .row-actions{display:flex;gap:8px;align-items:center}
-    .footer-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .score{font-weight:900;font-size:16px}
-    .muted{color:var(--muted)}
-    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;padding:18px}
-    .modal{width:100%;max-width:420px;background:#0c1428;border:1px solid var(--line);border-radius:16px;padding:16px}
-    .modal h2{margin:0 0 8px;font-size:16px}
-    .modal p{margin:0 0 10px;color:var(--muted);font-size:12px;line-height:1.4}
-    .err{color:#ff9aaa;font-size:12px;margin-top:8px;min-height:18px}
-    .okmsg{color:var(--ok);font-size:12px;margin-top:8px;min-height:18px}
-    .lb{display:grid;grid-template-columns:1fr;gap:8px}
-    .lb-row{display:flex;justify-content:space-between;gap:8px;padding:10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02)}
-    .lb-row b{font-weight:900}
-    .small{font-size:12px;color:var(--muted)}
-    .hr{height:1px;background:var(--line);margin:12px 0}
+    :root {
+      --bg1: #ffecd2; --bg2: #fcb69f;
+      --card: #fff; --text: #1f2937; --muted: #6b7280;
+      --primary: #7c3aed; --ok: #16a34a; --bad: #dc2626;
+      --border: #e5e7eb; --soft: #f8fafc;
+      --shadow: 0 14px 40px rgba(0,0,0,.10);
+      --radius: 18px;
+      --gold: #f59e0b; --silver: #94a3b8; --bronze: #d97706;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
+                  linear-gradient(120deg, var(--bg1) 0%, var(--bg2) 100%);
+      overflow: hidden;
+    }
+    #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 80px; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 0 14px; }
+
+    .actionbar {
+      position: sticky; top: 10px; z-index: 9999;
+      display: flex; justify-content: flex-end; gap: 10px; padding: 0 14px;
+    }
+    .btn {
+      border: 0; cursor: pointer;
+      border-radius: 999px; padding: 10px 14px;
+      font-weight: 900; font-size: .9rem;
+      transition: transform .16s ease, filter .16s ease;
+      display: inline-flex; align-items: center; gap: 8px;
+      user-select: none; white-space: nowrap;
+      box-shadow: 0 12px 24px rgba(0,0,0,.12);
+      background: #fff; color: #111827; border: 1px solid #e5e7eb;
+    }
+    .btn:hover { transform: translateY(-1px); filter: brightness(.98); }
+    .btn:active { transform: translateY(0px); }
+    .btn-reset { background: #111827; color: #fff; border: 0; }
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed, #fb7185);
+      color: #fff; border: 0;
+      box-shadow: 0 12px 24px rgba(124,58,237,.18);
+    }
+    .btn-check {
+      border-radius: 14px;
+      padding: 11px 12px;
+      justify-content: center;
+      width: 160px;
+    }
+    .btn-check[disabled] { opacity: .65; cursor: not-allowed; }
+
+    .topbar {
+      margin-top: 10px;
+      background: rgba(255,255,255,.86);
+      border: 1px solid rgba(229,231,235,.9);
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.06);
+      padding: 14px;
+      display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+    }
+    .titlebox { display: flex; gap: 10px; align-items: center; flex: 1 1 360px; min-width: 240px; }
+    .logo {
+      width: 42px; height: 42px; border-radius: 16px;
+      background: linear-gradient(135deg, #a78bfa, #fb7185);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 900;
+      box-shadow: 0 10px 22px rgba(124,58,237,.18);
+      user-select: none;
+    }
+    .titles h1 { font-size: 1.02rem; margin: 0; font-weight: 800; }
+    .titles .tiny { margin-top: 3px; font-size: .86rem; color: var(--muted); font-weight: 650; }
+
+    .stats { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .pill {
+      background: #f3f4f6; border: 1px solid #e5e7eb;
+      border-radius: 999px; padding: 8px 12px;
+      font-weight: 800; font-size: .9rem; color: #374151; white-space: nowrap;
+    }
+    .pill strong { color: var(--primary); }
+    .progressline {
+      height: 10px; border-radius: 999px; background: #f3f4f6; overflow: hidden;
+      border: 1px solid #e5e7eb; width: 100%; max-width: 360px;
+    }
+    .progressfill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #22c55e, #a78bfa);
+      transition: width .25s ease;
+    }
+
+    .content { padding: 12px 0 0; }
+    .card {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px; margin: 12px 0;
+    }
+    .row1 { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .vi { margin: 0; font-weight: 900; font-size: 1.04rem; line-height: 1.25; }
+    .meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .idx {
+      font-size: .78rem; font-weight: 900;
+      padding: 6px 10px; border-radius: 999px;
+      background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe;
+      white-space: nowrap;
+    }
+    .muted { color: var(--muted); font-weight: 650; }
+
+    .input {
+      width: 100%;
+      border-radius: 14px; border: 2px solid #e5e7eb;
+      padding: 11px 12px; font-size: .95rem; font-weight: 700;
+      outline: none; background: var(--soft);
+      transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .input:focus {
+      border-color: rgba(124,58,237,.55);
+      box-shadow: 0 0 0 5px rgba(124,58,237,.10);
+      background: #fff;
+    }
+    .input[disabled] { background: #f3f4f6; color: #111827; }
+
+    .resultRow{
+      display:grid;
+      grid-template-columns: 140px 1fr;
+      gap:10px;
+      align-items:center;
+      margin-top:10px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px dashed #e5e7eb;
+      background: #fff;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+    .oktxt { color: var(--ok); font-weight: 1000; }
+    .badtxt { color: var(--bad); font-weight: 1000; }
+
+    /* leaderboard */
+    .table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow: hidden;
+      border-radius: 16px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+    }
+    .table th, .table td {
+      padding: 10px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      font-weight: 750;
+      font-size: .92rem;
+    }
+    .table th { background: #f8fafc; font-weight: 900; }
+    .table tr:last-child td { border-bottom: 0; }
+
+    .rankpill {
+      display: inline-flex; align-items: center; gap: 8px;
+      border-radius: 999px; padding: 6px 10px;
+      font-weight: 950; font-size: .86rem;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      white-space: nowrap;
+    }
+    .medal {
+      width: 22px; height: 22px; border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: .9rem;
+      color: #111827;
+      border: 1px solid rgba(0,0,0,.08);
+      box-shadow: 0 10px 22px rgba(0,0,0,.10);
+    }
+    .m1 { background: linear-gradient(135deg, #fde68a, #f59e0b); }
+    .m2 { background: linear-gradient(135deg, #e2e8f0, #94a3b8); }
+    .m3 { background: linear-gradient(135deg, #fdba74, #d97706); }
+
+    .toprow1 td { background: rgba(245,158,11,.10); }
+    .toprow2 td { background: rgba(148,163,184,.12); }
+    .toprow3 td { background: rgba(217,119,6,.10); }
+
+    .meRow td {
+      background: rgba(124,58,237,.12) !important;
+      border-top: 1px solid rgba(124,58,237,.25);
+      border-bottom: 1px solid rgba(124,58,237,.25);
+    }
+    .meRow td:first-child { border-left: 6px solid rgba(124,58,237,.55); }
+    .meName { font-weight: 1000; letter-spacing: .01em; }
+    .meBadge {
+      margin-left: 8px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: .78rem;
+      background: rgba(124,58,237,.14);
+      border: 1px solid rgba(124,58,237,.35);
+      color: #4c1d95;
+      white-space: nowrap;
+    }
+
+    /* Modal (Reset) */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.35);
+      display: none; align-items: center; justify-content: center;
+      padding: 16px;
+      z-index: 10001;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      width: 100%; max-width: 520px;
+      background: #fff;
+      border-radius: 18px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 20px 60px rgba(0,0,0,.18);
+      padding: 14px;
+      max-height: 82vh;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .modal h3 { margin: 4px 0 6px; font-size: 1.02rem; }
+    .modal p { margin: 0 0 12px; color: var(--muted); font-weight: 650; font-size: .92rem; line-height: 1.35; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+    .btn-ghost { background: #fff; color: #111827; border: 1px solid #e5e7eb; box-shadow: none; }
+    .btn-danger { background: var(--bad); color: #fff; border: 0; }
+
+    /* Wrong popup */
+    .xclose { position: sticky; top: 0; display: flex; justify-content: flex-end; z-index: 2; margin-bottom: 4px; }
+    .btn-x {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 1000;
+      font-size: 1.8rem;
+      line-height: 1;
+      box-shadow: 0 12px 24px rgba(0,0,0,.10);
+    }
+    .btn-x:hover { filter: brightness(.98); transform: translateY(-1px); }
+    .btn-x:active { transform: translateY(0px); }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+      background: rgba(17,24,39,.92); color: #fff;
+      padding: 10px 12px; border-radius: 14px;
+      font-weight: 800; font-size: .9rem;
+      opacity: 0; pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+      max-width: calc(100% - 28px);
+      z-index: 10003;
+      text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+    @media (max-width: 820px) {
+      .progressline { max-width: 100%; }
+      .btn { padding: 9px 12px; font-size: .85rem; }
+      .btn-check{ width: 100%; }
+      .resultRow{ grid-template-columns: 120px 1fr; }
+    }
   </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="top">
-      <div class="title">
-        <h1>Vocabulary – CHECK từng câu</h1>
-        <div class="sub">Mở trang là lên liền (Vercel). Chấm/ghi Sheet chạy phía sau (Apps Script).</div>
-      </div>
-      <div class="bar">
-        <div class="pill" id="pillUser">Chưa đăng nhập</div>
-        <div class="pill" id="pillLast">Last: —</div>
-        <button class="btn ghost" id="btnRename">Đổi tên</button>
-        <button class="btn ghost" id="btnNew">Bài mới</button>
-        <button class="btn" id="btnFinalize">Nộp bài / Tính điểm</button>
-      </div>
+  <div id="shell">
+    <div class="actionbar">
+      <button class="btn" id="btnScrollTop">⬆️ Lên đầu</button>
+      <button class="btn btn-reset" id="btnReset">🔁 Làm lại</button>
     </div>
 
-    <div class="grid">
-      <div class="card">
-        <div class="footer-actions">
-          <div class="score" id="scoreText">Score: —</div>
-          <div class="muted" id="statusText">Ready.</div>
-        </div>
-        <div class="hr"></div>
-        <div class="small">Tip: bấm “Check” từng câu để chấm AI + lưu Sheet. Reload (F5) không mất vì lưu localStorage.</div>
-      </div>
-
-      <div class="card">
-        <table class="table" id="tbl">
-          <thead>
-            <tr>
-              <th style="width:60px">#</th>
-              <th>Word</th>
-              <th>Trả lời (VN)</th>
-              <th style="width:220px">Kết quả</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </div>
-
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-          <div>
-            <div style="font-weight:900">Sai / Chưa làm</div>
-            <div class="small">Danh sách sai sẽ hiện khi bạn “Nộp bài”.</div>
+    <div class="wrap">
+      <div class="topbar">
+        <div class="titlebox">
+          <div class="logo">Hi!</div>
+          <div class="titles">
+            <h1 id="quizTitle">Vocabulary</h1>
+            <div class="tiny" id="quizSub"></div>
           </div>
-          <button class="btn ghost" id="btnLeaderboard">Load Leaderboard</button>
         </div>
-        <div class="hr"></div>
-        <div id="wrongBox" class="small muted">—</div>
-        <div class="hr"></div>
-        <div style="font-weight:900;margin-bottom:8px">Leaderboard</div>
-        <div class="lb" id="lb"></div>
+
+        <div class="stats">
+          <div class="pill">Người làm: <strong id="whoName">—</strong></div>
+          <div class="pill">Đã check: <strong id="answeredCount">0</strong>/<span id="totalCount">0</span></div>
+          <div class="progressline"><div class="progressfill" id="progressFill"></div></div>
+        </div>
+      </div>
+
+      <div class="content" id="content"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Reset Confirmation Modal -->
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle">Làm lại bài?</h3>
+      <p>Xóa lần hiện tại và shuffle lại.</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btnCancel">Hủy</button>
+        <button class="btn btn-danger" id="btnConfirmReset">Xóa & Làm lại</button>
       </div>
     </div>
   </div>
 
-  <!-- LOGIN / RENAME MODAL -->
-  <div class="overlay" id="overlay">
-    <div class="modal">
-      <h2 id="modalTitle">Nhập username</h2>
-      <p id="modalDesc">
-        Chỉ nhập 1 lần. Username lưu theo domain và dùng cho mọi quiz sau này.
-        Xoá cache/localStorage là mất luôn (không khôi phục).
-      </p>
-      <input id="inpUsername" type="text" maxlength="15" placeholder="vd: tuankhoi123" autocomplete="off" />
-      <div class="err" id="modalErr"></div>
-      <div class="okmsg" id="modalOk"></div>
-      <div class="row-actions" style="margin-top:10px;justify-content:flex-end">
-        <button class="btn ghost" id="btnCancel">Hủy</button>
-        <button class="btn" id="btnConfirm">OK</button>
+  <!-- Wrong Answers Popup -->
+  <div class="modal-backdrop" id="wrongBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="wrongTitle">
+      <div class="xclose">
+        <button class="btn-x" id="btnCloseWrong" aria-label="Đóng">✕</button>
       </div>
+      <h3 id="wrongTitle">Những câu sai</h3>
+      <div id="wrongBody" style="display:grid; gap:12px;"></div>
     </div>
   </div>
 
 <script>
-/***********************
- * 1) EDIT THIS
- ***********************/
-const API_URL = "https://script.google.com/macros/s/AKfycbwathB6XNqQ52tzgh-Ml-UmgObMrmgz0Ke9Lxw1ZDdv5CkCazSDNlzmc_YSSk9dDfqS/exec"; // vd: https://script.google.com/macros/s/xxxx/exec
+/********************
+ * 0) SET API URL (Apps Script Web App)
+ ********************/
+const API_URL = "https://script.google.com/macros/s/AKfycbxJNj1BWD563CvtpzFD65RNsn7XRfAy0RYlj6WdEq17X-582M0MnCFdd0bgmB_MDJrWEg/exec";
 
-/***********************
- * CONFIG (same rules frontend)
- ***********************/
-const USER_KEY   = "tk_vocab_user_v1";
-const STATE_KEY  = "tk_vocab_state_v1";
-const HIST_KEY   = "tk_vocab_history_v1";
-
+/********************
+ * 0.1) Username rules
+ ********************/
+const USER_KEY = "tk_user_v1";
 const RENAME_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 
-// Bad words (frontend)
-const BAD_SUBSTRINGS = ["du","dit","lon","cac","fuck","shit","dick","pussy"];
-const BAD_TOKENS = ["cho"];
-
-/***********************
- * DATA (same as backend, for instant render)
- ***********************/
-const VOCABS = [
-  { id: 1,  no: 1,  word: "(un)adaptable", pos: "adj", meaning: "có thể thích nghi (unadaptable: không thể thích nghi)" },
-  { id: 2,  no: 2,  word: "analytical", pos: "adj", meaning: "phân tích" },
-  { id: 3,  no: 3,  word: "assertive", pos: "adj", meaning: "quả quyết; quyết đoán" },
-  { id: 4,  no: 4,  word: "argumentative", pos: "adj", meaning: "thích tranh luận; hay cãi" },
-  { id: 5,  no: 5,  word: "compassionate", pos: "adj", meaning: "thương cảm; từ bi; nhân hậu" },
-  { id: 6,  no: 6,  word: "conscientious", pos: "adj", meaning: "tận tâm; chu đáo; có trách nhiệm" },
-  { id: 7,  no: 7,  word: "considerate", pos: "adj", meaning: "ân cần; chu đáo; biết nghĩ cho người khác" },
-  { id: 8,  no: 8,  word: "detail-oriented", pos: "adj", meaning: "chú ý đến chi tiết; tỉ mỉ" },
-  { id: 9,  no: 9,  word: "diligent", pos: "adj", meaning: "siêng năng; chăm chỉ" },
-  { id: 10, no: 10, word: "empathetic", pos: "adj", meaning: "có sự thông cảm; thấu cảm" },
-  { id: 11, no: 11, word: "gregarious", pos: "adj", meaning: "thích giao du; hòa đồng" },
-  { id: 12, no: 12, word: "idealistic", pos: "adj", meaning: "lý tưởng hóa; duy tâm" },
-  { id: 13, no: 13, word: "flexible", pos: "adj", meaning: "linh hoạt; mềm dẻo; dễ uốn" },
-  { id: 14, no: 14, word: "innovative", pos: "adj", meaning: "đổi mới; cải cách; sáng tạo" },
-  { id: 15, no: 15, word: "intolerant", pos: "adj", meaning: "không khoan dung; không chịu được" },
-  { id: 16, no: 16, word: "observant", pos: "adj", meaning: "tinh mắt; hay quan sát" },
-  { id: 17, no: 17, word: "(il)loyal", pos: "adj", meaning: "trung thành (illoyal/disloyal: không trung thành)" },
-  { id: 18, no: 18, word: "optimistic", pos: "adj", meaning: "lạc quan" },
-  { id: 19, no: 19, word: "objective", pos: "adj", meaning: "khách quan" },
-  { id: 20, no: 20, word: "persuasive", pos: "adj", meaning: "thuyết phục" },
-  { id: 21, no: 21, word: "reserved", pos: "adj", meaning: "dè dặt; kín đáo; ít nói" },
-  { id: 22, no: 22, word: "resourceful", pos: "adj", meaning: "tháo vát; giỏi xoay xở" },
-  { id: 23, no: 23, word: "spontaneous", pos: "adj", meaning: "tự nhiên; tự phát" },
-  { id: 24, no: 24, word: "counsellor", pos: "n", meaning: "người cố vấn; tư vấn" },
-  { id: 25, no: 25, word: "geologist", pos: "n", meaning: "nhà địa chất học" },
-  { id: 26, no: 26, word: "politician", pos: "n", meaning: "chính trị gia" },
-  { id: 27, no: 27, word: "bad-mannered", pos: "adj", meaning: "thô lỗ; cư xử kém" },
-  { id: 28, no: 28, word: "quick-witted", pos: "adj", meaning: "nhanh trí; lanh trí" },
-  { id: 29, no: 29, word: "light-hearted", pos: "adj", meaning: "vui vẻ; vô tư; nhẹ nhàng" },
-  { id: 30, no: 30, word: "open-minded", pos: "adj", meaning: "cởi mở; thoáng; dễ tiếp thu" },
-  { id: 31, no: 31, word: "well-behaved", pos: "adj", meaning: "cư xử tốt; ngoan" },
-  { id: 32, no: 32, word: "thick-skinned", pos: "adj", meaning: "mặt dày; trơ; không dễ bị tổn thương" },
-  { id: 33, no: 33, word: "single-minded", pos: "adj", meaning: "quyết tâm; chuyên tâm" },
-
-  { id: 34, no: 38, word: "interview", pos: "v,n", meaning: "phỏng vấn" },
-  { id: 35, no: 39, word: "candidate", pos: "n", meaning: "ứng viên" },
-  { id: 36, no: 40, word: "employee", pos: "n", meaning: "công nhân; nhân viên" },
-  { id: 37, no: 41, word: "fame", pos: "n", meaning: "danh tiếng" },
-
-  { id: 38, no: 44, word: "wage", pos: "n", meaning: "tiền lương" },
-  { id: 39, no: 45, word: "disability", pos: "n", meaning: "khuyết tật" },
-
-  { id: 40, no: 46, word: "manual", pos: "adj", meaning: "bằng tay; lao động chân tay" },
-  { id: 41, no: 47, word: "staff", pos: "n", meaning: "nhân viên" },
-  { id: 42, no: 48, word: "insight", pos: "n", meaning: "cái nhìn sâu sắc; sự thấu hiểu" },
-  { id: 43, no: 49, word: "goal", pos: "n", meaning: "mục tiêu" },
-  { id: 44, no: 50, word: "networking", pos: "n", meaning: "mạng lưới; xây dựng quan hệ" },
-  { id: 45, no: 51, word: "agility", pos: "n", meaning: "sự nhanh nhẹn; linh hoạt" },
-  { id: 46, no: 52, word: "management", pos: "n", meaning: "quản lý" },
+// lọc bậy: cố tình bắt cả không dấu + biến thể hay gặp
+const BAD_SUBSTRINGS = [
+  "du","dit","lon","cac","cho",
+  "fuck","shit","dick","pussy"
 ];
 
-/***********************
- * DOM
- ***********************/
-const pillUser = document.getElementById("pillUser");
-const pillLast = document.getElementById("pillLast");
-const statusText = document.getElementById("statusText");
-const scoreText = document.getElementById("scoreText");
-const tbody = document.getElementById("tbody");
-const wrongBox = document.getElementById("wrongBox");
-const lb = document.getElementById("lb");
-
-const btnFinalize = document.getElementById("btnFinalize");
-const btnNew = document.getElementById("btnNew");
-const btnRename = document.getElementById("btnRename");
-const btnLeaderboard = document.getElementById("btnLeaderboard");
-
-// modal
-const overlay = document.getElementById("overlay");
-const modalTitle = document.getElementById("modalTitle");
-const modalDesc = document.getElementById("modalDesc");
-const inpUsername = document.getElementById("inpUsername");
-const modalErr = document.getElementById("modalErr");
-const modalOk = document.getElementById("modalOk");
-const btnCancel = document.getElementById("btnCancel");
-const btnConfirm = document.getElementById("btnConfirm");
-
-/***********************
- * STATE
- ***********************/
-let user = loadUser();
-let state = loadState();
-if (!state || !state.attemptId) state = newAttemptState();
-
-renderTable();
-restoreInputs();
-
-updateTopBar();
-updateLastScorePill();
-
-ensureLogin().then(() => {
-  updateTopBar();
-  // load leaderboard lazily
-  setTimeout(() => loadLeaderboard().catch(()=>{}), 400);
-});
-
-/***********************
- * API helper
- * - Use text/plain to avoid preflight headaches
- ***********************/
-async function api(action, payload) {
-  if (!API_URL || API_URL.includes("PASTE_")) throw new Error("Chưa set API_URL trong index.html");
-  const body = JSON.stringify({ action, ...payload });
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=UTF-8" },
-    body
-  });
-  const data = await res.json();
-  if (!data || data.ok === false) throw new Error(data && data.error ? data.error : "API error");
-  return data;
-}
-
-/***********************
- * LOGIN / USER
- ***********************/
-function loadUser() {
-  try { return JSON.parse(localStorage.getItem(USER_KEY) || "null"); } catch { return null; }
-}
-function saveUser(u) { localStorage.setItem(USER_KEY, JSON.stringify(u)); }
-function genId() {
-  if (crypto && crypto.randomUUID) return crypto.randomUUID();
-  return "u_" + Math.random().toString(16).slice(2) + "_" + Date.now();
-}
-
-function normalizeForFilter(s) {
-  let t = String(s||"").trim().toLowerCase();
-  t = t.replace(/iồn/g,"lồn");
-  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g,""); } catch {}
-  t = t.replace(/0/g,"o").replace(/1/g,"l").replace(/3/g,"e").replace(/4/g,"a").replace(/5/g,"s").replace(/7/g,"t");
-  t = t.replace(/\bion\b/g,"lon");
-  t = t.replace(/[^a-z0-9_]/g,"");
-  return t;
-}
-function isBadUsername(name) {
-  const t = normalizeForFilter(name);
-  for (const w of BAD_SUBSTRINGS) if (t.includes(w)) return true;
-  const tokens = t.split("_").filter(Boolean);
-  for (const tok of tokens) if (BAD_TOKENS.includes(tok)) return true;
-  return false;
-}
-function validateUsername(name) {
-  const u = String(name||"").trim();
-  if (!u) return "Thiếu username.";
-  if (u.length > 15) return "Username tối đa 15 ký tự.";
-  if (!/^[A-Za-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z A-Z 0-9 và dấu _";
-  if (isBadUsername(u)) return "Username có chứa từ không phù hợp.";
-  return null;
-}
-
-async function ensureLogin() {
-  if (user && user.userId && user.username) {
-    // refresh from server (optional)
-    try {
-      const me = await api("me", { userId: user.userId });
-      user = { ...user, ...me.user };
-      saveUser(user);
-      return;
-    } catch (e) {
-      // user lost -> force login
-      user = null;
-      saveUser(null);
-    }
-  }
-  await openLoginModal("login");
-}
-
-function canRenameClientSide(u) {
-  // server will enforce anyway; this is just UI hint
-  if (!u) return false;
-  if (!u.lastRenameAtMs) return true;
-  return (Date.now() - u.lastRenameAtMs) >= RENAME_COOLDOWN_MS;
-}
-
-/***********************
- * MODAL
- ***********************/
-let modalMode = "login"; // "login" | "rename"
-function openModal(mode, title, desc) {
-  modalMode = mode;
-  modalTitle.textContent = title;
-  modalDesc.textContent = desc;
-  modalErr.textContent = "";
-  modalOk.textContent = "";
-  inpUsername.value = "";
-  overlay.style.display = "flex";
-  setTimeout(() => inpUsername.focus(), 50);
-}
-function closeModal() {
-  overlay.style.display = "none";
-}
-
-async function openLoginModal(mode) {
-  openModal(
-    "login",
-    "Nhập username",
-    "Chỉ nhập 1 lần. Dùng cho mọi quiz trên domain. Xóa cache/localStorage là mất luôn (không khôi phục)."
-  );
-}
-
-btnCancel.addEventListener("click", () => {
-  if (user && user.userId) {
-    closeModal();
-  } else {
-    // chưa login thì không cho cancel
-    modalErr.textContent = "Bạn cần nhập username để vào.";
-  }
-});
-
-btnConfirm.addEventListener("click", async () => {
-  const name = inpUsername.value.trim();
-  const err = validateUsername(name);
-  if (err) { modalErr.textContent = err; modalOk.textContent = ""; return; }
-
-  modalErr.textContent = "";
-  modalOk.textContent = "Đang xử lý...";
-
-  try {
-    if (modalMode === "login") {
-      const userId = genId();
-      const resp = await api("register", { userId, username: name, ua: navigator.userAgent });
-      user = resp.user;
-      saveUser(user);
-      modalOk.textContent = "OK!";
-      closeModal();
-      updateTopBar();
-    } else if (modalMode === "rename") {
-      const resp = await api("rename", { userId: user.userId, newUsername: name, ua: navigator.userAgent });
-      user = { ...user, ...resp.user };
-      saveUser(user);
-      modalOk.textContent = "Đổi tên thành công!";
-      closeModal();
-      updateTopBar();
-      // refresh leaderboard display name
-      loadLeaderboard().catch(()=>{});
-    }
-  } catch (e) {
-    modalOk.textContent = "";
-    modalErr.textContent = e.message || String(e);
-  }
-});
-
-/***********************
- * UI actions
- ***********************/
-btnRename.addEventListener("click", async () => {
-  if (!user) return;
-  // UI hint only; server enforces true rule
-  if (!canRenameClientSide(user)) {
-    alert("Chưa đủ 30 ngày để đổi tên. (Server sẽ chặn)");
-    return;
-  }
-  openModal(
-    "rename",
-    "Đổi username",
-    "Lần đầu có thể đổi ngay. Sau đó mỗi 30 ngày mới đổi 1 lần. Tên cũ bị giữ chỗ vĩnh viễn."
-  );
-});
-
-btnNew.addEventListener("click", () => {
-  if (!confirm("Bắt đầu bài mới? (Không mất username, chỉ reset bài đang làm)")) return;
-  state = newAttemptState();
-  saveState();
-  renderTable();
-  restoreInputs();
-  scoreText.textContent = "Score: —";
-  wrongBox.textContent = "—";
-  status("Bắt đầu bài mới.");
-});
-
-btnFinalize.addEventListener("click", async () => {
-  if (!user) return;
-  try {
-    status("Đang tính điểm...");
-    const resp = await api("finalize", {
-      userId: user.userId,
-      cacheId: user.userId,
-      attemptId: state.attemptId,
-      ua: navigator.userAgent
-    });
-    const r = resp.result;
-    const sp = Math.round(r.scorePercent * 100) / 100;
-    scoreText.textContent = `Score: ${sp}% (${r.correctCount}/${r.totalCount})`;
-    status("OK. Đã chấm xong.");
-
-    // show wrong
-    if (r.wrong && r.wrong.length) {
-      wrongBox.innerHTML = r.wrong.map(x => {
-        const uans = escapeHtml(x.user || "(trống)");
-        const exp = escapeHtml(x.expected || "");
-        return `<div style="margin:6px 0">
-          <b>#${x.qid}</b> <span class="muted">${escapeHtml(x.word || "")}</span><br/>
-          <span class="muted">Bạn:</span> ${uans}<br/>
-          <span class="muted">Đúng:</span> ${exp}
-        </div>`;
-      }).join("");
-    } else {
-      wrongBox.textContent = "Không sai câu nào 🎉";
-    }
-
-    // save history local
-    pushHistory({ ts: Date.now(), scorePercent: r.scorePercent, correct: r.correctCount, total: r.totalCount });
-    updateLastScorePill();
-
-    // reload leaderboard
-    loadLeaderboard().catch(()=>{});
-  } catch (e) {
-    status("Lỗi: " + (e.message || e));
-    alert(e.message || String(e));
-  }
-});
-
-btnLeaderboard.addEventListener("click", () => loadLeaderboard().catch(err => alert(err.message || err)));
-
-/***********************
- * TABLE RENDER + LOGIC
- ***********************/
-function renderTable() {
-  tbody.innerHTML = VOCABS.map(v => {
-    const st = state.answers[String(v.id)] || {};
-    const tag = st.checked ? (st.ok ? `<span class="tag ok">✓</span>` : `<span class="tag bad">✗</span>`) : `<span class="tag">—</span>`;
-    const exp = st.checked ? `<div class="expected">${escapeHtml(st.expected || "")}</div>` : "";
-    return `
-      <tr data-vid="${v.id}">
-        <td><b>${v.no}</b></td>
-        <td>
-          <div class="w-word">${escapeHtml(v.word)}</div>
-          <div class="pos">${escapeHtml(v.pos)}</div>
-        </td>
-        <td>
-          <input type="text" id="ans_${v.id}" placeholder="Nhập nghĩa tiếng Việt..." value="${escapeAttr(st.answer || "")}">
-        </td>
-        <td>
-          <div class="row-actions">
-            <button class="mini" id="chk_${v.id}">Check</button>
-            ${tag}
-          </div>
-          <div class="res" id="res_${v.id}">
-            ${exp}
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join("");
-
-  // bind events
-  for (const v of VOCABS) {
-    const inp = document.getElementById("ans_" + v.id);
-    const btn = document.getElementById("chk_" + v.id);
-
-    inp.addEventListener("input", () => {
-      const a = inp.value;
-      ensureAnswerSlot(v.id);
-      state.answers[String(v.id)].answer = a;
-      // if user edits after checked, keep checked but do not auto re-check
-      saveStateDebounced();
-    });
-
-    btn.addEventListener("click", async () => {
-      if (!user) return;
-      btn.disabled = true;
-      try {
-        status(`Đang chấm câu #${v.no}...`);
-        const ans = (document.getElementById("ans_" + v.id).value || "").trim();
-        const resp = await api("gradeOne", {
-          userId: user.userId,
-          cacheId: user.userId,
-          attemptId: state.attemptId,
-          vocabId: v.id,
-          answer: ans,
-          ua: navigator.userAgent
-        });
-        const item = resp.item;
-
-        ensureAnswerSlot(v.id);
-        state.answers[String(v.id)].checked = true;
-        state.answers[String(v.id)].ok = !!item.ok;
-        state.answers[String(v.id)].expected = item.expected || "";
-        state.answers[String(v.id)].answer = item.user_answer || ans;
-
-        saveState();
-        // re-render only this row minimal
-        updateRow(v.id);
-        status(`OK câu #${v.no}.`);
-      } catch (e) {
-        status("Lỗi: " + (e.message || e));
-        alert(e.message || String(e));
-      } finally {
-        btn.disabled = false;
-      }
-    });
-  }
-}
-
-function ensureAnswerSlot(vocabId) {
-  const k = String(vocabId);
-  if (!state.answers[k]) state.answers[k] = { answer: "", checked: false, ok: false, expected: "" };
-}
-
-function updateRow(vocabId) {
-  const st = state.answers[String(vocabId)] || {};
-  const tr = document.querySelector(`tr[data-vid="${vocabId}"]`);
-  if (!tr) return;
-
-  // update tag + expected
-  const tagHost = tr.querySelector(".row-actions");
-  const resHost = tr.querySelector("#res_" + vocabId);
-  // rebuild tag area quickly
-  const oldTags = tagHost.querySelectorAll(".tag");
-  oldTags.forEach(x => x.remove());
-  const tag = document.createElement("span");
-  tag.className = "tag " + (st.checked ? (st.ok ? "ok" : "bad") : "");
-  tag.textContent = st.checked ? (st.ok ? "✓" : "✗") : "—";
-  tagHost.appendChild(tag);
-
-  resHost.innerHTML = st.checked ? `<div class="expected">${escapeHtml(st.expected || "")}</div>` : "";
-}
-
-function restoreInputs() {
-  // ensure attempt exists
-  if (!state || !state.attemptId) state = newAttemptState();
-  // render already happened in renderTable()
-}
-
-function status(msg) {
-  statusText.textContent = msg;
-}
-
-/***********************
- * localStorage state + history
- ***********************/
-function newAttemptState() {
-  return { attemptId: genAttemptId(), startedAt: Date.now(), answers: {} };
-}
-function genAttemptId() {
-  return "a_" + Math.random().toString(16).slice(2) + "_" + Date.now();
-}
-function loadState() {
-  try { return JSON.parse(localStorage.getItem(STATE_KEY) || "null"); } catch { return null; }
-}
-function saveState() {
-  localStorage.setItem(STATE_KEY, JSON.stringify(state));
-}
-let saveT = null;
-function saveStateDebounced() {
-  clearTimeout(saveT);
-  saveT = setTimeout(() => saveState(), 250);
-}
-
-function pushHistory(item) {
-  let arr = [];
-  try { arr = JSON.parse(localStorage.getItem(HIST_KEY) || "[]"); } catch {}
-  arr.unshift(item);
-  arr = arr.slice(0, 30);
-  localStorage.setItem(HIST_KEY, JSON.stringify(arr));
-}
-
-function updateLastScorePill() {
-  let arr = [];
-  try { arr = JSON.parse(localStorage.getItem(HIST_KEY) || "[]"); } catch {}
-  if (!arr.length) { pillLast.textContent = "Last: —"; return; }
-  const x = arr[0];
-  const sp = Math.round((x.scorePercent || 0) * 100) / 100;
-  pillLast.textContent = `Last: ${sp}%`;
-}
-
-/***********************
- * Leaderboard
- ***********************/
-async function loadLeaderboard() {
-  if (!user) return;
-  status("Đang tải leaderboard...");
-  const resp = await api("leaderboard", { limit: 30, ua: navigator.userAgent });
-  const rows = resp.rows || [];
-  lb.innerHTML = rows.length ? rows.map((r, i) => {
-    const name = escapeHtml(r.name || "—");
-    const sp = Math.round((r.scorePercent || 0) * 100) / 100;
-    return `<div class="lb-row"><div><b>#${i+1}</b> ${name}</div><div><b>${sp}%</b></div></div>`;
-  }).join("") : `<div class="small muted">Chưa có dữ liệu.</div>`;
-  status("OK leaderboard.");
-}
-
-/***********************
- * Top bar
- ***********************/
-function updateTopBar() {
-  if (!user || !user.username) {
-    pillUser.textContent = "Chưa đăng nhập";
-  } else {
-    pillUser.textContent = `User: ${user.username}`;
-  }
-}
-
-/***********************
- * helpers
- ***********************/
-function escapeHtml(s){
-  return String(s||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
-function escapeAttr(s){ return escapeHtml(s).replace(/"/g, "&quot;"); }
-</script>
-  <script>
-/**
- * TK Vercel Adapter
- * - Injects mandatory username modal
- * - Stores username forever (localStorage)
- * - Polyfills google.script.run => fetch(API_URL)
- * - Auto-adds: userId, name, cacheId, quizId, ua to payload
- * - Keeps your original UI/CSS untouched
- */
-
-// 1) SET THIS
-const API_URL = "https://script.google.com/macros/s/AKfycbyplOXDMjC8XzxwKZd_-F1BsjmE6NzMiOWNeSAPlyLQzBPFaZ9nlOjIF9I7A3jvUroj/exec"; // .../exec
-
-// storage keys
-const TK_USER_KEY = "tk_user_v1";
-
-// quizId by URL: ?quiz=vocab1
+/********************
+ * Polyfill google.script.run (để code cũ chạy y nguyên)
+ * Backend cần doPost nhận JSON {action,...}
+ ********************/
 function getQuizId() {
-  const u = new URL(location.href);
-  return (u.searchParams.get("quiz") || "vocab1").trim() || "vocab1";
+  try {
+    const u = new URL(location.href);
+    const q = (u.searchParams.get("quiz") || "").trim();
+    return q || "vocab1";
+  } catch { return "vocab1"; }
 }
 
-function genId() {
-  if (crypto?.randomUUID) return crypto.randomUUID();
-  return "u_" + Math.random().toString(16).slice(2) + "_" + Date.now();
-}
-
-function loadUser() {
-  try { return JSON.parse(localStorage.getItem(TK_USER_KEY) || "null"); } catch { return null; }
-}
-function saveUser(u) { localStorage.setItem(TK_USER_KEY, JSON.stringify(u)); }
-
-// modal inject (không đụng CSS gốc của bạn)
-function injectModal() {
-  if (document.getElementById("tk_login_overlay")) return;
-
-  const css = `
-  #tk_login_overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999999;display:flex;align-items:center;justify-content:center;padding:16px}
-  #tk_login_box{width:100%;max-width:420px;background:#fff;border-radius:14px;padding:14px 14px 12px;box-shadow:0 10px 30px rgba(0,0,0,.35);font-family:inherit}
-  #tk_login_box h3{margin:0 0 8px;font-size:16px}
-  #tk_login_box p{margin:0 0 10px;font-size:12px;opacity:.75;line-height:1.4}
-  #tk_login_inp{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px;outline:none}
-  #tk_login_err{min-height:18px;margin-top:8px;color:#c0392b;font-size:12px}
-  #tk_login_ok{min-height:18px;margin-top:8px;color:#2ecc71;font-size:12px}
-  #tk_login_row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
-  #tk_login_btn{padding:10px 12px;border:0;border-radius:10px;background:#2b66ff;color:#fff;font-weight:700;cursor:pointer}
-  #tk_rename_btn{position:fixed;right:12px;bottom:12px;z-index:999998;padding:10px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.15);background:rgba(255,255,255,.85);backdrop-filter:blur(6px);cursor:pointer;font-weight:700;display:none}
-  `;
-  const style = document.createElement("style");
-  style.textContent = css;
-  document.head.appendChild(style);
-
-  document.body.insertAdjacentHTML("beforeend", `
-    <div id="tk_login_overlay" style="display:none">
-      <div id="tk_login_box">
-        <h3 id="tk_login_title">Nhập username</h3>
-        <p id="tk_login_desc">Bắt buộc nhập trước khi làm. Lưu vĩnh viễn theo trình duyệt. Xoá cache là mất luôn.</p>
-        <input id="tk_login_inp" maxlength="15" placeholder="vd: tuankhoi123" autocomplete="off" />
-        <div id="tk_login_err"></div>
-        <div id="tk_login_ok"></div>
-        <div id="tk_login_row">
-          <button id="tk_login_btn">OK</button>
-        </div>
-      </div>
-    </div>
-    <button id="tk_rename_btn">Đổi tên</button>
-  `);
-}
-
-function normalizeForFilter(s) {
-  let t = String(s||"").trim().toLowerCase();
-  t = t.replace(/iồn/g,"lồn");
-  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g,""); } catch {}
-  t = t.replace(/0/g,"o").replace(/1/g,"l").replace(/3/g,"e").replace(/4/g,"a").replace(/5/g,"s").replace(/7/g,"t");
-  t = t.replace(/[^a-z0-9_]/g,"");
-  return t;
-}
-function isBadUsername(u){
-  const BAD_SUBSTRINGS = ["du","dit","lon","ion","cac","fuck","shit","dick","pussy"];
-  const BAD_TOKENS = ["cho"];
-  const t = normalizeForFilter(u);
-  for (const w of BAD_SUBSTRINGS) if (t.includes(w)) return true;
-  const toks = t.split("_").filter(Boolean);
-  for (const tok of toks) if (BAD_TOKENS.includes(tok)) return true;
-  return false;
-}
-function validateUsername(u){
-  u = String(u||"").trim();
-  if (!u) return "Thiếu username.";
-  if (u.length > 15) return "Username tối đa 15 ký tự.";
-  if (!/^[A-Za-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z A-Z 0-9 và dấu _";
-  if (isBadUsername(u)) return "Username có chứa từ không phù hợp.";
-  return null;
-}
-
-async function apiCall(action, payload) {
-  const body = JSON.stringify({ action, ...payload });
+async function postJSON(payload) {
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=UTF-8" },
-    body
+    body: JSON.stringify(payload),
   });
-  const data = await res.json();
-  if (!data || data.ok === false) throw new Error(data?.error || "API error");
+
+  const txt = await res.text();
+  let data;
+  try { data = JSON.parse(txt); }
+  catch {
+    throw new Error("API không trả JSON. (Bạn cần doPost JSON ở Apps Script)");
+  }
+
+  if (data && data.ok === false) throw new Error(data.error || "API error");
   return data;
 }
 
-async function ensureLogin() {
-  injectModal();
-  let u = loadUser();
-
-  const overlay = document.getElementById("tk_login_overlay");
-  const inp = document.getElementById("tk_login_inp");
-  const err = document.getElementById("tk_login_err");
-  const ok = document.getElementById("tk_login_ok");
-  const btn = document.getElementById("tk_login_btn");
-  const renameBtn = document.getElementById("tk_rename_btn");
-
-  async function open(mode) {
-    overlay.style.display = "flex";
-    err.textContent = "";
-    ok.textContent = "";
-    inp.value = "";
-    inp.focus();
-    btn.textContent = (mode === "rename") ? "Đổi tên" : "OK";
-
-    btn.onclick = async () => {
-      const name = inp.value.trim();
-      const v = validateUsername(name);
-      if (v) { err.textContent = v; ok.textContent = ""; return; }
-      err.textContent = "";
-      ok.textContent = "Đang xử lý...";
-
-      try {
-        if (mode === "rename") {
-          const resp = await apiCall("renameUser", { userId: u.userId, newUsername: name, ua: navigator.userAgent });
-          u = { ...u, ...resp.user };
-          saveUser(u);
-          ok.textContent = "Đổi tên OK!";
-          overlay.style.display = "none";
-        } else {
-          const userId = genId();
-          const resp = await apiCall("registerUser", { userId, username: name, ua: navigator.userAgent });
-          u = resp.user;
-          saveUser(u);
-          ok.textContent = "OK!";
-          overlay.style.display = "none";
-        }
-        renameBtn.style.display = "block";
-      } catch (e) {
-        ok.textContent = "";
-        err.textContent = e.message || String(e);
-      }
-    };
-  }
-
-  // If already has user, verify exists server-side
-  if (u?.userId) {
-    try {
-      await apiCall("me", { userId: u.userId });
-      renameBtn.style.display = "block";
-    } catch {
-      u = null;
-      saveUser(null);
-    }
-  }
-
-  if (!u?.userId) await open("login");
-
-  // rename button
-  renameBtn.onclick = () => open("rename");
-
-  // expose
-  window.TK_USER = () => loadUser();
-}
-
-function polyfillGoogleScriptRun() {
-  // Create google.script.run polyfill that calls API_URL
+function installGoogleScriptRunPolyfill() {
   window.google = window.google || {};
   window.google.script = window.google.script || {};
 
-  function makeRunner(success, failure) {
+  function runner(success, failure) {
     return new Proxy({}, {
       get(_t, prop) {
-        if (prop === "withSuccessHandler") return (fn) => makeRunner(fn, failure);
-        if (prop === "withFailureHandler") return (fn) => makeRunner(success, fn);
+        if (prop === "withSuccessHandler") return (fn) => runner(fn, failure);
+        if (prop === "withFailureHandler") return (fn) => runner(success, fn);
 
-        // method call: google.script.run.someFunc(payload)
-        return async (arg) => {
-          try {
-            const user = loadUser();
-            const quizId = getQuizId();
+        return (arg) => {
+          const action = String(prop);
 
-            // payload normalization
-            let payload = (arg && typeof arg === "object") ? { ...arg } : {};
-            // auto inject identity
-            if (user?.userId) {
-              payload.userId = user.userId;
-              payload.name = user.username;      // keep compatibility with your old code
-              payload.cacheId = user.userId;     // stable
-            }
-            payload.quizId = payload.quizId || quizId;
-            payload.ua = payload.ua || navigator.userAgent;
-
-            // map old calls where arg is primitive
-            if (typeof arg !== "object") {
-              if (prop === "getLeaderboard") payload.limit = arg;
-              if (prop === "getProgress") payload.cacheId = arg;
-              if (prop === "getQuizData") payload.quizId = quizId;
-            }
-
-            const data = await apiCall(String(prop), payload);
-            success && success(data);
-            return data;
-          } catch (e) {
-            failure && failure(e);
-            throw e;
+          let payload = {};
+          if (arg && typeof arg === "object") payload = { ...arg };
+          else {
+            // map primitive calls from old code
+            if (action === "getLeaderboard") payload = { limit: arg };
+            else if (action === "getProgress") payload = { cacheId: arg };
+            else payload = {};
           }
+
+          // add quizId (không phá backend cũ nếu ignore)
+          if (action === "getQuizData" && !payload.quizId) payload.quizId = getQuizId();
+
+          const p = postJSON({ action, ...payload })
+            .then((data) => {
+              // getQuizData: backend có thể trả thẳng object quiz hoặc bọc {data:...}
+              const out = (action === "getQuizData" && data && data.data) ? data.data : data;
+              success && success(out);
+              return out;
+            })
+            .catch((err) => {
+              const e = (err instanceof Error) ? err : new Error(String(err));
+              failure && failure(e);
+              throw e;
+            });
+
+          return p;
         };
       }
     });
   }
 
-  window.google.script.run = makeRunner(null, null);
+  window.google.script.run = runner(null, null);
 }
 
-// Boot
-document.addEventListener("DOMContentLoaded", async () => {
-  if (!API_URL || API_URL.includes("PASTE_")) {
-    console.warn("Chưa set API_URL.");
+function gasAvailable() {
+  return !!(API_URL && API_URL.startsWith("http"));
+}
+
+/********************
+ * User (username) local
+ ********************/
+function loadUser() {
+  try { return JSON.parse(localStorage.getItem(USER_KEY) || "null"); } catch { return null; }
+}
+function saveUser(u) {
+  if (!u) localStorage.removeItem(USER_KEY);
+  else localStorage.setItem(USER_KEY, JSON.stringify(u));
+}
+
+function normalizeForFilter(s) {
+  let t = String(s || "").trim().toLowerCase();
+
+  // đổi đ -> d
+  t = t.replace(/đ/g, "d");
+
+  // gỡ dấu
+  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); } catch {}
+
+  // thay leet cơ bản
+  t = t.replace(/0/g, "o").replace(/1/g, "l").replace(/3/g, "e").replace(/4/g, "a").replace(/5/g, "s").replace(/7/g, "t");
+
+  // chỉ giữ chữ số _
+  t = t.replace(/[^a-z0-9_]/g, "");
+  return t;
+}
+function isBadUsername(u) {
+  const t = normalizeForFilter(u);
+  for (const w of BAD_SUBSTRINGS) {
+    if (t.includes(w)) return true;
   }
-  await ensureLogin();
-  polyfillGoogleScriptRun();
+  return false;
+}
+function validateUsername(u) {
+  u = String(u || "").trim();
+  if (!u) return "Chưa nhập username.";
+  if (u.length > 15) return "Username tối đa 15 ký tự.";
+  if (!/^[A-Za-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z A-Z 0-9 và dấu _";
+  if (isBadUsername(u)) return "Username có chứa từ không phù hợp.";
+  return null;
+}
+
+/********************
+ * Helpers (giữ nguyên)
+ ********************/
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1400);
+}
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function randId(prefix = "id") {
+  return prefix + "_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+}
+function normalizeName(s){
+  return String(s||"").trim().replace(/\s+/g," ").toLowerCase();
+}
+
+/********************
+ * Persist (giữ nguyên)
+ ********************/
+const STORAGE_KEY = "gs_vocab_check_progress_v2";
+const DB_NAME = "gs_vocab_check_db_v2";
+const STORE_NAME = "kv";
+const NAME_PREFIX = "GSV2::";
+
+const Persist = {
+  mode: { local: false, session: false, idb: false },
+  db: null,
+
+  async init() {
+    try { const k = "__t__"; localStorage.setItem(k, "1"); localStorage.removeItem(k); this.mode.local = true; } catch (e) {}
+    try { const k = "__t__"; sessionStorage.setItem(k, "1"); sessionStorage.removeItem(k); this.mode.session = true; } catch (e) {}
+    try {
+      this.db = await this.openDB();
+      await this.idbSet("__t__", "1");
+      await this.idbRemove("__t__");
+      this.mode.idb = true;
+    } catch (e) {
+      this.mode.idb = false;
+      this.db = null;
+    }
+  },
+
+  mirrorToWindowName(rawJson) {
+    try { window.name = NAME_PREFIX + rawJson; } catch (e) {}
+  },
+  mirrorGet() {
+    try {
+      const n = window.name || "";
+      if (n.startsWith(NAME_PREFIX)) return n.slice(NAME_PREFIX.length);
+    } catch (e) {}
+    return null;
+  },
+
+  async get(key) {
+    if (this.mode.local) {
+      try { const v = localStorage.getItem(key); if (v) return v; } catch (e) {}
+    }
+    if (this.mode.idb && this.db) {
+      try { const v = await this.idbGet(key); if (v) return v; } catch (e) {}
+    }
+    if (this.mode.session) {
+      try { const v = sessionStorage.getItem(key); if (v) return v; } catch (e) {}
+    }
+    return this.mirrorGet();
+  },
+
+  async set(key, value, { mirror = false } = {}) {
+    if (mirror) this.mirrorToWindowName(value);
+    let okAny = false;
+    if (this.mode.local) { try { localStorage.setItem(key, value); okAny = true; } catch (e) {} }
+    if (this.mode.idb && this.db) { try { await this.idbSet(key, value); okAny = true; } catch (e) {} }
+    if (this.mode.session) { try { sessionStorage.setItem(key, value); okAny = true; } catch (e) {} }
+    return okAny;
+  },
+
+  async remove(key) {
+    try { if ((window.name || "").startsWith(NAME_PREFIX)) window.name = ""; } catch (e) {}
+    try { localStorage.removeItem(key); } catch (e) {}
+    try { sessionStorage.removeItem(key); } catch (e) {}
+    if (this.mode.idb && this.db) { try { await this.idbRemove(key); } catch (e) {} }
+  },
+
+  openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+  idbTx(mode, fn) {
+    return new Promise((resolve, reject) => {
+      const tx = this.db.transaction(STORE_NAME, mode);
+      const store = tx.objectStore(STORE_NAME);
+      const req = fn(store);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+  idbGet(key) { return this.idbTx("readonly", s => s.get(key)); },
+  idbSet(key, val) { return this.idbTx("readwrite", s => s.put(val, key)); },
+  idbRemove(key) { return this.idbTx("readwrite", s => s.delete(key)); },
+};
+
+/********************
+ * Quiz Data
+ ********************/
+let QUIZ = { title: "Vocabulary", sub: "", vocabs: [], requireAccessCode: false };
+let VMAP = new Map();
+
+/********************
+ * State
+ ********************/
+const QUIZ_VERSION = "vocab-check-v2";
+
+let state = {
+  quizVersion: QUIZ_VERSION,
+  cacheId: "",
+  name: "",
+  accessCode: "",
+  attemptId: "",
+  order: [],
+  answers: {},
+  checked: {},
+  finalized: false,
+  result: null,
+  history: []
+};
+
+let USER = null;
+
+function ensureCacheId() {
+  // ưu tiên userId để ổn định theo username
+  if (USER && USER.userId) {
+    state.cacheId = USER.userId;
+    try { location.hash = "cache=" + encodeURIComponent(state.cacheId); } catch (e) {}
+    return;
+  }
+  if (state.cacheId && String(state.cacheId).trim()) return;
+  state.cacheId = randId("cache");
+  try { location.hash = "cache=" + encodeURIComponent(state.cacheId); } catch (e) {}
+}
+
+function newAttempt() {
+  state.attemptId = randId("attempt");
+  state.order = shuffle(QUIZ.vocabs.map(v => v.id));
+  state.answers = {};
+  state.checked = {};
+  state.finalized = false;
+  state.result = null;
+}
+
+let saveTimer = null;
+function scheduleSave({ mirror = false } = {}) {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    state.ts = Date.now();
+    const raw = JSON.stringify(state);
+    await Persist.set(STORAGE_KEY, raw, { mirror });
+  }, 200);
+}
+
+// save progress to sheet (throttle)
+let lastCloud = 0;
+function scheduleCloudSave() {
+  if (!gasAvailable()) return;
+  const now = Date.now();
+  if (now - lastCloud < 4000) return;
+  lastCloud = now;
+
+  try {
+    google.script.run.saveProgress({
+      cacheId: state.cacheId,
+      name: state.name || "",
+      stateJson: JSON.stringify(state)
+    });
+  } catch(e){}
+}
+
+function checkedCount() { return Object.keys(state.checked || {}).length; }
+function totalCount() { return QUIZ.vocabs.length; }
+
+function updateStats() {
+  const who = document.getElementById("whoName");
+  who.textContent = state.name ? state.name : "—";
+
+  // không thêm UI, chỉ thêm hành vi: bấm tên để đổi username
+  who.style.cursor = state.name ? "pointer" : "default";
+  who.title = state.name ? "Bấm để đổi username (30 ngày/lần)" : "";
+
+  document.getElementById("answeredCount").textContent = checkedCount();
+  document.getElementById("totalCount").textContent = totalCount();
+  document.getElementById("progressFill").style.width =
+    (totalCount() ? Math.round((checkedCount() / totalCount()) * 100) : 0) + "%";
+}
+
+/********************
+ * Views
+ ********************/
+const content = document.getElementById("content");
+
+function renderNameView() {
+  content.innerHTML = "";
+  const c = document.createElement("div");
+  c.className = "card";
+  c.innerHTML = `
+    <div class="row1">
+      <p class="vi">Nhập USERNAME</p>
+      <div class="meta"><span class="idx">BẮT BUỘC</span></div>
+    </div>
+    <div class="muted" style="margin-top:6px; line-height:1.35">
+      Nhập 1 lần là dùng mãi. Xóa cache/localStorage là mất luôn (không khôi phục).<br/>
+      Username tối đa 15 ký tự, chỉ a-z A-Z 0-9 và dấu _.
+    </div>
+    ${QUIZ.requireAccessCode ? `<div style="margin-top:10px; display:grid; gap:10px;">
+      <input id="codeInput" class="input" placeholder="Mã truy cập" maxlength="32" />
+    </div>` : ``}
+    <div style="margin-top:10px; display:grid; gap:10px;">
+      <input id="nameInput" class="input" placeholder="vd: tuankhoi123" autocomplete="off" maxlength="15" />
+      <button id="btnStart" class="btn btn-primary" style="justify-content:center;">➡️ Vào làm</button>
+    </div>
+  `;
+  content.appendChild(c);
+
+  const input = c.querySelector("#nameInput");
+  const btn = c.querySelector("#btnStart");
+  const codeInput = c.querySelector("#codeInput");
+
+  input.value = "";
+  input.focus();
+
+  const start = async () => {
+    let username = String(input.value || "").trim();
+
+    const err = validateUsername(username);
+    if (err) { toast(err); return; }
+
+    // backend: registerUser(userId, username) -> {ok:true, user:{userId, username, lastRenameAtMs?...}}
+    try {
+      btn.disabled = true;
+      btn.textContent = "⏳";
+
+      const userId = randId("u");
+      const res = await postJSON({ action: "registerUser", userId, username, ua: navigator.userAgent || "" });
+
+      // chấp nhận backend trả {user:{...}} hoặc trả thẳng user
+      const u = res.user ? res.user : res;
+      if (!u || !u.userId || !u.username) throw new Error("Backend registerUser trả thiếu user.");
+
+      USER = { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
+      saveUser(USER);
+
+      state.name = USER.username;
+      state.cacheId = USER.userId;
+      if (codeInput) state.accessCode = String(codeInput.value || "").trim();
+
+      if (!state.attemptId) newAttempt();
+      scheduleSave({ mirror: true });
+      scheduleCloudSave();
+
+      renderQuizView();
+      toast("OK");
+    } catch (e) {
+      toast((e && e.message) ? e.message : String(e));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "➡️ Vào làm";
+    }
+  };
+
+  btn.addEventListener("click", start);
+  input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); start(); } });
+}
+
+function buildQuizHTML() {
+  const order = state.order && state.order.length ? state.order : QUIZ.vocabs.map(v => v.id);
+  let html = "";
+
+  order.forEach((id, idx) => {
+    const v = VMAP.get(id);
+    if (!v) return;
+
+    const displayNo = idx + 1;
+    const typed = String(state.answers[id] ?? "");
+    const checked = state.checked && state.checked[id];
+    const locked = !!(checked && checked.locked);
+
+    const resultHtml = checked ? `
+      <div class="resultRow">
+        <div>${checked.ok ? `<span class="oktxt">ĐÚNG ✅</span>` : `<span class="badtxt">SAI ❌</span>`}</div>
+        <div>${checked.ok ? `` : `<span class="muted">Đáp án:</span> <b>${escapeHtml(checked.expected || v.meaning || "")}</b>`}</div>
+      </div>
+    ` : ``;
+
+    html += `
+      <div class="card" data-qcard="${id}">
+        <div class="row1">
+          <p class="vi">Câu ${displayNo}. <b>${escapeHtml(v.word)}</b> <span class="muted">(${escapeHtml(v.pos||"")})</span></p>
+          <div class="meta"><span class="idx">#${displayNo}</span></div>
+        </div>
+
+        <div style="margin-top:10px; display:grid; gap:10px;">
+          <input class="input ansInput" data-qid="${id}" placeholder="Nhập nghĩa…" value="${escapeHtml(typed)}" ${locked ? "disabled" : ""}/>
+          <button class="btn btn-primary btn-check" data-check="${id}" ${locked ? "disabled" : ""}>
+            ${locked ? "ĐÃ CHECK" : "✅ CHECK"}
+          </button>
+        </div>
+
+        ${resultHtml}
+      </div>
+    `;
+  });
+
+  return html;
+}
+
+let handlersBound = false;
+function renderQuizView() {
+  updateStats();
+  content.innerHTML = buildQuizHTML();
+
+  if (!handlersBound) {
+    content.addEventListener("input", onInput, { passive: true });
+    content.addEventListener("click", onClick);
+    handlersBound = true;
+  }
+}
+
+function onInput(e) {
+  const t = e.target;
+  if (!t || !t.classList.contains("ansInput")) return;
+  const id = Number(t.dataset.qid);
+  if (!isFinite(id)) return;
+
+  if (state.checked && state.checked[id] && state.checked[id].locked) {
+    t.value = String(state.answers[id] ?? "");
+    return;
+  }
+
+  state.answers[id] = String(t.value || "");
+  scheduleSave();
+  scheduleCloudSave();
+}
+
+let checking = new Set();
+
+function onClick(e) {
+  const btn = e.target.closest("[data-check]");
+  if (!btn) return;
+
+  const id = Number(btn.dataset.check);
+  if (!isFinite(id)) return;
+
+  if (!state.name) { toast("Bạn cần nhập username trước"); renderNameView(); return; }
+  if (!gasAvailable()) { toast("Thiếu API_URL Apps Script"); return; }
+
+  if (state.checked && state.checked[id] && state.checked[id].locked) return;
+
+  const input = content.querySelector(`.ansInput[data-qid="${id}"]`);
+  const ans = input ? String(input.value || "").trim() : "";
+
+  if (checking.has(id)) return;
+  checking.add(id);
+
+  btn.disabled = true;
+  btn.textContent = "⏳";
+
+  google.script.run
+    .withSuccessHandler((res) => {
+      checking.delete(id);
+
+      if (!res || !res.ok || !res.item) {
+        btn.disabled = false;
+        btn.textContent = "✅ CHECK";
+        toast("Lỗi check");
+        return;
+      }
+
+      state.answers[id] = ans;
+      state.checked[id] = {
+        locked: true,
+        ok: !!res.item.ok,
+        expected: String(res.item.expected || "")
+      };
+
+      scheduleSave({ mirror: true });
+      scheduleCloudSave();
+
+      renderQuizView();
+      toast(res.item.ok ? "ĐÚNG" : "SAI");
+
+      if (checkedCount() >= totalCount()) {
+        finalizeAndShow();
+      }
+    })
+    .withFailureHandler((err) => {
+      checking.delete(id);
+      btn.disabled = false;
+      btn.textContent = "✅ CHECK";
+      toast("Lỗi: " + (err && err.message ? err.message : err));
+    })
+    .gradeOne({
+      name: state.name,
+      accessCode: state.accessCode || "",
+      cacheId: state.cacheId,
+      attemptId: state.attemptId,
+      vocabId: id,
+      answer: ans,
+      ua: navigator.userAgent || ""
+    });
+}
+
+/********************
+ * Result + Leaderboard (giữ nguyên)
+ ********************/
+const wrongBackdrop = document.getElementById("wrongBackdrop");
+const wrongBody = document.getElementById("wrongBody");
+document.getElementById("btnCloseWrong").addEventListener("click", () => closeWrongPopup());
+wrongBackdrop.addEventListener("click", (e) => { if (e.target === wrongBackdrop) closeWrongPopup(); });
+
+function openWrongPopup() {
+  wrongBackdrop.classList.add("show");
+  wrongBackdrop.setAttribute("aria-hidden", "false");
+}
+function closeWrongPopup() {
+  wrongBackdrop.classList.remove("show");
+  wrongBackdrop.setAttribute("aria-hidden", "true");
+}
+
+function buildWrongPopupContent() {
+  wrongBody.innerHTML = "";
+  const r = state.result;
+  if (!r) return;
+
+  const wrong = r.wrong || [];
+  if (!wrong.length) {
+    wrongBody.innerHTML = `<div class="card"><span class="oktxt">Không sai ✅</span></div>`;
+    return;
+  }
+
+  wrong.forEach((w) => {
+    const box = document.createElement("div");
+    box.className = "card";
+    box.innerHTML = `
+      <div class="row1">
+        <p class="vi"><b>${escapeHtml(w.word || "")}</b></p>
+        <div class="meta"><span class="idx">SAI</span></div>
+      </div>
+      <div style="margin-top:10px" class="muted">Bạn viết: <b>${escapeHtml(w.user || "—")}</b></div>
+      <div style="margin-top:6px">Đáp án: <b>${escapeHtml(w.expected || "")}</b></div>
+    `;
+    wrongBody.appendChild(box);
+  });
+}
+
+function fetchLeaderboard() {
+  const box = document.getElementById("lbBox");
+  if (!box) return;
+
+  const meNorm = normalizeName(state.name);
+
+  google.script.run
+    .withSuccessHandler((res) => {
+      const rows = (res && res.rows) ? res.rows : [];
+      if (!rows.length) {
+        box.innerHTML = `<div class="muted">Chưa có dữ liệu.</div>`;
+        return;
+      }
+
+      const uniqueRows = rows.slice(0, 30);
+      box.innerHTML = `
+        <div style="overflow:auto;">
+          <table class="table">
+            <thead><tr><th>#</th><th>Tên</th><th>Điểm</th><th>%</th></tr></thead>
+            <tbody>
+              ${uniqueRows.map((r, index) => {
+                const rk = index + 1;
+                const medal = rk === 1 ? `<span class="medal m1">🥇</span>` :
+                              rk === 2 ? `<span class="medal m2">🥈</span>` :
+                              rk === 3 ? `<span class="medal m3">🥉</span>` : "";
+                const trClass = rk === 1 ? "toprow1" :
+                                rk === 2 ? "toprow2" :
+                                rk === 3 ? "toprow3" : "";
+                const isMe = normalizeName(r.name) === meNorm;
+                const rowClass = `${trClass} ${isMe ? "meRow" : ""}`.trim();
+
+                const nameCell = isMe
+                  ? `<span class="meName">${escapeHtml(r.name)}</span><span class="meBadge">Bạn</span>`
+                  : `${escapeHtml(r.name)}`;
+
+                return `
+                  <tr class="${rowClass}">
+                    <td><span class="rankpill">${medal}<span>${rk}</span></span></td>
+                    <td>${nameCell}</td>
+                    <td><b>${Number(r.score10).toFixed(1)}</b>/10</td>
+                    <td>${Number(r.scorePercent).toFixed(0)}%</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    })
+    .withFailureHandler((err) => {
+      box.innerHTML = `Lỗi BXH: ${escapeHtml(err && err.message ? err.message : String(err))}`;
+    })
+    .getLeaderboard(30);
+}
+
+function renderResultView() {
+  content.innerHTML = "";
+  const r = state.result;
+
+  const sum = document.createElement("div");
+  sum.className = "card";
+  sum.innerHTML = `
+    <div class="row1">
+      <p class="vi">Kết quả</p>
+      <div class="meta"><span class="idx">DONE</span></div>
+    </div>
+    <div style="margin-top:10px; display:grid; gap:8px;">
+      <div class="pill">Điểm: <strong>${r.scorePercent.toFixed(0)}%</strong> (${r.score10.toFixed(1)}/10)</div>
+      <div class="pill">Đúng: <strong>${r.correctCount}</strong>/${r.totalCount}</div>
+      <button class="btn btn-primary" id="btnShowWrong" style="justify-content:center;">📌 Xem câu sai</button>
+    </div>
+  `;
+  content.appendChild(sum);
+
+  const lb = document.createElement("div");
+  lb.className = "card";
+  lb.innerHTML = `
+    <div class="row1">
+      <p class="vi">Bảng xếp hạng</p>
+      <div class="meta"><span class="idx">TOP</span></div>
+    </div>
+    <div id="lbBox" class="muted" style="margin-top:10px">Đang tải…</div>
+  `;
+  content.appendChild(lb);
+
+  document.getElementById("btnShowWrong").addEventListener("click", () => {
+    buildWrongPopupContent();
+    openWrongPopup();
+  });
+
+  fetchLeaderboard();
+  document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function finalizeAndShow() {
+  if (state.finalized) return;
+  state.finalized = true;
+
+  google.script.run
+    .withSuccessHandler((res) => {
+      if (!res || !res.ok || !res.result) {
+        toast("Finalize lỗi");
+        return;
+      }
+      state.result = res.result;
+
+      state.history = Array.isArray(state.history) ? state.history : [];
+      state.history.push({
+        ts: Date.now(),
+        scorePercent: state.result.scorePercent,
+        score10: state.result.score10,
+        correctCount: state.result.correctCount,
+        totalCount: state.result.totalCount
+      });
+
+      scheduleSave({ mirror: true });
+      scheduleCloudSave();
+
+      renderResultView();
+      toast("Xong");
+    })
+    .withFailureHandler((err) => {
+      toast("Finalize lỗi: " + (err && err.message ? err.message : err));
+    })
+    .finalizeAttempt({
+      name: state.name,
+      accessCode: state.accessCode || "",
+      cacheId: state.cacheId,
+      attemptId: state.attemptId
+    });
+}
+
+/********************
+ * Reset (giữ nguyên)
+ ********************/
+const modal = document.getElementById("modalBackdrop");
+const openModal = () => { modal.classList.add("show"); modal.setAttribute("aria-hidden", "false"); };
+const closeModal = () => { modal.classList.remove("show"); modal.setAttribute("aria-hidden", "true"); };
+
+document.getElementById("btnReset").addEventListener("click", openModal);
+document.getElementById("btnCancel").addEventListener("click", closeModal);
+modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+document.getElementById("btnConfirmReset").addEventListener("click", () => {
+  closeModal();
+  const keepName = state.name;
+  const keepCache = state.cacheId;
+  const keepHist = Array.isArray(state.history) ? state.history : [];
+  const keepCode = state.accessCode || "";
+
+  state = {
+    quizVersion: QUIZ_VERSION,
+    cacheId: keepCache,
+    name: keepName,
+    accessCode: keepCode,
+    attemptId: "",
+    order: [],
+    answers: {},
+    checked: {},
+    finalized: false,
+    result: null,
+    history: keepHist
+  };
+  newAttempt();
+  scheduleSave({ mirror: true });
+  scheduleCloudSave();
+  toast("Đã làm lại");
+  renderQuizView();
 });
+
+/********************
+ * Scroll top (giữ nguyên)
+ ********************/
+document.getElementById("btnScrollTop").addEventListener("click", () => {
+  document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
+});
+
+/********************
+ * Rename username (không thêm UI: bấm vào tên ở topbar)
+ ********************/
+document.getElementById("whoName").addEventListener("click", async () => {
+  if (!USER || !USER.userId) return;
+
+  const last = Number(USER.lastRenameAtMs || 0);
+  const can = (!last) || (Date.now() - last >= RENAME_COOLDOWN_MS);
+  if (!can) {
+    const leftMs = (last + RENAME_COOLDOWN_MS) - Date.now();
+    const leftDays = Math.ceil(leftMs / (24*60*60*1000));
+    toast(`Chưa đủ 30 ngày để đổi tên (${leftDays} ngày nữa).`);
+    return;
+  }
+
+  const newU = prompt("Đổi username (tối đa 15 ký tự, a-zA-Z0-9_):", USER.username || "");
+  if (newU === null) return;
+
+  const err = validateUsername(newU);
+  if (err) { toast(err); return; }
+
+  try {
+    const res = await postJSON({ action: "renameUser", userId: USER.userId, newUsername: newU.trim(), ua: navigator.userAgent || "" });
+    const u = res.user ? res.user : res;
+
+    USER.username = u.username || newU.trim();
+    USER.lastRenameAtMs = u.lastRenameAtMs || Date.now();
+    saveUser(USER);
+
+    state.name = USER.username;
+    scheduleSave({ mirror: true });
+    updateStats();
+    toast("Đổi tên OK");
+  } catch (e) {
+    toast((e && e.message) ? e.message : String(e));
+  }
+});
+
+/********************
+ * Boot
+ ********************/
+function parseHashCacheId() {
+  try {
+    const h = String(location.hash || "").replace(/^#/, "");
+    const m = h.match(/(?:^|&)cache=([^&]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  } catch(e){ return null; }
+}
+
+async function verifyUserIfAny() {
+  USER = loadUser();
+  if (!USER || !USER.userId) return;
+
+  // hỏi server user còn tồn tại không (nếu backend có action me)
+  try {
+    await postJSON({ action: "me", userId: USER.userId });
+  } catch {
+    // nếu mất (hoặc backend không hỗ trợ), cho như user mất
+    // bạn có thể bỏ đoạn này nếu backend bạn chưa có "me"
+    // nhưng giữ vậy sẽ đúng ý “xóa cache là mất luôn”
+    USER = null;
+    saveUser(null);
+  }
+}
+
+async function bootWithQuizLoaded() {
+  document.getElementById("quizTitle").textContent = QUIZ.title || "Vocabulary";
+  document.getElementById("quizSub").textContent = (QUIZ.sub || "").trim();
+
+  VMAP = new Map((QUIZ.vocabs||[]).map(v => [v.id, v]));
+  await Persist.init();
+
+  let raw = null;
+  try { raw = Persist.mirrorGet ? Persist.mirrorGet() : null; } catch (e) {}
+  if (!raw && Persist.mode && Persist.mode.local) {
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+  }
+  if (!raw && Persist.mode && Persist.mode.session) {
+    try { raw = sessionStorage.getItem(STORAGE_KEY); } catch (e) {}
+  }
+
+  // nếu mất local, thử kéo progress từ sheet theo hash cache
+  if (!raw && gasAvailable()) {
+    const fromHash = parseHashCacheId();
+    if (fromHash) {
+      try {
+        const res = await new Promise((resolve) => {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(() => resolve({ ok:true, stateJson:null }))
+            .getProgress(fromHash);
+        });
+        if (res && res.stateJson) raw = res.stateJson;
+      } catch(e){}
+    }
+  }
+
+  if (raw) {
+    try { state = JSON.parse(raw) || state; } catch (e) {}
+  }
+
+  ensureCacheId();
+  if (!state.attemptId || !state.order || !state.order.length) newAttempt();
+
+  // nếu có USER thì ép state.name/cacheId theo USER để “nhập 1 lần dùng mãi”
+  if (USER && USER.userId && USER.username) {
+    state.name = USER.username;
+    state.cacheId = USER.userId;
+  }
+
+  updateStats();
+
+  if (!USER || !USER.username) renderNameView();
+  else if (state.finalized && state.result) renderResultView();
+  else renderQuizView();
+
+  scheduleSave({ mirror: true });
+
+  window.addEventListener("pagehide", () => {
+    try { Persist.mirrorToWindowName(JSON.stringify(state)); } catch (e) {}
+    scheduleCloudSave();
+  }, { passive: true });
+}
+
+// Start
+(async function(){
+  if (!gasAvailable()) {
+    content.innerHTML = `<div class="card"><b>Thiếu API_URL Apps Script</b></div>`;
+    return;
+  }
+
+  installGoogleScriptRunPolyfill();
+  await verifyUserIfAny();
+
+  google.script.run
+    .withSuccessHandler((data) => { QUIZ = data || QUIZ; bootWithQuizLoaded(); })
+    .withFailureHandler((err) => {
+      content.innerHTML = `<div class="card"><b>Lỗi tải dữ liệu</b><div class="muted" style="margin-top:6px">${escapeHtml(err && err.message ? err.message : String(err))}</div></div>`;
+    })
+    .getQuizData();
+})();
 </script>
 </body>
 </html>
