@@ -314,12 +314,17 @@
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
 
-    /* Discussion button at bottom */
+    /* Discussion button (small, only after done) */
     .fabDiscuss {
       position: fixed;
       right: 14px;
       bottom: 18px;
       z-index: 10002;
+      display: none;
+    }
+    .btn-discuss-mini{
+      padding: 9px 12px;
+      font-size: .86rem;
     }
 
     /* Discussion styles */
@@ -356,7 +361,7 @@
       margin-top: 10px;
       margin-left: 14px;
       padding-left: 12px;
-      border-left: 6px solid #e5e7eb; /* thanh màu xám như cây */
+      border-left: 6px solid #e5e7eb;
       display: grid;
       gap: 10px;
     }
@@ -416,9 +421,9 @@
     </div>
   </div>
 
-  <!-- Discussion button (bottom) -->
-  <div class="fabDiscuss">
-    <button class="btn" id="btnDiscuss">💬 Thảo luận</button>
+  <!-- Small Discuss Button (ONLY after finished) -->
+  <div class="fabDiscuss" id="fabDiscuss">
+    <button class="btn btn-discuss-mini" id="btnDiscuss">💬 Thảo luận</button>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -446,36 +451,11 @@
     </div>
   </div>
 
-  <!-- Discussion Modal -->
-  <div class="modal-backdrop" id="discussBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="discussTitle">
-      <div class="xclose">
-        <button class="btn-x" id="btnCloseDiscuss" aria-label="Đóng">✕</button>
-      </div>
-      <h3 id="discussTitle">Thảo luận</h3>
-      <p>Bình luận tối đa 120 ký tự. Trả lời chỉ 1 cấp (dạng cây).</p>
-
-      <div class="card" style="margin: 10px 0;">
-        <div class="charRow">
-          <div><b>Viết bình luận (mốc)</b></div>
-          <div><span id="rootCount">0</span>/120</div>
-        </div>
-        <textarea id="rootInput" class="input" rows="3" maxlength="120" placeholder="Nhập bình luận..."></textarea>
-        <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; margin-top:10px;">
-          <button class="btn btn-primary" id="btnPostRoot" style="justify-content:center;">➕ Gửi</button>
-        </div>
-        <div class="muted" id="discussHint" style="margin-top:8px;"></div>
-      </div>
-
-      <div id="discussList" class="cmtBox"></div>
-    </div>
-  </div>
-
 <script>
 /********************
  * 0) SET API URL (Apps Script Web App)
  ********************/
-const API_URL = "https://script.google.com/macros/s/AKfycbyyLwG0ine09mCCmTZRh-8_PBGNtMKXRU4dM6ajV6GawVhcQVm7YMiGzANrruavJXlX7w/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycby4t4ErkDq0TxfkqMqbDmmQhYfQIeMZQDYe3Pq3dDLzDiJF4r6AllR4aMzg5DYoZkSC2A/exec";
 
 /********************
  * Username rules
@@ -613,7 +593,7 @@ function toast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 1400);
+  setTimeout(() => t.classList.remove("show"), 1200);
 }
 function shuffle(arr) {
   const a = arr.slice();
@@ -790,7 +770,7 @@ function scheduleCloudSave() {
   if (!state.name) return;
 
   const now = Date.now();
-  if (now - lastCloud < 1500) return; // nhẹ thôi, đừng spam
+  if (now - lastCloud < 1500) return;
   lastCloud = now;
 
   try {
@@ -808,7 +788,7 @@ function startCloudAutosave(){
   if (cloudInterval) return;
   cloudInterval = setInterval(() => {
     scheduleCloudSave();
-  }, 30000); // 0.5 phút
+  }, 30000);
 }
 
 /********************
@@ -829,9 +809,14 @@ function updateUserCorner(){
   }
   box.style.display = "inline-flex";
   nm.textContent = name;
-  const admin = isAdminName(name);
-  ad.style.display = admin ? "inline-flex" : "none";
+  ad.style.display = isAdminName(name) ? "inline-flex" : "none";
 }
+
+function setDiscussFabVisible(show){
+  const fab = document.getElementById("fabDiscuss");
+  fab.style.display = show ? "block" : "none";
+}
+
 function updateStats() {
   updateUserCorner();
 
@@ -842,6 +827,9 @@ function updateStats() {
 
   const canSubmit = !!state.name && !state.finalized && checkedCount() > 0;
   document.getElementById("btnSubmit").disabled = !canSubmit;
+
+  // Discuss button only after finished
+  setDiscussFabVisible(!!(state.finalized && state.result));
 }
 
 /********************
@@ -853,11 +841,11 @@ function renderLoadingCard(msg){
   content.innerHTML = "";
   const c = document.createElement("div");
   c.className = "card";
-  c.innerHTML = `<div class="vi">${escapeHtml(msg||"Đang tải…")}</div><div class="muted" style="margin-top:6px">Vui lòng chờ 1 chút.</div>`;
+  c.innerHTML = `<div class="vi">${escapeHtml(msg||"Đang tải…")}</div>`;
   content.appendChild(c);
 }
 
-/* Gate screen: cực quan trọng để KHÔNG nhảy lung tung */
+/* Gate screen: username input "cũ", gọn */
 let GATE = { ready: false, status: "Đang tải…" };
 
 function setGateStatus(msg){
@@ -872,52 +860,71 @@ function setGateReady(ready){
 }
 
 function renderGateView() {
+  setDiscussFabVisible(false);
   content.innerHTML = "";
 
   const knownName = (USER && USER.username) ? USER.username : (state.name || "");
-  const isKnown = !!knownName;
+  const hasName = !!knownName;
 
   const c = document.createElement("div");
   c.className = "card";
 
-  if (!isKnown) {
-    // FIRST TIME: show username input
-    c.innerHTML = `
-      <div class="row1">
-        <p class="vi">Nhập USERNAME</p>
-        <div class="meta"><span class="idx">BẮT BUỘC</span></div>
-      </div>
-      <div class="muted" style="margin-top:6px; line-height:1.35">
-        Username tối đa 15 ký tự, chỉ a-z A-Z 0-9 và dấu _. Nếu trùng tên, hệ thống sẽ tự cộng số (1/2/3...).<br/>
-        (Gợi ý) tuankhoi = admin.
-      </div>
+  const admin = isAdminName(knownName);
 
-      <div style="margin-top:10px; display:grid; gap:10px;">
-        <input id="nameInput" class="input" placeholder="vd: tuankhoi123" autocomplete="off" maxlength="15" />
-        <button id="btnStart" class="btn btn-primary" style="justify-content:center;">➕ Lưu username</button>
-        <div class="muted" id="gateStatus" style="margin-top:4px;">${escapeHtml(GATE.status || "")}</div>
-      </div>
-    `;
-    content.appendChild(c);
+  c.innerHTML = `
+    <div class="row1">
+      <p class="vi">USERNAME</p>
+      <div class="meta"><span class="idx">BẮT BUỘC</span></div>
+    </div>
 
-    const input = c.querySelector("#nameInput");
-    const btn = c.querySelector("#btnStart");
-    input.focus();
+    <div style="margin-top:10px; display:grid; gap:10px;">
+      <input id="nameInput" class="input" placeholder="vd: tuankhoi123" autocomplete="off" maxlength="15" value="${escapeHtml(knownName)}" ${hasName ? "disabled" : ""} />
+      ${hasName ? `
+        <div class="muted">Đã lưu: <b>${escapeHtml(knownName)}</b> ${admin ? `<span class="adminBadgeInline">ADMIN</span>` : ``}</div>
+      ` : `
+        <div class="muted">Tối đa 15 ký tự, chỉ a-z A-Z 0-9 và dấu _</div>
+      `}
+      ${QUIZ.requireAccessCode ? `
+        <input id="codeInput" class="input" placeholder="Mã truy cập" maxlength="32" value="${escapeHtml(state.accessCode||"")}" />
+      ` : ``}
 
-    const start = async () => {
-      let username = String(input.value || "").trim();
+      ${hasName ? `
+        <button id="btnEnter" class="btn btn-primary" style="justify-content:center;" disabled>
+          ${state.finalized && state.result ? "📊 Xem kết quả" : "➡️ Vào làm"}
+        </button>
+      ` : `
+        <button id="btnSaveName" class="btn btn-primary" style="justify-content:center;">➕ Lưu username</button>
+      `}
+      <div class="muted" id="gateStatus">${escapeHtml(GATE.status || "")}</div>
+    </div>
+  `;
+  content.appendChild(c);
+
+  const nameInput = c.querySelector("#nameInput");
+  const codeInput = c.querySelector("#codeInput");
+
+  if (codeInput) {
+    codeInput.addEventListener("input", () => {
+      state.accessCode = String(codeInput.value || "").trim();
+      scheduleSave({ mirror: true });
+    }, { passive: true });
+  }
+
+  const saveBtn = c.querySelector("#btnSaveName");
+  if (saveBtn) {
+    const doSave = async () => {
+      let username = String(nameInput.value || "").trim();
       const err = validateUsername(username);
       if (err) { toast(err); return; }
 
       try {
-        btn.disabled = true;
-        btn.textContent = "⏳";
+        saveBtn.disabled = true;
 
         const userId = (USER && USER.userId) ? USER.userId : randId("u");
         const res = await postJSON({ action: "registerUser", userId, username, ua: navigator.userAgent || "" });
 
         const u = res.user ? res.user : res;
-        if (!u || !u.userId || !u.username) throw new Error("Backend registerUser trả thiếu user.");
+        if (!u || !u.userId || !u.username) throw new Error("registerUser lỗi.");
 
         USER = { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
         saveUser(USER);
@@ -931,81 +938,39 @@ function renderGateView() {
         scheduleCloudSave();
         updateStats();
 
-        toast("Đã lưu username");
-        // Sau khi có username -> chỉ hiện nút "Vào làm", KHÔNG tự nhảy
+        toast("Đã lưu");
         renderGateView();
-
-        // start loading quiz in background (nếu chưa)
-        if (!QUIZ_LOADED) {
-          setGateStatus("Đang tải đề…");
-          await loadBootstrapOrFallback_();
-          setGateReady(true);
-          setGateStatus("Sẵn sàng.");
-        }
       } catch (e) {
         toast((e && e.message) ? e.message : String(e));
       } finally {
-        btn.disabled = false;
-        btn.textContent = "➕ Lưu username";
+        saveBtn.disabled = false;
       }
     };
 
-    btn.addEventListener("click", start);
-    input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); start(); } });
+    saveBtn.addEventListener("click", doSave);
+    nameInput && nameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); doSave(); }
+    });
+    try { nameInput && nameInput.focus(); } catch(e){}
     return;
   }
 
-  // HAS USERNAME: show ONLY enter button (no input)
-  const admin = isAdminName(knownName);
-  const buttonLabel = (state.finalized && state.result) ? "📊 Xem kết quả" : "➡️ Vào làm";
-
-  c.innerHTML = `
-    <div class="row1">
-      <p class="vi">Xin chào, <b>${escapeHtml(knownName)}</b> ${admin ? `<span class="adminBadgeInline">ADMIN</span>` : ``}</p>
-      <div class="meta"><span class="idx">READY</span></div>
-    </div>
-    <div class="muted" style="margin-top:6px; line-height:1.35">
-      Bấm <b>${escapeHtml(buttonLabel)}</b> để vào bài. (Trang sẽ không tự nhảy nữa.)
-    </div>
-
-    ${QUIZ.requireAccessCode ? `
-      <div style="margin-top:10px; display:grid; gap:10px;">
-        <div class="charRow"><div><b>Mã truy cập</b></div><div class="muted">(nếu có)</div></div>
-        <input id="codeInput" class="input" placeholder="Mã truy cập" maxlength="32" />
-      </div>
-    ` : ``}
-
-    <div style="margin-top:10px; display:grid; gap:10px;">
-      <button id="btnEnter" class="btn btn-primary" style="justify-content:center;" disabled>${escapeHtml(buttonLabel)}</button>
-      <div class="muted" id="gateStatus">${escapeHtml(GATE.status || "")}</div>
-    </div>
-  `;
-  content.appendChild(c);
-
   const btnEnter = c.querySelector("#btnEnter");
-  const codeInput = c.querySelector("#codeInput");
+  if (btnEnter) {
+    btnEnter.addEventListener("click", () => {
+      if (!QUIZ_LOADED) { toast("Đang tải đề…"); return; }
+      if (QUIZ.requireAccessCode && !String(state.accessCode||"").trim()){
+        toast("Thiếu mã truy cập.");
+        return;
+      }
 
-  if (codeInput) {
-    codeInput.value = String(state.accessCode || "");
-    codeInput.addEventListener("input", () => {
-      state.accessCode = String(codeInput.value || "").trim();
-      scheduleSave({ mirror: true });
-    }, { passive: true });
+      if (state.finalized && state.result) renderResultView();
+      else renderQuizView();
+
+      document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
+    });
   }
 
-  btnEnter.addEventListener("click", () => {
-    if (!QUIZ_LOADED) { toast("Đang tải đề…"); return; }
-    if (QUIZ.requireAccessCode && !String(state.accessCode||"").trim()){
-      toast("Bạn cần nhập mã truy cập.");
-      return;
-    }
-    // enter: không auto-jump nữa, user click mới vô
-    if (state.finalized && state.result) renderResultView();
-    else renderQuizView();
-    document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
-  });
-
-  // apply gate state
   setGateReady(GATE.ready);
   setGateStatus(GATE.status);
 }
@@ -1057,10 +1022,11 @@ function buildQuizHTML() {
 
 let handlersBound = false;
 function renderQuizView() {
+  setDiscussFabVisible(false);
+
   if (!QUIZ_LOADED) { renderLoadingCard("Đang tải đề…"); return; }
   if (!state.name) { renderGateView(); return; }
 
-  // ensure attempt has order
   if (!state.attemptId) state.attemptId = randId("attempt");
   if (!state.order || !state.order.length) state.order = shuffle(QUIZ.vocabs.map(v => v.id));
   updateStats();
@@ -1099,10 +1065,10 @@ function onClick(e) {
   const id = Number(btn.dataset.check);
   if (!isFinite(id)) return;
 
-  if (!state.name) { toast("Bạn cần username"); renderGateView(); return; }
-  if (!gasAvailable()) { toast("Thiếu API_URL Apps Script"); return; }
+  if (!state.name) { toast("Thiếu username"); renderGateView(); return; }
+  if (!gasAvailable()) { toast("Thiếu API_URL"); return; }
   if (QUIZ.requireAccessCode && !String(state.accessCode||"").trim()){
-    toast("Bạn cần nhập mã truy cập.");
+    toast("Thiếu mã truy cập.");
     renderGateView();
     return;
   }
@@ -1167,7 +1133,7 @@ function onClick(e) {
 }
 
 /********************
- * Result + Leaderboard
+ * Wrong popup
  ********************/
 const wrongBackdrop = document.getElementById("wrongBackdrop");
 const wrongBody = document.getElementById("wrongBody");
@@ -1209,6 +1175,9 @@ function buildWrongPopupContent() {
   });
 }
 
+/********************
+ * Leaderboard
+ ********************/
 function fetchLeaderboard() {
   const box = document.getElementById("lbBox");
   if (!box) return;
@@ -1267,7 +1236,462 @@ function fetchLeaderboard() {
     .getLeaderboard({ limit: 30, quizId: QUIZ.quizId || getQuizId() });
 }
 
+/********************
+ * Discussion (INLINE after results) - OPTIMISTIC UI
+ ********************/
+const DISCUSS_MAX = 120;
+
+let DISCUSS = {
+  loaded: false,
+  loading: false,
+  tree: []
+};
+let discussObserver = null;
+let openReplyRootId = "";
+const pendingTempIds = new Set();
+
+function canDeleteComment_(c){
+  const admin = isAdminName(state.name);
+  if (admin) return true;
+  return normalizeName(c.author) === normalizeName(state.name);
+}
+
+function normalizeTreeFromServer_(res){
+  // preferred: res.tree (each node has replies)
+  if (res && Array.isArray(res.tree)) {
+    return res.tree.map(root => ({
+      id: String(root.id),
+      parentId: String(root.parentId||""),
+      author: String(root.author||""),
+      createdAtMs: Number(root.createdAtMs||0) || Date.now(),
+      text: String(root.text||""),
+      replies: Array.isArray(root.replies) ? root.replies.map(r => ({
+        id: String(r.id),
+        parentId: String(r.parentId || root.id || ""),
+        author: String(r.author||""),
+        createdAtMs: Number(r.createdAtMs||0) || Date.now(),
+        text: String(r.text||""),
+        replies: []
+      })) : [],
+      pending: !!root.pending
+    }));
+  }
+
+  // fallback: res.comments (flat)
+  const flat = (res && Array.isArray(res.comments)) ? res.comments : [];
+  const roots = [];
+  const byId = new Map();
+  for (const c of flat) {
+    const obj = {
+      id: String(c.id),
+      parentId: String(c.parentId||""),
+      author: String(c.author||""),
+      createdAtMs: Number(c.createdAtMs||0) || Date.now(),
+      text: String(c.text||""),
+      replies: []
+    };
+    byId.set(obj.id, obj);
+  }
+  for (const c of byId.values()) {
+    if (c.parentId && byId.has(c.parentId)) {
+      const p = byId.get(c.parentId);
+      // 1 level only: nếu parent cũng là reply -> đẩy thành root
+      if (p.parentId) roots.push(c);
+      else p.replies.push(c);
+    } else {
+      roots.push(c);
+    }
+  }
+  roots.sort((a,b)=>a.createdAtMs-b.createdAtMs);
+  roots.forEach(r=>r.replies.sort((a,b)=>a.createdAtMs-b.createdAtMs));
+  return roots;
+}
+
+function getDiscussionEls_(){
+  return {
+    section: document.getElementById("discussionSection"),
+    list: document.getElementById("discussList"),
+    rootInput: document.getElementById("rootInput"),
+    rootCount: document.getElementById("rootCount"),
+    btnPostRoot: document.getElementById("btnPostRoot"),
+  };
+}
+
+function renderDiscuss_(){
+  const { list, rootCount, rootInput } = getDiscussionEls_();
+  if (!list) return;
+
+  if (!DISCUSS.loaded && DISCUSS.loading) {
+    list.innerHTML = `<div class="muted">Đang tải…</div>`;
+    return;
+  }
+
+  const tree = Array.isArray(DISCUSS.tree) ? DISCUSS.tree : [];
+  if (!tree.length) {
+    list.innerHTML = `<div class="muted">Chưa có bình luận nào.</div>`;
+  } else {
+    list.innerHTML = "";
+    tree.forEach(root => {
+      const wrap = document.createElement("div");
+      wrap.className = "cmtItem";
+
+      const admin = isAdminName(root.author);
+      const canDel = canDeleteComment_(root);
+
+      const timeLabel = root.pending ? "…" : formatTs(root.createdAtMs);
+
+      wrap.innerHTML = `
+        <div class="cmtHead">
+          <div class="cmtAuthor">
+            <span>${escapeHtml(root.author || "—")}</span>
+            ${admin ? `<span class="adminBadgeInline">ADMIN</span>` : ``}
+          </div>
+          <div class="cmtTime">${escapeHtml(timeLabel)}</div>
+        </div>
+        <div class="cmtText">${escapeHtml(root.text || "")}</div>
+        <div class="cmtActions">
+          <button class="cmtBtn" data-reply="${escapeHtml(root.id)}">↩️ Trả lời</button>
+          ${canDel ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(root.id)}">🗑️ Xóa</button>` : ``}
+        </div>
+        <div class="replySlot" data-slot="${escapeHtml(root.id)}"></div>
+        <div class="replyWrap" data-replies="${escapeHtml(root.id)}"></div>
+      `;
+      list.appendChild(wrap);
+
+      // reply form toggle render
+      const slot = wrap.querySelector(`[data-slot="${CSS.escape(String(root.id))}"]`);
+      if (slot && openReplyRootId === String(root.id)) {
+        slot.innerHTML = `
+          <div class="replyForm">
+            <div class="charRow">
+              <div><b>Trả lời</b></div>
+              <div><span data-ct>0</span>/${DISCUSS_MAX}</div>
+            </div>
+            <textarea class="input" rows="2" maxlength="${DISCUSS_MAX}" placeholder="Nhập trả lời..."></textarea>
+            <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
+              <button class="btn btn-primary" data-sendreply="${escapeHtml(root.id)}" style="justify-content:center;">Gửi</button>
+              <button class="btn btn-ghost" data-cancelreply style="justify-content:center;">Hủy</button>
+            </div>
+          </div>
+        `;
+      }
+
+      // replies (1 level)
+      const rWrap = wrap.querySelector(`[data-replies="${CSS.escape(String(root.id))}"]`);
+      const replies = Array.isArray(root.replies) ? root.replies : [];
+      if (rWrap) {
+        if (!replies.length) {
+          rWrap.innerHTML = `<div class="muted">Chưa có trả lời.</div>`;
+        } else {
+          rWrap.innerHTML = "";
+          replies.forEach(r => {
+            const item = document.createElement("div");
+            item.className = "cmtItem";
+            item.style.margin = "0";
+
+            const rAdmin = isAdminName(r.author);
+            const rCanDel = canDeleteComment_(r);
+            const rTimeLabel = r.pending ? "…" : formatTs(r.createdAtMs);
+
+            item.innerHTML = `
+              <div class="cmtHead">
+                <div class="cmtAuthor">
+                  <span>${escapeHtml(r.author || "—")}</span>
+                  ${rAdmin ? `<span class="adminBadgeInline">ADMIN</span>` : ``}
+                </div>
+                <div class="cmtTime">${escapeHtml(rTimeLabel)}</div>
+              </div>
+              <div class="cmtText">${escapeHtml(r.text || "")}</div>
+              <div class="cmtActions">
+                ${rCanDel ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(r.id)}">🗑️ Xóa</button>` : ``}
+              </div>
+            `;
+            rWrap.appendChild(item);
+          });
+        }
+      }
+    });
+  }
+
+  // update root counter
+  if (rootInput && rootCount) rootCount.textContent = String((rootInput.value||"").length);
+}
+
+async function ensureDiscussionLoaded_(force=false){
+  if (!state.finalized || !state.result) return;
+  if (DISCUSS.loading) return;
+  if (DISCUSS.loaded && !force) return;
+
+  DISCUSS.loading = true;
+  renderDiscuss_();
+
+  try {
+    const res = await postJSON({ action:"getComments", quizId: getQuizId() });
+    DISCUSS.tree = normalizeTreeFromServer_(res);
+    DISCUSS.loaded = true;
+  } catch (e) {
+    // im lặng, chỉ toast khi user chủ động mở/scroll
+    toast("Không tải được bình luận");
+  } finally {
+    DISCUSS.loading = false;
+    renderDiscuss_();
+  }
+}
+
+function findRootById_(id){
+  const tree = DISCUSS.tree || [];
+  for (let i=0;i<tree.length;i++){
+    if (String(tree[i].id) === String(id)) return tree[i];
+  }
+  return null;
+}
+
+function removeNodeById_(id){
+  const tree = DISCUSS.tree || [];
+  const nid = String(id);
+  // remove reply first
+  for (const root of tree) {
+    if (Array.isArray(root.replies)) {
+      const before = root.replies.length;
+      root.replies = root.replies.filter(r => String(r.id) !== nid);
+      if (root.replies.length !== before) return true;
+    }
+  }
+  // remove root
+  const beforeRoots = tree.length;
+  DISCUSS.tree = tree.filter(r => String(r.id) !== nid);
+  return DISCUSS.tree.length !== beforeRoots;
+}
+
+function snapshotTree_(){
+  return JSON.parse(JSON.stringify(DISCUSS.tree || []));
+}
+
+function isValidDiscussText_(t){
+  t = String(t||"").trim();
+  if (!t) return false;
+  if (t.length > DISCUSS_MAX) return false;
+  return true;
+}
+
+async function optimisticAddComment_({ text, parentId }){
+  const trimmed = String(text||"").trim();
+  if (!isValidDiscussText_(trimmed)) { toast("Nội dung không hợp lệ"); return; }
+  if (!state.name) { toast("Thiếu username"); return; }
+
+  const tempId = "tmp_" + randId("c");
+  pendingTempIds.add(tempId);
+
+  const node = {
+    id: tempId,
+    parentId: String(parentId||""),
+    author: state.name,
+    createdAtMs: Date.now(),
+    text: trimmed,
+    replies: [],
+    pending: true
+  };
+
+  // optimistic insert
+  if (!node.parentId) {
+    DISCUSS.tree = Array.isArray(DISCUSS.tree) ? DISCUSS.tree : [];
+    DISCUSS.tree.push(node);
+  } else {
+    const root = findRootById_(node.parentId);
+    if (root) {
+      root.replies = Array.isArray(root.replies) ? root.replies : [];
+      root.replies.push(node);
+    } else {
+      // nếu không tìm thấy root thì đẩy thành root
+      DISCUSS.tree = Array.isArray(DISCUSS.tree) ? DISCUSS.tree : [];
+      DISCUSS.tree.push(node);
+    }
+  }
+
+  // sort nhẹ
+  (DISCUSS.tree||[]).sort((a,b)=>a.createdAtMs-b.createdAtMs);
+  (DISCUSS.tree||[]).forEach(r => (r.replies||[]).sort((a,b)=>a.createdAtMs-b.createdAtMs));
+
+  renderDiscuss_();
+
+  // fire server (không chờ UI)
+  try {
+    const res = await postJSON({
+      action:"addComment",
+      quizId: getQuizId(),
+      userId: (USER && USER.userId) ? USER.userId : "",
+      name: state.name,
+      text: trimmed,
+      parentId: node.parentId
+    });
+
+    const srv = res && res.comment ? res.comment : null;
+    if (!srv || !srv.id) throw new Error("addComment lỗi");
+
+    // replace tempId with real id
+    const realId = String(srv.id);
+    const tree = DISCUSS.tree || [];
+    for (const root of tree) {
+      if (String(root.id) === tempId) {
+        root.id = realId;
+        root.createdAtMs = Number(srv.createdAtMs||root.createdAtMs) || root.createdAtMs;
+        root.pending = false;
+        pendingTempIds.delete(tempId);
+        renderDiscuss_();
+        return;
+      }
+      for (const r of (root.replies||[])) {
+        if (String(r.id) === tempId) {
+          r.id = realId;
+          r.createdAtMs = Number(srv.createdAtMs||r.createdAtMs) || r.createdAtMs;
+          r.pending = false;
+          pendingTempIds.delete(tempId);
+          renderDiscuss_();
+          return;
+        }
+      }
+    }
+
+    // if not found, force reload
+    pendingTempIds.delete(tempId);
+    await ensureDiscussionLoaded_(true);
+  } catch (e) {
+    // rollback
+    pendingTempIds.delete(tempId);
+    removeNodeById_(tempId);
+    renderDiscuss_();
+    toast("Gửi lỗi");
+  }
+}
+
+async function optimisticDeleteComment_(id){
+  if (!state.name) { toast("Thiếu username"); return; }
+  const sid = String(id||"").trim();
+  if (!sid) return;
+
+  // optimistic remove
+  const snap = snapshotTree_();
+  const removed = removeNodeById_(sid);
+  if (!removed) return;
+  renderDiscuss_();
+
+  // fire server
+  try {
+    await postJSON({
+      action:"deleteComment",
+      quizId: getQuizId(),
+      userId: (USER && USER.userId) ? USER.userId : "",
+      name: state.name,
+      id: sid
+    });
+    // background refresh nhẹ để sync nếu cần
+    setTimeout(() => { ensureDiscussionLoaded_(true); }, 600);
+  } catch (e) {
+    // rollback
+    DISCUSS.tree = snap;
+    renderDiscuss_();
+    toast("Xóa lỗi");
+  }
+}
+
+function bindDiscussionEvents_(){
+  // (re)bind root input / send
+  const { rootInput, btnPostRoot, rootCount, section } = getDiscussionEls_();
+  if (!section || !rootInput || !btnPostRoot || !rootCount) return;
+
+  rootInput.addEventListener("input", () => {
+    rootCount.textContent = String((rootInput.value||"").length);
+  }, { passive:true });
+
+  btnPostRoot.addEventListener("click", () => {
+    const text = String(rootInput.value||"").trim();
+    if (!isValidDiscussText_(text)) { toast("Tối đa 120 ký tự"); return; }
+    rootInput.value = "";
+    rootCount.textContent = "0";
+    optimisticAddComment_({ text, parentId:"" });
+  });
+
+  // delegation for reply/delete/send/cancel
+  section.addEventListener("click", (e) => {
+    const delBtn = e.target.closest("[data-del]");
+    if (delBtn) {
+      const id = String(delBtn.getAttribute("data-del")||"");
+      if (!id) return;
+      // không confirm để “nhanh”
+      optimisticDeleteComment_(id);
+      return;
+    }
+
+    const replyBtn = e.target.closest("[data-reply]");
+    if (replyBtn) {
+      const rootId = String(replyBtn.getAttribute("data-reply")||"");
+      openReplyRootId = (openReplyRootId === rootId) ? "" : rootId;
+      renderDiscuss_();
+
+      // focus textarea
+      const slot = section.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
+      const ta = slot ? slot.querySelector("textarea") : null;
+      if (ta) ta.focus();
+      return;
+    }
+
+    const cancelBtn = e.target.closest("[data-cancelreply]");
+    if (cancelBtn) {
+      openReplyRootId = "";
+      renderDiscuss_();
+      return;
+    }
+
+    const sendBtn = e.target.closest("[data-sendreply]");
+    if (sendBtn) {
+      const rootId = String(sendBtn.getAttribute("data-sendreply")||"");
+      const slot = section.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
+      const ta = slot ? slot.querySelector("textarea") : null;
+      const text = ta ? String(ta.value||"").trim() : "";
+      if (!isValidDiscussText_(text)) { toast("Tối đa 120 ký tự"); return; }
+      openReplyRootId = "";
+      renderDiscuss_();
+      optimisticAddComment_({ text, parentId: rootId });
+      return;
+    }
+  });
+
+  // live count for reply textarea
+  section.addEventListener("input", (e) => {
+    const ta = e.target;
+    if (!(ta && ta.tagName === "TEXTAREA")) return;
+    const form = ta.closest(".replyForm");
+    if (!form) return;
+    const ct = form.querySelector("[data-ct]");
+    if (ct) ct.textContent = String((ta.value||"").length);
+  }, { passive:true });
+}
+
+function attachDiscussionObserver_(){
+  if (discussObserver) {
+    try { discussObserver.disconnect(); } catch(e){}
+    discussObserver = null;
+  }
+  const sec = document.getElementById("discussionSection");
+  if (!sec) return;
+
+  discussObserver = new IntersectionObserver((entries) => {
+    for (const ent of entries) {
+      if (ent.isIntersecting) {
+        ensureDiscussionLoaded_();
+      }
+    }
+  }, { root: document.getElementById("shell"), threshold: 0.15 });
+
+  discussObserver.observe(sec);
+}
+
+/********************
+ * Result view (Discussion section nằm dưới cùng)
+ ********************/
 function renderResultView() {
+  setDiscussFabVisible(true);
+
   content.innerHTML = "";
   const r = state.result;
 
@@ -1297,16 +1721,53 @@ function renderResultView() {
   `;
   content.appendChild(lb);
 
+  // Discussion section (inline)
+  const discuss = document.createElement("div");
+  discuss.className = "card";
+  discuss.id = "discussionSection";
+  discuss.innerHTML = `
+    <div class="row1">
+      <p class="vi">Thảo luận</p>
+      <div class="meta"><span class="idx">💬</span></div>
+    </div>
+
+    <div style="margin-top:10px; display:grid; gap:10px;">
+      <div class="charRow">
+        <div><b>Viết bình luận</b></div>
+        <div><span id="rootCount">0</span>/${DISCUSS_MAX}</div>
+      </div>
+      <textarea id="rootInput" class="input" rows="3" maxlength="${DISCUSS_MAX}" placeholder="Nhập bình luận..."></textarea>
+      <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="btnPostRoot" style="justify-content:center;">➕ Gửi</button>
+      </div>
+      <div id="discussList" class="cmtBox"></div>
+    </div>
+  `;
+  content.appendChild(discuss);
+
   document.getElementById("btnShowWrong").addEventListener("click", () => {
     buildWrongPopupContent();
     openWrongPopup();
   });
 
   fetchLeaderboard();
-  document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
   document.getElementById("btnSubmit").disabled = true;
+
+  // bind discussion events once per render
+  DISCUSS.loaded = false;
+  DISCUSS.loading = false;
+  DISCUSS.tree = [];
+  openReplyRootId = "";
+  renderDiscuss_();
+  bindDiscussionEvents_();
+  attachDiscussionObserver_();
+
+  updateStats();
 }
 
+/********************
+ * Finalize
+ ********************/
 function finalizeAndShow() {
   if (state.finalized) return;
   state.finalized = true;
@@ -1341,7 +1802,7 @@ function finalizeAndShow() {
     .withFailureHandler((err) => {
       state.finalized = false;
       updateStats();
-      toast("Finalize lỗi: " + (err && err.message ? err.message : err));
+      toast("Finalize lỗi");
     })
     .finalizeAttempt({
       name: state.name,
@@ -1357,11 +1818,11 @@ function finalizeAndShow() {
  * Submit button
  ********************/
 document.getElementById("btnSubmit").addEventListener("click", () => {
-  if (!state.name) { toast("Chưa có username"); renderGateView(); return; }
+  if (!state.name) { toast("Thiếu username"); renderGateView(); return; }
   if (state.finalized) return;
 
   const missing = Math.max(0, totalCount() - checkedCount());
-  const ok = missing === 0 ? true : confirm(`Bạn còn ${missing} câu chưa check.\nNộp luôn thì các câu chưa check tính SAI.\n\nNộp bài?`);
+  const ok = missing === 0 ? true : confirm(`Bạn còn ${missing} câu chưa check.\nNộp luôn sẽ tính SAI.\n\nNộp bài?`);
   if (!ok) return;
 
   finalizeAndShow();
@@ -1404,7 +1865,6 @@ document.getElementById("btnConfirmReset").addEventListener("click", () => {
   scheduleCloudSave();
   toast("Đã làm lại");
 
-  // sau reset: quay về gate (không auto nhảy)
   GATE.ready = true;
   GATE.status = "Sẵn sàng.";
   renderGateView();
@@ -1416,6 +1876,24 @@ document.getElementById("btnConfirmReset").addEventListener("click", () => {
  ********************/
 document.getElementById("btnScrollTop").addEventListener("click", () => {
   document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
+});
+
+/********************
+ * Discuss button: scroll xuống phần thảo luận (chỉ sau khi xong)
+ ********************/
+document.getElementById("btnDiscuss").addEventListener("click", async () => {
+  if (!(state.finalized && state.result)) return;
+  const sec = document.getElementById("discussionSection");
+  if (!sec) return;
+
+  await ensureDiscussionLoaded_();
+  sec.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  // focus nhanh vào ô nhập
+  setTimeout(() => {
+    const { rootInput } = getDiscussionEls_();
+    if (rootInput) rootInput.focus();
+  }, 350);
 });
 
 /********************
@@ -1460,13 +1938,11 @@ function adoptStateFromServer_(serverStateJson){
   const sTs = Number(serverState.ts || 0);
   const lTs = Number(state.ts || 0);
 
-  // ưu tiên bản mới hơn
   if (!lTs && sTs) state = serverState;
   else if (sTs && sTs > lTs) state = serverState;
 }
 
 async function loadBootstrapOrFallback_(){
-  // Try bootstrap first (nhanh hơn: 1 request)
   try {
     const payload = {
       action: "bootstrap",
@@ -1477,9 +1953,8 @@ async function loadBootstrapOrFallback_(){
     };
     const res = await postJSON(payload);
 
-    // Expected: { ok:true, me, quiz, progress, lastScore }
     if (res && res.quiz) applyQuiz_(res.quiz);
-    else if (res && res.title && res.vocabs) applyQuiz_(res); // tolerant
+    else if (res && res.title && res.vocabs) applyQuiz_(res);
 
     if (res && res.me && res.me.user) {
       const u = res.me.user;
@@ -1498,296 +1973,15 @@ async function loadBootstrapOrFallback_(){
     // fallback below
   }
 
-  // Fallback: getQuizData + getProgress (2 requests)
   const quizData = await postJSON({ action: "getQuizData", quizId: getQuizId() });
   applyQuiz_(quizData);
 
-  // if has cacheId -> try progress
   if (state.cacheId) {
     try {
       const pr = await postJSON({ action: "getProgress", cacheId: state.cacheId });
       if (pr && pr.stateJson) adoptStateFromServer_(pr.stateJson);
     } catch(e){}
   }
-}
-
-/********************
- * Discussion (UI now, backend later)
- ********************/
-const discussBackdrop = document.getElementById("discussBackdrop");
-const discussList = document.getElementById("discussList");
-const discussHint = document.getElementById("discussHint");
-const rootInput = document.getElementById("rootInput");
-const rootCount = document.getElementById("rootCount");
-
-document.getElementById("btnDiscuss").addEventListener("click", async () => {
-  openDiscuss();
-  await refreshDiscuss();
-});
-document.getElementById("btnCloseDiscuss").addEventListener("click", () => closeDiscuss());
-discussBackdrop.addEventListener("click", (e) => { if (e.target === discussBackdrop) closeDiscuss(); });
-rootInput.addEventListener("input", () => rootCount.textContent = String((rootInput.value||"").length), { passive:true });
-document.getElementById("btnPostRoot").addEventListener("click", async () => {
-  const text = String(rootInput.value||"").trim();
-  if (!state.name) { toast("Bạn cần username"); return; }
-  if (!text) { toast("Chưa nhập nội dung"); return; }
-  if (text.length > 120) { toast("Tối đa 120 ký tự"); return; }
-
-  await addComment({ text, parentId: "" });
-  rootInput.value = "";
-  rootCount.textContent = "0";
-  await refreshDiscuss();
-});
-
-function openDiscuss(){
-  discussBackdrop.classList.add("show");
-  discussBackdrop.setAttribute("aria-hidden", "false");
-}
-function closeDiscuss(){
-  discussBackdrop.classList.remove("show");
-  discussBackdrop.setAttribute("aria-hidden", "true");
-}
-
-const DISCUSS_LOCAL_KEY = () => `gs_discuss_v1::${getQuizId()}`;
-
-function loadLocalComments_(){
-  try { return JSON.parse(localStorage.getItem(DISCUSS_LOCAL_KEY()) || "[]"); } catch { return []; }
-}
-function saveLocalComments_(arr){
-  try { localStorage.setItem(DISCUSS_LOCAL_KEY(), JSON.stringify(arr||[])); } catch(e){}
-}
-
-function canDeleteComment_(c){
-  const admin = isAdminName(state.name);
-  if (admin) return true;
-  return normalizeName(c.author) === normalizeName(state.name);
-}
-
-async function tryServerGetComments_(){
-  // sẽ hoạt động khi bạn bổ sung code.gs: action getComments
-  const res = await postJSON({ action:"getComments", quizId: getQuizId() });
-  if (res && Array.isArray(res.comments)) return { source:"server", comments: res.comments };
-  if (res && Array.isArray(res.rows)) return { source:"server", comments: res.rows };
-  throw new Error("no comments");
-}
-async function tryServerAddComment_({ text, parentId }){
-  const res = await postJSON({
-    action:"addComment",
-    quizId: getQuizId(),
-    userId: (USER && USER.userId) ? USER.userId : "",
-    name: state.name,
-    text,
-    parentId: parentId || ""
-  });
-  return res;
-}
-async function tryServerDeleteComment_({ id }){
-  const res = await postJSON({
-    action:"deleteComment",
-    quizId: getQuizId(),
-    userId: (USER && USER.userId) ? USER.userId : "",
-    name: state.name,
-    id
-  });
-  return res;
-}
-
-async function getComments(){
-  // server-first, fallback local
-  try {
-    const out = await tryServerGetComments_();
-    discussHint.textContent = "Đang dùng bình luận SERVER.";
-    return out.comments;
-  } catch(e){
-    discussHint.textContent = "Đang dùng bình luận LOCAL (tạm thời).";
-    return loadLocalComments_();
-  }
-}
-async function addComment({ text, parentId }){
-  try {
-    await tryServerAddComment_({ text, parentId });
-    return;
-  } catch(e){
-    // local fallback
-    const arr = loadLocalComments_();
-    const now = Date.now();
-    arr.push({
-      id: randId("c"),
-      quizId: getQuizId(),
-      parentId: parentId || "",
-      author: state.name,
-      authorNorm: normalizeName(state.name),
-      createdAtMs: now,
-      text: String(text||"").trim()
-    });
-    saveLocalComments_(arr);
-  }
-}
-async function deleteComment({ id }){
-  try {
-    await tryServerDeleteComment_({ id });
-    return;
-  } catch(e){
-    const arr = loadLocalComments_();
-    const kept = arr.filter(x => x.id !== id && x.parentId !== id);
-    saveLocalComments_(kept);
-  }
-}
-
-function groupComments_(list){
-  const roots = [];
-  const repliesBy = new Map();
-  for (const c of (list||[])) {
-    const pid = String(c.parentId||"");
-    if (!pid) roots.push(c);
-    else {
-      if (!repliesBy.has(pid)) repliesBy.set(pid, []);
-      repliesBy.get(pid).push(c);
-    }
-  }
-  roots.sort((a,b)=>Number(a.createdAtMs||0)-Number(b.createdAtMs||0));
-  for (const [k, arr] of repliesBy.entries()){
-    arr.sort((a,b)=>Number(a.createdAtMs||0)-Number(b.createdAtMs||0));
-  }
-  return { roots, repliesBy };
-}
-
-function renderDiscussList_(comments){
-  discussList.innerHTML = "";
-  const { roots, repliesBy } = groupComments_(comments);
-
-  if (!roots.length){
-    discussList.innerHTML = `<div class="muted">Chưa có bình luận nào.</div>`;
-    return;
-  }
-
-  roots.forEach((c) => {
-    const wrap = document.createElement("div");
-    wrap.className = "cmtItem";
-
-    const admin = isAdminName(c.author);
-    const canDel = canDeleteComment_(c);
-
-    wrap.innerHTML = `
-      <div class="cmtHead">
-        <div class="cmtAuthor">
-          <span>${escapeHtml(c.author || "—")}</span>
-          ${admin ? `<span class="adminBadgeInline">ADMIN</span>` : ``}
-        </div>
-        <div class="cmtTime">${escapeHtml(formatTs(c.createdAtMs || Date.now()))}</div>
-      </div>
-      <div class="cmtText">${escapeHtml(c.text || "")}</div>
-      <div class="cmtActions">
-        <button class="cmtBtn" data-reply="${escapeHtml(c.id)}">↩️ Trả lời</button>
-        ${canDel ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(c.id)}">🗑️ Xóa</button>` : ``}
-      </div>
-      <div class="replySlot" data-slot="${escapeHtml(c.id)}"></div>
-      <div class="replyWrap" data-replies="${escapeHtml(c.id)}"></div>
-    `;
-    discussList.appendChild(wrap);
-
-    // render replies (1 level)
-    const replies = repliesBy.get(String(c.id)) || [];
-    const rWrap = wrap.querySelector(`[data-replies="${CSS.escape(String(c.id))}"]`);
-    if (replies.length){
-      replies.forEach((r) => {
-        const rAdmin = isAdminName(r.author);
-        const rCanDel = canDeleteComment_(r);
-        const item = document.createElement("div");
-        item.className = "cmtItem";
-        item.style.margin = "0";
-        item.innerHTML = `
-          <div class="cmtHead">
-            <div class="cmtAuthor">
-              <span>${escapeHtml(r.author || "—")}</span>
-              ${rAdmin ? `<span class="adminBadgeInline">ADMIN</span>` : ``}
-            </div>
-            <div class="cmtTime">${escapeHtml(formatTs(r.createdAtMs || Date.now()))}</div>
-          </div>
-          <div class="cmtText">${escapeHtml(r.text || "")}</div>
-          <div class="cmtActions">
-            ${rCanDel ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(r.id)}">🗑️ Xóa</button>` : ``}
-          </div>
-        `;
-        rWrap.appendChild(item);
-      });
-    } else {
-      rWrap.innerHTML = `<div class="muted">Chưa có trả lời.</div>`;
-    }
-  });
-
-  // actions
-  discussList.querySelectorAll("[data-del]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      if (!state.name) { toast("Bạn cần username"); return; }
-      const id = String(btn.getAttribute("data-del")||"");
-      if (!id) return;
-      const ok = confirm("Xóa bình luận này? (xóa là mất luôn)");
-      if (!ok) return;
-      await deleteComment({ id });
-      await refreshDiscuss();
-      toast("Đã xóa");
-    });
-  });
-
-  discussList.querySelectorAll("[data-reply]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      if (!state.name) { toast("Bạn cần username"); return; }
-      const rootId = String(btn.getAttribute("data-reply")||"");
-      const slot = discussList.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
-      if (!slot) return;
-
-      // toggle form
-      if (slot.dataset.open === "1") {
-        slot.innerHTML = "";
-        slot.dataset.open = "0";
-        return;
-      }
-      slot.dataset.open = "1";
-      slot.innerHTML = `
-        <div class="replyForm">
-          <div class="charRow">
-            <div><b>Trả lời</b></div>
-            <div><span data-ct>0</span>/120</div>
-          </div>
-          <textarea class="input" rows="2" maxlength="120" placeholder="Nhập trả lời..."></textarea>
-          <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
-            <button class="btn btn-primary" data-send style="justify-content:center;">Gửi</button>
-            <button class="btn btn-ghost" data-cancel>Hủy</button>
-          </div>
-        </div>
-      `;
-      const ta = slot.querySelector("textarea");
-      const ct = slot.querySelector("[data-ct]");
-      const send = slot.querySelector("[data-send]");
-      const cancel = slot.querySelector("[data-cancel]");
-
-      ta.addEventListener("input", () => ct.textContent = String((ta.value||"").length), { passive:true });
-      cancel.addEventListener("click", () => { slot.innerHTML=""; slot.dataset.open="0"; });
-      send.addEventListener("click", async () => {
-        const text = String(ta.value||"").trim();
-        if (!text) { toast("Chưa nhập nội dung"); return; }
-        if (text.length > 120) { toast("Tối đa 120 ký tự"); return; }
-        send.disabled = true;
-        send.textContent = "⏳";
-        try {
-          await addComment({ text, parentId: rootId });
-          await refreshDiscuss();
-          toast("Đã gửi");
-        } finally {
-          send.disabled = false;
-          send.textContent = "Gửi";
-        }
-      });
-
-      ta.focus();
-    });
-  });
-}
-
-async function refreshDiscuss(){
-  const comments = await getComments();
-  renderDiscussList_(comments);
 }
 
 /********************
@@ -1803,39 +1997,34 @@ function parseHashCacheId() {
 
 (async function(){
   if (!gasAvailable()) {
-    content.innerHTML = `<div class="card"><b>Thiếu API_URL Apps Script</b></div>`;
+    content.innerHTML = `<div class="card"><b>Thiếu API_URL</b></div>`;
     return;
   }
 
   installGoogleScriptRunPolyfill();
 
-  // 1) show gate immediately (stable UI)
+  // 1) show gate immediately
   setGateReady(false);
   setGateStatus("Đang chuẩn bị…");
   renderGateView();
 
-  // 2) init persist + load local state (background)
+  // 2) init persist + load local state
   await Persist.init();
   await tryLoadStateLocal();
 
-  // 3) load cached user ASAP
+  // 3) load cached user
   USER = loadUser();
 
   // 4) cacheId
   ensureCacheId();
 
-  // if user exists, prefer stable name/cacheId
+  // prefer stable name/cacheId
   if (USER && USER.userId && USER.username) {
     state.name = USER.username;
     state.cacheId = USER.userId;
-  } else {
-    // if local state has name but localStorage user missing -> vẫn coi là known username
-    if (state.name && !USER) {
-      // keep state.name; user can continue without typing again
-    }
   }
 
-  // 5) if hash contains cacheId and state.cacheId empty -> use it
+  // if hash has cacheId and state empty
   if (!state.cacheId) {
     const fromHash = parseHashCacheId();
     if (fromHash) state.cacheId = fromHash;
@@ -1844,12 +2033,11 @@ function parseHashCacheId() {
   updateStats();
   scheduleSave({ mirror: true });
 
-  // 6) load quiz/progress via bootstrap (1 call) - but DO NOT render quiz automatically
+  // 5) load quiz/progress via bootstrap - but DO NOT auto enter
   try {
     setGateStatus("Đang tải đề…");
     await loadBootstrapOrFallback_();
 
-    // ensure attempt order after quiz loaded
     if (!state.attemptId) state.attemptId = randId("attempt");
     if (!state.order || !state.order.length) state.order = shuffle(QUIZ.vocabs.map(v => v.id));
 
@@ -1858,31 +2046,24 @@ function parseHashCacheId() {
 
     setGateStatus("Sẵn sàng.");
     setGateReady(true);
-    renderGateView(); // refresh gate according to username now
+    renderGateView();
   } catch (e) {
-    setGateStatus("Lỗi tải: " + (e && e.message ? e.message : String(e)));
+    setGateStatus("Lỗi tải");
     setGateReady(false);
     renderGateView();
     return;
   }
 
-  // autosave cloud every 30s
   startCloudAutosave();
 
-  // save on exit
   window.addEventListener("pagehide", () => {
     try { Persist.mirrorToWindowName(JSON.stringify(state)); } catch (e) {}
     scheduleCloudSave();
   }, { passive: true });
+
+  // if already finalized from saved state, allow user to enter result via gate
 })();
 
-/********************
- * Wrong popup close bindings (already above)
- ********************/
-function closeWrongPopup() {
-  wrongBackdrop.classList.remove("show");
-  wrongBackdrop.setAttribute("aria-hidden", "true");
-}
 </script>
 </body>
 </html>
