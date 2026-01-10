@@ -18,6 +18,7 @@
       --shadow: 0 14px 40px rgba(0,0,0,.10);
       --radius: 18px;
       --gold: #f59e0b; --silver: #94a3b8; --bronze: #d97706;
+      --admin: #2563eb;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -101,6 +102,18 @@
       transition: width .25s ease;
     }
 
+    .adminBadge {
+      margin-left: 8px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-weight: 950;
+      font-size: .78rem;
+      background: rgba(37,99,235,.12);
+      border: 1px solid rgba(37,99,235,.35);
+      color: var(--admin);
+      white-space: nowrap;
+    }
+
     .content { padding: 12px 0 0; }
     .card {
       background: var(--card);
@@ -150,7 +163,6 @@
     .oktxt { color: var(--ok); font-weight: 1000; }
     .badtxt { color: var(--bad); font-weight: 1000; }
 
-    /* leaderboard */
     .table {
       width: 100%;
       border-collapse: separate;
@@ -213,20 +225,6 @@
       white-space: nowrap;
     }
 
-    /* ADMIN badge */
-    .adminBadge{
-      margin-left: 8px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-weight: 1000;
-      font-size: .78rem;
-      background: rgba(29,78,216,.12);
-      border: 1px solid rgba(29,78,216,.28);
-      color: #1d4ed8;
-      white-space: nowrap;
-    }
-
-    /* Modal (Reset) */
     .modal-backdrop {
       position: fixed; inset: 0; background: rgba(0,0,0,.35);
       display: none; align-items: center; justify-content: center;
@@ -251,7 +249,6 @@
     .btn-ghost { background: #fff; color: #111827; border: 1px solid #e5e7eb; box-shadow: none; }
     .btn-danger { background: var(--bad); color: #fff; border: 0; }
 
-    /* Wrong popup */
     .xclose { position: sticky; top: 0; display: flex; justify-content: flex-end; z-index: 2; margin-bottom: 4px; }
     .btn-x {
       width: 56px; height: 56px;
@@ -293,8 +290,8 @@
   <div id="shell">
     <div class="actionbar">
       <button class="btn" id="btnScrollTop">⬆️ Lên đầu</button>
+      <button class="btn btn-primary" id="btnSubmit" disabled>🏁 Nộp bài</button>
       <button class="btn btn-reset" id="btnReset">🔁 Làm lại</button>
-      <button class="btn btn-primary" id="btnSubmit">📤 Nộp bài</button>
     </div>
 
     <div class="wrap">
@@ -308,7 +305,10 @@
         </div>
 
         <div class="stats">
-          <div class="pill">Người làm: <strong id="whoName">—</strong></div>
+          <div class="pill">Người làm:
+            <strong id="whoName">—</strong>
+            <span id="whoAdmin" class="adminBadge" style="display:none;">ADMIN</span>
+          </div>
           <div class="pill">Đã check: <strong id="answeredCount">0</strong>/<span id="totalCount">0</span></div>
           <div class="progressline"><div class="progressfill" id="progressFill"></div></div>
         </div>
@@ -347,126 +347,18 @@
 /********************
  * 0) SET API URL (Apps Script Web App)
  ********************/
-const API_URL = "https://script.google.com/macros/s/AKfycbxJNj1BWD563CvtpzFD65RNsn7XRfAy0RYlj6WdEq17X-582M0MnCFdd0bgmB_MDJrWEg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzwIf5yYvAzSoyQbg74MrawSZlR9nq3JHPYqAv-d9QgHn2-6rdCGYDW6Wr4Ka7aeoVJ6A/exec";
 
 /********************
- * 0.05) Action fallback (để khỏi lệch tên action backend)
- ********************/
-const ACTION_ALIASES = {
-  getQuizData:      ["getQuizData","getQuiz","quizData","quiz","data"],
-  registerUser:     ["registerUser","register","signup"],
-  renameUser:       ["renameUser","rename","changeName"],
-  me:               ["me","whoami","profile"],
-  gradeOne:         ["gradeOne","grade","checkOne","check"],
-  finalizeAttempt:  ["finalizeAttempt","finalize","submit","finish"],
-  getLeaderboard:   ["getLeaderboard","leaderboard","lb","top"],
-  saveProgress:     ["saveProgress","save","progressSave"],
-  getProgress:      ["getProgress","progress","progressGet"]
-};
-const ACTION_RESOLVED = Object.create(null);
-
-/********************
- * 0.1) Username rules
+ * Username rules
  ********************/
 const USER_KEY = "tk_user_v1";
 const RENAME_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
 const BAD_SUBSTRINGS = ["du","dit","lon","cac","cho","fuck","shit","dick","pussy"];
+const ADMIN_NORM = "tuankhoi";
 
 /********************
- * Helpers
- ********************/
-function escapeHtml(s) {
-  return String(s ?? "")
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
-function toast(msg) {
-  const t = document.getElementById("toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 1400);
-}
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-function randId(prefix = "id") {
-  return prefix + "_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
-}
-function normalizeName(s){
-  return String(s||"").trim().replace(/\s+/g," ").toLowerCase();
-}
-function isAdminName(name){
-  return normalizeName(name) === "tuankhoi";
-}
-
-/********************
- * API core
- ********************/
-function gasAvailable() {
-  return !!(API_URL && API_URL.startsWith("http"));
-}
-
-async function postRaw(payload) {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=UTF-8" },
-    body: JSON.stringify(payload),
-  });
-
-  const txt = await res.text();
-  let data;
-  try { data = JSON.parse(txt); }
-  catch {
-    throw new Error("API không trả JSON. RAW: " + txt.slice(0, 160));
-  }
-  return data;
-}
-
-function isUnknownActionResp(data){
-  const err = String((data && data.error) ? data.error : "");
-  return data && data.ok === false && /unknown action/i.test(err);
-}
-
-async function callAction(logicalAction, payload) {
-  const logical = String(logicalAction);
-  const aliases = ACTION_ALIASES[logical] || [logical];
-  const prefer = ACTION_RESOLVED[logical] ? [ACTION_RESOLVED[logical]] : [];
-  const tries = [...prefer, ...aliases.filter(x => !prefer.includes(x))];
-
-  let lastErr = null;
-  for (const act of tries) {
-    try {
-      const data = await postRaw({ action: act, ...(payload||{}) });
-
-      // unknown action -> thử alias khác
-      if (isUnknownActionResp(data)) {
-        lastErr = new Error(data.error || "Unknown action");
-        continue;
-      }
-
-      // nếu backend trả ok:false thì ném luôn
-      if (data && data.ok === false) {
-        throw new Error(data.error || "API error");
-      }
-
-      ACTION_RESOLVED[logical] = act;
-      return data;
-    } catch (e) {
-      lastErr = e;
-      // nếu lỗi parse / network thì dừng luôn
-      if (!(e && /Unknown action/i.test(String(e.message||"")))) break;
-    }
-  }
-  throw (lastErr || new Error("API error"));
-}
-
-/********************
- * Polyfill google.script.run (để code cũ chạy)
+ * Polyfill google.script.run
  ********************/
 function getQuizId() {
   try {
@@ -474,6 +366,20 @@ function getQuizId() {
     const q = (u.searchParams.get("quiz") || "").trim();
     return q || "vocab1";
   } catch { return "vocab1"; }
+}
+
+async function postJSON(payload) {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=UTF-8" },
+    body: JSON.stringify(payload),
+  });
+  const txt = await res.text();
+  let data;
+  try { data = JSON.parse(txt); }
+  catch { throw new Error("API không trả JSON."); }
+  if (data && data.ok === false) throw new Error(data.error || "API error");
+  return data;
 }
 
 function installGoogleScriptRunPolyfill() {
@@ -486,39 +392,42 @@ function installGoogleScriptRunPolyfill() {
         if (prop === "withSuccessHandler") return (fn) => runner(fn, failure);
         if (prop === "withFailureHandler") return (fn) => runner(success, fn);
 
-        return async (arg) => {
-          const method = String(prop);
+        return (arg) => {
+          const action = String(prop);
 
-          // map primitive calls
           let payload = {};
           if (arg && typeof arg === "object") payload = { ...arg };
           else {
-            if (method === "getLeaderboard") payload = { limit: arg };
-            else if (method === "getProgress") payload = { cacheId: arg };
+            if (action === "getLeaderboard") payload = { limit: arg };
+            else if (action === "getProgress") payload = { cacheId: arg };
             else payload = {};
           }
 
-          if (method === "getQuizData" && !payload.quizId) payload.quizId = getQuizId();
+          if (action === "getQuizData" && !payload.quizId) payload.quizId = getQuizId();
 
-          try {
-            const data = await callAction(method, payload);
+          const p = postJSON({ action, ...payload })
+            .then((data) => {
+              const out = (action === "getQuizData" && data && data.data) ? data.data : data;
+              success && success(out);
+              return out;
+            })
+            .catch((err) => {
+              const e = (err instanceof Error) ? err : new Error(String(err));
+              failure && failure(e);
+              throw e;
+            });
 
-            // getQuizData: backend có thể trả {ok:true,data:quiz} hoặc trả thẳng quiz
-            const out = (method === "getQuizData" && data && data.data) ? data.data : data;
-
-            success && success(out);
-            return out;
-          } catch (err) {
-            const e = (err instanceof Error) ? err : new Error(String(err));
-            failure && failure(e);
-            throw e;
-          }
+          return p;
         };
       }
     });
   }
 
   window.google.script.run = runner(null, null);
+}
+
+function gasAvailable() {
+  return !!(API_URL && API_URL.startsWith("http"));
 }
 
 /********************
@@ -553,47 +462,120 @@ function validateUsername(u) {
   if (isBadUsername(u)) return "Username có chứa từ không phù hợp.";
   return null;
 }
+function isAdminName(nameLike){
+  return normalizeForFilter(nameLike) === ADMIN_NORM;
+}
 
 /********************
- * Persist (NHẸ: chỉ localStorage + window.name)
+ * Helpers
+ ********************/
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1400);
+}
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function randId(prefix = "id") {
+  return prefix + "_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+}
+function normalizeName(s){
+  return String(s||"").trim().replace(/\s+/g," ").toLowerCase();
+}
+
+/********************
+ * Persist (same)
  ********************/
 const STORAGE_KEY = "gs_vocab_check_progress_v2";
+const DB_NAME = "gs_vocab_check_db_v2";
+const STORE_NAME = "kv";
 const NAME_PREFIX = "GSV2::";
 
 const Persist = {
+  mode: { local: false, session: false, idb: false },
+  db: null,
+
+  async init() {
+    try { const k = "__t__"; localStorage.setItem(k, "1"); localStorage.removeItem(k); this.mode.local = true; } catch (e) {}
+    try { const k = "__t__"; sessionStorage.setItem(k, "1"); sessionStorage.removeItem(k); this.mode.session = true; } catch (e) {}
+    try {
+      this.db = await this.openDB();
+      await this.idbSet("__t__", "1");
+      await this.idbRemove("__t__");
+      this.mode.idb = true;
+    } catch (e) {
+      this.mode.idb = false;
+      this.db = null;
+    }
+  },
+
   mirrorToWindowName(rawJson) {
-    try { window.name = NAME_PREFIX + rawJson; } catch {}
+    try { window.name = NAME_PREFIX + rawJson; } catch (e) {}
   },
   mirrorGet() {
     try {
       const n = window.name || "";
       if (n.startsWith(NAME_PREFIX)) return n.slice(NAME_PREFIX.length);
-    } catch {}
+    } catch (e) {}
     return null;
   },
-  get() {
-    try { return localStorage.getItem(STORAGE_KEY) || null; } catch {}
-    return this.mirrorGet();
+
+  async set(key, value, { mirror = false } = {}) {
+    if (mirror) this.mirrorToWindowName(value);
+    if (this.mode.local) { try { localStorage.setItem(key, value); } catch (e) {} }
+    if (this.mode.idb && this.db) { try { await this.idbSet(key, value); } catch (e) {} }
+    if (this.mode.session) { try { sessionStorage.setItem(key, value); } catch (e) {} }
   },
-  set(raw, { mirror=false }={}) {
-    if (mirror) this.mirrorToWindowName(raw);
-    try { localStorage.setItem(STORAGE_KEY, raw); } catch {}
+
+  async remove(key) {
+    try { if ((window.name || "").startsWith(NAME_PREFIX)) window.name = ""; } catch (e) {}
+    try { localStorage.removeItem(key); } catch (e) {}
+    try { sessionStorage.removeItem(key); } catch (e) {}
+    if (this.mode.idb && this.db) { try { await this.idbRemove(key); } catch (e) {} }
   },
-  remove() {
-    try { localStorage.removeItem(STORAGE_KEY); } catch {}
-    try { if ((window.name||"").startsWith(NAME_PREFIX)) window.name=""; } catch {}
-  }
+
+  openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME);
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+  idbTx(mode, fn) {
+    return new Promise((resolve, reject) => {
+      const tx = this.db.transaction(STORE_NAME, mode);
+      const store = tx.objectStore(STORE_NAME);
+      const req = fn(store);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+  idbSet(key, val) { return this.idbTx("readwrite", s => s.put(val, key)); },
+  idbRemove(key) { return this.idbTx("readwrite", s => s.delete(key)); },
 };
 
 /********************
  * Quiz Data
  ********************/
-let QUIZ = { title: "Vocabulary", sub: "", vocabs: [], requireAccessCode: false };
+let QUIZ = { title: "Vocabulary", sub: "", vocabs: [], requireAccessCode: false, quizId: getQuizId() };
 let VMAP = new Map();
-
-let QUIZ_READY = false;
-let QUIZ_ERROR = null;
-let QUIZ_PROMISE = null;
+let QUIZ_LOADED = false;
 
 /********************
  * State
@@ -619,12 +601,12 @@ let USER = null;
 function ensureCacheId() {
   if (USER && USER.userId) {
     state.cacheId = USER.userId;
-    try { location.hash = "cache=" + encodeURIComponent(state.cacheId); } catch {}
+    try { location.hash = "cache=" + encodeURIComponent(state.cacheId); } catch (e) {}
     return;
   }
   if (state.cacheId && String(state.cacheId).trim()) return;
   state.cacheId = randId("cache");
-  try { location.hash = "cache=" + encodeURIComponent(state.cacheId); } catch {}
+  try { location.hash = "cache=" + encodeURIComponent(state.cacheId); } catch (e) {}
 }
 
 function newAttempt() {
@@ -639,27 +621,29 @@ function newAttempt() {
 let saveTimer = null;
 function scheduleSave({ mirror = false } = {}) {
   if (saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
+  saveTimer = setTimeout(async () => {
     state.ts = Date.now();
-    Persist.set(JSON.stringify(state), { mirror });
-  }, 120);
+    const raw = JSON.stringify(state);
+    await Persist.set(STORAGE_KEY, raw, { mirror });
+  }, 200);
 }
 
-// cloud save: CHỈ khi check/finalize/pagehide (đỡ lag)
 let lastCloud = 0;
-function scheduleCloudSave(force=false) {
-  if (!gasAvailable() || !window.google?.script?.run) return;
+function scheduleCloudSave() {
+  if (!gasAvailable()) return;
   const now = Date.now();
-  if (!force && now - lastCloud < 4000) return;
+  if (now - lastCloud < 4000) return;
   lastCloud = now;
 
   try {
     google.script.run.saveProgress({
       cacheId: state.cacheId,
       name: state.name || "",
-      stateJson: JSON.stringify(state)
+      stateJson: JSON.stringify(state),
+      userId: (USER && USER.userId) ? USER.userId : "",
+      quizId: QUIZ.quizId || getQuizId()
     });
-  } catch {}
+  } catch(e){}
 }
 
 function checkedCount() { return Object.keys(state.checked || {}).length; }
@@ -667,15 +651,19 @@ function totalCount() { return QUIZ.vocabs.length; }
 
 function updateStats() {
   const who = document.getElementById("whoName");
-  const name = state.name ? state.name : "—";
-  who.innerHTML = escapeHtml(name) + (state.name && isAdminName(state.name) ? ` <span class="adminBadge">ADMIN</span>` : "");
-  who.style.cursor = state.name ? "pointer" : "default";
-  who.title = state.name ? "Bấm để đổi username (30 ngày/lần)" : "";
+  const whoAdmin = document.getElementById("whoAdmin");
+
+  who.textContent = state.name ? state.name : "—";
+  const admin = isAdminName(state.name || "");
+  whoAdmin.style.display = admin ? "inline-flex" : "none";
 
   document.getElementById("answeredCount").textContent = checkedCount();
   document.getElementById("totalCount").textContent = totalCount();
   document.getElementById("progressFill").style.width =
     (totalCount() ? Math.round((checkedCount() / totalCount()) * 100) : 0) + "%";
+
+  const canSubmit = !!state.name && !state.finalized && checkedCount() > 0;
+  document.getElementById("btnSubmit").disabled = !canSubmit;
 }
 
 /********************
@@ -683,60 +671,12 @@ function updateStats() {
  ********************/
 const content = document.getElementById("content");
 
-function renderLoadingCard(msg, detail) {
-  content.innerHTML = `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">${escapeHtml(msg || "Đang tải…")}</p>
-        <div class="meta"><span class="idx">LOAD</span></div>
-      </div>
-      <div class="muted" style="margin-top:6px; line-height:1.35">
-        ${escapeHtml(detail || "Bạn có thể nhập username ngay. Dữ liệu sẽ nạp sau.")}
-      </div>
-      ${QUIZ_ERROR ? `
-        <div class="muted" style="margin-top:10px;color:#b91c1c">
-          ${escapeHtml(String(QUIZ_ERROR))}
-        </div>
-        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
-          <button class="btn btn-primary" id="btnRetry">🔄 Thử lại</button>
-        </div>
-      ` : ``}
-    </div>
-  `;
-  const btn = document.getElementById("btnRetry");
-  if (btn) btn.addEventListener("click", () => {
-    QUIZ_ERROR = null;
-    QUIZ_READY = false;
-    QUIZ_PROMISE = loadQuizData();
-    toast("Đang thử lại…");
-  });
-}
-
-async function registerWithAutoSuffix(baseUsername) {
-  // thử: name, name1..name9
-  const base = String(baseUsername || "").trim();
-  for (let i = 0; i <= 9; i++) {
-    const suffix = (i === 0) ? "" : String(i);
-    const maxBaseLen = 15 - suffix.length;
-    const candidate = (base.length > maxBaseLen ? base.slice(0, maxBaseLen) : base) + suffix;
-
-    const err = validateUsername(candidate);
-    if (err) throw new Error(err);
-
-    try {
-      const userId = randId("u");
-      const res = await callAction("registerUser", { userId, username: candidate, ua: navigator.userAgent || "" });
-      const u = res.user ? res.user : res;
-      if (!u || !u.userId || !u.username) throw new Error("Backend registerUser trả thiếu user.");
-      return { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0, _tried: candidate };
-    } catch (e) {
-      const msg = String(e && e.message ? e.message : e);
-      // nếu trùng tên -> thử tiếp
-      if (/tồn tại|exist|duplicate|used|taken/i.test(msg)) continue;
-      throw e;
-    }
-  }
-  throw new Error("Username đã tồn tại. Thử tên khác.");
+function renderLoadingCard(msg){
+  content.innerHTML = "";
+  const c = document.createElement("div");
+  c.className = "card";
+  c.innerHTML = `<div class="vi">${escapeHtml(msg||"Đang tải…")}</div><div class="muted" style="margin-top:6px">Bạn có thể nhập username trước.</div>`;
+  content.appendChild(c);
 }
 
 function renderNameView() {
@@ -749,12 +689,14 @@ function renderNameView() {
       <div class="meta"><span class="idx">BẮT BUỘC</span></div>
     </div>
     <div class="muted" style="margin-top:6px; line-height:1.35">
-      Nhập 1 lần là dùng mãi. Xóa cache/localStorage là mất luôn (không khôi phục).<br/>
-      Username tối đa 15 ký tự, chỉ a-z A-Z 0-9 và dấu _.
+      Username tối đa 15 ký tự, chỉ a-z A-Z 0-9 và dấu _. Nếu trùng tên, hệ thống sẽ tự cộng số (1/2/3...).<br/>
+      (Gợi ý) tuankhoi = admin.
     </div>
+
     ${QUIZ.requireAccessCode ? `<div style="margin-top:10px; display:grid; gap:10px;">
       <input id="codeInput" class="input" placeholder="Mã truy cập" maxlength="32" />
     </div>` : ``}
+
     <div style="margin-top:10px; display:grid; gap:10px;">
       <input id="nameInput" class="input" placeholder="vd: tuankhoi123" autocomplete="off" maxlength="15" />
       <button id="btnStart" class="btn btn-primary" style="justify-content:center;">➡️ Vào làm</button>
@@ -766,19 +708,24 @@ function renderNameView() {
   const btn = c.querySelector("#btnStart");
   const codeInput = c.querySelector("#codeInput");
 
-  input.value = "";
+  input.value = (USER && USER.username) ? USER.username : "";
   input.focus();
 
   const start = async () => {
     let username = String(input.value || "").trim();
-    const vErr = validateUsername(username);
-    if (vErr) { toast(vErr); return; }
+    const err = validateUsername(username);
+    if (err) { toast(err); return; }
 
     try {
       btn.disabled = true;
       btn.textContent = "⏳";
 
-      const u = await registerWithAutoSuffix(username);
+      const userId = (USER && USER.userId) ? USER.userId : randId("u");
+      const res = await postJSON({ action: "registerUser", userId, username, ua: navigator.userAgent || "" });
+
+      const u = res.user ? res.user : res;
+      if (!u || !u.userId || !u.username) throw new Error("Backend registerUser trả thiếu user.");
+
       USER = { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
       saveUser(USER);
 
@@ -786,30 +733,24 @@ function renderNameView() {
       state.cacheId = USER.userId;
       if (codeInput) state.accessCode = String(codeInput.value || "").trim();
 
-      ensureCacheId();
-
       if (!state.attemptId) newAttempt();
       scheduleSave({ mirror: true });
+      scheduleCloudSave();
 
-      if (u._tried && normalizeName(u._tried) !== normalizeName(username)) {
-        toast(`Tên trùng → dùng: ${u._tried}`);
+      updateStats();
+
+      // nếu quiz chưa load xong thì show loading rồi tự render quiz sau
+      if (!QUIZ_LOADED) {
+        renderLoadingCard("Đã lưu username. Đang tải đề…");
       } else {
-        toast("OK");
+        renderQuizView();
       }
-
-      // nếu quiz chưa load xong, show loading
-      if (!QUIZ_READY) {
-        renderLoadingCard("Đang tải câu hỏi…", "Đợi xíu nha, tải xong là vào làm liền.");
-        await QUIZ_PROMISE;
-      }
-
-      renderQuizView();
+      toast("OK");
     } catch (e) {
       toast((e && e.message) ? e.message : String(e));
     } finally {
       btn.disabled = false;
       btn.textContent = "➡️ Vào làm";
-      updateStats();
     }
   };
 
@@ -861,6 +802,8 @@ function buildQuizHTML() {
 
 let handlersBound = false;
 function renderQuizView() {
+  if (!QUIZ_LOADED) { renderLoadingCard("Đang tải đề…"); return; }
+
   updateStats();
   content.innerHTML = buildQuizHTML();
 
@@ -883,13 +826,13 @@ function onInput(e) {
   }
 
   state.answers[id] = String(t.value || "");
-  scheduleSave();            // chỉ save local
-  // scheduleCloudSave();    // bỏ để khỏi lag
+  scheduleSave();
+  scheduleCloudSave();
 }
 
 let checking = new Set();
 
-async function onClick(e) {
+function onClick(e) {
   const btn = e.target.closest("[data-check]");
   if (!btn) return;
 
@@ -898,7 +841,6 @@ async function onClick(e) {
 
   if (!state.name) { toast("Bạn cần nhập username trước"); renderNameView(); return; }
   if (!gasAvailable()) { toast("Thiếu API_URL Apps Script"); return; }
-  if (!QUIZ_READY) { toast("Đang tải câu hỏi…"); return; }
 
   if (state.checked && state.checked[id] && state.checked[id].locked) return;
 
@@ -911,9 +853,45 @@ async function onClick(e) {
   btn.disabled = true;
   btn.textContent = "⏳";
 
-  try {
-    const res = await callAction("gradeOne", {
-      name: state.name,
+  google.script.run
+    .withSuccessHandler((res) => {
+      checking.delete(id);
+
+      if (!res || !res.ok || !res.item) {
+        btn.disabled = false;
+        btn.textContent = "✅ CHECK";
+        toast("Lỗi check");
+        return;
+      }
+
+      state.answers[id] = ans;
+      state.checked[id] = {
+        locked: true,
+        ok: !!res.item.ok,
+        expected: String(res.item.expected || "")
+      };
+
+      scheduleSave({ mirror: true });
+      scheduleCloudSave();
+
+      renderQuizView();
+      toast(res.item.ok ? "ĐÚNG" : "SAI");
+
+      updateStats();
+      if (checkedCount() >= totalCount()) {
+        finalizeAndShow();
+      }
+    })
+    .withFailureHandler((err) => {
+      checking.delete(id);
+      btn.disabled = false;
+      btn.textContent = "✅ CHECK";
+      toast("Lỗi: " + (err && err.message ? err.message : err));
+    })
+    .gradeOne({
+      name: state.name,                 // backward compatible
+      userId: USER && USER.userId ? USER.userId : "",  // new backend
+      quizId: QUIZ.quizId || getQuizId(),
       accessCode: state.accessCode || "",
       cacheId: state.cacheId,
       attemptId: state.attemptId,
@@ -921,37 +899,6 @@ async function onClick(e) {
       answer: ans,
       ua: navigator.userAgent || ""
     });
-
-    // backend có thể trả {ok:true,item:{...}} hoặc {item:{...}} hoặc {ok,expected}
-    const item = res.item ? res.item : res;
-
-    if (!item || typeof item.ok === "undefined") {
-      throw new Error("Lỗi check: backend trả thiếu item.ok");
-    }
-
-    state.answers[id] = ans;
-    state.checked[id] = {
-      locked: true,
-      ok: !!item.ok,
-      expected: String(item.expected || "")
-    };
-
-    scheduleSave({ mirror: true });
-    scheduleCloudSave(false);
-
-    renderQuizView();
-    toast(item.ok ? "ĐÚNG" : "SAI");
-
-    if (checkedCount() >= totalCount()) {
-      finalizeAndShow(); // auto
-    }
-  } catch (err) {
-    toast("Lỗi: " + (err && err.message ? err.message : String(err)));
-    btn.disabled = false;
-    btn.textContent = "✅ CHECK";
-  } finally {
-    checking.delete(id);
-  }
 }
 
 /********************
@@ -997,67 +944,62 @@ function buildWrongPopupContent() {
   });
 }
 
-async function fetchLeaderboard() {
+function fetchLeaderboard() {
   const box = document.getElementById("lbBox");
   if (!box) return;
 
   const meNorm = normalizeName(state.name);
 
-  box.textContent = "Đang tải…";
+  google.script.run
+    .withSuccessHandler((res) => {
+      const rows = (res && res.rows) ? res.rows : [];
+      if (!rows.length) {
+        box.innerHTML = `<div class="muted">Chưa có dữ liệu.</div>`;
+        return;
+      }
 
-  try {
-    const res = await callAction("getLeaderboard", { limit: 30 });
-    const rows = (res && res.rows) ? res.rows : (Array.isArray(res) ? res : []);
+      const uniqueRows = rows.slice(0, 30);
+      box.innerHTML = `
+        <div style="overflow:auto;">
+          <table class="table">
+            <thead><tr><th>#</th><th>Tên</th><th>Điểm</th><th>%</th></tr></thead>
+            <tbody>
+              ${uniqueRows.map((r, index) => {
+                const rk = index + 1;
+                const medal = rk === 1 ? `<span class="medal m1">🥇</span>` :
+                              rk === 2 ? `<span class="medal m2">🥈</span>` :
+                              rk === 3 ? `<span class="medal m3">🥉</span>` : "";
+                const trClass = rk === 1 ? "toprow1" :
+                                rk === 2 ? "toprow2" :
+                                rk === 3 ? "toprow3" : "";
+                const isMe = normalizeName(r.name) === meNorm;
+                const rowClass = `${trClass} ${isMe ? "meRow" : ""}`.trim();
 
-    if (!rows.length) {
-      box.innerHTML = `<div class="muted">Chưa có dữ liệu.</div>`;
-      return;
-    }
+                const admin = !!r.isAdmin || isAdminName(r.name);
+                const adminTag = admin ? `<span class="adminBadge" style="margin-left:8px">ADMIN</span>` : ``;
 
-    const uniqueRows = rows.slice(0, 30);
-    box.innerHTML = `
-      <div style="overflow:auto;">
-        <table class="table">
-          <thead><tr><th>#</th><th>Tên</th><th>Điểm</th><th>%</th></tr></thead>
-          <tbody>
-            ${uniqueRows.map((r, index) => {
-              const rk = index + 1;
-              const medal = rk === 1 ? `<span class="medal m1">🥇</span>` :
-                            rk === 2 ? `<span class="medal m2">🥈</span>` :
-                            rk === 3 ? `<span class="medal m3">🥉</span>` : "";
-              const trClass = rk === 1 ? "toprow1" :
-                              rk === 2 ? "toprow2" :
-                              rk === 3 ? "toprow3" : "";
+                const nameCell = isMe
+                  ? `<span class="meName">${escapeHtml(r.name)}</span><span class="meBadge">Bạn</span>${adminTag}`
+                  : `${escapeHtml(r.name)}${adminTag}`;
 
-              const nameRaw = String(r.name || r.username || "—");
-              const isMe = normalizeName(nameRaw) === meNorm;
-              const rowClass = `${trClass} ${isMe ? "meRow" : ""}`.trim();
-
-              const adminTag = isAdminName(nameRaw) ? `<span class="adminBadge">ADMIN</span>` : "";
-
-              const nameCell = isMe
-                ? `<span class="meName">${escapeHtml(nameRaw)}</span>${adminTag}<span class="meBadge">Bạn</span>`
-                : `${escapeHtml(nameRaw)}${adminTag}`;
-
-              const score10 = (typeof r.score10 !== "undefined") ? Number(r.score10).toFixed(1) : "—";
-              const sp = (typeof r.scorePercent !== "undefined") ? Number(r.scorePercent).toFixed(0) : "—";
-
-              return `
-                <tr class="${rowClass}">
-                  <td><span class="rankpill">${medal}<span>${rk}</span></span></td>
-                  <td>${nameCell}</td>
-                  <td><b>${score10}</b>/10</td>
-                  <td>${sp}%</td>
-                </tr>
-              `;
-            }).join("")}
-          </tbody>
-        </table>
-      </div>
-    `;
-  } catch (err) {
-    box.innerHTML = `Lỗi BXH: ${escapeHtml(err && err.message ? err.message : String(err))}`;
-  }
+                return `
+                  <tr class="${rowClass}">
+                    <td><span class="rankpill">${medal}<span>${rk}</span></span></td>
+                    <td>${nameCell}</td>
+                    <td><b>${Number(r.score10).toFixed(1)}</b>/10</td>
+                    <td>${Number(r.scorePercent).toFixed(0)}%</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    })
+    .withFailureHandler((err) => {
+      box.innerHTML = `Lỗi BXH: ${escapeHtml(err && err.message ? err.message : String(err))}`;
+    })
+    .getLeaderboard({ limit: 30, quizId: QUIZ.quizId || getQuizId() });
 }
 
 function renderResultView() {
@@ -1072,8 +1014,8 @@ function renderResultView() {
       <div class="meta"><span class="idx">DONE</span></div>
     </div>
     <div style="margin-top:10px; display:grid; gap:8px;">
-      <div class="pill">Điểm: <strong>${Number(r.scorePercent || 0).toFixed(0)}%</strong> (${Number(r.score10 || 0).toFixed(1)}/10)</div>
-      <div class="pill">Đúng: <strong>${Number(r.correctCount || 0)}</strong>/${Number(r.totalCount || 0)}</div>
+      <div class="pill">Điểm: <strong>${r.scorePercent.toFixed(0)}%</strong> (${r.score10.toFixed(1)}/10)</div>
+      <div class="pill">Đúng: <strong>${r.correctCount}</strong>/${r.totalCount}</div>
       <button class="btn btn-primary" id="btnShowWrong" style="justify-content:center;">📌 Xem câu sai</button>
     </div>
   `;
@@ -1097,49 +1039,70 @@ function renderResultView() {
 
   fetchLeaderboard();
   document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
+
+  // disable submit after result
+  document.getElementById("btnSubmit").disabled = true;
 }
 
-async function finalizeAndShow() {
-  if (!state.name) { toast("Chưa có username"); renderNameView(); return; }
-  if (state.finalized && state.result) { renderResultView(); return; }
-
+function finalizeAndShow() {
+  if (state.finalized) return;
   state.finalized = true;
-  scheduleSave({ mirror: true });
 
-  try {
-    const res = await callAction("finalizeAttempt", {
+  updateStats();
+
+  google.script.run
+    .withSuccessHandler((res) => {
+      if (!res || !res.ok || !res.result) {
+        toast("Finalize lỗi");
+        state.finalized = false;
+        updateStats();
+        return;
+      }
+      state.result = res.result;
+
+      state.history = Array.isArray(state.history) ? state.history : [];
+      state.history.push({
+        ts: Date.now(),
+        scorePercent: state.result.scorePercent,
+        score10: state.result.score10,
+        correctCount: state.result.correctCount,
+        totalCount: state.result.totalCount
+      });
+
+      scheduleSave({ mirror: true });
+      scheduleCloudSave();
+
+      renderResultView();
+      toast("Xong");
+    })
+    .withFailureHandler((err) => {
+      state.finalized = false;
+      updateStats();
+      toast("Finalize lỗi: " + (err && err.message ? err.message : err));
+    })
+    .finalizeAttempt({
       name: state.name,
+      userId: USER && USER.userId ? USER.userId : "",
+      quizId: QUIZ.quizId || getQuizId(),
       accessCode: state.accessCode || "",
       cacheId: state.cacheId,
       attemptId: state.attemptId
     });
-
-    const result = res.result ? res.result : res;
-    if (!result || typeof result.scorePercent === "undefined") {
-      throw new Error("Finalize lỗi: backend trả thiếu result.scorePercent");
-    }
-
-    state.result = result;
-
-    state.history = Array.isArray(state.history) ? state.history : [];
-    state.history.push({
-      ts: Date.now(),
-      scorePercent: state.result.scorePercent,
-      score10: state.result.score10,
-      correctCount: state.result.correctCount,
-      totalCount: state.result.totalCount
-    });
-
-    scheduleSave({ mirror: true });
-    scheduleCloudSave(true);
-
-    renderResultView();
-    toast("Xong");
-  } catch (err) {
-    state.finalized = false;
-    toast("Finalize lỗi: " + (err && err.message ? err.message : String(err)));
-  }
 }
+
+/********************
+ * Submit button (manual)
+ ********************/
+document.getElementById("btnSubmit").addEventListener("click", () => {
+  if (!state.name) { toast("Chưa có username"); renderNameView(); return; }
+  if (state.finalized) return;
+
+  const missing = Math.max(0, totalCount() - checkedCount());
+  const ok = missing === 0 ? true : confirm(`Bạn còn ${missing} câu chưa check.\nNộp luôn thì các câu chưa check tính SAI.\n\nNộp bài?`);
+  if (!ok) return;
+
+  finalizeAndShow();
+});
 
 /********************
  * Reset
@@ -1172,11 +1135,12 @@ document.getElementById("btnConfirmReset").addEventListener("click", () => {
     result: null,
     history: keepHist
   };
-  if (QUIZ_READY) newAttempt();
+  newAttempt();
   scheduleSave({ mirror: true });
+  scheduleCloudSave();
   toast("Đã làm lại");
-  if (QUIZ_READY) renderQuizView();
-  else renderLoadingCard("Đang tải câu hỏi…");
+  renderQuizView();
+  updateStats();
 });
 
 /********************
@@ -1187,154 +1151,48 @@ document.getElementById("btnScrollTop").addEventListener("click", () => {
 });
 
 /********************
- * Submit button (Nộp bài)
- ********************/
-document.getElementById("btnSubmit").addEventListener("click", () => {
-  finalizeAndShow();
-});
-
-/********************
- * Rename username (bấm vào tên ở topbar)
- ********************/
-document.getElementById("whoName").addEventListener("click", async () => {
-  if (!USER || !USER.userId) return;
-
-  const last = Number(USER.lastRenameAtMs || 0);
-  const can = (!last) || (Date.now() - last >= RENAME_COOLDOWN_MS);
-  if (!can) {
-    const leftMs = (last + RENAME_COOLDOWN_MS) - Date.now();
-    const leftDays = Math.ceil(leftMs / (24*60*60*1000));
-    toast(`Chưa đủ 30 ngày để đổi tên (${leftDays} ngày nữa).`);
-    return;
-  }
-
-  const newU = prompt("Đổi username (tối đa 15 ký tự, a-zA-Z0-9_):", USER.username || "");
-  if (newU === null) return;
-
-  const err = validateUsername(newU);
-  if (err) { toast(err); return; }
-
-  try {
-    const res = await callAction("renameUser", { userId: USER.userId, newUsername: newU.trim(), ua: navigator.userAgent || "" });
-    const u = res.user ? res.user : res;
-
-    USER.username = u.username || newU.trim();
-    USER.lastRenameAtMs = u.lastRenameAtMs || Date.now();
-    saveUser(USER);
-
-    state.name = USER.username;
-    scheduleSave({ mirror: true });
-    updateStats();
-    toast("Đổi tên OK");
-  } catch (e) {
-    toast((e && e.message) ? e.message : String(e));
-  }
-});
-
-/********************
- * Boot
+ * Boot: show name view immediately, load quiz in background
  ********************/
 function parseHashCacheId() {
   try {
     const h = String(location.hash || "").replace(/^#/, "");
     const m = h.match(/(?:^|&)cache=([^&]+)/);
     return m ? decodeURIComponent(m[1]) : null;
-  } catch { return null; }
+  } catch(e){ return null; }
 }
 
-async function loadQuizData() {
-  QUIZ_ERROR = null;
-  QUIZ_READY = false;
-
-  try {
-    const data = await callAction("getQuizData", { quizId: getQuizId() });
-    const quiz = data && data.data ? data.data : data;
-
-    QUIZ = quiz || QUIZ;
-    VMAP = new Map((QUIZ.vocabs || []).map(v => [v.id, v]));
-
-    QUIZ_READY = true;
-    return true;
-  } catch (e) {
-    QUIZ_ERROR = (e && e.message) ? e.message : String(e);
-    QUIZ_READY = false;
-    renderLoadingCard("Lỗi tải dữ liệu", "Nếu đứng lâu: kiểm tra Apps Script Web App đã deploy (Anyone) và doPost JSON.");
-    throw e;
+async function tryLoadStateLocal(){
+  let raw = null;
+  try { raw = Persist.mirrorGet ? Persist.mirrorGet() : null; } catch (e) {}
+  if (!raw && Persist.mode && Persist.mode.local) {
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {}
   }
-}
-
-function loadStateFast() {
-  const raw = Persist.get() || Persist.mirrorGet();
+  if (!raw && Persist.mode && Persist.mode.session) {
+    try { raw = sessionStorage.getItem(STORAGE_KEY); } catch (e) {}
+  }
   if (raw) {
-    try { state = JSON.parse(raw) || state; } catch {}
+    try { state = JSON.parse(raw) || state; } catch (e) {}
   }
 }
 
-async function tryRestoreFromSheetIfMissing() {
-  if (Persist.get()) return;
-  const fromHash = parseHashCacheId();
-  if (!fromHash) return;
+async function loadQuizData(){
+  const data = await new Promise((resolve, reject) => {
+    google.script.run
+      .withSuccessHandler(resolve)
+      .withFailureHandler(reject)
+      .getQuizData({ quizId: getQuizId() });
+  });
 
-  try {
-    const res = await callAction("getProgress", { cacheId: fromHash });
-    if (res && res.stateJson) {
-      try {
-        state = JSON.parse(res.stateJson) || state;
-        Persist.set(JSON.stringify(state), { mirror: true });
-      } catch {}
-    }
-  } catch {}
-}
+  QUIZ = data || QUIZ;
+  QUIZ.quizId = QUIZ.quizId || getQuizId();
+  QUIZ_LOADED = true;
 
-async function verifyUserIfAnyAsync() {
-  if (!USER || !USER.userId) return;
-  // không chặn UI: verify sau
-  try {
-    await callAction("me", { userId: USER.userId });
-  } catch {
-    USER = null;
-    saveUser(null);
-    state.name = "";
-    state.cacheId = "";
-    updateStats();
-    renderNameView();
-    toast("User đã mất (xóa cache rồi đăng nhập lại)");
-  }
-}
-
-function bootRender() {
   document.getElementById("quizTitle").textContent = QUIZ.title || "Vocabulary";
   document.getElementById("quizSub").textContent = (QUIZ.sub || "").trim();
-
-  ensureCacheId();
-
-  if (!state.attemptId || !state.order || !state.order.length) {
-    if (QUIZ_READY) newAttempt();
-  }
-
-  // ép name/cache theo USER (nhập 1 lần dùng mãi)
-  if (USER && USER.userId && USER.username) {
-    state.name = USER.username;
-    state.cacheId = USER.userId;
-  }
-
-  updateStats();
-
-  if (!USER || !USER.username) renderNameView();
-  else if (state.finalized && state.result) renderResultView();
-  else if (QUIZ_READY) renderQuizView();
-  else renderLoadingCard("Đang tải câu hỏi…");
-
-  scheduleSave({ mirror: true });
-
-  window.addEventListener("pagehide", () => {
-    try { Persist.mirrorToWindowName(JSON.stringify(state)); } catch {}
-    scheduleCloudSave(true);
-  }, { passive: true });
+  VMAP = new Map((QUIZ.vocabs||[]).map(v => [v.id, v]));
 }
 
-// START
-(function(){
+(async function(){
   if (!gasAvailable()) {
     content.innerHTML = `<div class="card"><b>Thiếu API_URL Apps Script</b></div>`;
     return;
@@ -1342,32 +1200,78 @@ function bootRender() {
 
   installGoogleScriptRunPolyfill();
 
-  // render ngay lập tức (không chờ mạng)
-  renderLoadingCard("Đang tải…", "Bạn có thể nhập username ngay, dữ liệu sẽ nạp sau.");
+  // show UI immediately
+  renderNameView();
+
+  // init persist in background
+  await Persist.init();
+  await tryLoadStateLocal();
 
   USER = loadUser();
-  loadStateFast();
 
-  // nếu có user -> set vào state ngay
+  ensureCacheId();
+
+  // if user exists, prefer stable name/cacheId
   if (USER && USER.userId && USER.username) {
     state.name = USER.username;
     state.cacheId = USER.userId;
   }
 
+  // attempt
+  if (!state.attemptId || !state.order || !state.order.length) {
+    // if quiz not loaded yet, order will be built after load; create attempt later
+    state.attemptId = state.attemptId || randId("attempt");
+  }
+
   updateStats();
-  if (!USER || !USER.username) renderNameView();
+  scheduleSave({ mirror: true });
 
-  // async: restore progress từ sheet (nếu local mất)
-  setTimeout(() => { tryRestoreFromSheetIfMissing().catch(()=>{}); }, 0);
+  // load quiz data (background)
+  try {
+    await loadQuizData();
+  } catch (e) {
+    // still keep name UI
+    toast("Lỗi tải dữ liệu: " + (e && e.message ? e.message : String(e)));
+    return;
+  }
 
-  // async: verify user (không chặn UI)
-  setTimeout(() => { verifyUserIfAnyAsync().catch(()=>{}); }, 0);
+  // Now we have vocabs -> ensure attempt order exists
+  if (!state.order || !state.order.length) {
+    newAttempt();
+  }
 
-  // async: load quiz (không chặn UI)
-  QUIZ_PROMISE = loadQuizData()
-    .then(() => { bootRender(); })
-    .catch(() => { /* lỗi đã render card */ });
+  updateStats();
 
+  // render correct view
+  if (!USER || !USER.username) {
+    renderNameView();
+  } else if (state.finalized && state.result) {
+    renderResultView();
+  } else {
+    renderQuizView();
+  }
+
+  // try restore from server if no local and hash has cache (optional)
+  if (!state.result && checkedCount() === 0) {
+    const fromHash = parseHashCacheId();
+    if (fromHash) {
+      try {
+        const res = await postJSON({ action: "getProgress", cacheId: fromHash });
+        if (res && res.stateJson) {
+          try { state = JSON.parse(res.stateJson) || state; } catch(e){}
+          // after restore, re-render
+          updateStats();
+          if (state.finalized && state.result) renderResultView();
+          else renderQuizView();
+        }
+      } catch(e){}
+    }
+  }
+
+  window.addEventListener("pagehide", () => {
+    try { Persist.mirrorToWindowName(JSON.stringify(state)); } catch (e) {}
+    scheduleCloudSave();
+  }, { passive: true });
 })();
 </script>
 </body>
