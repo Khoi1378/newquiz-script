@@ -837,17 +837,43 @@ function updateStats() {
  ********************/
 const content = document.getElementById("content");
 
-function renderLoadingCard(msg){
+/* Boot loading screen with dots . .. ... */
+let BOOT_LOADER = { timer: null, dots: 1 };
+function showBootLoading(msg){
   content.innerHTML = "";
   const c = document.createElement("div");
   c.className = "card";
-  c.innerHTML = `<div class="vi">${escapeHtml(msg||"Đang tải…")}</div>`;
+  c.innerHTML = `
+    <div class="row1">
+      <p class="vi" id="bootTitle">${escapeHtml(msg || "Đang tải quiz, đợi xíu nha")}</p>
+      <div class="meta"><span class="idx">LOADING</span></div>
+    </div>
+    <div class="muted" style="margin-top:8px; line-height:1.35">
+      Vui lòng chờ<span id="bootDots">.</span>
+    </div>
+  `;
   content.appendChild(c);
+
+  const dotsEl = document.getElementById("bootDots");
+  BOOT_LOADER.dots = 1;
+  if (BOOT_LOADER.timer) clearInterval(BOOT_LOADER.timer);
+  BOOT_LOADER.timer = setInterval(() => {
+    if (!dotsEl) return;
+    BOOT_LOADER.dots = (BOOT_LOADER.dots % 3) + 1;
+    dotsEl.textContent = ".".repeat(BOOT_LOADER.dots);
+  }, 420);
+}
+function setBootLoadingMsg(msg){
+  const t = document.getElementById("bootTitle");
+  if (t) t.textContent = String(msg || "");
+}
+function hideBootLoading(){
+  if (BOOT_LOADER.timer) clearInterval(BOOT_LOADER.timer);
+  BOOT_LOADER.timer = null;
 }
 
-/* Gate screen: username input "cũ", gọn */
-let GATE = { ready: false, status: "Đang tải…" };
-
+/* Gate state */
+let GATE = { ready: false, status: "Sẵn sàng." };
 function setGateStatus(msg){
   GATE.status = String(msg||"");
   const el = document.getElementById("gateStatus");
@@ -859,6 +885,10 @@ function setGateReady(ready){
   if (btn) btn.disabled = !GATE.ready;
 }
 
+/* Gate view:
+   - Nếu có username: hiện màn hình "Vào làm"
+   - Nếu chưa: hiện input username
+*/
 function renderGateView() {
   setDiscussFabVisible(false);
   content.innerHTML = "";
@@ -869,94 +899,43 @@ function renderGateView() {
   const c = document.createElement("div");
   c.className = "card";
 
-  const admin = isAdminName(knownName);
+  // ENTER MODE
+  if (hasName) {
+    const admin = isAdminName(knownName);
+    const buttonLabel = (state.finalized && state.result) ? "📊 Xem kết quả" : "➡️ Vào làm";
 
-  c.innerHTML = `
-    <div class="row1">
-      <p class="vi">USERNAME</p>
-      <div class="meta"><span class="idx">BẮT BUỘC</span></div>
-    </div>
+    c.innerHTML = `
+      <div class="row1">
+        <p class="vi">Xin chào, <b>${escapeHtml(knownName)}</b> ${admin ? `<span class="adminBadgeInline">ADMIN</span>` : ``}</p>
+        <div class="meta"><span class="idx">READY</span></div>
+      </div>
+      <div class="muted" style="margin-top:6px; line-height:1.35">
+        Bấm <b>${escapeHtml(buttonLabel)}</b> để vào bài.
+      </div>
 
-    <div style="margin-top:10px; display:grid; gap:10px;">
-      <input id="nameInput" class="input" placeholder="vd: tuankhoi123" autocomplete="off" maxlength="15" value="${escapeHtml(knownName)}" ${hasName ? "disabled" : ""} />
-      ${hasName ? `
-        <div class="muted">Đã lưu: <b>${escapeHtml(knownName)}</b> ${admin ? `<span class="adminBadgeInline">ADMIN</span>` : ``}</div>
-      ` : `
-        <div class="muted">Tối đa 15 ký tự, chỉ a-z A-Z 0-9 và dấu _</div>
-      `}
-      ${QUIZ.requireAccessCode ? `
-        <input id="codeInput" class="input" placeholder="Mã truy cập" maxlength="32" value="${escapeHtml(state.accessCode||"")}" />
+      ${QUIZ_LOADED && QUIZ.requireAccessCode ? `
+        <div style="margin-top:10px; display:grid; gap:10px;">
+          <div class="charRow"><div><b>Mã truy cập</b></div><div class="muted">(nếu có)</div></div>
+          <input id="codeInput" class="input" placeholder="Mã truy cập" maxlength="32" value="${escapeHtml(state.accessCode||"")}" />
+        </div>
       ` : ``}
 
-      ${hasName ? `
-        <button id="btnEnter" class="btn btn-primary" style="justify-content:center;" disabled>
-          ${state.finalized && state.result ? "📊 Xem kết quả" : "➡️ Vào làm"}
-        </button>
-      ` : `
-        <button id="btnSaveName" class="btn btn-primary" style="justify-content:center;">➕ Lưu username</button>
-      `}
-      <div class="muted" id="gateStatus">${escapeHtml(GATE.status || "")}</div>
-    </div>
-  `;
-  content.appendChild(c);
+      <div style="margin-top:10px; display:grid; gap:10px;">
+        <button id="btnEnter" class="btn btn-primary" style="justify-content:center;" disabled>${escapeHtml(buttonLabel)}</button>
+        <div class="muted" id="gateStatus">${escapeHtml(GATE.status || "")}</div>
+      </div>
+    `;
+    content.appendChild(c);
 
-  const nameInput = c.querySelector("#nameInput");
-  const codeInput = c.querySelector("#codeInput");
-
-  if (codeInput) {
-    codeInput.addEventListener("input", () => {
-      state.accessCode = String(codeInput.value || "").trim();
-      scheduleSave({ mirror: true });
-    }, { passive: true });
-  }
-
-  const saveBtn = c.querySelector("#btnSaveName");
-  if (saveBtn) {
-    const doSave = async () => {
-      let username = String(nameInput.value || "").trim();
-      const err = validateUsername(username);
-      if (err) { toast(err); return; }
-
-      try {
-        saveBtn.disabled = true;
-
-        const userId = (USER && USER.userId) ? USER.userId : randId("u");
-        const res = await postJSON({ action: "registerUser", userId, username, ua: navigator.userAgent || "" });
-
-        const u = res.user ? res.user : res;
-        if (!u || !u.userId || !u.username) throw new Error("registerUser lỗi.");
-
-        USER = { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
-        saveUser(USER);
-
-        state.name = USER.username;
-        state.cacheId = USER.userId;
-        ensureCacheId();
-
-        if (!state.attemptId) state.attemptId = randId("attempt");
+    const codeInput = c.querySelector("#codeInput");
+    if (codeInput) {
+      codeInput.addEventListener("input", () => {
+        state.accessCode = String(codeInput.value || "").trim();
         scheduleSave({ mirror: true });
-        scheduleCloudSave();
-        updateStats();
+      }, { passive: true });
+    }
 
-        toast("Đã lưu");
-        renderGateView();
-      } catch (e) {
-        toast((e && e.message) ? e.message : String(e));
-      } finally {
-        saveBtn.disabled = false;
-      }
-    };
-
-    saveBtn.addEventListener("click", doSave);
-    nameInput && nameInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); doSave(); }
-    });
-    try { nameInput && nameInput.focus(); } catch(e){}
-    return;
-  }
-
-  const btnEnter = c.querySelector("#btnEnter");
-  if (btnEnter) {
+    const btnEnter = c.querySelector("#btnEnter");
     btnEnter.addEventListener("click", () => {
       if (!QUIZ_LOADED) { toast("Đang tải đề…"); return; }
       if (QUIZ.requireAccessCode && !String(state.accessCode||"").trim()){
@@ -969,7 +948,75 @@ function renderGateView() {
 
       document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
     });
+
+    setGateReady(GATE.ready);
+    setGateStatus(GATE.status);
+    return;
   }
+
+  // USERNAME INPUT MODE
+  c.innerHTML = `
+    <div class="row1">
+      <p class="vi">Nhập USERNAME</p>
+      <div class="meta"><span class="idx">BẮT BUỘC</span></div>
+    </div>
+    <div class="muted" style="margin-top:6px; line-height:1.35">
+      Tối đa 15 ký tự, chỉ a-z A-Z 0-9 và dấu _. Nếu trùng tên, hệ thống tự cộng số.
+    </div>
+
+    <div style="margin-top:10px; display:grid; gap:10px;">
+      <input id="nameInput" class="input" placeholder="vd: tuankhoi123" autocomplete="off" maxlength="15" />
+      <button id="btnSaveName" class="btn btn-primary" style="justify-content:center;">➕ Lưu username</button>
+      <div class="muted" id="gateStatus">${escapeHtml(GATE.status || "")}</div>
+    </div>
+  `;
+  content.appendChild(c);
+
+  const nameInput = c.querySelector("#nameInput");
+  const saveBtn = c.querySelector("#btnSaveName");
+  try { nameInput.focus(); } catch(e){}
+
+  const doSave = async () => {
+    let username = String(nameInput.value || "").trim();
+    const err = validateUsername(username);
+    if (err) { toast(err); return; }
+
+    try {
+      saveBtn.disabled = true;
+      saveBtn.textContent = "⏳";
+
+      const userId = (USER && USER.userId) ? USER.userId : randId("u");
+      const res = await postJSON({ action: "registerUser", userId, username, ua: navigator.userAgent || "" });
+
+      const u = res.user ? res.user : res;
+      if (!u || !u.userId || !u.username) throw new Error("registerUser lỗi.");
+
+      USER = { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
+      saveUser(USER);
+
+      state.name = USER.username;
+      state.cacheId = USER.userId;
+      ensureCacheId();
+
+      if (!state.attemptId) state.attemptId = randId("attempt");
+      scheduleSave({ mirror: true });
+      scheduleCloudSave();
+      updateStats();
+
+      toast("Đã lưu");
+      renderGateView(); // chuyển sang màn "Vào làm"
+    } catch (e) {
+      toast((e && e.message) ? e.message : String(e));
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "➕ Lưu username";
+    }
+  };
+
+  saveBtn.addEventListener("click", doSave);
+  nameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); doSave(); }
+  });
 
   setGateReady(GATE.ready);
   setGateStatus(GATE.status);
@@ -1024,7 +1071,7 @@ let handlersBound = false;
 function renderQuizView() {
   setDiscussFabVisible(false);
 
-  if (!QUIZ_LOADED) { renderLoadingCard("Đang tải đề…"); return; }
+  if (!QUIZ_LOADED) { content.innerHTML = `<div class="card"><div class="vi">Đang tải đề…</div></div>`; return; }
   if (!state.name) { renderGateView(); return; }
 
   if (!state.attemptId) state.attemptId = randId("attempt");
@@ -1238,6 +1285,7 @@ function fetchLeaderboard() {
 
 /********************
  * Discussion (INLINE after results) - OPTIMISTIC UI
+ * Fix "xóa rồi lát lại nhảy" bằng tombstone local (ẩn vĩnh viễn trên máy này)
  ********************/
 const DISCUSS_MAX = 120;
 
@@ -1250,16 +1298,100 @@ let discussObserver = null;
 let openReplyRootId = "";
 const pendingTempIds = new Set();
 
+/* tombstone deleted ids (per quiz) */
+const DISCUSS_DELETED_KEY = () => `gs_discuss_deleted_v2::${getQuizId()}`;
+let DELETED_IDS = new Set();
+
+function loadDeletedIds_(){
+  try {
+    const raw = localStorage.getItem(DISCUSS_DELETED_KEY());
+    const arr = JSON.parse(raw || "[]");
+    if (Array.isArray(arr)) return new Set(arr.map(x => String(x)));
+  } catch(e){}
+  return new Set();
+}
+function saveDeletedIds_(){
+  try { localStorage.setItem(DISCUSS_DELETED_KEY(), JSON.stringify(Array.from(DELETED_IDS))); } catch(e){}
+}
+function markDeleted_(id){
+  const sid = String(id||"").trim();
+  if (!sid) return;
+  DELETED_IDS.add(sid);
+  saveDeletedIds_();
+}
+function unmarkDeleted_(id){
+  const sid = String(id||"").trim();
+  if (!sid) return;
+  if (DELETED_IDS.delete(sid)) saveDeletedIds_();
+}
+function isTempId_(id){
+  return String(id||"").startsWith("tmp_");
+}
+
 function canDeleteComment_(c){
   const admin = isAdminName(state.name);
   if (admin) return true;
   return normalizeName(c.author) === normalizeName(state.name);
 }
 
+function collectIdsFromTree_(tree){
+  const ids = new Set();
+  for (const r of (tree||[])) {
+    ids.add(String(r.id));
+    for (const rr of (r.replies||[])) ids.add(String(rr.id));
+  }
+  return ids;
+}
+
+function filterTreeByDeleted_(tree){
+  const out = [];
+  for (const root of (tree||[])) {
+    const rid = String(root.id);
+    if (DELETED_IDS.has(rid)) continue;
+
+    const replies = Array.isArray(root.replies) ? root.replies : [];
+    const keptReplies = replies.filter(r => {
+      const id = String(r.id);
+      const pid = String(r.parentId || root.id || "");
+      if (DELETED_IDS.has(id)) return false;
+      if (pid && DELETED_IDS.has(pid)) return false;
+      return true;
+    });
+
+    out.push({
+      ...root,
+      replies: keptReplies
+    });
+  }
+  return out;
+}
+
+function dedupeTree_(tree){
+  const seen = new Set();
+  const out = [];
+  for (const root of (tree||[])) {
+    const rid = String(root.id);
+    if (seen.has(rid)) continue;
+    seen.add(rid);
+
+    const rseen = new Set();
+    const replies = [];
+    for (const r of (root.replies || [])) {
+      const id = String(r.id);
+      if (rseen.has(id)) continue;
+      rseen.add(id);
+      replies.push(r);
+    }
+
+    out.push({ ...root, replies });
+  }
+  return out;
+}
+
 function normalizeTreeFromServer_(res){
-  // preferred: res.tree (each node has replies)
+  // preferred: res.tree
   if (res && Array.isArray(res.tree)) {
-    return res.tree.map(root => ({
+    const roots = res.tree.map(root => ({
       id: String(root.id),
       parentId: String(root.parentId||""),
       author: String(root.author||""),
@@ -1271,10 +1403,14 @@ function normalizeTreeFromServer_(res){
         author: String(r.author||""),
         createdAtMs: Number(r.createdAtMs||0) || Date.now(),
         text: String(r.text||""),
-        replies: []
+        replies: [],
+        pending: !!r.pending
       })) : [],
       pending: !!root.pending
     }));
+    roots.sort((a,b)=>a.createdAtMs-b.createdAtMs);
+    roots.forEach(r=>r.replies.sort((a,b)=>a.createdAtMs-b.createdAtMs));
+    return roots;
   }
 
   // fallback: res.comments (flat)
@@ -1282,20 +1418,22 @@ function normalizeTreeFromServer_(res){
   const roots = [];
   const byId = new Map();
   for (const c of flat) {
-    const obj = {
-      id: String(c.id),
+    const id = String(c.id);
+    if (!id) continue;
+    if (byId.has(id)) continue; // dedupe
+    byId.set(id, {
+      id,
       parentId: String(c.parentId||""),
       author: String(c.author||""),
       createdAtMs: Number(c.createdAtMs||0) || Date.now(),
       text: String(c.text||""),
       replies: []
-    };
-    byId.set(obj.id, obj);
+    });
   }
   for (const c of byId.values()) {
     if (c.parentId && byId.has(c.parentId)) {
       const p = byId.get(c.parentId);
-      // 1 level only: nếu parent cũng là reply -> đẩy thành root
+      // 1 level only
       if (p.parentId) roots.push(c);
       else p.replies.push(c);
     } else {
@@ -1337,7 +1475,6 @@ function renderDiscuss_(){
 
       const admin = isAdminName(root.author);
       const canDel = canDeleteComment_(root);
-
       const timeLabel = root.pending ? "…" : formatTs(root.createdAtMs);
 
       wrap.innerHTML = `
@@ -1358,7 +1495,7 @@ function renderDiscuss_(){
       `;
       list.appendChild(wrap);
 
-      // reply form toggle render
+      // reply form
       const slot = wrap.querySelector(`[data-slot="${CSS.escape(String(root.id))}"]`);
       if (slot && openReplyRootId === String(root.id)) {
         slot.innerHTML = `
@@ -1417,27 +1554,9 @@ function renderDiscuss_(){
   if (rootInput && rootCount) rootCount.textContent = String((rootInput.value||"").length);
 }
 
-async function ensureDiscussionLoaded_(force=false){
-  if (!state.finalized || !state.result) return;
-  if (DISCUSS.loading) return;
-  if (DISCUSS.loaded && !force) return;
-
-  DISCUSS.loading = true;
-  renderDiscuss_();
-
-  try {
-    const res = await postJSON({ action:"getComments", quizId: getQuizId() });
-    DISCUSS.tree = normalizeTreeFromServer_(res);
-    DISCUSS.loaded = true;
-  } catch (e) {
-    // im lặng, chỉ toast khi user chủ động mở/scroll
-    toast("Không tải được bình luận");
-  } finally {
-    DISCUSS.loading = false;
-    renderDiscuss_();
-  }
+function snapshotTree_(){
+  return JSON.parse(JSON.stringify(DISCUSS.tree || []));
 }
-
 function findRootById_(id){
   const tree = DISCUSS.tree || [];
   for (let i=0;i<tree.length;i++){
@@ -1445,10 +1564,10 @@ function findRootById_(id){
   }
   return null;
 }
-
 function removeNodeById_(id){
   const tree = DISCUSS.tree || [];
   const nid = String(id);
+
   // remove reply first
   for (const root of tree) {
     if (Array.isArray(root.replies)) {
@@ -1462,16 +1581,80 @@ function removeNodeById_(id){
   DISCUSS.tree = tree.filter(r => String(r.id) !== nid);
   return DISCUSS.tree.length !== beforeRoots;
 }
-
-function snapshotTree_(){
-  return JSON.parse(JSON.stringify(DISCUSS.tree || []));
-}
-
 function isValidDiscussText_(t){
   t = String(t||"").trim();
   if (!t) return false;
   if (t.length > DISCUSS_MAX) return false;
   return true;
+}
+
+async function ensureDiscussionLoaded_(force=false){
+  if (!state.finalized || !state.result) return;
+  if (DISCUSS.loading) return;
+  if (DISCUSS.loaded && !force) return;
+
+  DISCUSS.loading = true;
+  renderDiscuss_();
+
+  // keep pending nodes (optimistic) so refresh không làm mất
+  const pendingKeep = [];
+  for (const r of (DISCUSS.tree || [])) {
+    if (r && r.pending && pendingTempIds.has(String(r.id))) pendingKeep.push(JSON.parse(JSON.stringify(r)));
+    for (const rr of (r.replies || [])) {
+      if (rr && rr.pending && pendingTempIds.has(String(rr.id))) pendingKeep.push(JSON.parse(JSON.stringify(rr)));
+    }
+  }
+
+  try {
+    const res = await postJSON({ action:"getComments", quizId: getQuizId() });
+    let tree = normalizeTreeFromServer_(res);
+
+    // prune tombstones if server no longer has those ids
+    const serverIds = collectIdsFromTree_(tree);
+    let changed = false;
+    for (const did of Array.from(DELETED_IDS)) {
+      if (!serverIds.has(String(did))) { DELETED_IDS.delete(String(did)); changed = true; }
+    }
+    if (changed) saveDeletedIds_();
+
+    // filter deleted ids (fix "xóa rồi lại nhảy")
+    tree = filterTreeByDeleted_(tree);
+    tree = dedupeTree_(tree);
+
+    // re-insert pending nodes not present
+    const nowIds = collectIdsFromTree_(tree);
+    for (const p of pendingKeep) {
+      if (!p || !p.id) continue;
+      const pid = String(p.id);
+      if (nowIds.has(pid)) continue;
+      if (DELETED_IDS.has(pid)) continue;
+
+      if (!p.parentId) {
+        tree.push(p);
+      } else {
+        const root = tree.find(x => String(x.id) === String(p.parentId));
+        if (root) {
+          root.replies = Array.isArray(root.replies) ? root.replies : [];
+          root.replies.push(p);
+        } else {
+          // nếu root chưa có thì đẩy thành root
+          tree.push({ ...p, parentId:"", replies: Array.isArray(p.replies)?p.replies:[] });
+        }
+      }
+    }
+
+    // sort
+    tree.sort((a,b)=>Number(a.createdAtMs||0)-Number(b.createdAtMs||0));
+    tree.forEach(r => (r.replies||[]).sort((a,b)=>Number(a.createdAtMs||0)-Number(b.createdAtMs||0)));
+
+    DISCUSS.tree = tree;
+    DISCUSS.loaded = true;
+  } catch (e) {
+    toast("Không tải được bình luận");
+  } finally {
+    DISCUSS.loading = false;
+    renderDiscuss_();
+  }
 }
 
 async function optimisticAddComment_({ text, parentId }){
@@ -1493,8 +1676,8 @@ async function optimisticAddComment_({ text, parentId }){
   };
 
   // optimistic insert
+  DISCUSS.tree = Array.isArray(DISCUSS.tree) ? DISCUSS.tree : [];
   if (!node.parentId) {
-    DISCUSS.tree = Array.isArray(DISCUSS.tree) ? DISCUSS.tree : [];
     DISCUSS.tree.push(node);
   } else {
     const root = findRootById_(node.parentId);
@@ -1502,19 +1685,14 @@ async function optimisticAddComment_({ text, parentId }){
       root.replies = Array.isArray(root.replies) ? root.replies : [];
       root.replies.push(node);
     } else {
-      // nếu không tìm thấy root thì đẩy thành root
-      DISCUSS.tree = Array.isArray(DISCUSS.tree) ? DISCUSS.tree : [];
-      DISCUSS.tree.push(node);
+      DISCUSS.tree.push({ ...node, parentId:"" });
     }
   }
 
-  // sort nhẹ
   (DISCUSS.tree||[]).sort((a,b)=>a.createdAtMs-b.createdAtMs);
   (DISCUSS.tree||[]).forEach(r => (r.replies||[]).sort((a,b)=>a.createdAtMs-b.createdAtMs));
-
   renderDiscuss_();
 
-  // fire server (không chờ UI)
   try {
     const res = await postJSON({
       action:"addComment",
@@ -1528,8 +1706,17 @@ async function optimisticAddComment_({ text, parentId }){
     const srv = res && res.comment ? res.comment : null;
     if (!srv || !srv.id) throw new Error("addComment lỗi");
 
-    // replace tempId with real id
     const realId = String(srv.id);
+
+    // nếu user đã xóa temp trước đó -> bỏ luôn
+    if (DELETED_IDS.has(tempId)) {
+      pendingTempIds.delete(tempId);
+      removeNodeById_(tempId);
+      renderDiscuss_();
+      return;
+    }
+
+    // replace tempId
     const tree = DISCUSS.tree || [];
     for (const root of tree) {
       if (String(root.id) === tempId) {
@@ -1552,11 +1739,9 @@ async function optimisticAddComment_({ text, parentId }){
       }
     }
 
-    // if not found, force reload
     pendingTempIds.delete(tempId);
     await ensureDiscussionLoaded_(true);
   } catch (e) {
-    // rollback
     pendingTempIds.delete(tempId);
     removeNodeById_(tempId);
     renderDiscuss_();
@@ -1569,13 +1754,24 @@ async function optimisticDeleteComment_(id){
   const sid = String(id||"").trim();
   if (!sid) return;
 
-  // optimistic remove
-  const snap = snapshotTree_();
-  const removed = removeNodeById_(sid);
-  if (!removed) return;
-  renderDiscuss_();
+  // nếu là temp pending: xóa local thôi
+  if (isTempId_(sid) && pendingTempIds.has(sid)) {
+    pendingTempIds.delete(sid);
+    removeNodeById_(sid);
+    renderDiscuss_();
+    toast("Đã xóa");
+    return;
+  }
 
-  // fire server
+  // tombstone: ẩn vĩnh viễn trên máy này (fix ghost)
+  markDeleted_(sid);
+
+  // optimistic remove
+  removeNodeById_(sid);
+  renderDiscuss_();
+  toast("Đã xóa");
+
+  // fire server (nếu backend chưa hỗ trợ thì cũng không “nhảy lại” nữa)
   try {
     await postJSON({
       action:"deleteComment",
@@ -1584,18 +1780,17 @@ async function optimisticDeleteComment_(id){
       name: state.name,
       id: sid
     });
-    // background refresh nhẹ để sync nếu cần
-    setTimeout(() => { ensureDiscussionLoaded_(true); }, 600);
   } catch (e) {
-    // rollback
-    DISCUSS.tree = snap;
-    renderDiscuss_();
-    toast("Xóa lỗi");
+    // vẫn giữ tombstone để khỏi nhảy lại
+    // (optional) toast nhẹ thôi
+    // toast("Server chưa xóa được (đã ẩn ở máy bạn)");
   }
+
+  // refresh nhẹ để sync phần còn lại
+  setTimeout(() => { ensureDiscussionLoaded_(true); }, 650);
 }
 
 function bindDiscussionEvents_(){
-  // (re)bind root input / send
   const { rootInput, btnPostRoot, rootCount, section } = getDiscussionEls_();
   if (!section || !rootInput || !btnPostRoot || !rootCount) return;
 
@@ -1611,13 +1806,11 @@ function bindDiscussionEvents_(){
     optimisticAddComment_({ text, parentId:"" });
   });
 
-  // delegation for reply/delete/send/cancel
   section.addEventListener("click", (e) => {
     const delBtn = e.target.closest("[data-del]");
     if (delBtn) {
       const id = String(delBtn.getAttribute("data-del")||"");
       if (!id) return;
-      // không confirm để “nhanh”
       optimisticDeleteComment_(id);
       return;
     }
@@ -1628,7 +1821,6 @@ function bindDiscussionEvents_(){
       openReplyRootId = (openReplyRootId === rootId) ? "" : rootId;
       renderDiscuss_();
 
-      // focus textarea
       const slot = section.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
       const ta = slot ? slot.querySelector("textarea") : null;
       if (ta) ta.focus();
@@ -1656,7 +1848,6 @@ function bindDiscussionEvents_(){
     }
   });
 
-  // live count for reply textarea
   section.addEventListener("input", (e) => {
     const ta = e.target;
     if (!(ta && ta.tagName === "TEXTAREA")) return;
@@ -1677,9 +1868,7 @@ function attachDiscussionObserver_(){
 
   discussObserver = new IntersectionObserver((entries) => {
     for (const ent of entries) {
-      if (ent.isIntersecting) {
-        ensureDiscussionLoaded_();
-      }
+      if (ent.isIntersecting) ensureDiscussionLoaded_();
     }
   }, { root: document.getElementById("shell"), threshold: 0.15 });
 
@@ -1753,11 +1942,12 @@ function renderResultView() {
   fetchLeaderboard();
   document.getElementById("btnSubmit").disabled = true;
 
-  // bind discussion events once per render
+  // init discussion state
   DISCUSS.loaded = false;
   DISCUSS.loading = false;
   DISCUSS.tree = [];
   openReplyRootId = "";
+
   renderDiscuss_();
   bindDiscussionEvents_();
   attachDiscussionObserver_();
@@ -1889,7 +2079,6 @@ document.getElementById("btnDiscuss").addEventListener("click", async () => {
   await ensureDiscussionLoaded_();
   sec.scrollIntoView({ behavior: "smooth", block: "start" });
 
-  // focus nhanh vào ô nhập
   setTimeout(() => {
     const { rootInput } = getDiscussionEls_();
     if (rootInput) rootInput.focus();
@@ -1985,7 +2174,9 @@ async function loadBootstrapOrFallback_(){
 }
 
 /********************
- * Boot: NO AUTO JUMP
+ * Boot: SHOW LOADING FIRST, then:
+ * - if has username -> show "Vào làm"
+ * - else -> show username input
  ********************/
 function parseHashCacheId() {
   try {
@@ -2003,17 +2194,21 @@ function parseHashCacheId() {
 
   installGoogleScriptRunPolyfill();
 
-  // 1) show gate immediately
-  setGateReady(false);
-  setGateStatus("Đang chuẩn bị…");
-  renderGateView();
+  // 0) show fake loading screen with dots
+  showBootLoading("Đang tải quiz, đợi xíu nha");
 
-  // 2) init persist + load local state
-  await Persist.init();
-  await tryLoadStateLocal();
+  // 1) init persist + load local state
+  try {
+    setBootLoadingMsg("Đang chuẩn bị…");
+    await Persist.init();
+    await tryLoadStateLocal();
+  } catch(e){}
 
-  // 3) load cached user
-  USER = loadUser();
+  // 2) load cached user
+  try { USER = loadUser(); } catch(e){ USER = null; }
+
+  // 3) load tombstone deleted ids for comments
+  DELETED_IDS = loadDeletedIds_();
 
   // 4) cacheId
   ensureCacheId();
@@ -2033,9 +2228,9 @@ function parseHashCacheId() {
   updateStats();
   scheduleSave({ mirror: true });
 
-  // 5) load quiz/progress via bootstrap - but DO NOT auto enter
+  // 5) load quiz/progress via bootstrap
   try {
-    setGateStatus("Đang tải đề…");
+    setBootLoadingMsg("Đang tải đề…");
     await loadBootstrapOrFallback_();
 
     if (!state.attemptId) state.attemptId = randId("attempt");
@@ -2044,26 +2239,26 @@ function parseHashCacheId() {
     updateStats();
     scheduleSave({ mirror: true });
 
-    setGateStatus("Sẵn sàng.");
-    setGateReady(true);
-    renderGateView();
+    // gate is ready now
+    GATE.ready = true;
+    GATE.status = "Sẵn sàng.";
   } catch (e) {
-    setGateStatus("Lỗi tải");
-    setGateReady(false);
-    renderGateView();
-    return;
+    GATE.ready = false;
+    GATE.status = "Lỗi tải đề";
   }
 
+  // 6) stop loader and show gate depending on username
+  hideBootLoading();
+  renderGateView();
+
+  // autosave
   startCloudAutosave();
 
   window.addEventListener("pagehide", () => {
     try { Persist.mirrorToWindowName(JSON.stringify(state)); } catch (e) {}
     scheduleCloudSave();
   }, { passive: true });
-
-  // if already finalized from saved state, allow user to enter result via gate
 })();
-
 </script>
 </body>
 </html>
