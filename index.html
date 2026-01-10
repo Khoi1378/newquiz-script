@@ -94,11 +94,17 @@
       color: #fff; border: 0;
       box-shadow: 0 12px 24px rgba(124,58,237,.18);
     }
+
+    /* CHECK: nhỏ, chữ "Check" */
     .btn-check {
-      border-radius: 14px;
-      padding: 11px 12px;
+      border-radius: 12px;
+      padding: 9px 10px;
+      font-size: .86rem;
+      font-weight: 950;
+      box-shadow: 0 10px 20px rgba(124,58,237,.14);
+      width: auto;
+      min-width: 86px;
       justify-content: center;
-      width: 160px;
     }
     .btn-check[disabled] { opacity: .65; cursor: not-allowed; }
 
@@ -173,6 +179,15 @@
     }
     .input[disabled] { background: #f3f4f6; color: #111827; }
 
+    /* row input + check */
+    .qaRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap: wrap;
+    }
+    .qaRow .input{ flex: 1 1 260px; }
+
     .resultRow{
       display:grid;
       grid-template-columns: 140px 1fr;
@@ -189,7 +204,6 @@
     .oktxt { color: var(--ok); font-weight: 1000; }
     .badtxt { color: var(--bad); font-weight: 1000; }
 
-    /* Table (Leaderboard) - NO horizontal scroll, ellipsis name */
     .table {
       width: 100%;
       border-collapse: separate;
@@ -198,7 +212,7 @@
       border-radius: 16px;
       border: 1px solid #e5e7eb;
       background: #fff;
-      table-layout: fixed;
+      table-layout: fixed; /* quan trọng: không tràn ngang */
     }
     .table th, .table td {
       padding: 10px 10px;
@@ -206,17 +220,11 @@
       text-align: left;
       font-weight: 750;
       font-size: .92rem;
-      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      vertical-align: middle;
     }
     .table th { background: #f8fafc; font-weight: 900; }
     .table tr:last-child td { border-bottom: 0; }
-
-    .lbRankCol { width: 78px; }
-    .lbScoreCol { width: 92px; text-align: right; }
-    .table th:last-child, .table td:last-child { text-align: right; }
 
     .rankpill {
       display: inline-flex; align-items: center; gap: 8px;
@@ -225,8 +233,6 @@
       border: 1px solid #e5e7eb;
       background: #fff;
       white-space: nowrap;
-      max-width: 100%;
-      overflow: hidden;
     }
     .medal {
       width: 22px; height: 22px; border-radius: 999px;
@@ -273,6 +279,15 @@
       border: 1px solid rgba(37,99,235,.35);
       color: var(--admin);
       white-space: nowrap;
+    }
+
+    /* leaderboard: cột tên ellipsis */
+    .lbName{
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display:block;
+      width: 100%;
     }
 
     .modal-backdrop {
@@ -350,48 +365,37 @@
     }
     .cmtHead {
       display:flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
-      align-items: flex-start;
+      align-items: center;
       margin-bottom: 8px;
     }
-    /* Username grey */
     .cmtAuthor {
       font-weight: 950;
-      color: #6b7280;
+      color: #6b7280; /* username xám */
       display:flex; gap: 8px; align-items:center; flex-wrap: wrap;
-      max-width: 100%;
-      overflow: hidden;
     }
-    .cmtAuthor span{
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 72vw;
-    }
-    .cmtRight{
-      display:flex;
-      gap: 10px;
-      align-items: center;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-      margin-left: auto;
-    }
-    .cmtTime { color: #6b7280; font-weight: 800; font-size: .85rem; white-space: nowrap; }
     .cmtText { color: #111827; font-weight: 750; line-height: 1.35; white-space: pre-wrap; word-break: break-word; }
-
-    /* Buttons move RIGHT */
-    .cmtActionsInline { display:flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .cmtActions {
+      display:flex; gap: 8px; flex-wrap: wrap;
+      margin-top: 10px;
+      justify-content: flex-end; /* dồn sang phải */
+    }
     .cmtBtn {
       border-radius: 999px;
-      padding: 8px 12px;
+      padding: 7px 10px;
       font-weight: 900;
       border: 1px solid #e5e7eb;
       background: #fff;
       cursor: pointer;
-      font-size: .86rem;
-      white-space: nowrap;
+      font-size: .82rem; /* nhỏ hơn */
     }
     .cmtBtnDanger { background: rgba(220,38,38,.1); border-color: rgba(220,38,38,.25); color: #991b1b; }
-
+    .cmtTime {
+      margin-top: 6px;
+      text-align: right;
+      color: #6b7280;
+      font-weight: 800;
+      font-size: .82rem;
+    }
     .replyWrap{
       margin-top: 10px;
       margin-left: 14px;
@@ -416,12 +420,9 @@
     @media (max-width: 820px) {
       .progressline { max-width: 100%; }
       .btn { padding: 9px 12px; font-size: .85rem; }
-      .btn-check{ width: 100%; }
       .resultRow{ grid-template-columns: 120px 1fr; }
       .userCorner .name { max-width: 66vw; }
-      .cmtAuthor span{ max-width: 64vw; }
-      .lbRankCol{ width: 70px; }
-      .lbScoreCol{ width: 86px; }
+      .btn-check{ min-width: 84px; }
     }
   </style>
 </head>
@@ -647,6 +648,9 @@ function randId(prefix = "id") {
 function normalizeName(s){
   return String(s||"").trim().replace(/\s+/g," ").toLowerCase();
 }
+function answerKey(s){
+  return String(s||"").trim().replace(/\s+/g," ").toLowerCase();
+}
 function pad2(n){ return String(n).padStart(2,"0"); }
 function formatTs(ms){
   const d = new Date(Number(ms||0));
@@ -753,7 +757,7 @@ let state = {
   attemptId: "",
   order: [],
   answers: {},
-  checked: {},
+  checked: {},   // { [vocabId]: { locked, ok, expected, lastKey, gradedAtMs } }
   finalized: false,
   result: null,
   history: [],
@@ -761,6 +765,18 @@ let state = {
 };
 
 let USER = null;
+
+/********************
+ * View control: ẩn Nộp bài ở trang vào làm + trang kết quả
+ ********************/
+let CURRENT_VIEW = "boot"; // boot|gate|quiz|result
+function setView(v){
+  CURRENT_VIEW = v;
+  const btnSubmit = document.getElementById("btnSubmit");
+  if (btnSubmit) {
+    btnSubmit.style.display = (v === "quiz") ? "inline-flex" : "none";
+  }
+}
 
 /********************
  * Stable cacheId + attempt
@@ -832,21 +848,17 @@ function startCloudAutosave(){
 /********************
  * Stats + username corner
  ********************/
-function totalCount() { return QUIZ.vocabs.length; }
 function answeredCount() {
-  const a = state.answers || {};
   let c = 0;
-  for (const k in a) {
-    if (!Object.prototype.hasOwnProperty.call(a, k)) continue;
-    if (String(a[k] || "").trim()) c++;
+  const order = state.order && state.order.length ? state.order : (QUIZ.vocabs||[]).map(v=>v.id);
+  for (const id of order) {
+    const v = String(state.answers[id] ?? "").trim();
+    if (v) c++;
   }
   return c;
 }
-function setSubmitBtnVisible(show){
-  const b = document.getElementById("btnSubmit");
-  if (!b) return;
-  b.style.display = show ? "inline-flex" : "none";
-}
+function totalCount() { return QUIZ.vocabs.length; }
+
 function updateUserCorner(){
   const box = document.getElementById("userCorner");
   const nm = document.getElementById("userCornerName");
@@ -861,10 +873,12 @@ function updateUserCorner(){
   nm.textContent = name;
   ad.style.display = isAdminName(name) ? "inline-flex" : "none";
 }
+
 function setDiscussFabVisible(show){
   const fab = document.getElementById("fabDiscuss");
   fab.style.display = show ? "block" : "none";
 }
+
 function updateStats() {
   updateUserCorner();
 
@@ -875,14 +889,10 @@ function updateStats() {
 
   const canSubmit = !!state.name && !state.finalized && answeredCount() > 0;
   const btnSubmit = document.getElementById("btnSubmit");
-  btnSubmit.disabled = !canSubmit;
+  if (btnSubmit) btnSubmit.disabled = !canSubmit;
 
-  // Discuss button only after finished + has result
-  setDiscussFabVisible(!!(state.finalized && state.result));
-
-  // hide submit button on result screen (the user asked: result page don't show "Nộp bài")
-  if (state.finalized) setSubmitBtnVisible(false);
-  else setSubmitBtnVisible(true);
+  // Discuss button only after finished
+  setDiscussFabVisible(!!(state.finalized));
 }
 
 /********************
@@ -893,6 +903,7 @@ const content = document.getElementById("content");
 /* Boot loading screen with dots . .. ... */
 let BOOT_LOADER = { timer: null, dots: 1 };
 function showBootLoading(msg){
+  setView("boot");
   content.innerHTML = "";
   const c = document.createElement("div");
   c.className = "card";
@@ -938,15 +949,10 @@ function setGateReady(ready){
   if (btn) btn.disabled = !GATE.ready;
 }
 
-/* Gate view:
-   - Nếu có username: hiện màn hình "Vào làm"
-   - Nếu chưa: hiện input username
-*/
+/* Gate view */
 function renderGateView() {
+  setView("gate");
   setDiscussFabVisible(false);
-  state.finalized = !!(state.finalized && state.result); // nếu finalized mà chưa có result => reset gate tránh kẹt
-  setSubmitBtnVisible(true);
-
   content.innerHTML = "";
 
   const knownName = (USER && USER.username) ? USER.username : (state.name || "");
@@ -955,7 +961,6 @@ function renderGateView() {
   const c = document.createElement("div");
   c.className = "card";
 
-  // ENTER MODE
   if (hasName) {
     const admin = isAdminName(knownName);
     const buttonLabel = (state.finalized && state.result) ? "📊 Xem kết quả" : "➡️ Vào làm";
@@ -999,7 +1004,7 @@ function renderGateView() {
         return;
       }
 
-      if (state.finalized && state.result) renderResultView();
+      if (state.finalized) renderResultView();
       else renderQuizView();
 
       document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
@@ -1007,7 +1012,6 @@ function renderGateView() {
 
     setGateReady(GATE.ready);
     setGateStatus(GATE.status);
-    updateStats();
     return;
   }
 
@@ -1061,7 +1065,7 @@ function renderGateView() {
       updateStats();
 
       toast("Đã lưu");
-      renderGateView(); // chuyển sang màn "Vào làm"
+      renderGateView();
     } catch (e) {
       toast((e && e.message) ? e.message : String(e));
     } finally {
@@ -1077,7 +1081,6 @@ function renderGateView() {
 
   setGateReady(GATE.ready);
   setGateStatus(GATE.status);
-  updateStats();
 }
 
 /********************
@@ -1096,8 +1099,8 @@ function buildQuizHTML() {
     const checked = state.checked && state.checked[id];
     const locked = !!(checked && checked.locked);
 
-    const resultHtml = checked ? `
-      <div class="resultRow">
+    const resultHtml = (checked && checked.locked) ? `
+      <div class="resultRow" data-result="${id}">
         <div>${checked.ok ? `<span class="oktxt">ĐÚNG ✅</span>` : `<span class="badtxt">SAI ❌</span>`}</div>
         <div>${checked.ok ? `` : `<span class="muted">Đáp án:</span> <b>${escapeHtml(checked.expected || v.meaning || "")}</b>`}</div>
       </div>
@@ -1110,11 +1113,13 @@ function buildQuizHTML() {
           <div class="meta"><span class="idx">#${displayNo}</span></div>
         </div>
 
-        <div style="margin-top:10px; display:grid; gap:10px;">
-          <input class="input ansInput" data-qid="${id}" placeholder="Nhập nghĩa… (Enter để qua câu tiếp)" value="${escapeHtml(typed)}" ${locked ? "disabled" : ""}/>
-          <button class="btn btn-primary btn-check" data-check="${id}" ${locked ? "disabled" : ""}>
-            ${locked ? "ĐÃ CHECK" : "✅ CHECK (tùy chọn)"}
-          </button>
+        <div style="margin-top:10px;">
+          <div class="qaRow">
+            <input class="input ansInput" data-qid="${id}" placeholder="Nhập nghĩa…" value="${escapeHtml(typed)}" ${locked ? "disabled" : ""}/>
+            <button class="btn btn-primary btn-check" data-check="${id}" ${locked ? "disabled" : ""}>
+              ${locked ? "Đã check" : "Check"}
+            </button>
+          </div>
         </div>
 
         ${resultHtml}
@@ -1126,11 +1131,9 @@ function buildQuizHTML() {
 }
 
 let handlersBound = false;
-let lastFocusQid = null;
-
 function renderQuizView() {
+  setView("quiz");
   setDiscussFabVisible(false);
-  setSubmitBtnVisible(true);
 
   if (!QUIZ_LOADED) { content.innerHTML = `<div class="card"><div class="vi">Đang tải đề…</div></div>`; return; }
   if (!state.name) { renderGateView(); return; }
@@ -1145,55 +1148,160 @@ function renderQuizView() {
     content.addEventListener("input", onInput, { passive: true });
     content.addEventListener("click", onClick);
     content.addEventListener("keydown", onKeyDown);
-    content.addEventListener("focusin", onFocusIn, { passive: true });
+    content.addEventListener("focusout", onFocusOut, { passive: true });
     handlersBound = true;
   }
 }
 
-function onFocusIn(e){
-  const t = e.target;
-  if (!t || !t.classList.contains("ansInput")) return;
-  const id = Number(t.dataset.qid);
-  if (!isFinite(id)) return;
-  lastFocusQid = id;
+/********************
+ * Auto-grade: chấm ngầm khi nhập (debounce) để nộp bài nhanh
+ ********************/
+const gradeTimers = new Map();     // id -> timer
+const gradeToken = new Map();      // id -> token (chống response cũ)
+const gradeInFlight = new Set();   // id in flight
+const lockAfterGrade = new Set();  // id: user bấm Check khi đang chấm
+
+function getCardEls_(id){
+  const card = content.querySelector(`[data-qcard="${CSS.escape(String(id))}"]`);
+  if (!card) return null;
+  const input = card.querySelector(`.ansInput[data-qid="${CSS.escape(String(id))}"]`);
+  const btn = card.querySelector(`[data-check="${CSS.escape(String(id))}"]`);
+  const res = card.querySelector(`[data-result="${CSS.escape(String(id))}"]`);
+  return { card, input, btn, res };
 }
 
-function onKeyDown(e){
-  const t = e.target;
-  if (!t || !t.classList.contains("ansInput")) return;
+function ensureResultRow_(id, ok, expected){
+  const els = getCardEls_(id);
+  if (!els) return;
+  const { card } = els;
 
-  if (e.key === "Enter") {
-    e.preventDefault();
-    const id = Number(t.dataset.qid);
-    if (!isFinite(id)) return;
-    focusNextInput_(id);
+  let row = card.querySelector(`[data-result="${CSS.escape(String(id))}"]`);
+  if (!row) {
+    row = document.createElement("div");
+    row.className = "resultRow";
+    row.setAttribute("data-result", String(id));
+    card.appendChild(row);
+  }
+  row.innerHTML = `
+    <div>${ok ? `<span class="oktxt">ĐÚNG ✅</span>` : `<span class="badtxt">SAI ❌</span>`}</div>
+    <div>${ok ? `` : `<span class="muted">Đáp án:</span> <b>${escapeHtml(expected || "")}</b>`}</div>
+  `;
+}
+
+function lockUI_(id){
+  const els = getCardEls_(id);
+  if (!els) return;
+  if (els.input) els.input.disabled = true;
+  if (els.btn) {
+    els.btn.disabled = true;
+    els.btn.textContent = "Đã check";
+  }
+  const ck = state.checked[id];
+  if (ck) ensureResultRow_(id, !!ck.ok, String(ck.expected||""));
+}
+
+async function gradeOne_(id, ans, { lock = false } = {}){
+  if (!state.name) return;
+  if (QUIZ.requireAccessCode && !String(state.accessCode||"").trim()) return;
+
+  const akey = answerKey(ans);
+  const existed = state.checked && state.checked[id];
+  if (existed && existed.locked) return;
+
+  // Nếu đã chấm đúng y key này rồi thì khỏi gọi lại
+  if (existed && existed.lastKey === akey && !!existed.gradedAtMs) {
+    if (lock && !existed.locked) {
+      existed.locked = true;
+      scheduleSave({ mirror: true });
+      scheduleCloudSave();
+      lockUI_(id);
+    }
+    return;
+  }
+
+  // chống spam
+  const token = randId("g");
+  gradeToken.set(id, token);
+  gradeInFlight.add(id);
+
+  try {
+    const res = await postJSON({
+      action: "gradeOne",
+      name: state.name,
+      userId: USER && USER.userId ? USER.userId : "",
+      quizId: QUIZ.quizId || getQuizId(),
+      accessCode: state.accessCode || "",
+      cacheId: state.cacheId,
+      attemptId: state.attemptId,
+      vocabId: id,
+      answer: String(ans || "").trim(),
+      ua: navigator.userAgent || ""
+    });
+
+    // stale response
+    if (gradeToken.get(id) !== token) return;
+
+    if (!res || !res.ok || !res.item) throw new Error("Lỗi chấm.");
+
+    state.checked[id] = {
+      locked: !!lock,
+      ok: !!res.item.ok,
+      expected: String(res.item.expected || ""),
+      lastKey: akey,
+      gradedAtMs: Date.now()
+    };
+
+    scheduleSave({ mirror: true });
+    scheduleCloudSave();
+    updateStats();
+
+    // nếu user bấm Check trong lúc đang chấm ngầm
+    if (lockAfterGrade.has(id)) {
+      lockAfterGrade.delete(id);
+      state.checked[id].locked = true;
+      scheduleSave({ mirror: true });
+      scheduleCloudSave();
+      lockUI_(id);
+      return;
+    }
+
+    if (lock) lockUI_(id);
+  } catch (e) {
+    // im lặng (ngầm) để không phá bàn phím, chỉ toast khi lock
+    if (lock) toast("Check lỗi");
+  } finally {
+    gradeInFlight.delete(id);
   }
 }
 
-function focusInput_(id){
-  const el = content.querySelector(`.ansInput[data-qid="${CSS.escape(String(id))}"]`);
-  if (el && !el.disabled) {
-    try { el.focus({ preventScroll: false }); } catch(e){ try { el.focus(); } catch(_){} }
-    return true;
-  }
-  return false;
+function scheduleAutoGrade_(id, delayMs = 550){
+  if (gradeTimers.has(id)) clearTimeout(gradeTimers.get(id));
+  const t = setTimeout(async () => {
+    gradeTimers.delete(id);
+
+    const ans = String(state.answers[id] ?? "").trim();
+    const existed = state.checked && state.checked[id];
+    if (existed && existed.locked) return;
+
+    if (!ans) {
+      // nếu chưa lock thì xoá kết quả chấm ngầm (để sạch)
+      if (existed && !existed.locked) {
+        delete state.checked[id];
+        scheduleSave({ mirror: true });
+        scheduleCloudSave();
+      }
+      updateStats();
+      return;
+    }
+
+    await gradeOne_(id, ans, { lock: false });
+  }, delayMs);
+  gradeTimers.set(id, t);
 }
 
-function focusNextInput_(currentId){
-  const order = state.order && state.order.length ? state.order : (QUIZ.vocabs||[]).map(v=>v.id);
-  const idx = order.findIndex(x => Number(x) === Number(currentId));
-  if (idx === -1) return false;
-
-  for (let i = idx + 1; i < order.length; i++){
-    if (focusInput_(order[i])) return true;
-  }
-  // wrap: focus first unfinished
-  for (let i = 0; i < order.length; i++){
-    if (focusInput_(order[i])) return true;
-  }
-  return false;
-}
-
+/********************
+ * Events: input / enter / blur
+ ********************/
 function onInput(e) {
   const t = e.target;
   if (!t || !t.classList.contains("ansInput")) return;
@@ -1209,128 +1317,108 @@ function onInput(e) {
   scheduleSave();
   scheduleCloudSave();
   updateStats();
+
+  // chấm ngầm
+  scheduleAutoGrade_(id, 550);
 }
 
-let checking = new Set();
+function focusNextInput_(id){
+  const inputs = Array.from(content.querySelectorAll(".ansInput"));
+  const idx = inputs.findIndex(x => Number(x.dataset.qid) === Number(id));
+  if (idx >= 0 && idx < inputs.length - 1) {
+    try { inputs[idx + 1].focus({ preventScroll: false }); } catch(e){}
+    try { inputs[idx + 1].scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch(e){}
+  }
+}
 
-function ensureGateForQuiz_(){
-  if (!state.name) { toast("Thiếu username"); renderGateView(); return false; }
-  if (!gasAvailable()) { toast("Thiếu API_URL"); return false; }
+function onKeyDown(e){
+  const t = e.target;
+  if (!t || !t.classList.contains("ansInput")) return;
+
+  if (e.key === "Enter") {
+    e.preventDefault();
+    const id = Number(t.dataset.qid);
+    if (!isFinite(id)) return;
+
+    // chấm ngầm nhanh khi Enter, rồi chuyển câu kế
+    scheduleAutoGrade_(id, 0);
+    focusNextInput_(id);
+  }
+}
+
+function onFocusOut(e){
+  const t = e.target;
+  if (!t || !t.classList.contains("ansInput")) return;
+  const id = Number(t.dataset.qid);
+  if (!isFinite(id)) return;
+
+  // blur -> chấm ngay (ngầm)
+  scheduleAutoGrade_(id, 0);
+}
+
+/********************
+ * Click: Check (nhỏ) - lock + hiện đúng/sai ngay
+ ********************/
+function onClick(e) {
+  const btn = e.target.closest("[data-check]");
+  if (!btn) return;
+
+  const id = Number(btn.dataset.check);
+  if (!isFinite(id)) return;
+
+  if (!state.name) { toast("Thiếu username"); renderGateView(); return; }
+  if (!gasAvailable()) { toast("Thiếu API_URL"); return; }
   if (QUIZ.requireAccessCode && !String(state.accessCode||"").trim()){
     toast("Thiếu mã truy cập.");
     renderGateView();
-    return false;
-  }
-  return true;
-}
-
-function updateOneCardUI_(id){
-  const card = content.querySelector(`[data-qcard="${CSS.escape(String(id))}"]`);
-  const v = VMAP.get(Number(id));
-  if (!card || !v) return;
-
-  const checked = state.checked && state.checked[id];
-  const locked = !!(checked && checked.locked);
-
-  const input = card.querySelector(`.ansInput[data-qid="${CSS.escape(String(id))}"]`);
-  const btn = card.querySelector(`[data-check="${CSS.escape(String(id))}"]`);
-
-  if (input) input.disabled = locked;
-  if (btn) {
-    btn.disabled = locked;
-    btn.textContent = locked ? "ĐÃ CHECK" : "✅ CHECK (tùy chọn)";
-  }
-
-  // result row
-  let rr = card.querySelector(".resultRow");
-  if (!checked) {
-    if (rr) rr.remove();
     return;
   }
-  if (!rr) {
-    rr = document.createElement("div");
-    rr.className = "resultRow";
-    card.appendChild(rr);
+
+  const existed = state.checked && state.checked[id];
+  if (existed && existed.locked) return;
+
+  const els = getCardEls_(id);
+  const ans = els && els.input ? String(els.input.value || "").trim() : String(state.answers[id]||"").trim();
+  state.answers[id] = ans;
+  scheduleSave();
+  scheduleCloudSave();
+
+  if (!ans) { toast("Chưa nhập"); return; }
+
+  // Nếu đang chấm ngầm thì đợi xong rồi lock
+  if (gradeInFlight.has(id)) {
+    lockAfterGrade.add(id);
+    btn.disabled = true;
+    btn.textContent = "…";
+    return;
   }
-  rr.innerHTML = `
-    <div>${checked.ok ? `<span class="oktxt">ĐÚNG ✅</span>` : `<span class="badtxt">SAI ❌</span>`}</div>
-    <div>${checked.ok ? `` : `<span class="muted">Đáp án:</span> <b>${escapeHtml(checked.expected || v.meaning || "")}</b>`}</div>
-  `;
-}
 
-async function checkOne_(id, btn){
-  if (!ensureGateForQuiz_()) return;
-  if (state.checked && state.checked[id] && state.checked[id].locked) return;
-
-  const shell = document.getElementById("shell");
-  const prevScroll = shell ? shell.scrollTop : 0;
-  const focusBefore = lastFocusQid;
-
-  const input = content.querySelector(`.ansInput[data-qid="${CSS.escape(String(id))}"]`);
-  const ans = input ? String(input.value || "").trim() : "";
-  if (!ans) { toast("Chưa nhập đáp án"); return; }
-
-  if (checking.has(id)) return;
-  checking.add(id);
-
-  btn.disabled = true;
-  const oldText = btn.textContent;
-  btn.textContent = "⏳";
-
-  try {
-    const res = await postJSON({
-      action: "gradeOne",
-      name: state.name,
-      userId: USER && USER.userId ? USER.userId : "",
-      quizId: QUIZ.quizId || getQuizId(),
-      accessCode: state.accessCode || "",
-      cacheId: state.cacheId,
-      attemptId: state.attemptId,
-      vocabId: id,
-      answer: ans,
-      ua: navigator.userAgent || ""
-    });
-
-    if (!res || !res.ok || !res.item) throw new Error("Lỗi check");
-
-    state.answers[id] = ans;
-    state.checked[id] = {
-      locked: true,
-      ok: !!res.item.ok,
-      expected: String(res.item.expected || "")
-    };
-
+  // Nếu đã có kết quả chấm ngầm cho đúng câu trả lời hiện tại -> lock ngay, khỏi gọi API
+  const akey = answerKey(ans);
+  if (existed && existed.lastKey === akey && !!existed.gradedAtMs) {
+    existed.locked = true;
     scheduleSave({ mirror: true });
     scheduleCloudSave();
-
-    updateOneCardUI_(id);
+    lockUI_(id);
+    toast(existed.ok ? "ĐÚNG" : "SAI");
     updateStats();
-
-    // restore scroll (avoid jump)
-    if (shell) shell.scrollTop = prevScroll;
-
-    // keep keyboard: focus next if user was on that input
-    if (focusBefore === id) focusNextInput_(id);
-    else if (focusBefore) focusInput_(focusBefore);
-
-    toast(res.item.ok ? "ĐÚNG" : "SAI");
-  } catch (e) {
-    btn.disabled = false;
-    btn.textContent = oldText || "✅ CHECK (tùy chọn)";
-    toast("Lỗi: " + (e && e.message ? e.message : e));
-  } finally {
-    checking.delete(id);
-  }
-}
-
-function onClick(e) {
-  const btn = e.target.closest("[data-check]");
-  if (btn) {
-    const id = Number(btn.dataset.check);
-    if (!isFinite(id)) return;
-    checkOne_(id, btn);
     return;
   }
+
+  // Chưa có -> gọi API rồi lock
+  btn.disabled = true;
+  btn.textContent = "…";
+  gradeOne_(id, ans, { lock: true }).then(() => {
+    const ck = state.checked[id];
+    if (ck) toast(ck.ok ? "ĐÚNG" : "SAI");
+  }).finally(() => {
+    // nếu API fail thì mở lại nút
+    const ck = state.checked[id];
+    if (!(ck && ck.locked)) {
+      btn.disabled = false;
+      btn.textContent = "Check";
+    }
+  });
 }
 
 /********************
@@ -1377,71 +1465,70 @@ function buildWrongPopupContent() {
 }
 
 /********************
- * Leaderboard (NO %, NO horizontal scroll)
+ * Leaderboard (NO % , NO horizontal scroll)
  ********************/
-function fetchLeaderboard() {
+async function fetchLeaderboard() {
   const box = document.getElementById("lbBox");
   if (!box) return;
 
   const meNorm = normalizeName(state.name);
 
-  google.script.run
-    .withSuccessHandler((res) => {
-      const rows = (res && res.rows) ? res.rows : [];
-      if (!rows.length) {
-        box.innerHTML = `<div class="muted">Chưa có dữ liệu.</div>`;
-        return;
-      }
+  try {
+    const res = await postJSON({ action: "getLeaderboard", limit: 30, quizId: QUIZ.quizId || getQuizId() });
+    const rows = (res && res.rows) ? res.rows : [];
+    if (!rows.length) {
+      box.innerHTML = `<div class="muted">Chưa có dữ liệu.</div>`;
+      return;
+    }
 
-      const uniqueRows = rows.slice(0, 30);
+    const uniqueRows = rows.slice(0, 30);
 
-      box.innerHTML = `
-        <table class="table">
-          <colgroup>
-            <col class="lbRankCol">
-            <col>
-            <col class="lbScoreCol">
-          </colgroup>
-          <thead><tr><th>#</th><th>Tên</th><th>Điểm</th></tr></thead>
-          <tbody>
-            ${uniqueRows.map((r, index) => {
-              const rk = index + 1;
-              const medal = rk === 1 ? `<span class="medal m1">🥇</span>` :
-                            rk === 2 ? `<span class="medal m2">🥈</span>` :
-                            rk === 3 ? `<span class="medal m3">🥉</span>` : "";
-              const trClass = rk === 1 ? "toprow1" :
-                              rk === 2 ? "toprow2" :
-                              rk === 3 ? "toprow3" : "";
-              const isMe = normalizeName(r.name) === meNorm;
-              const rowClass = `${trClass} ${isMe ? "meRow" : ""}`.trim();
+    // NO overflow wrapper => luôn gọn trong màn hình
+    box.innerHTML = `
+      <table class="table">
+        <colgroup>
+          <col style="width:74px" />
+          <col />
+          <col style="width:92px" />
+        </colgroup>
+        <thead><tr><th>#</th><th>Tên</th><th>Điểm</th></tr></thead>
+        <tbody>
+          ${uniqueRows.map((r, index) => {
+            const rk = index + 1;
+            const medal = rk === 1 ? `<span class="medal m1">🥇</span>` :
+                          rk === 2 ? `<span class="medal m2">🥈</span>` :
+                          rk === 3 ? `<span class="medal m3">🥉</span>` : "";
+            const trClass = rk === 1 ? "toprow1" :
+                            rk === 2 ? "toprow2" :
+                            rk === 3 ? "toprow3" : "";
+            const isMe = normalizeName(r.name) === meNorm;
+            const rowClass = `${trClass} ${isMe ? "meRow" : ""}`.trim();
 
-              const admin = !!r.isAdmin || isAdminName(r.name);
-              const adminTag = admin ? `<span class="adminBadgeInline">ADMIN</span>` : ``;
+            const admin = !!r.isAdmin || isAdminName(r.name);
+            const adminTag = admin ? `<span class="adminBadgeInline">ADMIN</span>` : ``;
 
-              const nameCell = isMe
-                ? `<span class="meName">${escapeHtml(r.name)}</span><span class="meBadge">Bạn</span>${adminTag}`
-                : `${escapeHtml(r.name)}${adminTag}`;
+            const nameCell = isMe
+              ? `<span class="meName lbName">${escapeHtml(r.name)}</span><span class="meBadge">Bạn</span>${adminTag}`
+              : `<span class="lbName">${escapeHtml(r.name)}</span>${adminTag}`;
 
-              return `
-                <tr class="${rowClass}">
-                  <td><span class="rankpill">${medal}<span>${rk}</span></span></td>
-                  <td title="${escapeHtml(r.name)}">${nameCell}</td>
-                  <td><b>${Number(r.score10).toFixed(1)}</b>/10</td>
-                </tr>
-              `;
-            }).join("")}
-          </tbody>
-        </table>
-      `;
-    })
-    .withFailureHandler((err) => {
-      box.innerHTML = `Lỗi BXH: ${escapeHtml(err && err.message ? err.message : String(err))}`;
-    })
-    .getLeaderboard({ limit: 30, quizId: QUIZ.quizId || getQuizId() });
+            return `
+              <tr class="${rowClass}">
+                <td><span class="rankpill">${medal}<span>${rk}</span></span></td>
+                <td>${nameCell}</td>
+                <td><b>${Number(r.score10).toFixed(1)}</b>/10</td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+  } catch (err) {
+    box.innerHTML = `Lỗi BXH: ${escapeHtml(err && err.message ? err.message : String(err))}`;
+  }
 }
 
 /********************
- * Discussion (INLINE after results) - OPTIMISTIC UI
+ * Discussion - OPTIMISTIC UI
  ********************/
 const DISCUSS_MAX = 120;
 
@@ -1628,20 +1715,18 @@ function renderDiscuss_(){
       wrap.innerHTML = `
         <div class="cmtHead">
           <div class="cmtAuthor">
-            <span title="${escapeHtml(root.author || "—")}">${escapeHtml(root.author || "—")}</span>
+            <span>${escapeHtml(root.author || "—")}</span>
             ${admin ? `<span class="adminBadgeInline">ADMIN</span>` : ``}
-          </div>
-
-          <div class="cmtRight">
-            <div class="cmtActionsInline">
-              <button class="cmtBtn" data-reply="${escapeHtml(root.id)}">↩️ Trả lời</button>
-              ${canDel ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(root.id)}">🗑️ Xóa</button>` : ``}
-            </div>
-            <div class="cmtTime">${escapeHtml(timeLabel)}</div>
           </div>
         </div>
 
         <div class="cmtText">${escapeHtml(root.text || "")}</div>
+
+        <div class="cmtActions">
+          <button class="cmtBtn" data-reply="${escapeHtml(root.id)}">Trả lời</button>
+          ${canDel ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(root.id)}">Xóa</button>` : ``}
+        </div>
+        <div class="cmtTime">${escapeHtml(timeLabel)}</div>
 
         <div class="replySlot" data-slot="${escapeHtml(root.id)}"></div>
         <div class="replyWrap" data-replies="${escapeHtml(root.id)}"></div>
@@ -1666,12 +1751,12 @@ function renderDiscuss_(){
         `;
       }
 
-      // replies (1 level)
+      // replies (1 level) - KHÔNG hiện "chưa có trả lời"
       const rWrap = wrap.querySelector(`[data-replies="${CSS.escape(String(root.id))}"]`);
       const replies = Array.isArray(root.replies) ? root.replies : [];
       if (rWrap) {
         if (!replies.length) {
-          rWrap.innerHTML = `<div class="muted">Chưa có trả lời.</div>`;
+          rWrap.innerHTML = ""; // không hiện gì
         } else {
           rWrap.innerHTML = "";
           replies.forEach(r => {
@@ -1686,17 +1771,17 @@ function renderDiscuss_(){
             item.innerHTML = `
               <div class="cmtHead">
                 <div class="cmtAuthor">
-                  <span title="${escapeHtml(r.author || "—")}">${escapeHtml(r.author || "—")}</span>
+                  <span>${escapeHtml(r.author || "—")}</span>
                   ${rAdmin ? `<span class="adminBadgeInline">ADMIN</span>` : ``}
                 </div>
-                <div class="cmtRight">
-                  <div class="cmtActionsInline">
-                    ${rCanDel ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(r.id)}">🗑️ Xóa</button>` : ``}
-                  </div>
-                  <div class="cmtTime">${escapeHtml(rTimeLabel)}</div>
-                </div>
               </div>
+
               <div class="cmtText">${escapeHtml(r.text || "")}</div>
+
+              <div class="cmtActions">
+                ${rCanDel ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(r.id)}">Xóa</button>` : ``}
+              </div>
+              <div class="cmtTime">${escapeHtml(rTimeLabel)}</div>
             `;
             rWrap.appendChild(item);
           });
@@ -1705,17 +1790,9 @@ function renderDiscuss_(){
     });
   }
 
-  // update root counter
   if (rootInput && rootCount) rootCount.textContent = String((rootInput.value||"").length);
 }
 
-function findRootById_(id){
-  const tree = DISCUSS.tree || [];
-  for (let i=0;i<tree.length;i++){
-    if (String(tree[i].id) === String(id)) return tree[i];
-  }
-  return null;
-}
 function removeNodeById_(id){
   const tree = DISCUSS.tree || [];
   const nid = String(id);
@@ -1739,7 +1816,7 @@ function isValidDiscussText_(t){
 }
 
 async function ensureDiscussionLoaded_(force=false){
-  if (!state.finalized || !state.result) return;
+  if (!state.finalized) return;
   if (DISCUSS.loading) return;
   if (DISCUSS.loaded && !force) return;
 
@@ -1823,7 +1900,7 @@ async function optimisticAddComment_({ text, parentId }){
   if (!node.parentId) {
     DISCUSS.tree.push(node);
   } else {
-    const root = findRootById_(node.parentId);
+    const root = (DISCUSS.tree||[]).find(x => String(x.id) === String(node.parentId));
     if (root) {
       root.replies = Array.isArray(root.replies) ? root.replies : [];
       root.replies.push(node);
@@ -1895,6 +1972,10 @@ async function optimisticDeleteComment_(id){
   const sid = String(id||"").trim();
   if (!sid) return;
 
+  // confirm
+  const ok = confirm("Xóa bình luận này?");
+  if (!ok) return;
+
   if (isTempId_(sid) && pendingTempIds.has(sid)) {
     pendingTempIds.delete(sid);
     removeNodeById_(sid);
@@ -1904,6 +1985,7 @@ async function optimisticDeleteComment_(id){
   }
 
   markDeleted_(sid);
+
   removeNodeById_(sid);
   renderDiscuss_();
   toast("Đã xóa");
@@ -1916,9 +1998,7 @@ async function optimisticDeleteComment_(id){
       name: state.name,
       id: sid
     });
-  } catch (e) {
-    // vẫn giữ tombstone để khỏi nhảy lại
-  }
+  } catch (e) {}
 
   setTimeout(() => { ensureDiscussionLoaded_(true); }, 650);
 }
@@ -1944,11 +2024,6 @@ function bindDiscussionEvents_(){
     if (delBtn) {
       const id = String(delBtn.getAttribute("data-del")||"");
       if (!id) return;
-
-      // CONFIRM DELETE (as requested)
-      const ok = confirm("Xóa bình luận này?");
-      if (!ok) return;
-
       optimisticDeleteComment_(id);
       return;
     }
@@ -2014,28 +2089,41 @@ function attachDiscussionObserver_(){
 }
 
 /********************
- * Result view (Discussion section nằm dưới cùng)
+ * Result view (hiện ngay; nếu chưa có result => "đang tính điểm...")
  ********************/
 function renderResultView() {
+  setView("result");
   setDiscussFabVisible(true);
-  setSubmitBtnVisible(false);
 
   content.innerHTML = "";
   const r = state.result;
 
   const sum = document.createElement("div");
   sum.className = "card";
-  sum.innerHTML = `
-    <div class="row1">
-      <p class="vi">Kết quả</p>
-      <div class="meta"><span class="idx">DONE</span></div>
-    </div>
-    <div style="margin-top:10px; display:grid; gap:8px;">
-      <div class="pill">Điểm: <strong>${r.score10.toFixed(1)}</strong>/10</div>
-      <div class="pill">Đúng: <strong>${r.correctCount}</strong>/<span>${r.totalCount}</span></div>
-      <button class="btn btn-primary" id="btnShowWrong" style="justify-content:center;">📌 Xem câu sai</button>
-    </div>
-  `;
+
+  if (!r) {
+    sum.innerHTML = `
+      <div class="row1">
+        <p class="vi">Kết quả</p>
+        <div class="meta"><span class="idx">ĐANG TÍNH</span></div>
+      </div>
+      <div class="muted" style="margin-top:10px; line-height:1.35">
+        Đang tính điểm...
+      </div>
+    `;
+  } else {
+    sum.innerHTML = `
+      <div class="row1">
+        <p class="vi">Kết quả</p>
+        <div class="meta"><span class="idx">DONE</span></div>
+      </div>
+      <div style="margin-top:10px; display:grid; gap:8px;">
+        <div class="pill">Điểm: <strong>${Number(r.score10).toFixed(1)}/10</strong></div>
+        <div class="pill">Đúng: <strong>${r.correctCount}</strong>/${r.totalCount}</div>
+        <button class="btn btn-primary" id="btnShowWrong" style="justify-content:center;">📌 Xem câu sai</button>
+      </div>
+    `;
+  }
   content.appendChild(sum);
 
   const lb = document.createElement("div");
@@ -2045,11 +2133,10 @@ function renderResultView() {
       <p class="vi">Bảng xếp hạng</p>
       <div class="meta"><span class="idx">TOP</span></div>
     </div>
-    <div id="lbBox" class="muted" style="margin-top:10px">Đang tải…</div>
+    <div id="lbBox" class="muted" style="margin-top:10px; overflow-x:hidden;">Đang tải…</div>
   `;
   content.appendChild(lb);
 
-  // Discussion section (inline)
   const discuss = document.createElement("div");
   discuss.className = "card";
   discuss.id = "discussionSection";
@@ -2073,10 +2160,12 @@ function renderResultView() {
   `;
   content.appendChild(discuss);
 
-  document.getElementById("btnShowWrong").addEventListener("click", () => {
-    buildWrongPopupContent();
-    openWrongPopup();
-  });
+  if (r) {
+    document.getElementById("btnShowWrong").addEventListener("click", () => {
+      buildWrongPopupContent();
+      openWrongPopup();
+    });
+  }
 
   fetchLeaderboard();
 
@@ -2093,185 +2182,122 @@ function renderResultView() {
   updateStats();
 }
 
-/* Result loading view: show immediately on submit */
-function renderResultLoadingView(msg){
-  setDiscussFabVisible(false);
-  setSubmitBtnVisible(false);
-
-  content.innerHTML = "";
-
-  const sum = document.createElement("div");
-  sum.className = "card";
-  sum.innerHTML = `
-    <div class="row1">
-      <p class="vi">Kết quả</p>
-      <div class="meta"><span class="idx">⏳</span></div>
-    </div>
-    <div class="muted" style="margin-top:10px; line-height:1.35;">
-      <b>Đang tính điểm...</b><br/>
-      <span id="gradingMsg">${escapeHtml(msg || "Vui lòng chờ")}</span>
-    </div>
-  `;
-  content.appendChild(sum);
-
-  const lb = document.createElement("div");
-  lb.className = "card";
-  lb.innerHTML = `
-    <div class="row1">
-      <p class="vi">Bảng xếp hạng</p>
-      <div class="meta"><span class="idx">TOP</span></div>
-    </div>
-    <div class="muted" style="margin-top:10px">Sẽ hiện sau khi chấm xong.</div>
-  `;
-  content.appendChild(lb);
-
-  updateStats();
-}
-
-function setGradingMsg_(s){
-  const el = document.getElementById("gradingMsg");
-  if (el) el.textContent = String(s||"");
-}
-
 /********************
- * Finalize helpers (Submit without pressing check)
+ * Submit: hiện trang kết quả LIỀN, rồi tính điểm sau
  ********************/
 function getMissingQuestions_(){
   const order = state.order && state.order.length ? state.order : (QUIZ.vocabs||[]).map(v=>v.id);
-  const missNos = [];
+  const missing = [];
   for (let i=0;i<order.length;i++){
     const id = order[i];
-    const ans = String((state.answers||{})[id] || "").trim();
-    if (!ans) missNos.push(i+1); // display number
+    const ans = String(state.answers[id] ?? "").trim();
+    if (!ans) missing.push(i+1);
   }
-  return missNos;
+  return missing;
 }
 
-async function gradeAllAnswers_(){
+async function flushPendingGrades_(){
+  // stop timers
+  for (const [id, tm] of gradeTimers.entries()) {
+    clearTimeout(tm);
+    gradeTimers.delete(id);
+  }
+
   const order = state.order && state.order.length ? state.order : (QUIZ.vocabs||[]).map(v=>v.id);
-  const targets = order.filter(id => !(state.checked && state.checked[id] && state.checked[id].locked));
+  const tasks = [];
 
-  if (!targets.length) return;
+  for (const id of order) {
+    const ans = String(state.answers[id] ?? "").trim();
+    if (!ans) continue;
 
-  const concurrency = 6;
-  let done = 0;
-  let idx = 0;
+    const ck = state.checked && state.checked[id];
+    if (ck && ck.locked) continue;
 
-  async function worker(){
-    while (idx < targets.length) {
-      const my = targets[idx++];
-      const ans = String((state.answers||{})[my] || "").trim();
+    const akey = answerKey(ans);
+    if (ck && ck.lastKey === akey && !!ck.gradedAtMs) continue;
 
-      try {
-        const res = await postJSON({
-          action: "gradeOne",
-          name: state.name,
-          userId: USER && USER.userId ? USER.userId : "",
-          quizId: QUIZ.quizId || getQuizId(),
-          accessCode: state.accessCode || "",
-          cacheId: state.cacheId,
-          attemptId: state.attemptId,
-          vocabId: my,
-          answer: ans,
-          ua: navigator.userAgent || ""
-        });
-
-        if (res && res.item) {
-          state.checked[my] = {
-            locked: true,
-            ok: !!res.item.ok,
-            expected: String(res.item.expected || "")
-          };
-        }
-      } catch(e) {
-        // ignore per-item error; continue to keep flow
-      } finally {
-        done++;
-        setGradingMsg_(`Đang chấm ${done}/${targets.length}...`);
-        scheduleSave({ mirror: true });
-      }
-    }
+    // chấm ngầm thiếu (hiếm) -> cho vào task
+    tasks.push(gradeOne_(id, ans, { lock: false }));
   }
 
-  const workers = [];
-  for (let i=0;i<Math.min(concurrency, targets.length); i++){
-    workers.push(worker());
+  // chờ vừa đủ để finalize có dữ liệu; UI đã chuyển sang kết quả nên không "chờ bấm"
+  if (tasks.length) {
+    try { await Promise.allSettled(tasks); } catch(e){}
   }
-  await Promise.all(workers);
 }
 
-async function finalizeFlow_(){
-  if (!ensureGateForQuiz_()) return;
+async function finalizeAttemptAsync_(){
+  const res = await postJSON({
+    action: "finalizeAttempt",
+    name: state.name,
+    userId: USER && USER.userId ? USER.userId : "",
+    quizId: QUIZ.quizId || getQuizId(),
+    accessCode: state.accessCode || "",
+    cacheId: state.cacheId,
+    attemptId: state.attemptId
+  });
+  return res;
+}
+
+document.getElementById("btnSubmit").addEventListener("click", () => {
+  if (!state.name) { toast("Thiếu username"); renderGateView(); return; }
   if (state.finalized) return;
 
   const missing = getMissingQuestions_();
-  if (missing.length > 0) {
+  if (missing.length) {
     let msg = "";
     if (missing.length > 5) {
-      msg = `Bạn còn ${missing.length} câu chưa làm.\nNộp luôn?`;
+      msg = `Bạn còn ${missing.length} câu chưa làm hoặc nhiều hơn.\nNộp vẫn tính sai các câu đó.\n\nNộp bài?`;
     } else {
-      msg = `Bạn còn câu ${missing.join(", ")} chưa làm.\nNộp luôn?`;
+      msg = `Bạn còn câu ${missing.join(", ")} chưa làm.\nNộp vẫn tính sai các câu đó.\n\nNộp bài?`;
     }
     const ok = confirm(msg);
     if (!ok) return;
   }
 
-  // show result screen immediately
+  // UI: chuyển sang kết quả liền
   state.finalized = true;
   state.result = null;
-  renderResultLoadingView(missing.length ? "Đang chấm cả bài (kể cả câu chưa làm)..." : "Đang chấm cả bài...");
   scheduleSave({ mirror: true });
   scheduleCloudSave();
-  updateStats();
+  renderResultView();
+  toast("Đang tính điểm...");
 
-  try {
-    if (!state.attemptId) state.attemptId = randId("attempt");
+  // tính sau (không làm user thấy “bấm không ăn”)
+  setTimeout(async () => {
+    try {
+      await flushPendingGrades_();
 
-    await gradeAllAnswers_();
+      const res = await finalizeAttemptAsync_();
+      if (!res || !res.ok || !res.result) throw new Error("Finalize lỗi");
 
-    const fin = await postJSON({
-      action: "finalizeAttempt",
-      name: state.name,
-      userId: USER && USER.userId ? USER.userId : "",
-      quizId: QUIZ.quizId || getQuizId(),
-      accessCode: state.accessCode || "",
-      cacheId: state.cacheId,
-      attemptId: state.attemptId
-    });
+      state.result = res.result;
 
-    if (!fin || !fin.ok || !fin.result) throw new Error("Finalize lỗi");
+      state.history = Array.isArray(state.history) ? state.history : [];
+      state.history.push({
+        ts: Date.now(),
+        score10: state.result.score10,
+        correctCount: state.result.correctCount,
+        totalCount: state.result.totalCount
+      });
 
-    state.result = fin.result;
+      scheduleSave({ mirror: true });
+      scheduleCloudSave();
 
-    state.history = Array.isArray(state.history) ? state.history : [];
-    state.history.push({
-      ts: Date.now(),
-      scorePercent: state.result.scorePercent,
-      score10: state.result.score10,
-      correctCount: state.result.correctCount,
-      totalCount: state.result.totalCount
-    });
-
-    scheduleSave({ mirror: true });
-    scheduleCloudSave();
-
-    renderResultView();
-    toast("Xong");
-  } catch (e) {
-    // fail-safe: allow user retry
-    toast("Lỗi tính điểm");
-    state.finalized = false;
-    state.result = null;
-    scheduleSave({ mirror: true });
-    renderQuizView();
-  }
-}
-
-/********************
- * Submit button
- ********************/
-document.getElementById("btnSubmit").addEventListener("click", () => {
-  finalizeFlow_();
+      renderResultView();
+      toast("Xong");
+    } catch (e) {
+      // nếu lỗi finalize -> quay lại làm bài
+      state.finalized = false;
+      state.result = null;
+      scheduleSave({ mirror: true });
+      scheduleCloudSave();
+      toast("Nộp lỗi, thử lại");
+      renderQuizView();
+    } finally {
+      updateStats();
+    }
+  }, 0);
 });
 
 /********************
@@ -2328,7 +2354,7 @@ document.getElementById("btnScrollTop").addEventListener("click", () => {
  * Discuss button: scroll xuống phần thảo luận (chỉ sau khi xong)
  ********************/
 document.getElementById("btnDiscuss").addEventListener("click", async () => {
-  if (!(state.finalized && state.result)) return;
+  if (!state.finalized) return;
   const sec = document.getElementById("discussionSection");
   if (!sec) return;
 
@@ -2414,9 +2440,7 @@ async function loadBootstrapOrFallback_(){
     }
 
     return;
-  } catch(e){
-    // fallback below
-  }
+  } catch(e){}
 
   const quizData = await postJSON({ action: "getQuizData", quizId: getQuizId() });
   applyQuiz_(quizData);
@@ -2430,7 +2454,7 @@ async function loadBootstrapOrFallback_(){
 }
 
 /********************
- * Boot: SHOW LOADING FIRST, then gate
+ * Boot
  ********************/
 function parseHashCacheId() {
   try {
