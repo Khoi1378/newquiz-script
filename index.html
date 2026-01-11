@@ -1368,8 +1368,8 @@ function openProfileModal_(){
     const nextOk = last ? (last + 30*DAY) : 0;
     const canRename = (!last) || (now >= nextOk);
 
-    if (canRename) hintEl.textContent = "Lần đổi hợp lệ: ngay bây giờ.";
-    else hintEl.textContent = "Lần đổi hợp lệ: " + formatTs(nextOk);
+    if (canRename) hintEl.textContent = "Có thể đổi  username ngay bây giờ.";
+    else hintEl.textContent = "Có thể đổi  username vào " + formatTs(nextOk);
 
     if (newUsernameEl) {
       newUsernameEl.disabled = false;
