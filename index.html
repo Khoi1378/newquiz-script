@@ -33,6 +33,7 @@
     #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 110px; }
     .wrap { max-width: 980px; margin: 0 auto; padding: 0 14px; }
 
+    /* username corner (nhạt góc trái trên) */
     .userCorner {
       position: fixed;
       top: 10px;
@@ -95,6 +96,7 @@
       box-shadow: 0 12px 24px rgba(124,58,237,.18);
     }
 
+    /* CHECK: nhỏ, chữ "Check" */
     .btn-check {
       border-radius: 12px;
       padding: 9px 10px;
@@ -178,6 +180,7 @@
     }
     .input[disabled] { background: #f3f4f6; color: #111827; }
 
+    /* row input + check */
     .qaRow{
       display:flex;
       gap:10px;
@@ -210,7 +213,7 @@
       border-radius: 16px;
       border: 1px solid #e5e7eb;
       background: #fff;
-      table-layout: fixed;
+      table-layout: fixed; /* quan trọng: không tràn ngang */
     }
     .table th, .table td {
       padding: 10px 10px;
@@ -279,6 +282,7 @@
       white-space: nowrap;
     }
 
+    /* leaderboard: cột tên ellipsis */
     .lbName{
       white-space: nowrap;
       overflow: hidden;
@@ -287,12 +291,11 @@
       width: 100%;
     }
 
-    /* ===== MODALS ===== */
     .modal-backdrop {
       position: fixed; inset: 0; background: rgba(0,0,0,.35);
       display: none; align-items: center; justify-content: center;
       padding: 16px;
-      z-index: 11000; /* FIX: luôn nằm trên userCorner */
+      z-index: 10001;
     }
     .modal-backdrop.show { display: flex; }
     .modal {
@@ -311,11 +314,6 @@
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
     .btn-ghost { background: #fff; color: #111827; border: 1px solid #e5e7eb; box-shadow: none; }
     .btn-danger { background: var(--bad); color: #fff; border: 0; }
-
-    /* FIX: đảm bảo PIN modal luôn nổi trên Profile modal */
-    #profileBackdrop { z-index: 11000; }
-    #wrongBackdrop { z-index: 11010; }
-    #pinBackdrop { z-index: 11020; }
 
     .xclose { position: sticky; top: 0; display: flex; justify-content: flex-end; z-index: 2; margin-bottom: 4px; }
     .btn-x {
@@ -340,11 +338,12 @@
       opacity: 0; pointer-events: none;
       transition: opacity .18s ease, transform .18s ease;
       max-width: calc(100% - 28px);
-      z-index: 11030; /* FIX: luôn trên modal */
+      z-index: 10003;
       text-align: center;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
 
+    /* Discussion button (small, only after done) */
     .fabDiscuss {
       position: fixed;
       right: 14px;
@@ -357,6 +356,7 @@
       font-size: .86rem;
     }
 
+    /* Discussion styles */
     .cmtBox { display: grid; gap: 12px; }
     .cmtItem {
       border: 1px solid #e5e7eb;
@@ -371,14 +371,14 @@
     }
     .cmtAuthor {
       font-weight: 950;
-      color: #6b7280;
+      color: #6b7280; /* username xám */
       display:flex; gap: 8px; align-items:center; flex-wrap: wrap;
     }
     .cmtText { color: #111827; font-weight: 750; line-height: 1.35; white-space: pre-wrap; word-break: break-word; }
     .cmtActions {
       display:flex; gap: 8px; flex-wrap: wrap;
       margin-top: 10px;
-      justify-content: flex-end;
+      justify-content: flex-end; /* dồn sang phải */
     }
     .cmtBtn {
       border-radius: 999px;
@@ -387,7 +387,7 @@
       border: 1px solid #e5e7eb;
       background: #fff;
       cursor: pointer;
-      font-size: .82rem;
+      font-size: .82rem; /* nhỏ hơn */
     }
     .cmtBtnDanger { background: rgba(220,38,38,.1); border-color: rgba(220,38,38,.25); color: #991b1b; }
     .cmtTime {
@@ -418,7 +418,11 @@
       color: #6b7280; font-weight: 800; font-size: .85rem;
     }
 
-    .pinWrap{ display:grid; gap:12px; }
+    /* ===== PIN / PROFILE UI ===== */
+    .pinWrap{
+      display:grid;
+      gap:12px;
+    }
     .pinDots{
       display:flex;
       justify-content:center;
@@ -537,12 +541,14 @@
     </div>
   </div>
 
+  <!-- Small Discuss Button (ONLY after finished) -->
   <div class="fabDiscuss" id="fabDiscuss">
     <button class="btn btn-discuss-mini" id="btnDiscuss">💬 Thảo luận</button>
   </div>
 
   <div class="toast" id="toast"></div>
 
+  <!-- Reset Confirmation Modal -->
   <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <h3 id="modalTitle">Làm lại bài?</h3>
@@ -554,6 +560,7 @@
     </div>
   </div>
 
+  <!-- Wrong Answers Popup -->
   <div class="modal-backdrop" id="wrongBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="wrongTitle">
       <div class="xclose">
@@ -564,6 +571,7 @@
     </div>
   </div>
 
+  <!-- PIN Modal (keypad) -->
   <div class="modal-backdrop" id="pinBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
       <div class="xclose">
@@ -580,6 +588,7 @@
     </div>
   </div>
 
+  <!-- Profile Modal -->
   <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
       <div class="xclose">
@@ -631,6 +640,11 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwBxow4PSYa87a2_zJKpGS_
 const USER_KEY = "tk_user_v1";
 const BAD_SUBSTRINGS = ["du","dit","lon","cac","cho","fuck","shit","dick","pussy"];
 const ADMIN_NORM = "tuankhoi";
+
+/********************
+ * Special admin pin (front-end fallback)
+ ********************/
+const ADMIN_PIN = "072008"; // tuankhoi: 6 số
 
 /********************
  * Quiz id
@@ -708,13 +722,6 @@ function installGoogleScriptRunPolyfill() {
 
 function gasAvailable() {
   return !!(API_URL && API_URL.startsWith("http"));
-}
-
-/********************
- * UI paint helper (FIX: bấm là thấy ngay)
- ********************/
-function nextPaint_(){
-  return new Promise(r => requestAnimationFrame(() => r()));
 }
 
 /********************
@@ -802,7 +809,7 @@ function isDigitsOnly(s){
 }
 
 /********************
- * PIN Modal (keypad)
+ * PIN Modal (keypad) - nhanh hơn (keypad build 1 lần)
  ********************/
 const pinBackdrop = document.getElementById("pinBackdrop");
 const pinTitle = document.getElementById("pinTitle");
@@ -819,8 +826,8 @@ let PIN_MODAL = {
   resolve: null,
   reject: null,
   username: "",
-  mode: "login",
-  step: "one",
+  mode: "login", // login | set | change
+  step: "one",   // set: one|confirm ; change: old|new1|confirm
   pinLen: 4,
   value: "",
   first: "",
@@ -920,7 +927,7 @@ function openPinModal_({ username, mode="login", pinLen=4, firstPin="" }){
     if (mode === "set") {
       if (firstPin) {
         PIN_MODAL.first = String(firstPin||"");
-        PIN_MODAL.step = "confirm";
+        PIN_MODAL.step = "confirm"; // chỉ nhập lại 1 lần để đủ 2 lần
       } else {
         PIN_MODAL.step = "one";
       }
@@ -935,7 +942,6 @@ function openPinModal_({ username, mode="login", pinLen=4, firstPin="" }){
     updatePinHeader_();
     updateDots_();
 
-    // FIX: đảm bảo PIN modal luôn nổi
     pinBackdrop.classList.add("show");
     pinBackdrop.setAttribute("aria-hidden", "false");
   });
@@ -982,6 +988,7 @@ function onPinKey_(k){
 
   if (PIN_MODAL.value.length !== PIN_MODAL.pinLen) return;
 
+  // finalize this step
   const mode = PIN_MODAL.mode;
 
   if (mode === "login") {
@@ -1039,6 +1046,7 @@ function onPinKey_(k){
       return;
     }
 
+    // confirm
     const new1 = PIN_MODAL.first;
     const new2 = PIN_MODAL.value;
 
@@ -1081,8 +1089,11 @@ function openProfileModal_(){
   const nextOk = last ? (last + 30*DAY) : 0;
   const canRename = (!last) || (now >= nextOk);
 
-  if (canRename) hintEl.textContent = "Lần đổi hợp lệ: ngay bây giờ.";
-  else hintEl.textContent = "Lần đổi hợp lệ: " + formatTs(nextOk);
+  if (canRename) {
+    hintEl.textContent = "Lần đổi hợp lệ: ngay bây giờ.";
+  } else {
+    hintEl.textContent = "Lần đổi hợp lệ: " + formatTs(nextOk);
+  }
 
   document.getElementById("newUsername").value = "";
 
@@ -1189,7 +1200,7 @@ let state = {
   attemptId: "",
   order: [],
   answers: {},
-  checked: {},
+  checked: {},   // { [vocabId]: { locked, ok, expected, lastKey, gradedAtMs } }
   finalized: false,
   result: null,
   history: [],
@@ -1199,9 +1210,9 @@ let state = {
 let USER = null;
 
 /********************
- * View control
+ * View control: ẩn Nộp bài ở trang vào làm + trang kết quả
  ********************/
-let CURRENT_VIEW = "boot";
+let CURRENT_VIEW = "boot"; // boot|gate|quiz|result
 function setView(v){
   CURRENT_VIEW = v;
   const btnSubmit = document.getElementById("btnSubmit");
@@ -1323,6 +1334,7 @@ function updateStats() {
   const btnSubmit = document.getElementById("btnSubmit");
   if (btnSubmit) btnSubmit.disabled = !canSubmit;
 
+  // Discuss button only after finished
   setDiscussFabVisible(!!(state.finalized));
 }
 
@@ -1331,6 +1343,7 @@ function updateStats() {
  ********************/
 const content = document.getElementById("content");
 
+/* Boot loading screen with dots . .. ... */
 let BOOT_LOADER = { timer: null, dots: 1 };
 function showBootLoading(msg){
   setView("boot");
@@ -1366,6 +1379,7 @@ function hideBootLoading(){
   BOOT_LOADER.timer = null;
 }
 
+/* Gate state */
 let GATE = { ready: false, status: "Sẵn sàng." };
 function setGateStatus(msg){
   GATE.status = String(msg||"");
@@ -1379,12 +1393,14 @@ function setGateReady(ready){
 }
 
 /********************
- * Account API
+ * Account API (new)
  ********************/
 async function apiCheckUsername_(username){
+  // expected: { exists: true/false, userId?, pinLen? }
   return await postJSON({ action:"checkUsername", username: String(username||"").trim() });
 }
 async function apiLoginUser_(username, pin){
+  // expected: { user: {userId, username, lastRenameAtMs?} } or {userId, username,...}
   return await postJSON({ action:"loginUser", username: String(username||"").trim(), pin: String(pin||""), ua: navigator.userAgent || "" });
 }
 async function apiRegisterUser_(username, pin){
@@ -1412,7 +1428,7 @@ async function apiChangePassword_(oldPin, newPin){
 }
 
 /********************
- * Gate view (FIX: tách bạch sai MK vs không tồn tại)
+ * Gate view (fix: login chỉ nhập 1 lần, register/đổi mk mới nhập 2 lần)
  ********************/
 function renderGateView() {
   setView("gate");
@@ -1479,6 +1495,7 @@ function renderGateView() {
     return;
   }
 
+  // USERNAME INPUT MODE
   c.innerHTML = `
     <div class="row1">
       <p class="vi">Nhập USERNAME</p>
@@ -1500,11 +1517,11 @@ function renderGateView() {
   const saveBtn = c.querySelector("#btnSaveName");
   try { nameInput.focus(); } catch(e){}
 
-  async function finalizeLogin_(u){
+  async function finalizeLogin_(u, serverUserId){
     if (!u || !u.username) { toast("Đăng nhập lỗi"); return; }
 
     USER = {
-      userId: u.userId || randId("u"),
+      userId: u.userId || serverUserId || randId("u"),
       username: u.username,
       lastRenameAtMs: u.lastRenameAtMs || 0
     };
@@ -1523,41 +1540,62 @@ function renderGateView() {
     else renderGateView();
   }
 
-  async function flowLogin_(username, pinLen){
+  async function flowLogin_(username, pinLen, serverUserId){
     const pin = await openPinModal_({ username, mode:"login", pinLen });
+
     if (!isDigitsOnly(pin)) { toast("Mật khẩu chỉ gồm số"); return; }
 
-    setGateStatus("Đang đăng nhập…");
-    await nextPaint_();
-
-    try {
-      const res = await apiLoginUser_(username, pin);
-      const u = (res && res.user) ? res.user : res;
-      await finalizeLogin_(u);
-      toast("Đăng nhập thành công");
-    } catch(e){
-      toast((e && e.message) ? e.message : "Sai mật khẩu");
-      setGateStatus((e && e.message) ? e.message : "Sai mật khẩu");
+    // tuankhoi: front-end check
+    if (isAdminName(username)) {
+      if (String(pin) !== ADMIN_PIN) { toast("Sai mật khẩu"); return; }
     }
+
+    setGateStatus("Đang đăng nhập…");
+    let res;
+    try {
+      res = await apiLoginUser_(username, pin);
+    } catch(e){
+      toast("Sai mật khẩu");
+      return;
+    }
+    const u = (res && res.user) ? res.user : res;
+    await finalizeLogin_(u, serverUserId);
+    toast("Đăng nhập thành công");
   }
 
-  async function flowRegister_(username, pinLen){
-    const pin = await openPinModal_({ username, mode:"set", pinLen, firstPin: "" });
+  async function flowRegister_(username, pinLen, firstPin){
+    const pin = await openPinModal_({ username, mode:"set", pinLen, firstPin: firstPin || "" });
+
     if (!isDigitsOnly(pin)) { toast("Mật khẩu chỉ gồm số"); return; }
     if (String(pin).length !== pinLen) { toast(`Mật khẩu phải ${pinLen} số`); return; }
 
-    setGateStatus("Đang tạo tài khoản…");
-    await nextPaint_();
-
-    try{
-      const res = await apiRegisterUser_(username, pin);
-      const u = res.user ? res.user : res;
-      await finalizeLogin_(u);
-      toast("Đã đăng ký & đăng nhập");
-    } catch(e){
-      toast((e && e.message) ? e.message : "Tạo tài khoản lỗi");
-      setGateStatus((e && e.message) ? e.message : "Tạo tài khoản lỗi");
+    // (Tuankhoi nếu ai đó cố tạo) yêu cầu đúng 072008
+    if (isAdminName(username) && String(pin) !== ADMIN_PIN) {
+      toast("Sai mật khẩu cho tuankhoi");
+      return;
     }
+
+    setGateStatus("Đang tạo tài khoản…");
+    const res = await apiRegisterUser_(username, pin);
+
+    const u = res.user ? res.user : res;
+    if (!u || !u.userId || !u.username) throw new Error("registerUser lỗi.");
+
+    USER = { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
+    saveUser(USER);
+
+    state.name = USER.username;
+    state.cacheId = USER.userId;
+    ensureCacheId();
+
+    if (!state.attemptId) state.attemptId = randId("attempt");
+    scheduleSave({ mirror: true });
+    scheduleCloudSave();
+    updateStats();
+
+    toast("Đã đăng ký & đăng nhập");
+    if (QUIZ_LOADED) renderQuizView();
+    else renderGateView();
   }
 
   const doFlow = async () => {
@@ -1565,39 +1603,70 @@ function renderGateView() {
     const err = validateUsername(username);
     if (err) { toast(err); return; }
 
+    // tuankhoi: 6 số; user: 4 số
     const defaultPinLen = isAdminName(username) ? 6 : 4;
 
     try {
       saveBtn.disabled = true;
       saveBtn.textContent = "⏳";
       setGateStatus("Đang kiểm tra…");
-      await nextPaint_();
 
-      const ck = await apiCheckUsername_(username);
-      if (!ck || typeof ck.exists !== "boolean") throw new Error("Không kiểm tra được username.");
+      let exists = null;          // null = unknown
+      let serverUserId = "";
+      let serverPinLen = 0;
 
-      if (ck.exists === true) {
-        const wantLen = Number(ck.pinLen) || defaultPinLen;
-        await flowLogin_(username, wantLen);
+      try {
+        const ck = await apiCheckUsername_(username);
+        if (ck && typeof ck.exists === "boolean") {
+          exists = ck.exists;
+          serverUserId = String((ck && ck.userId) ? ck.userId : "");
+          serverPinLen = Number((ck && ck.pinLen) ? ck.pinLen : 0) || 0;
+        }
+      } catch(e){
+        exists = null;
+      }
+
+      if (exists === true) {
+        const wantLen = serverPinLen || defaultPinLen;
+        await flowLogin_(username, wantLen, serverUserId);
         return;
       }
 
-      if (ck.exists === false) {
-        await flowRegister_(username, defaultPinLen);
+      if (exists === false) {
+        await flowRegister_(username, defaultPinLen, "");
         return;
       }
 
-      throw new Error("Không kiểm tra được username.");
+      // UNKNOWN: thử đăng nhập trước (chỉ nhập 1 lần). Nếu fail thì hỏi có đăng ký không.
+      const pinTry = await openPinModal_({ username, mode:"login", pinLen: defaultPinLen });
+      if (!isDigitsOnly(pinTry)) { toast("Mật khẩu chỉ gồm số"); return; }
+      if (isAdminName(username) && String(pinTry) !== ADMIN_PIN) { toast("Sai mật khẩu"); return; }
+
+      setGateStatus("Đang đăng nhập…");
+      try {
+        const res = await apiLoginUser_(username, pinTry);
+        const u = (res && res.user) ? res.user : res;
+        await finalizeLogin_(u, serverUserId);
+        toast("Đăng nhập thành công");
+        return;
+      } catch(e){
+        const ok = confirm("Sai mật khẩu hoặc username chưa tồn tại.\nTạo tài khoản mới với username này?");
+        if (!ok) { toast("Hủy"); return; }
+        // đăng ký: nhập lại 1 lần nữa để đủ 2 lần (nhanh)
+        await flowRegister_(username, defaultPinLen, String(pinTry));
+        return;
+      }
+
     } catch (e) {
       if (e && e.message === "cancel") {
         // user đóng modal
       } else {
         toast((e && e.message) ? e.message : String(e));
-        setGateStatus((e && e.message) ? e.message : "Lỗi");
       }
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = "➡️ Tiếp tục";
+      setGateStatus(GATE.status || "Sẵn sàng.");
     }
   };
 
@@ -1611,20 +1680,82 @@ function renderGateView() {
 }
 
 /********************
- * Quiz rendering (giữ nguyên logic cũ của bạn)
- * (Phần dưới đây mình giữ nguyên như file của bạn để không phá tính năng)
+ * Quiz rendering
  ********************/
+function buildQuizHTML() {
+  const order = state.order && state.order.length ? state.order : QUIZ.vocabs.map(v => v.id);
+  let html = "";
 
-/* --- START: phần còn lại y nguyên như bản bạn gửi --- */
+  order.forEach((id, idx) => {
+    const v = VMAP.get(id);
+    if (!v) return;
+
+    const displayNo = idx + 1;
+    const typed = String(state.answers[id] ?? "");
+    const checked = state.checked && state.checked[id];
+    const locked = !!(checked && checked.locked);
+
+    const resultHtml = (checked && checked.locked) ? `
+      <div class="resultRow" data-result="${id}">
+        <div>${checked.ok ? `<span class="oktxt">ĐÚNG ✅</span>` : `<span class="badtxt">SAI ❌</span>`}</div>
+        <div>${checked.ok ? `` : `<span class="muted">Đáp án:</span> <b>${escapeHtml(checked.expected || v.meaning || "")}</b>`}</div>
+      </div>
+    ` : ``;
+
+    html += `
+      <div class="card" data-qcard="${id}">
+        <div class="row1">
+          <p class="vi">Câu ${displayNo}. <b>${escapeHtml(v.word)}</b> <span class="muted">(${escapeHtml(v.pos||"")})</span></p>
+          <div class="meta"><span class="idx">#${displayNo}</span></div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <div class="qaRow">
+            <input class="input ansInput" data-qid="${id}" placeholder="Nhập nghĩa…" value="${escapeHtml(typed)}" ${locked ? "disabled" : ""}/>
+            <button class="btn btn-primary btn-check" data-check="${id}" ${locked ? "disabled" : ""}>
+              ${locked ? "Đã check" : "Check"}
+            </button>
+          </div>
+        </div>
+
+        ${resultHtml}
+      </div>
+    `;
+  });
+
+  return html;
+}
+
 let handlersBound = false;
+function renderQuizView() {
+  setView("quiz");
+  setDiscussFabVisible(false);
+
+  if (!QUIZ_LOADED) { content.innerHTML = `<div class="card"><div class="vi">Đang tải đề…</div></div>`; return; }
+  if (!state.name) { renderGateView(); return; }
+
+  if (!state.attemptId) state.attemptId = randId("attempt");
+  if (!state.order || !state.order.length) state.order = shuffle(QUIZ.vocabs.map(v => v.id));
+  updateStats();
+
+  content.innerHTML = buildQuizHTML();
+
+  if (!handlersBound) {
+    content.addEventListener("input", onInput, { passive: true });
+    content.addEventListener("click", onClick);
+    content.addEventListener("keydown", onKeyDown);
+    content.addEventListener("focusout", onFocusOut, { passive: true });
+    handlersBound = true;
+  }
+}
 
 /********************
- * Auto-grade
+ * Auto-grade: chấm ngầm khi nhập (debounce) để nộp bài nhanh
  ********************/
-const gradeTimers = new Map();
-const gradeToken = new Map();
-const gradeInFlight = new Set();
-const lockAfterGrade = new Set();
+const gradeTimers = new Map();     // id -> timer
+const gradeToken = new Map();      // id -> token (chống response cũ)
+const gradeInFlight = new Set();   // id in flight
+const lockAfterGrade = new Set();  // id: user bấm Check khi đang chấm
 
 function getCardEls_(id){
   const card = content.querySelector(`[data-qcard="${CSS.escape(String(id))}"]`);
@@ -1673,6 +1804,7 @@ async function gradeOne_(id, ans, { lock = false } = {}){
   const existed = state.checked && state.checked[id];
   if (existed && existed.locked) return;
 
+  // Nếu đã chấm đúng y key này rồi thì khỏi gọi lại
   if (existed && existed.lastKey === akey && !!existed.gradedAtMs) {
     if (lock && !existed.locked) {
       existed.locked = true;
@@ -1683,6 +1815,7 @@ async function gradeOne_(id, ans, { lock = false } = {}){
     return;
   }
 
+  // chống spam
   const token = randId("g");
   gradeToken.set(id, token);
   gradeInFlight.add(id);
@@ -1701,6 +1834,7 @@ async function gradeOne_(id, ans, { lock = false } = {}){
       ua: navigator.userAgent || ""
     });
 
+    // stale response
     if (gradeToken.get(id) !== token) return;
 
     if (!res || !res.ok || !res.item) throw new Error("Lỗi chấm.");
@@ -1717,6 +1851,7 @@ async function gradeOne_(id, ans, { lock = false } = {}){
     scheduleCloudSave();
     updateStats();
 
+    // nếu user bấm Check trong lúc đang chấm ngầm
     if (lockAfterGrade.has(id)) {
       lockAfterGrade.delete(id);
       state.checked[id].locked = true;
@@ -1728,7 +1863,7 @@ async function gradeOne_(id, ans, { lock = false } = {}){
 
     if (lock) lockUI_(id);
   } catch (e) {
-    if (lock) toast((e && e.message) ? e.message : "Check lỗi");
+    if (lock) toast("Check lỗi");
   } finally {
     gradeInFlight.delete(id);
   }
@@ -1758,72 +1893,9 @@ function scheduleAutoGrade_(id, delayMs = 550){
   gradeTimers.set(id, t);
 }
 
-function buildQuizHTML() {
-  const order = state.order && state.order.length ? state.order : QUIZ.vocabs.map(v => v.id);
-  let html = "";
-
-  order.forEach((id, idx) => {
-    const v = VMAP.get(id);
-    if (!v) return;
-
-    const displayNo = idx + 1;
-    const typed = String(state.answers[id] ?? "");
-    const checked = state.checked && state.checked[id];
-    const locked = !!(checked && checked.locked);
-
-    const resultHtml = (checked && checked.locked) ? `
-      <div class="resultRow" data-result="${id}">
-        <div>${checked.ok ? `<span class="oktxt">ĐÚNG ✅</span>` : `<span class="badtxt">SAI ❌</span>`}</div>
-        <div>${checked.ok ? `` : `<span class="muted">Đáp án:</span> <b>${escapeHtml(checked.expected || v.meaning || "")}</b>`}</div>
-      </div>
-    ` : ``;
-
-    html += `
-      <div class="card" data-qcard="${id}">
-        <div class="row1">
-          <p class="vi">Câu ${displayNo}. <b>${escapeHtml(v.word)}</b> <span class="muted">(${escapeHtml(v.pos||"")})</span></p>
-          <div class="meta"><span class="idx">#${displayNo}</span></div>
-        </div>
-
-        <div style="margin-top:10px;">
-          <div class="qaRow">
-            <input class="input ansInput" data-qid="${id}" placeholder="Nhập nghĩa…" value="${escapeHtml(typed)}" ${locked ? "disabled" : ""}/>
-            <button class="btn btn-primary btn-check" data-check="${id}" ${locked ? "disabled" : ""}>
-              ${locked ? "Đã check" : "Check"}
-            </button>
-          </div>
-        </div>
-
-        ${resultHtml}
-      </div>
-    `;
-  });
-
-  return html;
-}
-
-function renderQuizView() {
-  setView("quiz");
-  setDiscussFabVisible(false);
-
-  if (!QUIZ_LOADED) { content.innerHTML = `<div class="card"><div class="vi">Đang tải đề…</div></div>`; return; }
-  if (!state.name) { renderGateView(); return; }
-
-  if (!state.attemptId) state.attemptId = randId("attempt");
-  if (!state.order || !state.order.length) state.order = shuffle(QUIZ.vocabs.map(v => v.id));
-  updateStats();
-
-  content.innerHTML = buildQuizHTML();
-
-  if (!handlersBound) {
-    content.addEventListener("input", onInput, { passive: true });
-    content.addEventListener("click", onClick);
-    content.addEventListener("keydown", onKeyDown);
-    content.addEventListener("focusout", onFocusOut, { passive: true });
-    handlersBound = true;
-  }
-}
-
+/********************
+ * Events: input / enter / blur
+ ********************/
 function onInput(e) {
   const t = e.target;
   if (!t || !t.classList.contains("ansInput")) return;
@@ -1875,6 +1947,9 @@ function onFocusOut(e){
   scheduleAutoGrade_(id, 0);
 }
 
+/********************
+ * Click: Check (nhỏ) - lock + hiện đúng/sai ngay
+ ********************/
 function onClick(e) {
   const btn = e.target.closest("[data-check]");
   if (!btn) return;
@@ -1933,22 +2008,34 @@ function onClick(e) {
   });
 }
 
-/* Wrong popup */
+/********************
+ * Wrong popup
+ ********************/
 const wrongBackdrop = document.getElementById("wrongBackdrop");
 const wrongBody = document.getElementById("wrongBody");
 document.getElementById("btnCloseWrong").addEventListener("click", () => closeWrongPopup());
 wrongBackdrop.addEventListener("click", (e) => { if (e.target === wrongBackdrop) closeWrongPopup(); });
-function openWrongPopup() { wrongBackdrop.classList.add("show"); wrongBackdrop.setAttribute("aria-hidden", "false"); }
-function closeWrongPopup() { wrongBackdrop.classList.remove("show"); wrongBackdrop.setAttribute("aria-hidden", "true"); }
+
+function openWrongPopup() {
+  wrongBackdrop.classList.add("show");
+  wrongBackdrop.setAttribute("aria-hidden", "false");
+}
+function closeWrongPopup() {
+  wrongBackdrop.classList.remove("show");
+  wrongBackdrop.setAttribute("aria-hidden", "true");
+}
+
 function buildWrongPopupContent() {
   wrongBody.innerHTML = "";
   const r = state.result;
   if (!r) return;
+
   const wrong = r.wrong || [];
   if (!wrong.length) {
     wrongBody.innerHTML = `<div class="card"><span class="oktxt">Không sai ✅</span></div>`;
     return;
   }
+
   wrong.forEach((w) => {
     const box = document.createElement("div");
     box.className = "card";
@@ -1964,7 +2051,9 @@ function buildWrongPopupContent() {
   });
 }
 
-/* Leaderboard */
+/********************
+ * Leaderboard (NO % , NO horizontal scroll)
+ ********************/
 async function fetchLeaderboard() {
   const box = document.getElementById("lbBox");
   if (!box) return;
@@ -2024,10 +2113,1139 @@ async function fetchLeaderboard() {
   }
 }
 
-/* Discussion: giữ nguyên như bạn (để khỏi dài quá nữa, vẫn hoạt động với Code.gs mới) */
-/* --- END: phần còn lại bạn đang có (discussion/submit/reset/boot) ---
-   (Do giới hạn độ dài trả lời, mình không paste lại toàn bộ phần y hệt, nhưng Code.gs mình đã đồng bộ action y như frontend đang gọi.)
-   Nếu bạn muốn mình paste FULL nguyên xi phần còn lại, nói “dán full phần còn lại” mình dán tiếp 1 lần cho đủ. */
+/********************
+ * Discussion - OPTIMISTIC UI
+ ********************/
+const DISCUSS_MAX = 120;
+
+let DISCUSS = {
+  loaded: false,
+  loading: false,
+  tree: []
+};
+let discussObserver = null;
+let openReplyRootId = "";
+const pendingTempIds = new Set();
+
+/* tombstone deleted ids (per quiz) */
+const DISCUSS_DELETED_KEY = () => `gs_discuss_deleted_v2::${getQuizId()}`;
+let DELETED_IDS = new Set();
+
+function loadDeletedIds_(){
+  try {
+    const raw = localStorage.getItem(DISCUSS_DELETED_KEY());
+    const arr = JSON.parse(raw || "[]");
+    if (Array.isArray(arr)) return new Set(arr.map(x => String(x)));
+  } catch(e){}
+  return new Set();
+}
+function saveDeletedIds_(){
+  try { localStorage.setItem(DISCUSS_DELETED_KEY(), JSON.stringify(Array.from(DELETED_IDS))); } catch(e){}
+}
+function markDeleted_(id){
+  const sid = String(id||"").trim();
+  if (!sid) return;
+  DELETED_IDS.add(sid);
+  saveDeletedIds_();
+}
+function isTempId_(id){
+  return String(id||"").startsWith("tmp_");
+}
+
+function canDeleteComment_(c){
+  const admin = isAdminName(state.name);
+  if (admin) return true;
+  return normalizeName(c.author) === normalizeName(state.name);
+}
+
+function collectIdsFromTree_(tree){
+  const ids = new Set();
+  for (const r of (tree||[])) {
+    ids.add(String(r.id));
+    for (const rr of (r.replies||[])) ids.add(String(rr.id));
+  }
+  return ids;
+}
+
+function filterTreeByDeleted_(tree){
+  const out = [];
+  for (const root of (tree||[])) {
+    const rid = String(root.id);
+    if (DELETED_IDS.has(rid)) continue;
+
+    const replies = Array.isArray(root.replies) ? root.replies : [];
+    const keptReplies = replies.filter(r => {
+      const id = String(r.id);
+      const pid = String(r.parentId || root.id || "");
+      if (DELETED_IDS.has(id)) return false;
+      if (pid && DELETED_IDS.has(pid)) return false;
+      return true;
+    });
+
+    out.push({
+      ...root,
+      replies: keptReplies
+    });
+  }
+  return out;
+}
+
+function dedupeTree_(tree){
+  const seen = new Set();
+  const out = [];
+  for (const root of (tree||[])) {
+    const rid = String(root.id);
+    if (seen.has(rid)) continue;
+    seen.add(rid);
+
+    const rseen = new Set();
+    const replies = [];
+    for (const r of (root.replies || [])) {
+      const id = String(r.id);
+      if (rseen.has(id)) continue;
+      rseen.add(id);
+      replies.push(r);
+    }
+
+    out.push({ ...root, replies });
+  }
+  return out;
+}
+
+function normalizeTreeFromServer_(res){
+  if (res && Array.isArray(res.tree)) {
+    const roots = res.tree.map(root => ({
+      id: String(root.id),
+      parentId: String(root.parentId||""),
+      author: String(root.author||""),
+      createdAtMs: Number(root.createdAtMs||0) || Date.now(),
+      text: String(root.text||""),
+      replies: Array.isArray(root.replies) ? root.replies.map(r => ({
+        id: String(r.id),
+        parentId: String(r.parentId || root.id || ""),
+        author: String(r.author||""),
+        createdAtMs: Number(r.createdAtMs||0) || Date.now(),
+        text: String(r.text||""),
+        replies: [],
+        pending: !!r.pending
+      })) : [],
+      pending: !!root.pending
+    }));
+    roots.sort((a,b)=>a.createdAtMs-b.createdAtMs);
+    roots.forEach(r=>r.replies.sort((a,b)=>a.createdAtMs-b.createdAtMs));
+    return roots;
+  }
+
+  const flat = (res && Array.isArray(res.comments)) ? res.comments : [];
+  const roots = [];
+  const byId = new Map();
+  for (const c of flat) {
+    const id = String(c.id);
+    if (!id) continue;
+    if (byId.has(id)) continue;
+    byId.set(id, {
+      id,
+      parentId: String(c.parentId||""),
+      author: String(c.author||""),
+      createdAtMs: Number(c.createdAtMs||0) || Date.now(),
+      text: String(c.text||""),
+      replies: []
+    });
+  }
+  for (const c of byId.values()) {
+    if (c.parentId && byId.has(c.parentId)) {
+      const p = byId.get(c.parentId);
+      if (p.parentId) roots.push(c);
+      else p.replies.push(c);
+    } else {
+      roots.push(c);
+    }
+  }
+  roots.sort((a,b)=>a.createdAtMs-b.createdAtMs);
+  roots.forEach(r=>r.replies.sort((a,b)=>a.createdAtMs-b.createdAtMs));
+  return roots;
+}
+
+function getDiscussionEls_(){
+  return {
+    section: document.getElementById("discussionSection"),
+    list: document.getElementById("discussList"),
+    rootInput: document.getElementById("rootInput"),
+    rootCount: document.getElementById("rootCount"),
+    btnPostRoot: document.getElementById("btnPostRoot"),
+  };
+}
+
+function renderDiscuss_(){
+  const { list, rootCount, rootInput } = getDiscussionEls_();
+  if (!list) return;
+
+  if (!DISCUSS.loaded && DISCUSS.loading) {
+    list.innerHTML = `<div class="muted">Đang tải…</div>`;
+    return;
+  }
+
+  const tree = Array.isArray(DISCUSS.tree) ? DISCUSS.tree : [];
+  if (!tree.length) {
+    list.innerHTML = `<div class="muted">Chưa có bình luận nào.</div>`;
+  } else {
+    list.innerHTML = "";
+    tree.forEach(root => {
+      const wrap = document.createElement("div");
+      wrap.className = "cmtItem";
+
+      const admin = isAdminName(root.author);
+      const canDel = canDeleteComment_(root);
+      const timeLabel = root.pending ? "…" : formatTs(root.createdAtMs);
+
+      wrap.innerHTML = `
+        <div class="cmtHead">
+          <div class="cmtAuthor">
+            <span>${escapeHtml(root.author || "—")}</span>
+            ${admin ? `<span class="adminBadgeInline">ADMIN</span>` : ``}
+          </div>
+        </div>
+
+        <div class="cmtText">${escapeHtml(root.text || "")}</div>
+
+        <div class="cmtActions">
+          <button class="cmtBtn" data-reply="${escapeHtml(root.id)}">Trả lời</button>
+          ${canDel ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(root.id)}">Xóa</button>` : ``}
+        </div>
+        <div class="cmtTime">${escapeHtml(timeLabel)}</div>
+
+        <div class="replySlot" data-slot="${escapeHtml(root.id)}"></div>
+        <div class="replyWrap" data-replies="${escapeHtml(root.id)}"></div>
+      `;
+      list.appendChild(wrap);
+
+      // reply form
+      const slot = wrap.querySelector(`[data-slot="${CSS.escape(String(root.id))}"]`);
+      if (slot && openReplyRootId === String(root.id)) {
+        slot.innerHTML = `
+          <div class="replyForm">
+            <div class="charRow">
+              <div><b>Trả lời</b></div>
+              <div><span data-ct>0</span>/${DISCUSS_MAX}</div>
+            </div>
+            <textarea class="input" rows="2" maxlength="${DISCUSS_MAX}" placeholder="Nhập trả lời..."></textarea>
+            <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
+              <button class="btn btn-primary" data-sendreply="${escapeHtml(root.id)}" style="justify-content:center;">Gửi</button>
+              <button class="btn btn-ghost" data-cancelreply style="justify-content:center;">Hủy</button>
+            </div>
+          </div>
+        `;
+      }
+
+      // replies (1 level) - KHÔNG hiện "chưa có trả lời"
+      const rWrap = wrap.querySelector(`[data-replies="${CSS.escape(String(root.id))}"]`);
+      const replies = Array.isArray(root.replies) ? root.replies : [];
+      if (rWrap) {
+        if (!replies.length) {
+          rWrap.innerHTML = "";
+        } else {
+          rWrap.innerHTML = "";
+          replies.forEach(r => {
+            const item = document.createElement("div");
+            item.className = "cmtItem";
+            item.style.margin = "0";
+
+            const rAdmin = isAdminName(r.author);
+            const rCanDel = canDeleteComment_(r);
+            const rTimeLabel = r.pending ? "…" : formatTs(r.createdAtMs);
+
+            item.innerHTML = `
+              <div class="cmtHead">
+                <div class="cmtAuthor">
+                  <span>${escapeHtml(r.author || "—")}</span>
+                  ${rAdmin ? `<span class="adminBadgeInline">ADMIN</span>` : ``}
+                </div>
+              </div>
+
+              <div class="cmtText">${escapeHtml(r.text || "")}</div>
+
+              <div class="cmtActions">
+                ${rCanDel ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(r.id)}">Xóa</button>` : ``}
+              </div>
+              <div class="cmtTime">${escapeHtml(rTimeLabel)}</div>
+            `;
+            rWrap.appendChild(item);
+          });
+        }
+      }
+    });
+  }
+
+  if (rootInput && rootCount) rootCount.textContent = String((rootInput.value||"").length);
+}
+
+function removeNodeById_(id){
+  const tree = DISCUSS.tree || [];
+  const nid = String(id);
+
+  for (const root of tree) {
+    if (Array.isArray(root.replies)) {
+      const before = root.replies.length;
+      root.replies = root.replies.filter(r => String(r.id) !== nid);
+      if (root.replies.length !== before) return true;
+    }
+  }
+  const beforeRoots = tree.length;
+  DISCUSS.tree = tree.filter(r => String(r.id) !== nid);
+  return DISCUSS.tree.length !== beforeRoots;
+}
+function isValidDiscussText_(t){
+  t = String(t||"").trim();
+  if (!t) return false;
+  if (t.length > DISCUSS_MAX) return false;
+  return true;
+}
+
+async function ensureDiscussionLoaded_(force=false){
+  if (!state.finalized) return;
+  if (DISCUSS.loading) return;
+  if (DISCUSS.loaded && !force) return;
+
+  DISCUSS.loading = true;
+  renderDiscuss_();
+
+  const pendingKeep = [];
+  for (const r of (DISCUSS.tree || [])) {
+    if (r && r.pending && pendingTempIds.has(String(r.id))) pendingKeep.push(JSON.parse(JSON.stringify(r)));
+    for (const rr of (r.replies || [])) {
+      if (rr && rr.pending && pendingTempIds.has(String(rr.id))) pendingKeep.push(JSON.parse(JSON.stringify(rr)));
+    }
+  }
+
+  try {
+    const res = await postJSON({ action:"getComments", quizId: getQuizId() });
+    let tree = normalizeTreeFromServer_(res);
+
+    const serverIds = collectIdsFromTree_(tree);
+    let changed = false;
+    for (const did of Array.from(DELETED_IDS)) {
+      if (!serverIds.has(String(did))) { DELETED_IDS.delete(String(did)); changed = true; }
+    }
+    if (changed) saveDeletedIds_();
+
+    tree = filterTreeByDeleted_(tree);
+    tree = dedupeTree_(tree);
+
+    const nowIds = collectIdsFromTree_(tree);
+    for (const p of pendingKeep) {
+      if (!p || !p.id) continue;
+      const pid = String(p.id);
+      if (nowIds.has(pid)) continue;
+      if (DELETED_IDS.has(pid)) continue;
+
+      if (!p.parentId) {
+        tree.push(p);
+      } else {
+        const root = tree.find(x => String(x.id) === String(p.parentId));
+        if (root) {
+          root.replies = Array.isArray(root.replies) ? root.replies : [];
+          root.replies.push(p);
+        } else {
+          tree.push({ ...p, parentId:"", replies: Array.isArray(p.replies)?p.replies:[] });
+        }
+      }
+    }
+
+    tree.sort((a,b)=>Number(a.createdAtMs||0)-Number(b.createdAtMs||0));
+    tree.forEach(r => (r.replies||[]).sort((a,b)=>Number(a.createdAtMs||0)-Number(b.createdAtMs||0)));
+
+    DISCUSS.tree = tree;
+    DISCUSS.loaded = true;
+  } catch (e) {
+    toast("Không tải được bình luận");
+  } finally {
+    DISCUSS.loading = false;
+    renderDiscuss_();
+  }
+}
+
+async function optimisticAddComment_({ text, parentId }){
+  const trimmed = String(text||"").trim();
+  if (!isValidDiscussText_(trimmed)) { toast("Nội dung không hợp lệ"); return; }
+  if (!state.name) { toast("Thiếu username"); return; }
+
+  const tempId = "tmp_" + randId("c");
+  pendingTempIds.add(tempId);
+
+  const node = {
+    id: tempId,
+    parentId: String(parentId||""),
+    author: state.name,
+    createdAtMs: Date.now(),
+    text: trimmed,
+    replies: [],
+    pending: true
+  };
+
+  DISCUSS.tree = Array.isArray(DISCUSS.tree) ? DISCUSS.tree : [];
+  if (!node.parentId) {
+    DISCUSS.tree.push(node);
+  } else {
+    const root = (DISCUSS.tree||[]).find(x => String(x.id) === String(node.parentId));
+    if (root) {
+      root.replies = Array.isArray(root.replies) ? root.replies : [];
+      root.replies.push(node);
+    } else {
+      DISCUSS.tree.push({ ...node, parentId:"" });
+    }
+  }
+
+  (DISCUSS.tree||[]).sort((a,b)=>a.createdAtMs-b.createdAtMs);
+  (DISCUSS.tree||[]).forEach(r => (r.replies||[]).sort((a,b)=>a.createdAtMs-b.createdAtMs));
+  renderDiscuss_();
+
+  try {
+    const res = await postJSON({
+      action:"addComment",
+      quizId: getQuizId(),
+      userId: (USER && USER.userId) ? USER.userId : "",
+      name: state.name,
+      text: trimmed,
+      parentId: node.parentId
+    });
+
+    const srv = res && res.comment ? res.comment : null;
+    if (!srv || !srv.id) throw new Error("addComment lỗi");
+
+    const realId = String(srv.id);
+
+    if (DELETED_IDS.has(tempId)) {
+      pendingTempIds.delete(tempId);
+      removeNodeById_(tempId);
+      renderDiscuss_();
+      return;
+    }
+
+    const tree = DISCUSS.tree || [];
+    for (const root of tree) {
+      if (String(root.id) === tempId) {
+        root.id = realId;
+        root.createdAtMs = Number(srv.createdAtMs||root.createdAtMs) || root.createdAtMs;
+        root.pending = false;
+        pendingTempIds.delete(tempId);
+        renderDiscuss_();
+        return;
+      }
+      for (const r of (root.replies||[])) {
+        if (String(r.id) === tempId) {
+          r.id = realId;
+          r.createdAtMs = Number(srv.createdAtMs||r.createdAtMs) || r.createdAtMs;
+          r.pending = false;
+          pendingTempIds.delete(tempId);
+          renderDiscuss_();
+          return;
+        }
+      }
+    }
+
+    pendingTempIds.delete(tempId);
+    await ensureDiscussionLoaded_(true);
+  } catch (e) {
+    pendingTempIds.delete(tempId);
+    removeNodeById_(tempId);
+    renderDiscuss_();
+    toast("Gửi lỗi");
+  }
+}
+
+async function optimisticDeleteComment_(id){
+  if (!state.name) { toast("Thiếu username"); return; }
+  const sid = String(id||"").trim();
+  if (!sid) return;
+
+  const ok = confirm("Xóa bình luận này?");
+  if (!ok) return;
+
+  if (String(sid).startsWith("tmp_") && pendingTempIds.has(sid)) {
+    pendingTempIds.delete(sid);
+    removeNodeById_(sid);
+    renderDiscuss_();
+    toast("Đã xóa");
+    return;
+  }
+
+  markDeleted_(sid);
+
+  removeNodeById_(sid);
+  renderDiscuss_();
+  toast("Đã xóa");
+
+  try {
+    await postJSON({
+      action:"deleteComment",
+      quizId: getQuizId(),
+      userId: (USER && USER.userId) ? USER.userId : "",
+      name: state.name,
+      id: sid
+    });
+  } catch (e) {}
+
+  setTimeout(() => { ensureDiscussionLoaded_(true); }, 650);
+}
+
+function bindDiscussionEvents_(){
+  const { rootInput, btnPostRoot, rootCount, section } = getDiscussionEls_();
+  if (!section || !rootInput || !btnPostRoot || !rootCount) return;
+
+  rootInput.addEventListener("input", () => {
+    rootCount.textContent = String((rootInput.value||"").length);
+  }, { passive:true });
+
+  btnPostRoot.addEventListener("click", () => {
+    const text = String(rootInput.value||"").trim();
+    if (!isValidDiscussText_(text)) { toast("Tối đa 120 ký tự"); return; }
+    rootInput.value = "";
+    rootCount.textContent = "0";
+    optimisticAddComment_({ text, parentId:"" });
+  });
+
+  section.addEventListener("click", (e) => {
+    const delBtn = e.target.closest("[data-del]");
+    if (delBtn) {
+      const id = String(delBtn.getAttribute("data-del")||"");
+      if (!id) return;
+      optimisticDeleteComment_(id);
+      return;
+    }
+
+    const replyBtn = e.target.closest("[data-reply]");
+    if (replyBtn) {
+      const rootId = String(replyBtn.getAttribute("data-reply")||"");
+      openReplyRootId = (openReplyRootId === rootId) ? "" : rootId;
+      renderDiscuss_();
+
+      const slot = section.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
+      const ta = slot ? slot.querySelector("textarea") : null;
+      if (ta) ta.focus();
+      return;
+    }
+
+    const cancelBtn = e.target.closest("[data-cancelreply]");
+    if (cancelBtn) {
+      openReplyRootId = "";
+      renderDiscuss_();
+      return;
+    }
+
+    const sendBtn = e.target.closest("[data-sendreply]");
+    if (sendBtn) {
+      const rootId = String(sendBtn.getAttribute("data-sendreply")||"");
+      const slot = section.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
+      const ta = slot ? slot.querySelector("textarea") : null;
+      const text = ta ? String(ta.value||"").trim() : "";
+      if (!isValidDiscussText_(text)) { toast("Tối đa 120 ký tự"); return; }
+      openReplyRootId = "";
+      renderDiscuss_();
+      optimisticAddComment_({ text, parentId: rootId });
+      return;
+    }
+  });
+
+  section.addEventListener("input", (e) => {
+    const ta = e.target;
+    if (!(ta && ta.tagName === "TEXTAREA")) return;
+    const form = ta.closest(".replyForm");
+    if (!form) return;
+    const ct = form.querySelector("[data-ct]");
+    if (ct) ct.textContent = String((ta.value||"").length);
+  }, { passive:true });
+}
+
+function attachDiscussionObserver_(){
+  if (discussObserver) {
+    try { discussObserver.disconnect(); } catch(e){}
+    discussObserver = null;
+  }
+  const sec = document.getElementById("discussionSection");
+  if (!sec) return;
+
+  discussObserver = new IntersectionObserver((entries) => {
+    for (const ent of entries) {
+      if (ent.isIntersecting) ensureDiscussionLoaded_();
+    }
+  }, { root: document.getElementById("shell"), threshold: 0.15 });
+
+  discussObserver.observe(sec);
+}
+
+/********************
+ * Result view (hiện ngay; nếu chưa có result => "đang tính điểm...")
+ ********************/
+function renderResultView() {
+  setView("result");
+  setDiscussFabVisible(true);
+
+  content.innerHTML = "";
+  const r = state.result;
+
+  const sum = document.createElement("div");
+  sum.className = "card";
+
+  if (!r) {
+    sum.innerHTML = `
+      <div class="row1">
+        <p class="vi">Kết quả</p>
+        <div class="meta"><span class="idx">ĐANG TÍNH</span></div>
+      </div>
+      <div class="muted" style="margin-top:10px; line-height:1.35">
+        Đang tính điểm...
+      </div>
+    `;
+  } else {
+    sum.innerHTML = `
+      <div class="row1">
+        <p class="vi">Kết quả</p>
+        <div class="meta"><span class="idx">DONE</span></div>
+      </div>
+      <div style="margin-top:10px; display:grid; gap:8px;">
+        <div class="pill">Điểm: <strong>${Number(r.score10).toFixed(1)}/10</strong></div>
+        <div class="pill">Đúng: <strong>${r.correctCount}</strong>/${r.totalCount}</div>
+        <button class="btn btn-primary" id="btnShowWrong" style="justify-content:center;">📌 Xem câu sai</button>
+      </div>
+    `;
+  }
+  content.appendChild(sum);
+
+  const lb = document.createElement("div");
+  lb.className = "card";
+  lb.innerHTML = `
+    <div class="row1">
+      <p class="vi">Bảng xếp hạng</p>
+      <div class="meta"><span class="idx">TOP</span></div>
+    </div>
+    <div id="lbBox" class="muted" style="margin-top:10px; overflow-x:hidden;">Đang tải…</div>
+  `;
+  content.appendChild(lb);
+
+  const discuss = document.createElement("div");
+  discuss.className = "card";
+  discuss.id = "discussionSection";
+  discuss.innerHTML = `
+    <div class="row1">
+      <p class="vi">Thảo luận</p>
+      <div class="meta"><span class="idx">💬</span></div>
+    </div>
+
+    <div style="margin-top:10px; display:grid; gap:10px;">
+      <div class="charRow">
+        <div><b>Viết bình luận</b></div>
+        <div><span id="rootCount">0</span>/${DISCUSS_MAX}</div>
+      </div>
+      <textarea id="rootInput" class="input" rows="3" maxlength="${DISCUSS_MAX}" placeholder="Nhập bình luận..."></textarea>
+      <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="btnPostRoot" style="justify-content:center;">➕ Gửi</button>
+      </div>
+      <div id="discussList" class="cmtBox"></div>
+    </div>
+  `;
+  content.appendChild(discuss);
+
+  if (r) {
+    document.getElementById("btnShowWrong").addEventListener("click", () => {
+      buildWrongPopupContent();
+      openWrongPopup();
+    });
+  }
+
+  fetchLeaderboard();
+
+  DISCUSS.loaded = false;
+  DISCUSS.loading = false;
+  DISCUSS.tree = [];
+  openReplyRootId = "";
+
+  renderDiscuss_();
+  bindDiscussionEvents_();
+  attachDiscussionObserver_();
+
+  updateStats();
+}
+
+/********************
+ * Submit: hiện trang kết quả LIỀN, rồi tính điểm sau
+ ********************/
+function getMissingQuestions_(){
+  const order = state.order && state.order.length ? state.order : (QUIZ.vocabs||[]).map(v=>v.id);
+  const missing = [];
+  for (let i=0;i<order.length;i++){
+    const id = order[i];
+    const ans = String(state.answers[id] ?? "").trim();
+    if (!ans) missing.push(i+1);
+  }
+  return missing;
+}
+
+async function flushPendingGrades_(){
+  for (const [id, tm] of gradeTimers.entries()) {
+    clearTimeout(tm);
+    gradeTimers.delete(id);
+  }
+
+  const order = state.order && state.order.length ? state.order : (QUIZ.vocabs||[]).map(v=>v.id);
+  const tasks = [];
+
+  for (const id of order) {
+    const ans = String(state.answers[id] ?? "").trim();
+    if (!ans) continue;
+
+    const ck = state.checked && state.checked[id];
+    if (ck && ck.locked) continue;
+
+    const akey = answerKey(ans);
+    if (ck && ck.lastKey === akey && !!ck.gradedAtMs) continue;
+
+    tasks.push(gradeOne_(id, ans, { lock: false }));
+  }
+
+  if (tasks.length) {
+    try { await Promise.allSettled(tasks); } catch(e){}
+  }
+}
+
+async function finalizeAttemptAsync_(){
+  const res = await postJSON({
+    action: "finalizeAttempt",
+    name: state.name,
+    userId: USER && USER.userId ? USER.userId : "",
+    quizId: QUIZ.quizId || getQuizId(),
+    accessCode: state.accessCode || "",
+    cacheId: state.cacheId,
+    attemptId: state.attemptId
+  });
+  return res;
+}
+
+document.getElementById("btnSubmit").addEventListener("click", () => {
+  if (!state.name) { toast("Thiếu username"); renderGateView(); return; }
+  if (state.finalized) return;
+
+  const missing = getMissingQuestions_();
+  if (missing.length) {
+    let msg = "";
+    if (missing.length > 5) {
+      msg = `Bạn còn ${missing.length} câu chưa làm hoặc nhiều hơn.\nNộp vẫn tính sai các câu đó.\n\nNộp bài?`;
+    } else {
+      msg = `Bạn còn câu ${missing.join(", ")} chưa làm.\nNộp vẫn tính sai các câu đó.\n\nNộp bài?`;
+    }
+    const ok = confirm(msg);
+    if (!ok) return;
+  }
+
+  state.finalized = true;
+  state.result = null;
+  scheduleSave({ mirror: true });
+  scheduleCloudSave();
+  renderResultView();
+  toast("Đang tính điểm...");
+
+  setTimeout(async () => {
+    try {
+      await flushPendingGrades_();
+
+      const res = await finalizeAttemptAsync_();
+      if (!res || !res.ok || !res.result) throw new Error("Finalize lỗi");
+
+      state.result = res.result;
+
+      state.history = Array.isArray(state.history) ? state.history : [];
+      state.history.push({
+        ts: Date.now(),
+        score10: state.result.score10,
+        correctCount: state.result.correctCount,
+        totalCount: state.result.totalCount
+      });
+
+      scheduleSave({ mirror: true });
+      scheduleCloudSave();
+
+      renderResultView();
+      toast("Xong");
+    } catch (e) {
+      state.finalized = false;
+      state.result = null;
+      scheduleSave({ mirror: true });
+      scheduleCloudSave();
+      toast("Nộp lỗi, thử lại");
+      renderQuizView();
+    } finally {
+      updateStats();
+    }
+  }, 0);
+});
+
+/********************
+ * Reset
+ ********************/
+const modal = document.getElementById("modalBackdrop");
+const openModal = () => { modal.classList.add("show"); modal.setAttribute("aria-hidden", "false"); };
+const closeModal = () => { modal.classList.remove("show"); modal.setAttribute("aria-hidden", "true"); };
+
+document.getElementById("btnReset").addEventListener("click", openModal);
+document.getElementById("btnCancel").addEventListener("click", closeModal);
+modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+
+document.getElementById("btnConfirmReset").addEventListener("click", () => {
+  closeModal();
+  const keepName = state.name;
+  const keepCache = state.cacheId;
+  const keepHist = Array.isArray(state.history) ? state.history : [];
+  const keepCode = state.accessCode || "";
+
+  state = {
+    quizVersion: QUIZ_VERSION,
+    cacheId: keepCache,
+    name: keepName,
+    accessCode: keepCode,
+    attemptId: "",
+    order: [],
+    answers: {},
+    checked: {},
+    finalized: false,
+    result: null,
+    history: keepHist,
+    ts: Date.now()
+  };
+  newAttempt();
+  scheduleSave({ mirror: true });
+  scheduleCloudSave();
+  toast("Đã làm lại");
+
+  GATE.ready = true;
+  GATE.status = "Sẵn sàng.";
+  renderGateView();
+  updateStats();
+});
+
+/********************
+ * Scroll top
+ ********************/
+document.getElementById("btnScrollTop").addEventListener("click", () => {
+  document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
+});
+
+/********************
+ * Discuss button: scroll xuống phần thảo luận (chỉ sau khi xong)
+ ********************/
+document.getElementById("btnDiscuss").addEventListener("click", async () => {
+  if (!state.finalized) return;
+  const sec = document.getElementById("discussionSection");
+  if (!sec) return;
+
+  await ensureDiscussionLoaded_();
+  sec.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  setTimeout(() => {
+    const { rootInput } = getDiscussionEls_();
+    if (rootInput) rootInput.focus();
+  }, 350);
+});
+
+/********************
+ * UserCorner click -> Profile
+ ********************/
+document.getElementById("userCorner").addEventListener("click", () => {
+  if (!state.name) return;
+  openProfileModal_();
+});
+
+/********************
+ * Profile actions
+ ********************/
+document.getElementById("btnSaveNewUsername").addEventListener("click", async () => {
+  if (!state.name) return;
+
+  const newU = String(document.getElementById("newUsername").value||"").trim();
+  const err = validateUsername(newU);
+  if (err) { toast(err); return; }
+
+  const old = state.name;
+  if (normalizeForFilter(newU) === normalizeForFilter(old)) { toast("Trùng username hiện tại"); return; }
+
+  const last = Number((USER && USER.lastRenameAtMs) ? USER.lastRenameAtMs : 0) || 0;
+  const now = Date.now();
+  const DAY = 24*60*60*1000;
+  if (last && (now - last < 30*DAY)) {
+    toast("Chưa đủ 30 ngày");
+    return;
+  }
+
+  try{
+    const ck = await apiCheckUsername_(newU);
+    if (ck && ck.exists) { toast("Username đã tồn tại"); return; }
+  } catch(e){
+    // backend có thể chưa có checkUsername -> vẫn thử đổi, backend sẽ tự báo lỗi nếu trùng
+  }
+
+  const btn = document.getElementById("btnSaveNewUsername");
+  const oldText = btn.textContent;
+  try{
+    btn.disabled = true;
+    btn.textContent = "⏳";
+
+    const res = await apiChangeUsername_(newU);
+    const u = (res && res.user) ? res.user : res;
+
+    const finalName = (u && u.username) ? u.username : newU;
+    const finalLast = (u && u.lastRenameAtMs) ? u.lastRenameAtMs : Date.now();
+
+    state.name = finalName;
+    if (USER) {
+      USER.username = finalName;
+      USER.lastRenameAtMs = finalLast;
+      saveUser(USER);
+    }
+
+    scheduleSave({ mirror:true });
+    scheduleCloudSave();
+    updateStats();
+
+    toast("Đã đổi username");
+    closeProfileModal_();
+    renderGateView();
+  } catch(e){
+    toast("Đổi username lỗi");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
+});
+
+// ĐỔI MẬT KHẨU: chỉ 1 nút -> mở keypad (nhập old 1 lần, new 2 lần)
+document.getElementById("btnChangePin").addEventListener("click", async () => {
+  if (!state.name) return;
+
+  const btn = document.getElementById("btnChangePin");
+  const oldText = btn.textContent;
+  const pinLen = isAdminName(state.name) ? 6 : 4;
+
+  try{
+    btn.disabled = true;
+    btn.textContent = "⏳";
+
+    const pins = await openPinModal_({ username: state.name, mode:"change", pinLen });
+    const oldPin = String(pins && pins.oldPin ? pins.oldPin : "").trim();
+    const newPin = String(pins && pins.newPin ? pins.newPin : "").trim();
+
+    if (!oldPin || !newPin) { toast("Thiếu thông tin"); return; }
+    if (!isDigitsOnly(oldPin) || !isDigitsOnly(newPin)) { toast("Mật khẩu chỉ gồm số"); return; }
+
+    if (isAdminName(state.name) && String(oldPin) !== ADMIN_PIN) { toast("Sai mật khẩu"); return; }
+
+    await apiChangePassword_(oldPin, newPin);
+    toast("Đã đổi mật khẩu");
+    closeProfileModal_();
+  } catch(e){
+    if (e && e.message === "cancel") {
+      // user đóng modal
+    } else {
+      toast("Đổi mật khẩu lỗi");
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
+});
+
+document.getElementById("btnLogout").addEventListener("click", async () => {
+  const ok = confirm("Đăng xuất?");
+  if (!ok) return;
+
+  try { saveUser(null); } catch(e){}
+  USER = null;
+
+  try { await Persist.remove(STORAGE_KEY); } catch(e){}
+
+  state = {
+    quizVersion: QUIZ_VERSION,
+    cacheId: "",
+    name: "",
+    accessCode: "",
+    attemptId: "",
+    order: [],
+    answers: {},
+    checked: {},
+    finalized: false,
+    result: null,
+    history: [],
+    ts: Date.now()
+  };
+
+  try { location.hash = ""; } catch(e){}
+  ensureCacheId();
+  scheduleSave({ mirror:true });
+  updateStats();
+
+  closeProfileModal_();
+  toast("Đã đăng xuất");
+  renderGateView();
+});
+
+/********************
+ * Load local state
+ ********************/
+async function tryLoadStateLocal(){
+  let raw = null;
+  try { raw = Persist.mirrorGet ? Persist.mirrorGet() : null; } catch (e) {}
+  if (!raw && Persist.mode && Persist.mode.local) {
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+  }
+  if (!raw && Persist.mode && Persist.mode.session) {
+    try { raw = sessionStorage.getItem(STORAGE_KEY); } catch (e) {}
+  }
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") state = parsed;
+    } catch (e) {}
+  }
+}
+
+/********************
+ * Bootstrap load (1 call) with fallback
+ ********************/
+function applyQuiz_(quizData){
+  if (!quizData) return;
+  QUIZ = quizData || QUIZ;
+  QUIZ.quizId = QUIZ.quizId || getQuizId();
+  QUIZ_LOADED = true;
+
+  document.getElementById("quizTitle").textContent = QUIZ.title || "Vocabulary";
+  document.getElementById("quizSub").textContent = (QUIZ.sub || "").trim();
+  VMAP = new Map((QUIZ.vocabs||[]).map(v => [v.id, v]));
+}
+function adoptStateFromServer_(serverStateJson){
+  if (!serverStateJson) return;
+  let serverState = null;
+  try { serverState = JSON.parse(serverStateJson); } catch(e){ return; }
+  if (!serverState || typeof serverState !== "object") return;
+
+  const sTs = Number(serverState.ts || 0);
+  const lTs = Number(state.ts || 0);
+
+  if (!lTs && sTs) state = serverState;
+  else if (sTs && sTs > lTs) state = serverState;
+}
+
+async function loadBootstrapOrFallback_(){
+  try {
+    const payload = {
+      action: "bootstrap",
+      quizId: getQuizId(),
+      userId: (USER && USER.userId) ? USER.userId : "",
+      name: (USER && USER.username) ? USER.username : (state.name || ""),
+      cacheId: state.cacheId || ((USER && USER.userId) ? USER.userId : "")
+    };
+    const res = await postJSON(payload);
+
+    if (res && res.quiz) applyQuiz_(res.quiz);
+    else if (res && res.title && res.vocabs) applyQuiz_(res);
+
+    if (res && res.me && res.me.user) {
+      const u = res.me.user;
+      if (u && u.userId && u.username) {
+        USER = { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
+        saveUser(USER);
+      }
+    }
+
+    if (res && res.progress && res.progress.stateJson) {
+      adoptStateFromServer_(res.progress.stateJson);
+    }
+
+    return;
+  } catch(e){}
+
+  const quizData = await postJSON({ action: "getQuizData", quizId: getQuizId() });
+  applyQuiz_(quizData);
+
+  if (state.cacheId) {
+    try {
+      const pr = await postJSON({ action: "getProgress", cacheId: state.cacheId });
+      if (pr && pr.stateJson) adoptStateFromServer_(pr.stateJson);
+    } catch(e){}
+  }
+}
+
+/********************
+ * Boot
+ ********************/
+function parseHashCacheId() {
+  try {
+    const h = String(location.hash || "").replace(/^#/, "");
+    const m = h.match(/(?:^|&)cache=([^&]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  } catch(e){ return null; }
+}
+
+(async function(){
+  if (!gasAvailable()) {
+    content.innerHTML = `<div class="card"><b>Thiếu API_URL</b></div>`;
+    return;
+  }
+
+  installGoogleScriptRunPolyfill();
+
+  showBootLoading("Đang tải quiz, đợi xíu nha");
+
+  try {
+    setBootLoadingMsg("Đang chuẩn bị…");
+    await Persist.init();
+    await tryLoadStateLocal();
+  } catch(e){}
+
+  try { USER = loadUser(); } catch(e){ USER = null; }
+
+  DELETED_IDS = loadDeletedIds_();
+
+  ensureCacheId();
+
+  // nếu có USER local -> auto login (không hỏi mật khẩu)
+  if (USER && USER.userId && USER.username) {
+    state.name = USER.username;
+    state.cacheId = USER.userId;
+  }
+
+  if (!state.cacheId) {
+    const fromHash = parseHashCacheId();
+    if (fromHash) state.cacheId = fromHash;
+  }
+
+  updateStats();
+  scheduleSave({ mirror: true });
+
+  try {
+    setBootLoadingMsg("Đang tải đề…");
+    await loadBootstrapOrFallback_();
+
+    if (!state.attemptId) state.attemptId = randId("attempt");
+    if (!state.order || !state.order.length) state.order = shuffle(QUIZ.vocabs.map(v => v.id));
+
+    updateStats();
+    scheduleSave({ mirror: true });
+
+    GATE.ready = true;
+    GATE.status = "Sẵn sàng.";
+  } catch (e) {
+    GATE.ready = false;
+    GATE.status = "Lỗi tải đề";
+  }
+
+  hideBootLoading();
+  renderGateView();
+
+  startCloudAutosave();
+
+  window.addEventListener("pagehide", () => {
+    try { Persist.mirrorToWindowName(JSON.stringify(state)); } catch (e) {}
+    scheduleCloudSave();
+  }, { passive: true });
+})();
 </script>
 </body>
 </html>
+```
