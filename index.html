@@ -721,6 +721,29 @@ async function postJSON(payload) {
   return data;
 }
 
+/* ✅ helper: không throw để thử nhiều action/biến thể */
+async function postJSONTry_(payload){
+  try {
+    const data = await postJSON(payload);
+    return { ok:true, data };
+  } catch(e){
+    const msg = (e && e.message) ? e.message : String(e);
+    return { ok:false, error: msg };
+  }
+}
+
+/* ✅ helper: thử nhiều action name (tương thích backend cũ/mới) */
+async function apiCallCompat_(actions, payload){
+  const list = Array.isArray(actions) ? actions : [actions];
+  let lastErr = "API error";
+  for (const act of list) {
+    const out = await postJSONTry_({ action: String(act), ...(payload||{}) });
+    if (out.ok) return out.data;
+    lastErr = out.error || lastErr;
+  }
+  throw new Error(lastErr);
+}
+
 /********************
  * Polyfill google.script.run
  ********************/
@@ -782,7 +805,8 @@ function normalizeUserObj_(u){
   const username = String(u.username || u.name || "").trim();
   const lastRenameAtMs = Number(u.lastRenameAtMs || 0) || 0;
 
-  if (!userId || !username) return null;
+  if (!username) return null;
+  // userId có thể trống (tránh tự sinh bừa khi login tài khoản đã có)
   return { userId, username, lastRenameAtMs };
 }
 
@@ -877,6 +901,21 @@ function formatTs(ms){
 }
 function isDigitsOnly(s){
   return /^[0-9]+$/.test(String(s||""));
+}
+
+/* ✅ sheet password hay bị mất số 0 đầu nếu cell kiểu number */
+function stripLeadingZeros_(s){
+  s = String(s||"");
+  if (!s) return s;
+  if (!/^0+\d/.test(s)) return s; // không bắt đầu bằng 0 => giữ
+  const t = s.replace(/^0+/, "");
+  return t === "" ? "0" : t;
+}
+function pinVariants_(pin){
+  const p = String(pin||"");
+  const t = stripLeadingZeros_(p);
+  if (t && t !== p) return [p, t];
+  return [p];
 }
 
 /********************
@@ -1675,8 +1714,19 @@ function setGateReady(ready){
 }
 
 /********************
- * Account API (✅ gửi cả password để match sheet)
+ * Account API (✅ đồng bộ Users!G)
  ********************/
+function buildUsersSheetHint_(){
+  return {
+    usersSheet: "Users",
+    usersSheetName: "Users",
+    sheetUsers: "Users",
+    sheet: "Users",
+    passwordCol: "G",
+    passwordColumn: "G",
+    passwordColLetter: "G"
+  };
+}
 function buildAuthFields_(pinLike){
   const p = String(pinLike ?? "");
   return {
@@ -1685,7 +1735,9 @@ function buildAuthFields_(pinLike){
     pass: p,
     pwd: p,
     pincode: p,
-    pinCode: p
+    pinCode: p,
+    pin_code: p,
+    userPassword: p
   };
 }
 function extractServerPassword_(obj){
@@ -1697,6 +1749,8 @@ function extractServerPassword_(obj){
     obj.pin ??
     obj.pincode ??
     obj.pinCode ??
+    obj.pin_code ??
+    obj.userPassword ??
     ""
   );
 }
@@ -1715,70 +1769,136 @@ function pickPinLen_(ck){
   return Number(ck.pinLen || (ck.user && ck.user.pinLen) || 0) || 0;
 }
 
+/* ✅ check username (compat) */
 async function apiCheckUsername_(username){
   const u = String(username||"").trim();
-  return await postJSON({ action:"checkUsername", username: u, name: u, userName: u });
+  return await apiCallCompat_(
+    ["checkUsername","userExists","checkUser","getUser"],
+    {
+      username: u,
+      name: u,
+      userName: u,
+      userId: (USER && USER.userId) ? USER.userId : "",
+      quizId: QUIZ.quizId || getQuizId(),
+      ...buildUsersSheetHint_()
+    }
+  );
 }
 
+/* ✅ login: thử action + thử biến thể pin (0123 -> 123) */
 async function apiLoginUser_(username, pin){
   const u = String(username||"").trim();
-  const p = String(pin||"");
-  return await postJSON({
-    action:"loginUser",
-    username: u,
-    name: u,
-    userName: u,
-    ...buildAuthFields_(p),
-    ua: navigator.userAgent || ""
-  });
+  const variants = pinVariants_(pin);
+
+  let lastErr = "Sai mật khẩu";
+  for (const pv of variants) {
+    try {
+      const res = await apiCallCompat_(
+        ["loginUser","login","authLogin","loginV2"],
+        {
+          username: u,
+          name: u,
+          userName: u,
+          userId: (USER && USER.userId) ? USER.userId : "",
+          quizId: QUIZ.quizId || getQuizId(),
+          ...buildAuthFields_(pv),
+          ...buildUsersSheetHint_(),
+          ua: navigator.userAgent || ""
+        }
+      );
+      return res;
+    } catch(e){
+      lastErr = (e && e.message) ? e.message : lastErr;
+    }
+  }
+  throw new Error(lastErr);
 }
 
 async function apiRegisterUser_(username, pin){
   const userId = randId("u");
   const u = String(username||"").trim();
   const p = String(pin||"");
-  return await postJSON({
-    action:"registerUser",
-    userId,
-    username: u,
-    name: u,
-    userName: u,
-    ...buildAuthFields_(p),
-    ua: navigator.userAgent || ""
-  });
+
+  return await apiCallCompat_(
+    ["registerUser","signup","createUser","register"],
+    {
+      userId,
+      username: u,
+      name: u,
+      userName: u,
+      quizId: QUIZ.quizId || getQuizId(),
+      ...buildAuthFields_(p),
+      ...buildUsersSheetHint_(),
+      ua: navigator.userAgent || ""
+    }
+  );
 }
 
 /* ✅ đổi signature để không bị dính state.name khi optimistic */
 async function apiChangeUsername_(oldUsername, newUsername){
-  return await postJSON({
-    action:"changeUsername",
-    userId: (USER && USER.userId) ? USER.userId : "",
-    oldUsername: String(oldUsername||"").trim(),
-    username: String(oldUsername||"").trim(),     // thêm field để backend cũ cũng hiểu
-    newUsername: String(newUsername||"").trim(),
-    ua: navigator.userAgent || ""
-  });
+  return await apiCallCompat_(
+    ["changeUsername","renameUser","updateUsername"],
+    {
+      userId: (USER && USER.userId) ? USER.userId : "",
+      oldUsername: String(oldUsername||"").trim(),
+      username: String(oldUsername||"").trim(),
+      newUsername: String(newUsername||"").trim(),
+      quizId: QUIZ.quizId || getQuizId(),
+      ...buildUsersSheetHint_(),
+      ua: navigator.userAgent || ""
+    }
+  );
 }
 
+/* ✅ đổi mật khẩu: thử nhiều key + thử biến thể oldPin */
 async function apiChangePassword_(username, oldPin, newPin){
   const u = String(username||"").trim();
   const o = String(oldPin||"");
   const n = String(newPin||"");
 
-  return await postJSON({
-    action:"changePassword",
-    userId: (USER && USER.userId) ? USER.userId : "",
-    username: u,
-    name: u,
-    userName: u,
-    oldPin: o,
-    newPin: n,
-    oldPassword: o,
-    newPassword: n,
-    oldPass: o,
-    newPass: n,
-    ua: navigator.userAgent || ""
-  });
+  const oldVariants = pinVariants_(o);
+  let lastErr = "Sai mật khẩu cũ hoặc server lỗi";
+
+  for (const ov of oldVariants) {
+    try {
+      const res = await apiCallCompat_(
+        ["changePassword","changePin","updatePassword","setPassword"],
+        {
+          userId: (USER && USER.userId) ? USER.userId : "",
+          username: u,
+          name: u,
+          userName: u,
+
+          oldPin: ov,
+          newPin: n,
+
+          oldPassword: ov,
+          newPassword: n,
+
+          oldPass: ov,
+          newPass: n,
+
+          oldPwd: ov,
+          newPwd: n,
+
+          old_pin: ov,
+          new_pin: n,
+
+          old_password: ov,
+          new_password: n,
+
+          quizId: QUIZ.quizId || getQuizId(),
+          ...buildUsersSheetHint_(),
+          ua: navigator.userAgent || ""
+        }
+      );
+      return res;
+    } catch(e){
+      lastErr = (e && e.message) ? e.message : lastErr;
+    }
+  }
+
+  throw new Error(lastErr);
 }
 
 /********************
@@ -1874,18 +1994,37 @@ function renderGateView() {
   try { nameInput.focus(); } catch(e){}
 
   async function finalizeLogin_(u, serverUserId){
-    // u có thể là user object (từ server) hoặc object fake khi fallback
     if (!u || !u.username) { toast("Đăng nhập lỗi"); return; }
 
+    const uname = String(u.username||"").trim();
+    // ✅ KHÔNG tự sinh userId ngẫu nhiên khi login tài khoản đã có
+    let bestUserId = String(u.userId || serverUserId || "").trim();
+
+    // nếu server không trả userId: thử lấy lại từ checkUsername
+    if (!bestUserId) {
+      // nếu đang có USER local cùng username thì ưu tiên giữ lại
+      if (USER && USER.userId && normalizeForFilter(USER.username) === normalizeForFilter(uname)) {
+        bestUserId = USER.userId;
+      } else {
+        try {
+          const ck = await apiCheckUsername_(uname);
+          const uid = pickUserId_(ck);
+          if (uid) bestUserId = String(uid);
+        } catch(e){}
+      }
+    }
+
     USER = {
-      userId: u.userId || serverUserId || randId("u"),
-      username: u.username,
-      lastRenameAtMs: u.lastRenameAtMs || 0
+      userId: bestUserId,          // có thể trống
+      username: uname,
+      lastRenameAtMs: Number(u.lastRenameAtMs || 0) || 0
     };
     saveUser(USER);
 
     state.name = USER.username;
-    state.cacheId = USER.userId;
+
+    // cacheId: chỉ set theo userId nếu có; không thì giữ cacheId cũ để không “đứt” progress
+    if (USER.userId) state.cacheId = USER.userId;
     ensureCacheId();
 
     if (!state.attemptId) state.attemptId = randId("attempt");
@@ -1912,23 +2051,29 @@ function renderGateView() {
           if (String(pin) !== ADMIN_PIN) return { ok:false, message:"Sai mật khẩu" };
         }
 
-        // ✅ try loginUser (gửi cả pin + password)
+        // ✅ try loginUser (compat + pin variants)
         try{
           const res = await apiLoginUser_(username, pin);
           const user = (res && res.user) ? res.user : res;
           const nu = normalizeUserObj_(user) || user;
           if (nu && nu.username) return { ok:true, data: nu };
-          // nếu server trả format khác -> vẫn cho qua minimal
-          return { ok:true, data: { userId: serverUserId || randId("u"), username, lastRenameAtMs: 0 } };
+
+          // nếu server trả format khác -> vẫn cho qua, nhưng KHÔNG tự sinh userId
+          return { ok:true, data: { userId: serverUserId || "", username, lastRenameAtMs: 0 } };
         } catch(e){
-          // ✅ fallback: nếu checkUsername trả được password thì verify tại client
+          // ✅ fallback: nếu checkUsername trả được password thì verify tại client (kèm bỏ 0 đầu)
           try{
             const ck = await apiCheckUsername_(username);
             const secret = extractServerPassword_(ck) || extractServerPassword_(ck && ck.user ? ck.user : null);
-            const uid = pickUserId_(ck) || serverUserId || randId("u");
+            const uid = pickUserId_(ck) || serverUserId || "";
 
-            if (secret && String(secret) === String(pin)) {
-              return { ok:true, data: { userId: uid, username: String(username||"").trim(), lastRenameAtMs: Number(ck.lastRenameAtMs||0)||0 } };
+            if (secret) {
+              const pList = pinVariants_(pin);
+              for (const pv of pList) {
+                if (String(secret) === String(pv)) {
+                  return { ok:true, data: { userId: uid, username: String(username||"").trim(), lastRenameAtMs: Number(ck.lastRenameAtMs||0)||0 } };
+                }
+              }
             }
           } catch(_e){}
           return { ok:false, message:"Sai mật khẩu" };
@@ -1948,6 +2093,12 @@ function renderGateView() {
     if (!isDigitsOnly(pin)) { toast("Mật khẩu chỉ gồm số"); return; }
     if (String(pin).length !== pinLen) { toast(`Mật khẩu phải ${pinLen} số`); return; }
 
+    // ✅ tránh lỗi sheet auto bỏ số 0 đầu nếu cột password đang là number
+    if (!isAdminName(username) && String(pin).startsWith("0")) {
+      toast("Mật khẩu không nên bắt đầu bằng 0 (Sheet có thể tự bỏ số 0 đầu).");
+      return;
+    }
+
     if (isAdminName(username) && String(pin) !== ADMIN_PIN) {
       toast("Tài khoản tuankhoi dùng mật khẩu 6 số cố định");
       return;
@@ -1958,13 +2109,13 @@ function renderGateView() {
 
     const uRaw = res.user ? res.user : res;
     const u = normalizeUserObj_(uRaw) || uRaw;
-    if (!u || !u.userId || !u.username) throw new Error("registerUser lỗi.");
+    if (!u || !u.username) throw new Error("registerUser lỗi.");
 
-    USER = { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
+    USER = { userId: String(u.userId||"").trim(), username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
     saveUser(USER);
 
     state.name = USER.username;
-    state.cacheId = USER.userId;
+    if (USER.userId) state.cacheId = USER.userId;
     ensureCacheId();
 
     if (!state.attemptId) state.attemptId = randId("attempt");
@@ -2009,7 +2160,6 @@ function renderGateView() {
       }
 
       if (exists === false) {
-        // ✅ username chưa đăng ký -> hỏi có muốn đăng ký không
         setGateStatus(`Username "${username}" chưa đăng ký.`);
         const ok = await openRegisterPrompt_(username);
         if (!ok) {
@@ -3425,7 +3575,7 @@ btnChangePinEl.addEventListener("pointerdown", async (e) => {
           return { ok:true };
         }
 
-        // verify bằng loginUser
+        // verify bằng loginUser (compat + thử bỏ 0 đầu)
         try{
           await apiLoginUser_(state.name, oldPin);
           return { ok:true };
@@ -3434,7 +3584,12 @@ btnChangePinEl.addEventListener("pointerdown", async (e) => {
           try{
             const ck = await apiCheckUsername_(state.name);
             const secret = extractServerPassword_(ck) || extractServerPassword_(ck && ck.user ? ck.user : null);
-            if (secret && String(secret) === String(oldPin)) return { ok:true };
+            if (secret) {
+              const vars = pinVariants_(oldPin);
+              for (const v of vars) {
+                if (String(secret) === String(v)) return { ok:true };
+              }
+            }
           } catch(_e){}
           return { ok:false, message:"Sai mật khẩu" };
         }
@@ -3445,7 +3600,12 @@ btnChangePinEl.addEventListener("pointerdown", async (e) => {
 
         if (isAdminName(state.name)) {
           // admin pin cố định -> không cho đổi
-          return { ok:false, message:"Tài khoản tuankhoi không cho đổi mật khẩu", resetStep:"old" };
+          return { ok:false, message:"Tài khoản tuankhoi không được phép đổi mật khẩu", resetStep:"old" };
+        }
+
+        // ✅ tránh lỗi sheet auto bỏ 0 đầu
+        if (String(newPin).startsWith("0")) {
+          return { ok:false, message:"Mật khẩu không nên bắt đầu bằng 0", resetStep:"new1" };
         }
 
         try{
@@ -3564,13 +3724,13 @@ async function loadBootstrapOrFallback_(){
     if (res && res.me && res.me.user) {
       const uRaw = res.me.user;
       const u = normalizeUserObj_(uRaw) || uRaw;
-      if (u && u.userId && u.username) {
-        USER = { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
+      if (u && u.username) {
+        USER = { userId: String(u.userId||"").trim(), username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
         saveUser(USER);
 
         // ✅ sync state.name để tránh lệch
         state.name = USER.username;
-        state.cacheId = USER.userId;
+        if (USER.userId) state.cacheId = USER.userId;
       }
     }
 
@@ -3625,9 +3785,9 @@ function parseHashCacheId() {
 
   ensureCacheId();
 
-  if (USER && USER.userId && USER.username) {
+  if (USER && USER.username) {
     state.name = USER.username;
-    state.cacheId = USER.userId;
+    if (USER.userId) state.cacheId = USER.userId;
   }
 
   if (!state.cacheId) {
