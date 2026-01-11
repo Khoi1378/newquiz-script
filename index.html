@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
   <title>Vocabulary Check</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,6 +22,7 @@
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
+    html { -webkit-text-size-adjust: 100%; }
     body {
       margin: 0;
       font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -29,23 +30,22 @@
       background: radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
                   linear-gradient(120deg, var(--bg1) 0%, var(--bg2) 100%);
       overflow: hidden;
+      touch-action: pan-x pan-y;
     }
 
-    /* giảm delay cảm giác trên mobile */
     .btn, .pinKey, .cmtBtn, .btn-x {
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
 
-    #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 110px; }
+    #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 110px; touch-action: pan-y; }
     .wrap { max-width: 980px; margin: 0 auto; padding: 0 14px; }
 
-    /* username corner (nhạt góc trái trên) */
     .userCorner {
       position: fixed;
       top: 10px;
       left: 12px;
-      z-index: 10010; /* thấp hơn modal */
+      z-index: 10010;
       display: none;
       align-items: center;
       gap: 8px;
@@ -102,8 +102,6 @@
       color: #fff; border: 0;
       box-shadow: 0 12px 24px rgba(124,58,237,.18);
     }
-
-    /* CHECK: nhỏ, chữ "Check" */
     .btn-check {
       border-radius: 12px;
       padding: 9px 10px;
@@ -187,7 +185,6 @@
     }
     .input[disabled] { background: #f3f4f6; color: #111827; }
 
-    /* row input + check */
     .qaRow{
       display:flex;
       gap:10px;
@@ -220,7 +217,7 @@
       border-radius: 16px;
       border: 1px solid #e5e7eb;
       background: #fff;
-      table-layout: fixed; /* quan trọng: không tràn ngang */
+      table-layout: fixed;
     }
     .table th, .table td {
       padding: 10px 10px;
@@ -265,9 +262,8 @@
       border-bottom: 1px solid rgba(124,58,237,.25);
     }
     .meRow td:first-child { border-left: 6px solid rgba(124,58,237,.55); }
-    .meName { font-weight: 1000; letter-spacing: .01em; }
+
     .meBadge {
-      margin-left: 8px;
       padding: 4px 8px;
       border-radius: 999px;
       font-weight: 900;
@@ -278,7 +274,6 @@
       white-space: nowrap;
     }
     .adminBadgeInline{
-      margin-left: 8px;
       padding: 4px 8px;
       border-radius: 999px;
       font-weight: 950;
@@ -289,28 +284,47 @@
       white-space: nowrap;
     }
 
-    /* leaderboard: cột tên ellipsis */
-    .lbName{
-      white-space: nowrap;
+    .lbNameWrap{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .lbNameText{
+      font-weight: 1000;
+      min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
-      display:block;
-      width: 100%;
+      white-space: nowrap;
+      flex: 1 1 auto;
+    }
+    .lbBadges{
+      display:flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      flex: 0 0 auto;
     }
 
-    /* ===== MODAL STACK FIX (quan trọng) ===== */
+    @keyframes rankPop {
+      0% { transform: scale(1); filter: brightness(1); }
+      45% { transform: scale(1.04); filter: brightness(1.03); }
+      100% { transform: scale(1); filter: brightness(1); }
+    }
+    .rankPop { animation: rankPop .55s ease; }
+
     .modal-backdrop {
       position: fixed; inset: 0; background: rgba(0,0,0,.35);
       display: none; align-items: center; justify-content: center;
       padding: 16px;
-      z-index: 20000; /* cao hơn hết phần UI */
+      z-index: 20000;
     }
     .modal-backdrop.show { display: flex; }
-    #modalBackdrop { z-index: 20010; }    /* reset confirm */
-    #registerBackdrop { z-index: 20015; } /* ✅ register confirm */
-    #wrongBackdrop { z-index: 20020; }    /* wrong popup */
-    #profileBackdrop { z-index: 20030; }  /* profile */
-    #pinBackdrop { z-index: 20040; }      /* PIN modal luôn ở trên cùng */
+    #modalBackdrop { z-index: 20010; }
+    #registerBackdrop { z-index: 20015; }
+    #wrongBackdrop { z-index: 20020; }
+    #profileBackdrop { z-index: 20030; }
+    #pinBackdrop { z-index: 20040; }
 
     .modal {
       width: 100%; max-width: 620px;
@@ -357,20 +371,15 @@
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
 
-    /* Discussion button (small, only after done) */
     .fabDiscuss {
       position: fixed;
       right: 14px;
       bottom: 18px;
-      z-index: 10010; /* dưới modal */
+      z-index: 10010;
       display: none;
     }
-    .btn-discuss-mini{
-      padding: 9px 12px;
-      font-size: .86rem;
-    }
+    .btn-discuss-mini{ padding: 9px 12px; font-size: .86rem; }
 
-    /* Discussion styles */
     .cmtBox { display: grid; gap: 12px; }
     .cmtItem {
       border: 1px solid #e5e7eb;
@@ -385,14 +394,14 @@
     }
     .cmtAuthor {
       font-weight: 950;
-      color: #6b7280; /* username xám */
+      color: #6b7280;
       display:flex; gap: 8px; align-items:center; flex-wrap: wrap;
     }
     .cmtText { color: #111827; font-weight: 750; line-height: 1.35; white-space: pre-wrap; word-break: break-word; }
     .cmtActions {
       display:flex; gap: 8px; flex-wrap: wrap;
       margin-top: 10px;
-      justify-content: flex-end; /* dồn sang phải */
+      justify-content: flex-end;
     }
     .cmtBtn {
       border-radius: 999px;
@@ -401,7 +410,7 @@
       border: 1px solid #e5e7eb;
       background: #fff;
       cursor: pointer;
-      font-size: .82rem; /* nhỏ hơn */
+      font-size: .82rem;
     }
     .cmtBtnDanger { background: rgba(220,38,38,.1); border-color: rgba(220,38,38,.25); color: #991b1b; }
     .cmtTime {
@@ -432,11 +441,7 @@
       color: #6b7280; font-weight: 800; font-size: .85rem;
     }
 
-    /* ===== PIN / PROFILE UI ===== */
-    .pinWrap{
-      display:grid;
-      gap:12px;
-    }
+    .pinWrap{ display:grid; gap:12px; }
     .pinDots{
       display:flex;
       justify-content:center;
@@ -487,7 +492,6 @@
       line-height: 1.35;
     }
 
-    /* ✅ sai mật khẩu: rung + đỏ dots (0.5s) */
     @keyframes shakeX {
       0% { transform: translateX(0); }
       15% { transform: translateX(-8px); }
@@ -506,30 +510,16 @@
     }
     .pinNote.error{ color: var(--bad); }
 
-    .sectionTitle{
-      font-weight: 1000;
-      margin: 8px 0 6px;
-      font-size: .98rem;
-    }
-    .divider{
-      height:1px;
-      background: #e5e7eb;
-      margin: 12px 0;
-    }
+    .sectionTitle{ font-weight: 1000; margin: 8px 0 6px; font-size: .98rem; }
+    .divider{ height:1px; background: #e5e7eb; margin: 12px 0; }
     .btn-red{
       background: var(--bad);
       color:#fff;
       border:0;
       box-shadow: 0 12px 24px rgba(220,38,38,.18);
     }
-    .grid2{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    @media (max-width: 520px){
-      .grid2{ grid-template-columns: 1fr; }
-    }
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 520px){ .grid2{ grid-template-columns: 1fr; } }
 
     @media (max-width: 820px) {
       .progressline { max-width: 100%; }
@@ -574,14 +564,12 @@
     </div>
   </div>
 
-  <!-- Small Discuss Button (ONLY after finished) -->
   <div class="fabDiscuss" id="fabDiscuss">
     <button class="btn btn-discuss-mini" id="btnDiscuss">💬 Thảo luận</button>
   </div>
 
   <div class="toast" id="toast"></div>
 
-  <!-- Reset Confirmation Modal -->
   <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <h3 id="modalTitle">Làm lại bài?</h3>
@@ -593,7 +581,6 @@
     </div>
   </div>
 
-  <!-- ✅ Register confirm -->
   <div class="modal-backdrop" id="registerBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
       <h3 id="registerTitle">Đăng ký tài khoản?</h3>
@@ -605,7 +592,6 @@
     </div>
   </div>
 
-  <!-- Wrong Answers Popup -->
   <div class="modal-backdrop" id="wrongBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="wrongTitle">
       <div class="xclose">
@@ -616,7 +602,6 @@
     </div>
   </div>
 
-  <!-- PIN Modal (keypad) -->
   <div class="modal-backdrop" id="pinBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
       <div class="xclose">
@@ -633,7 +618,6 @@
     </div>
   </div>
 
-  <!-- Profile Modal -->
   <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
       <div class="xclose">
@@ -652,18 +636,12 @@
 
       <div class="divider"></div>
 
-      <!-- ✅ ĐƯA MẬT KHẨU LÊN TRÊN CÙNG -->
       <div class="sectionTitle">Mật khẩu</div>
-      <div class="muted" style="margin:0 0 10px; line-height:1.35">
-      </div>
       <button class="btn btn-primary" id="btnChangePin" style="justify-content:center; width:100%;">🔒 Đổi mật khẩu</button>
 
       <div class="divider"></div>
 
       <div class="sectionTitle">Đổi username</div>
-      <div class="muted" style="margin:0 0 10px; line-height:1.35">
-      </div>
-
       <div class="grid2">
         <input class="input" id="newUsername" placeholder="Username mới" maxlength="15" autocomplete="off"/>
         <button class="btn btn-primary" id="btnSaveNewUsername" style="justify-content:center;">💾 Lưu username</button>
@@ -676,26 +654,19 @@
   </div>
 
 <script>
-/********************
- * 0) SET API URL (Apps Script Web App)
- ********************/
 const API_URL = "https://script.google.com/macros/s/AKfycbz-qpw7O50e1cMSkeYyPuieGXuesBLyF8LzJ6asr03ESQXkZqP2vivVZGcG-TBXDIHW4g/exec";
 
-/********************
- * Username rules
- ********************/
 const USER_KEY = "tk_user_v1";
 const BAD_SUBSTRINGS = ["duma","dit","lon","cac","fuck","shit","dick","pussy"];
 const ADMIN_NORM = "tuankhoi";
+const ADMIN_PIN = "072008";
 
-/********************
- * Special admin pin (front-end fallback)
- ********************/
-const ADMIN_PIN = "072008"; // tuankhoi: 6 số
+const QUIZ_VERSION = "vocab-check-v2";
+const STORAGE_KEY = "gs_vocab_check_progress_v2";
+const DB_NAME = "gs_vocab_check_db_v2";
+const STORE_NAME = "kv";
+const NAME_PREFIX = "GSV2::";
 
-/********************
- * Quiz id
- ********************/
 function getQuizId() {
   try {
     const u = new URL(location.href);
@@ -704,9 +675,92 @@ function getQuizId() {
   } catch { return "vocab1"; }
 }
 
-/********************
- * POST JSON
- ********************/
+const LOCAL_ANSWER_OVERRIDES = {
+  /* ví dụ:
+  vocab1: {
+    // key theo id hoặc theo word (normalize)
+    // "12": ["từ bỏ", "bỏ rơi"],
+    // "abandon": ["từ bỏ", "bỏ rơi"]
+  }
+  */
+};
+
+function preventZoom_(){
+  document.addEventListener("wheel", (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive:false });
+  document.addEventListener("keydown", (e) => {
+    const k = (e.key || "").toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && (k === "+" || k === "=" || k === "-" || k === "_" || k === "0")) e.preventDefault();
+  }, { passive:false });
+  ["gesturestart","gesturechange","gestureend"].forEach(ev => {
+    document.addEventListener(ev, (e) => e.preventDefault(), { passive:false });
+  });
+}
+preventZoom_();
+
+const SFX = (() => {
+  let ctx = null;
+  let unlocked = false;
+  const vol = 0.045;
+
+  function ensure(){
+    if (ctx) return ctx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    ctx = new AC();
+    return ctx;
+  }
+  async function unlock(){
+    const c = ensure();
+    if (!c) return;
+    if (unlocked) return;
+    try { await c.resume(); } catch(e){}
+    unlocked = (c.state === "running");
+    if (!unlocked) {
+      try {
+        const o = c.createOscillator();
+        const g = c.createGain();
+        g.gain.value = 0.0001;
+        o.connect(g).connect(c.destination);
+        o.start();
+        o.stop(c.currentTime + 0.01);
+      } catch(e){}
+    }
+  }
+  function tone(freq, dur=0.06, type="sine", gain=vol){
+    const c = ensure();
+    if (!c) return;
+    if (c.state !== "running") return;
+    const o = c.createOscillator();
+    const g = c.createGain();
+    const t0 = c.currentTime;
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g).connect(c.destination);
+    o.start(t0);
+    o.stop(t0 + dur + 0.02);
+  }
+  function click(){ tone(520, 0.045, "triangle", vol*0.65); }
+  function soft(){ tone(420, 0.05, "sine", vol*0.55); }
+  function ok(){ tone(740, 0.06, "triangle", vol*0.85); setTimeout(()=>tone(980,0.07,"triangle",vol*0.75), 55); }
+  function bad(){ tone(220, 0.08, "sine", vol*0.95); setTimeout(()=>tone(180,0.09,"sine",vol*0.85), 60); }
+  function rankUp(){
+    tone(440, 0.06, "triangle", vol*0.75);
+    setTimeout(()=>tone(660, 0.06, "triangle", vol*0.75), 60);
+    setTimeout(()=>tone(880, 0.07, "triangle", vol*0.75), 120);
+  }
+
+  document.addEventListener("pointerdown", (e) => {
+    unlock();
+    const t = e.target;
+    if (t && (t.closest("button") || t.closest(".pinKey") || t.closest(".cmtBtn") || t.closest(".btn-x"))) click();
+  }, true);
+
+  return { unlock, click, soft, ok, bad, rankUp };
+})();
+
 async function postJSON(payload) {
   const res = await fetch(API_URL, {
     method: "POST",
@@ -720,8 +774,6 @@ async function postJSON(payload) {
   if (data && data.ok === false) throw new Error(data.error || "API error");
   return data;
 }
-
-/* ✅ helper: không throw để thử nhiều action/biến thể */
 async function postJSONTry_(payload){
   try {
     const data = await postJSON(payload);
@@ -731,8 +783,6 @@ async function postJSONTry_(payload){
     return { ok:false, error: msg };
   }
 }
-
-/* ✅ helper: thử nhiều action name (tương thích backend cũ/mới) */
 async function apiCallCompat_(actions, payload){
   const list = Array.isArray(actions) ? actions : [actions];
   let lastErr = "API error";
@@ -744,95 +794,34 @@ async function apiCallCompat_(actions, payload){
   throw new Error(lastErr);
 }
 
-/********************
- * Polyfill google.script.run
- ********************/
 function installGoogleScriptRunPolyfill() {
   window.google = window.google || {};
   window.google.script = window.google.script || {};
-
   function runner(success, failure) {
     return new Proxy({}, {
       get(_t, prop) {
         if (prop === "withSuccessHandler") return (fn) => runner(fn, failure);
         if (prop === "withFailureHandler") return (fn) => runner(success, fn);
-
         return (arg) => {
           const action = String(prop);
-
           let payload = {};
           if (arg && typeof arg === "object") payload = { ...arg };
           else {
             if (action === "getLeaderboard") payload = { limit: arg };
             else if (action === "getProgress") payload = { cacheId: arg };
-            else payload = {};
           }
-
           if (action === "getQuizData" && !payload.quizId) payload.quizId = getQuizId();
-
-          const p = postJSON({ action, ...payload })
-            .then((data) => {
-              success && success(data);
-              return data;
-            })
-            .catch((err) => {
-              const e = (err instanceof Error) ? err : new Error(String(err));
-              failure && failure(e);
-              throw e;
-            });
-
-          return p;
+          return postJSON({ action, ...payload })
+            .then((data) => { success && success(data); return data; })
+            .catch((err) => { const e = (err instanceof Error) ? err : new Error(String(err)); failure && failure(e); throw e; });
         };
       }
     });
   }
-
   window.google.script.run = runner(null, null);
 }
+function gasAvailable() { return !!(API_URL && API_URL.startsWith("http")); }
 
-function gasAvailable() {
-  return !!(API_URL && API_URL.startsWith("http"));
-}
-
-/********************
- * User local cache (✅ migrate dữ liệu cũ)
- ********************/
-function normalizeUserObj_(u){
-  if (!u || typeof u !== "object") return null;
-
-  // migrate keys cũ: {id, name}
-  const userId = String(u.userId || u.id || "").trim();
-  const username = String(u.username || u.name || "").trim();
-  const lastRenameAtMs = Number(u.lastRenameAtMs || 0) || 0;
-
-  if (!username) return null;
-  // userId có thể trống (tránh tự sinh bừa khi login tài khoản đã có)
-  return { userId, username, lastRenameAtMs };
-}
-
-function loadUser() {
-  try {
-    const raw = localStorage.getItem(USER_KEY) || "null";
-    const obj = JSON.parse(raw);
-    const u = normalizeUserObj_(obj);
-    // nếu migrate được thì lưu lại chuẩn luôn
-    if (u) localStorage.setItem(USER_KEY, JSON.stringify(u));
-    return u;
-  } catch { return null; }
-}
-
-function saveUser(u) {
-  if (!u) localStorage.removeItem(USER_KEY);
-  else {
-    const norm = normalizeUserObj_(u) || null;
-    if (!norm) localStorage.removeItem(USER_KEY);
-    else localStorage.setItem(USER_KEY, JSON.stringify(norm));
-  }
-}
-
-/********************
- * Username normalize
- ********************/
 function normalizeForFilter(s) {
   let t = String(s || "").trim().toLowerCase();
   t = t.replace(/đ/g, "d");
@@ -841,6 +830,7 @@ function normalizeForFilter(s) {
   t = t.replace(/[^a-z0-9_]/g, "");
   return t;
 }
+function isAdminName(nameLike){ return normalizeForFilter(nameLike) === ADMIN_NORM; }
 function isBadUsername(u) {
   const t = normalizeForFilter(u);
   for (const w of BAD_SUBSTRINGS) if (t.includes(w)) return true;
@@ -854,13 +844,7 @@ function validateUsername(u) {
   if (isBadUsername(u)) return "Username có chứa từ không phù hợp.";
   return null;
 }
-function isAdminName(nameLike){
-  return normalizeForFilter(nameLike) === ADMIN_NORM;
-}
 
-/********************
- * Helpers
- ********************/
 function escapeHtml(s) {
   return String(s ?? "")
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -880,15 +864,9 @@ function shuffle(arr) {
   }
   return a;
 }
-function randId(prefix = "id") {
-  return prefix + "_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
-}
-function normalizeName(s){
-  return String(s||"").trim().replace(/\s+/g," ").toLowerCase();
-}
-function answerKey(s){
-  return String(s||"").trim().replace(/\s+/g," ").toLowerCase();
-}
+function randId(prefix = "id") { return prefix + "_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16); }
+function normalizeName(s){ return String(s||"").trim().replace(/\s+/g," ").toLowerCase(); }
+function answerKey(s){ return String(s||"").trim().replace(/\s+/g," ").toLowerCase(); }
 function pad2(n){ return String(n).padStart(2,"0"); }
 function formatTs(ms){
   const d = new Date(Number(ms||0));
@@ -899,15 +877,12 @@ function formatTs(ms){
   const yy = String(d.getFullYear()).slice(-2);
   return `${hh}:${mm}/${dd}/${MM}/${yy}`;
 }
-function isDigitsOnly(s){
-  return /^[0-9]+$/.test(String(s||""));
-}
+function isDigitsOnly(s){ return /^[0-9]+$/.test(String(s||"")); }
 
-/* ✅ sheet password hay bị mất số 0 đầu nếu cell kiểu number */
 function stripLeadingZeros_(s){
   s = String(s||"");
   if (!s) return s;
-  if (!/^0+\d/.test(s)) return s; // không bắt đầu bằng 0 => giữ
+  if (!/^0+\d/.test(s)) return s;
   const t = s.replace(/^0+/, "");
   return t === "" ? "0" : t;
 }
@@ -917,523 +892,6 @@ function pinVariants_(pin){
   if (t && t !== p) return [p, t];
   return [p];
 }
-
-/********************
- * ✅ Register confirm modal
- ********************/
-const registerBackdrop = document.getElementById("registerBackdrop");
-const registerDesc = document.getElementById("registerDesc");
-document.getElementById("btnRegisterNo").addEventListener("click", () => closeRegisterPrompt_(false));
-document.getElementById("btnRegisterYes").addEventListener("click", () => closeRegisterPrompt_(true));
-registerBackdrop.addEventListener("click", (e) => { if (e.target === registerBackdrop) closeRegisterPrompt_(false); });
-
-let REG_PROMPT = { open:false, resolve:null, username:"" };
-function openRegisterPrompt_(username){
-  return new Promise((resolve) => {
-    REG_PROMPT.open = true;
-    REG_PROMPT.resolve = resolve;
-    REG_PROMPT.username = String(username||"").trim();
-
-    registerDesc.textContent = `Username "${REG_PROMPT.username}" chưa đăng ký, bạn có muốn đăng ký không?`;
-    registerBackdrop.classList.add("show");
-    registerBackdrop.setAttribute("aria-hidden","false");
-  });
-}
-function closeRegisterPrompt_(ans){
-  if (!REG_PROMPT.open) return;
-  registerBackdrop.classList.remove("show");
-  registerBackdrop.setAttribute("aria-hidden","true");
-
-  const res = REG_PROMPT.resolve;
-  REG_PROMPT.open = false;
-  REG_PROMPT.resolve = null;
-  REG_PROMPT.username = "";
-
-  if (res) res(!!ans);
-}
-
-/********************
- * PIN Modal (keypad) - nhanh hơn (keypad build 1 lần)
- ********************/
-const pinBackdrop = document.getElementById("pinBackdrop");
-const pinTitle = document.getElementById("pinTitle");
-const pinDesc = document.getElementById("pinDesc");
-const pinDots = document.getElementById("pinDots");
-const pinKeypad = document.getElementById("pinKeypad");
-const pinNote = document.getElementById("pinNote");
-const pinWrap = document.getElementById("pinWrap");
-
-document.getElementById("btnClosePin").addEventListener("click", () => closePinModal_("cancel"));
-
-let PIN_KEYS_BUILT = false;
-
-let PIN_MODAL = {
-  open: false,
-  resolve: null,
-  reject: null,
-  username: "",
-  mode: "login", // login | set | change
-  step: "one",   // set: one|confirm ; change: old|new1|confirm
-  pinLen: 4,
-  value: "",
-  first: "",
-  old: "",
-  dotEls: [],
-  submitting: false,
-  noteDefault: "",
-  onSubmit: null,        // login: async(pin) => {ok, data?, message?}
-  onVerifyOld: null,     // change: async(oldPin) => {ok, message?}
-  onFinalizeChange: null // change: async({oldPin,newPin}) => {ok, message?, resetStep?}
-};
-
-function buildPinKeypadOnce_(){
-  if (PIN_KEYS_BUILT) return;
-  PIN_KEYS_BUILT = true;
-
-  pinKeypad.innerHTML = "";
-  const keys = ["1","2","3","4","5","6","7","8","9","CLEAR","0","⌫"];
-  keys.forEach(k => {
-    const b = document.createElement("button");
-    b.className = "pinKey" + ((k==="CLEAR"||k==="⌫") ? " small" : "");
-    b.type = "button";
-    b.textContent = k;
-    b.addEventListener("click", () => onPinKey_(k));
-    pinKeypad.appendChild(b);
-  });
-}
-
-function buildDots_(n){
-  pinDots.innerHTML = "";
-  PIN_MODAL.dotEls = [];
-  for (let i=0;i<n;i++){
-    const d = document.createElement("div");
-    d.className = "dot";
-    pinDots.appendChild(d);
-    PIN_MODAL.dotEls.push(d);
-  }
-}
-
-function updateDots_(){
-  const valLen = PIN_MODAL.value.length;
-  for (let i=0;i<PIN_MODAL.dotEls.length;i++){
-    const el = PIN_MODAL.dotEls[i];
-    if (!el) continue;
-    el.classList.toggle("filled", i < valLen);
-  }
-}
-
-function setPinNote_(msg, type=""){
-  if (type === "error") pinNote.classList.add("error");
-  else pinNote.classList.remove("error");
-  pinNote.textContent = String(msg || "");
-}
-
-function pinErrorPulse_(msg){
-  // clear nhập hiện tại + rung + đỏ dots trong 0.5s, không đóng modal
-  PIN_MODAL.value = "";
-  updateDots_();
-
-  pinDots.classList.add("error");
-  if (pinWrap) {
-    pinWrap.classList.remove("shake");
-    void pinWrap.offsetWidth; // retrigger
-    pinWrap.classList.add("shake");
-  }
-  setPinNote_(msg || "Sai mật khẩu", "error");
-
-  setTimeout(() => {
-    pinDots.classList.remove("error");
-    if (pinWrap) pinWrap.classList.remove("shake");
-    setPinNote_(PIN_MODAL.noteDefault || "");
-  }, 520);
-}
-
-function updatePinHeader_(){
-  const u = PIN_MODAL.username || "";
-  const mode = PIN_MODAL.mode;
-
-  let title = "";
-  let desc = "";
-
-  if (mode === "login") {
-    title = "Đăng nhập";
-    desc = `Username: ${u}`;
-  } else if (mode === "set") {
-    if (PIN_MODAL.step === "one") {
-      title = "Đăng ký";
-      desc = `Tạo mật khẩu ${PIN_MODAL.pinLen} số`;
-    } else {
-      title = "Xác nhận mật khẩu";
-      desc = `Nhập lại ${PIN_MODAL.pinLen} số`;
-    }
-  } else if (mode === "change") {
-    if (PIN_MODAL.step === "old") {
-      title = "Đổi mật khẩu";
-      desc = "Nhập mật khẩu hiện tại";
-    } else if (PIN_MODAL.step === "new1") {
-      title = "Mật khẩu mới";
-      desc = `Nhập ${PIN_MODAL.pinLen} số`;
-    } else {
-      title = "Xác nhận mật khẩu mới";
-      desc = `Nhập lại ${PIN_MODAL.pinLen} số`;
-    }
-  }
-
-  pinTitle.textContent = title;
-  pinDesc.textContent = desc;
-
-  // default note
-  if (isAdminName(u) || isAdminName(state.name)) {
-    PIN_MODAL.noteDefault = `Tài khoản tuankhoi dùng mật khẩu 6 số.`;
-  } else {
-    PIN_MODAL.noteDefault = `Mật khẩu chỉ gồm số.`;
-  }
-  setPinNote_(PIN_MODAL.noteDefault);
-}
-
-function openPinModal_({ username, mode="login", pinLen=4, firstPin="", onSubmit=null, onVerifyOld=null, onFinalizeChange=null }){
-  return new Promise((resolve, reject) => {
-    PIN_MODAL.open = true;
-    PIN_MODAL.resolve = resolve;
-    PIN_MODAL.reject = reject;
-
-    PIN_MODAL.username = String(username||"").trim();
-    PIN_MODAL.mode = mode;
-    PIN_MODAL.pinLen = Math.max(4, Number(pinLen)||4);
-
-    PIN_MODAL.value = "";
-    PIN_MODAL.first = "";
-    PIN_MODAL.old = "";
-    PIN_MODAL.submitting = false;
-
-    PIN_MODAL.onSubmit = (typeof onSubmit === "function") ? onSubmit : null;
-    PIN_MODAL.onVerifyOld = (typeof onVerifyOld === "function") ? onVerifyOld : null;
-    PIN_MODAL.onFinalizeChange = (typeof onFinalizeChange === "function") ? onFinalizeChange : null;
-
-    if (mode === "set") {
-      if (firstPin) {
-        PIN_MODAL.first = String(firstPin||"");
-        PIN_MODAL.step = "confirm";
-      } else {
-        PIN_MODAL.step = "one";
-      }
-    } else if (mode === "change") {
-      PIN_MODAL.step = "old";
-    } else {
-      PIN_MODAL.step = "one";
-    }
-
-    buildPinKeypadOnce_();
-    buildDots_(PIN_MODAL.pinLen);
-    updatePinHeader_();
-    updateDots_();
-
-    pinBackdrop.classList.add("show");
-    pinBackdrop.setAttribute("aria-hidden", "false");
-  });
-}
-
-function closePinModal_(why){
-  if (!PIN_MODAL.open) return;
-
-  pinBackdrop.classList.remove("show");
-  pinBackdrop.setAttribute("aria-hidden", "true");
-
-  const rej = PIN_MODAL.reject;
-
-  PIN_MODAL.open = false;
-  PIN_MODAL.resolve = null;
-  PIN_MODAL.reject = null;
-
-  PIN_MODAL.submitting = false;
-  PIN_MODAL.onSubmit = null;
-  PIN_MODAL.onVerifyOld = null;
-  PIN_MODAL.onFinalizeChange = null;
-
-  if (why === "ok") return;
-  if (rej) rej(new Error("cancel"));
-}
-
-pinBackdrop.addEventListener("click", (e) => {
-  if (e.target === pinBackdrop) closePinModal_("cancel");
-});
-
-async function submitLoginOrStay_(pin){
-  if (!PIN_MODAL.onSubmit) return null;
-
-  if (PIN_MODAL.submitting) return null;
-  PIN_MODAL.submitting = true;
-
-  try{
-    setPinNote_("Đang kiểm tra…");
-    pinNote.classList.remove("error");
-
-    const out = await PIN_MODAL.onSubmit(pin);
-    if (out && out.ok) {
-      const data = (out.data !== undefined) ? out.data : pin;
-      const res = PIN_MODAL.resolve;
-      closePinModal_("ok");
-      if (res) res(data);
-      return true;
-    }
-    pinErrorPulse_((out && out.message) ? out.message : "Sai mật khẩu");
-    return false;
-  } catch(e){
-    pinErrorPulse_("Sai mật khẩu");
-    return false;
-  } finally {
-    PIN_MODAL.submitting = false;
-  }
-}
-
-async function verifyOldOrStay_(oldPin){
-  if (!PIN_MODAL.onVerifyOld) return true;
-
-  if (PIN_MODAL.submitting) return false;
-  PIN_MODAL.submitting = true;
-
-  try{
-    setPinNote_("Đang kiểm tra…");
-    pinNote.classList.remove("error");
-
-    const out = await PIN_MODAL.onVerifyOld(oldPin);
-    if (out && out.ok) return true;
-
-    pinErrorPulse_((out && out.message) ? out.message : "Sai mật khẩu");
-    return false;
-  } catch(e){
-    pinErrorPulse_("Sai mật khẩu");
-    return false;
-  } finally {
-    PIN_MODAL.submitting = false;
-  }
-}
-
-async function finalizeChangeOrStay_(payload){
-  if (!PIN_MODAL.onFinalizeChange) return { ok:true };
-
-  if (PIN_MODAL.submitting) return { ok:false, message:"Đang xử lý…" };
-  PIN_MODAL.submitting = true;
-
-  try{
-    setPinNote_("Đang lưu…");
-    pinNote.classList.remove("error");
-
-    const out = await PIN_MODAL.onFinalizeChange(payload);
-    if (out && out.ok) return { ok:true };
-
-    return { ok:false, message: (out && out.message) ? out.message : "Không đổi được", resetStep: (out && out.resetStep) ? out.resetStep : "old" };
-  } catch(e){
-    return { ok:false, message:"Không đổi được", resetStep:"old" };
-  } finally {
-    PIN_MODAL.submitting = false;
-  }
-}
-
-async function onPinKey_(k){
-  if (!PIN_MODAL.open) return;
-  if (PIN_MODAL.submitting) return; // đang check -> khóa keypad
-
-  if (k === "CLEAR") {
-    PIN_MODAL.value = "";
-    updateDots_();
-    return;
-  }
-  if (k === "⌫") {
-    PIN_MODAL.value = PIN_MODAL.value.slice(0, -1);
-    updateDots_();
-    return;
-  }
-
-  if (PIN_MODAL.value.length >= PIN_MODAL.pinLen) return;
-  PIN_MODAL.value += String(k);
-  updateDots_();
-
-  if (PIN_MODAL.value.length !== PIN_MODAL.pinLen) return;
-
-  const mode = PIN_MODAL.mode;
-
-  if (mode === "login") {
-    const pin = PIN_MODAL.value;
-
-    // ✅ Sai thì rung + đỏ và KHÔNG đóng modal
-    if (PIN_MODAL.onSubmit) {
-      await submitLoginOrStay_(pin);
-      return;
-    }
-
-    // fallback cũ (nếu không truyền onSubmit)
-    const res = PIN_MODAL.resolve;
-    closePinModal_("ok");
-    if (res) res(pin);
-    return;
-  }
-
-  if (mode === "set") {
-    if (PIN_MODAL.step === "one") {
-      PIN_MODAL.first = PIN_MODAL.value;
-      PIN_MODAL.value = "";
-      PIN_MODAL.step = "confirm";
-      updatePinHeader_();
-      updateDots_();
-      return;
-    } else {
-      const pin1 = PIN_MODAL.first;
-      const pin2 = PIN_MODAL.value;
-
-      if (pin1 !== pin2) {
-        // ✅ mismatch -> đỏ + rung, ở lại modal
-        pinErrorPulse_("Mật khẩu không khớp");
-        PIN_MODAL.value = "";
-        PIN_MODAL.first = "";
-        PIN_MODAL.step = "one";
-        updatePinHeader_();
-        updateDots_();
-        return;
-      }
-
-      const res = PIN_MODAL.resolve;
-      closePinModal_("ok");
-      if (res) res(pin2);
-      return;
-    }
-  }
-
-  if (mode === "change") {
-    if (PIN_MODAL.step === "old") {
-      const oldPin = PIN_MODAL.value;
-
-      // ✅ verify old pin (sai -> đỏ + rung, không đóng)
-      const ok = await verifyOldOrStay_(oldPin);
-      if (!ok) {
-        PIN_MODAL.value = "";
-        PIN_MODAL.old = "";
-        PIN_MODAL.step = "old";
-        updatePinHeader_();
-        updateDots_();
-        return;
-      }
-
-      PIN_MODAL.old = oldPin;
-      PIN_MODAL.value = "";
-      PIN_MODAL.step = "new1";
-      updatePinHeader_();
-      updateDots_();
-      return;
-    }
-
-    if (PIN_MODAL.step === "new1") {
-      PIN_MODAL.first = PIN_MODAL.value;
-      PIN_MODAL.value = "";
-      PIN_MODAL.step = "confirm";
-      updatePinHeader_();
-      updateDots_();
-      return;
-    }
-
-    const new1 = PIN_MODAL.first;
-    const new2 = PIN_MODAL.value;
-
-    if (new1 !== new2) {
-      pinErrorPulse_("Mật khẩu mới không khớp");
-      PIN_MODAL.value = "";
-      PIN_MODAL.first = "";
-      PIN_MODAL.step = "new1";
-      updatePinHeader_();
-      updateDots_();
-      return;
-    }
-
-    // ✅ finalize change (server) -> fail thì ở lại modal + rung
-    const out = await finalizeChangeOrStay_({ oldPin: PIN_MODAL.old, newPin: new2 });
-    if (!out || !out.ok) {
-      pinErrorPulse_(out && out.message ? out.message : "Không đổi được");
-
-      // reset step nếu muốn
-      const resetStep = (out && out.resetStep) ? out.resetStep : "old";
-      if (resetStep === "new1") {
-        PIN_MODAL.step = "new1";
-        PIN_MODAL.value = "";
-        PIN_MODAL.first = "";
-      } else {
-        PIN_MODAL.step = "old";
-        PIN_MODAL.value = "";
-        PIN_MODAL.first = "";
-        PIN_MODAL.old = "";
-      }
-      updatePinHeader_();
-      updateDots_();
-      return;
-    }
-
-    const res = PIN_MODAL.resolve;
-    closePinModal_("ok");
-    if (res) res({ oldPin: PIN_MODAL.old, newPin: new2 });
-    return;
-  }
-}
-
-/********************
- * Profile Modal
- ********************/
-const profileBackdrop = document.getElementById("profileBackdrop");
-document.getElementById("btnCloseProfile").addEventListener("click", closeProfileModal_);
-profileBackdrop.addEventListener("click", (e) => { if (e.target === profileBackdrop) closeProfileModal_(); });
-
-function openProfileModal_(){
-  if (!state.name) return;
-
-  document.getElementById("profileUsername").textContent = state.name;
-  document.getElementById("profileRole").textContent = isAdminName(state.name) ? "ADMIN" : "USER";
-  document.getElementById("profileSub").textContent = "Quản lý tài khoản";
-
-  const hintEl = document.getElementById("profileRenameHint");
-  const newUsernameEl = document.getElementById("newUsername");
-  const btnSaveNewUsernameEl = document.getElementById("btnSaveNewUsername");
-
-  // ✅ khóa đổi username với tuankhoi
-  if (isAdminName(state.name)) {
-    hintEl.textContent = "Tài khoản tuankhoi không được đổi username.";
-    if (newUsernameEl) {
-      newUsernameEl.value = "";
-      newUsernameEl.disabled = true;
-      newUsernameEl.placeholder = "Không áp dụng cho tuankhoi";
-    }
-    if (btnSaveNewUsernameEl) btnSaveNewUsernameEl.disabled = true;
-  } else {
-    const last = Number((USER && USER.lastRenameAtMs) ? USER.lastRenameAtMs : 0) || 0;
-    const now = Date.now();
-    const DAY = 24*60*60*1000;
-    const nextOk = last ? (last + 30*DAY) : 0;
-    const canRename = (!last) || (now >= nextOk);
-
-    if (canRename) hintEl.textContent = "Có thể đổi  username ngay bây giờ.";
-    else hintEl.textContent = "Có thể đổi  username vào " + formatTs(nextOk);
-
-    if (newUsernameEl) {
-      newUsernameEl.disabled = false;
-      newUsernameEl.placeholder = "Username mới";
-    }
-    if (btnSaveNewUsernameEl) btnSaveNewUsernameEl.disabled = false;
-  }
-
-  document.getElementById("newUsername").value = "";
-
-  profileBackdrop.classList.add("show");
-  profileBackdrop.setAttribute("aria-hidden","false");
-}
-function closeProfileModal_(){
-  profileBackdrop.classList.remove("show");
-  profileBackdrop.setAttribute("aria-hidden","true");
-}
-
-/********************
- * Persist (same)
- ********************/
-const STORAGE_KEY = "gs_vocab_check_progress_v2";
-const DB_NAME = "gs_vocab_check_db_v2";
-const STORE_NAME = "kv";
-const NAME_PREFIX = "GSV2::";
 
 const Persist = {
   mode: { local: false, session: false, idb: false },
@@ -1453,9 +911,7 @@ const Persist = {
     }
   },
 
-  mirrorToWindowName(rawJson) {
-    try { window.name = NAME_PREFIX + rawJson; } catch (e) {}
-  },
+  mirrorToWindowName(rawJson) { try { window.name = NAME_PREFIX + rawJson; } catch (e) {} },
   mirrorGet() {
     try {
       const n = window.name || "";
@@ -1502,17 +958,127 @@ const Persist = {
   idbRemove(key) { return this.idbTx("readwrite", s => s.delete(key)); },
 };
 
-/********************
- * Quiz Data
- ********************/
+function normalizeUserObj_(u){
+  if (!u || typeof u !== "object") return null;
+  const userId = String(u.userId || u.id || "").trim();
+  const username = String(u.username || u.name || "").trim();
+  const lastRenameAtMs = Number(u.lastRenameAtMs || 0) || 0;
+  if (!username) return null;
+  return { userId, username, lastRenameAtMs };
+}
+function loadUser() {
+  try {
+    const raw = localStorage.getItem(USER_KEY) || "null";
+    const obj = JSON.parse(raw);
+    const u = normalizeUserObj_(obj);
+    if (u) localStorage.setItem(USER_KEY, JSON.stringify(u));
+    return u;
+  } catch { return null; }
+}
+function saveUser(u) {
+  if (!u) localStorage.removeItem(USER_KEY);
+  else {
+    const norm = normalizeUserObj_(u) || null;
+    if (!norm) localStorage.removeItem(USER_KEY);
+    else localStorage.setItem(USER_KEY, JSON.stringify(norm));
+  }
+}
+
+function buildUsersSheetHint_(){
+  return { usersSheet: "Users", usersSheetName: "Users", sheetUsers: "Users", sheet: "Users", passwordCol: "G", passwordColumn: "G", passwordColLetter: "G" };
+}
+function buildAuthFields_(pinLike){
+  const p = String(pinLike ?? "");
+  return { pin: p, password: p, pass: p, pwd: p, pincode: p, pinCode: p, pin_code: p, userPassword: p };
+}
+function extractServerPassword_(obj){
+  if (!obj || typeof obj !== "object") return "";
+  return String(obj.password ?? obj.pass ?? obj.pwd ?? obj.pin ?? obj.pincode ?? obj.pinCode ?? obj.pin_code ?? obj.userPassword ?? "");
+}
+function pickExists_(ck){
+  if (!ck) return null;
+  if (typeof ck.exists === "boolean") return ck.exists;
+  if (ck.ok === true && typeof ck.exists === "boolean") return ck.exists;
+  return null;
+}
+function pickUserId_(ck){
+  if (!ck) return "";
+  return String(ck.userId || (ck.user && ck.user.userId) || (ck.user && ck.user.id) || ck.id || "");
+}
+function pickPinLen_(ck){
+  if (!ck) return 0;
+  return Number(ck.pinLen || (ck.user && ck.user.pinLen) || 0) || 0;
+}
+async function apiCheckUsername_(username){
+  const u = String(username||"").trim();
+  return await apiCallCompat_(
+    ["checkUsername","userExists","checkUser","getUser"],
+    { username: u, name: u, userName: u, userId: (USER && USER.userId) ? USER.userId : "", quizId: QUIZ.quizId || getQuizId(), ...buildUsersSheetHint_() }
+  );
+}
+async function apiLoginUser_(username, pin){
+  const u = String(username||"").trim();
+  const variants = pinVariants_(pin);
+  let lastErr = "Sai mật khẩu";
+  for (const pv of variants) {
+    try {
+      const res = await apiCallCompat_(
+        ["loginUser","login","authLogin","loginV2"],
+        { username: u, name: u, userName: u, userId: (USER && USER.userId) ? USER.userId : "", quizId: QUIZ.quizId || getQuizId(), ...buildAuthFields_(pv), ...buildUsersSheetHint_(), ua: navigator.userAgent || "" }
+      );
+      return res;
+    } catch(e){ lastErr = (e && e.message) ? e.message : lastErr; }
+  }
+  throw new Error(lastErr);
+}
+async function apiRegisterUser_(username, pin){
+  const userId = randId("u");
+  const u = String(username||"").trim();
+  const p = String(pin||"");
+  return await apiCallCompat_(
+    ["registerUser","signup","createUser","register"],
+    { userId, username: u, name: u, userName: u, quizId: QUIZ.quizId || getQuizId(), ...buildAuthFields_(p), ...buildUsersSheetHint_(), ua: navigator.userAgent || "" }
+  );
+}
+async function apiChangeUsername_(oldUsername, newUsername){
+  return await apiCallCompat_(
+    ["changeUsername","renameUser","updateUsername"],
+    { userId: (USER && USER.userId) ? USER.userId : "", oldUsername: String(oldUsername||"").trim(), username: String(oldUsername||"").trim(), newUsername: String(newUsername||"").trim(), quizId: QUIZ.quizId || getQuizId(), ...buildUsersSheetHint_(), ua: navigator.userAgent || "" }
+  );
+}
+async function apiChangePassword_(username, oldPin, newPin){
+  const u = String(username||"").trim();
+  const o = String(oldPin||"");
+  const n = String(newPin||"");
+  const oldVariants = pinVariants_(o);
+  let lastErr = "Sai mật khẩu cũ hoặc server lỗi";
+  for (const ov of oldVariants) {
+    try {
+      const res = await apiCallCompat_(
+        ["changePassword","changePin","updatePassword","setPassword"],
+        {
+          userId: (USER && USER.userId) ? USER.userId : "",
+          username: u, name: u, userName: u,
+          oldPin: ov, newPin: n,
+          oldPassword: ov, newPassword: n,
+          oldPass: ov, newPass: n,
+          oldPwd: ov, newPwd: n,
+          old_pin: ov, new_pin: n,
+          old_password: ov, new_password: n,
+          quizId: QUIZ.quizId || getQuizId(),
+          ...buildUsersSheetHint_(),
+          ua: navigator.userAgent || ""
+        }
+      );
+      return res;
+    } catch(e){ lastErr = (e && e.message) ? e.message : lastErr; }
+  }
+  throw new Error(lastErr);
+}
+
 let QUIZ = { title: "Vocabulary", sub: "", vocabs: [], requireAccessCode: false, quizId: getQuizId() };
 let VMAP = new Map();
 let QUIZ_LOADED = false;
-
-/********************
- * State
- ********************/
-const QUIZ_VERSION = "vocab-check-v2";
 
 let state = {
   quizVersion: QUIZ_VERSION,
@@ -1528,24 +1094,15 @@ let state = {
   history: [],
   ts: 0
 };
-
 let USER = null;
 
-/********************
- * View control
- ********************/
-let CURRENT_VIEW = "boot"; // boot|gate|quiz|result
+let CURRENT_VIEW = "boot";
 function setView(v){
   CURRENT_VIEW = v;
   const btnSubmit = document.getElementById("btnSubmit");
-  if (btnSubmit) {
-    btnSubmit.style.display = (v === "quiz") ? "inline-flex" : "none";
-  }
+  if (btnSubmit) btnSubmit.style.display = (v === "quiz") ? "inline-flex" : "none";
 }
 
-/********************
- * Stable cacheId + attempt
- ********************/
 function ensureCacheId() {
   if (USER && USER.userId) {
     state.cacheId = USER.userId;
@@ -1566,9 +1123,6 @@ function newAttempt() {
   state.ts = Date.now();
 }
 
-/********************
- * Save local
- ********************/
 let saveTimer = null;
 function scheduleSave({ mirror = false } = {}) {
   if (saveTimer) clearTimeout(saveTimer);
@@ -1579,19 +1133,14 @@ function scheduleSave({ mirror = false } = {}) {
   }, 120);
 }
 
-/********************
- * Cloud save (throttle) + autosave 30s
- ********************/
 let lastCloud = 0;
 function scheduleCloudSave() {
   if (!gasAvailable()) return;
   if (!state || !state.cacheId) return;
   if (!state.name) return;
-
   const now = Date.now();
   if (now - lastCloud < 1500) return;
   lastCloud = now;
-
   try {
     google.script.run.saveProgress({
       cacheId: state.cacheId,
@@ -1605,14 +1154,9 @@ function scheduleCloudSave() {
 let cloudInterval = null;
 function startCloudAutosave(){
   if (cloudInterval) return;
-  cloudInterval = setInterval(() => {
-    scheduleCloudSave();
-  }, 30000);
+  cloudInterval = setInterval(() => scheduleCloudSave(), 30000);
 }
 
-/********************
- * Stats + username corner
- ********************/
 function answeredCount() {
   let c = 0;
   const order = state.order && state.order.length ? state.order : (QUIZ.vocabs||[]).map(v=>v.id);
@@ -1628,43 +1172,30 @@ function updateUserCorner(){
   const box = document.getElementById("userCorner");
   const nm = document.getElementById("userCornerName");
   const ad = document.getElementById("userCornerAdmin");
-
   const name = state.name || (USER && USER.username) || "";
-  if (!name) {
-    box.style.display = "none";
-    return;
-  }
+  if (!name) { box.style.display = "none"; return; }
   box.style.display = "inline-flex";
   nm.textContent = name;
   ad.style.display = isAdminName(name) ? "inline-flex" : "none";
 }
-
 function setDiscussFabVisible(show){
   const fab = document.getElementById("fabDiscuss");
   fab.style.display = show ? "block" : "none";
 }
-
 function updateStats() {
   updateUserCorner();
-
   document.getElementById("answeredCount").textContent = answeredCount();
   document.getElementById("totalCount").textContent = totalCount();
   document.getElementById("progressFill").style.width =
     (totalCount() ? Math.round((answeredCount() / totalCount()) * 100) : 0) + "%";
-
   const canSubmit = !!state.name && !state.finalized && answeredCount() > 0;
   const btnSubmit = document.getElementById("btnSubmit");
   if (btnSubmit) btnSubmit.disabled = !canSubmit;
-
   setDiscussFabVisible(!!(state.finalized));
 }
 
-/********************
- * Views
- ********************/
 const content = document.getElementById("content");
 
-/* Boot loading screen with dots . .. ... */
 let BOOT_LOADER = { timer: null, dots: 1 };
 function showBootLoading(msg){
   setView("boot");
@@ -1700,7 +1231,6 @@ function hideBootLoading(){
   BOOT_LOADER.timer = null;
 }
 
-/* Gate state */
 let GATE = { ready: false, status: "Sẵn sàng." };
 function setGateStatus(msg){
   GATE.status = String(msg||"");
@@ -1713,197 +1243,526 @@ function setGateReady(ready){
   if (btn) btn.disabled = !GATE.ready;
 }
 
-/********************
- * Account API (✅ đồng bộ Users!G)
- ********************/
-function buildUsersSheetHint_(){
-  return {
-    usersSheet: "Users",
-    usersSheetName: "Users",
-    sheetUsers: "Users",
-    sheet: "Users",
-    passwordCol: "G",
-    passwordColumn: "G",
-    passwordColLetter: "G"
-  };
+function normText_(s){
+  let t = String(s||"").trim().toLowerCase();
+  t = t.replace(/đ/g, "d");
+  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); } catch {}
+  t = t.replace(/[“”"']/g, " ");
+  t = t.replace(/[^a-z0-9\s]/g, " ");
+  t = t.replace(/\s+/g, " ").trim();
+  return t;
 }
-function buildAuthFields_(pinLike){
-  const p = String(pinLike ?? "");
-  return {
-    pin: p,
-    password: p,
-    pass: p,
-    pwd: p,
-    pincode: p,
-    pinCode: p,
-    pin_code: p,
-    userPassword: p
-  };
+function tokens_(s){ const t = normText_(s); return t ? t.split(" ").filter(Boolean) : []; }
+function uniq_(arr){
+  const out = [];
+  const seen = new Set();
+  for (const x of (arr||[])) {
+    const k = normText_(x);
+    if (!k) continue;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(String(x).trim());
+  }
+  return out;
 }
-function extractServerPassword_(obj){
-  if (!obj || typeof obj !== "object") return "";
-  return String(
-    obj.password ??
-    obj.pass ??
-    obj.pwd ??
-    obj.pin ??
-    obj.pincode ??
-    obj.pinCode ??
-    obj.pin_code ??
-    obj.userPassword ??
-    ""
-  );
+function splitMeaning_(s){
+  let t = String(s||"").trim();
+  if (!t) return [];
+  t = t.replace(/\([^)]*\)/g, " ");
+  t = t.replace(/\s+/g, " ").trim();
+  const parts = t.split(/[;|/]/g).map(x => x.trim()).filter(Boolean);
+  const more = [];
+  for (const p of parts) {
+    if (p.includes(",")) {
+      p.split(",").forEach(x => { const q = x.trim(); if (q) more.push(q); });
+    } else more.push(p);
+  }
+  return more;
 }
-function pickExists_(ck){
-  if (!ck) return null;
-  if (typeof ck.exists === "boolean") return ck.exists;
-  if (ck.ok === true && typeof ck.exists === "boolean") return ck.exists;
-  return null;
-}
-function pickUserId_(ck){
-  if (!ck) return "";
-  return String(ck.userId || (ck.user && ck.user.userId) || (ck.user && ck.user.id) || ck.id || "");
-}
-function pickPinLen_(ck){
-  if (!ck) return 0;
-  return Number(ck.pinLen || (ck.user && ck.user.pinLen) || 0) || 0;
-}
-
-/* ✅ check username (compat) */
-async function apiCheckUsername_(username){
-  const u = String(username||"").trim();
-  return await apiCallCompat_(
-    ["checkUsername","userExists","checkUser","getUser"],
-    {
-      username: u,
-      name: u,
-      userName: u,
-      userId: (USER && USER.userId) ? USER.userId : "",
-      quizId: QUIZ.quizId || getQuizId(),
-      ...buildUsersSheetHint_()
+function levenshtein_(a,b){
+  a = String(a||""); b = String(b||"");
+  if (a === b) return 0;
+  const al = a.length, bl = b.length;
+  if (!al) return bl;
+  if (!bl) return al;
+  const v0 = new Array(bl+1);
+  const v1 = new Array(bl+1);
+  for (let i=0;i<=bl;i++) v0[i]=i;
+  for (let i=0;i<al;i++){
+    v1[0] = i+1;
+    const ca = a.charCodeAt(i);
+    for (let j=0;j<bl;j++){
+      const cb = b.charCodeAt(j);
+      const cost = (ca === cb) ? 0 : 1;
+      v1[j+1] = Math.min(v1[j] + 1, v0[j+1] + 1, v0[j] + cost);
     }
-  );
+    for (let j=0;j<=bl;j++) v0[j]=v1[j];
+  }
+  return v1[bl];
+}
+function isSubseqWithOneExtraWord_(userTok, accTok){
+  if (userTok.length !== accTok.length + 1) return false;
+  let i=0, j=0, skipped=0;
+  while (i<userTok.length && j<accTok.length){
+    if (userTok[i] === accTok[j]) { i++; j++; continue; }
+    skipped++;
+    if (skipped > 1) return false;
+    i++;
+  }
+  if (j < accTok.length) return false;
+  return true;
+}
+function looseMatch_(userRaw, accRaw){
+  const u = normText_(userRaw);
+  const a = normText_(accRaw);
+  if (!u || !a) return false;
+  if (u === a) return true;
+
+  const ut = tokens_(u);
+  const at = tokens_(a);
+  if (isSubseqWithOneExtraWord_(ut, at)) return true;
+
+  const us = u.replace(/\s/g,"");
+  const as = a.replace(/\s/g,"");
+  const minLen = Math.min(us.length, as.length);
+  let thr = 1;
+  if (minLen >= 7) thr = 2;
+  if (minLen >= 12) thr = 3;
+  if (minLen >= 18) thr = 3;
+
+  const d = levenshtein_(us, as);
+  return d <= thr;
+}
+function acceptedAnswers_(v){
+  const quizId = getQuizId();
+  const overQuiz = (LOCAL_ANSWER_OVERRIDES && LOCAL_ANSWER_OVERRIDES[quizId]) ? LOCAL_ANSWER_OVERRIDES[quizId] : {};
+  const kId = String(v.id ?? "");
+  const kWord = normalizeForFilter(v.word || "");
+  const extra = (overQuiz && (overQuiz[kId] || overQuiz[kWord])) ? (overQuiz[kId] || overQuiz[kWord]) : [];
+  const base = [];
+  if (Array.isArray(v.answers)) base.push(...v.answers);
+  if (v.answer) base.push(v.answer);
+  if (v.meaning) base.push(...splitMeaning_(v.meaning));
+  base.push(...(extra || []));
+  return uniq_(base);
+}
+function gradeLocal_(v, userAns){
+  const accepted = acceptedAnswers_(v);
+  const expected = (accepted && accepted.length) ? accepted[0] : String(v.meaning || "");
+  const u = String(userAns||"").trim();
+  if (!u) return { ok:false, expected };
+  for (const a of accepted) if (looseMatch_(u, a)) return { ok:true, expected };
+  return { ok:false, expected };
 }
 
-/* ✅ login: thử action + thử biến thể pin (0123 -> 123) */
-async function apiLoginUser_(username, pin){
-  const u = String(username||"").trim();
-  const variants = pinVariants_(pin);
+function getCardEls_(id){
+  const card = content.querySelector(`[data-qcard="${CSS.escape(String(id))}"]`);
+  if (!card) return null;
+  const input = card.querySelector(`.ansInput[data-qid="${CSS.escape(String(id))}"]`);
+  const btn = card.querySelector(`[data-check="${CSS.escape(String(id))}"]`);
+  const res = card.querySelector(`[data-result="${CSS.escape(String(id))}"]`);
+  return { card, input, btn, res };
+}
+function ensureResultRow_(id, ok, expected){
+  const els = getCardEls_(id);
+  if (!els) return;
+  const { card } = els;
+  let row = card.querySelector(`[data-result="${CSS.escape(String(id))}"]`);
+  if (!row) {
+    row = document.createElement("div");
+    row.className = "resultRow";
+    row.setAttribute("data-result", String(id));
+    card.appendChild(row);
+  }
+  row.innerHTML = `
+    <div>${ok ? `<span class="oktxt">ĐÚNG ✅</span>` : `<span class="badtxt">SAI ❌</span>`}</div>
+    <div>${ok ? `` : `<span class="muted">Đáp án:</span> <b>${escapeHtml(expected || "")}</b>`}</div>
+  `;
+}
+function lockUI_(id){
+  const els = getCardEls_(id);
+  if (!els) return;
+  if (els.input) els.input.disabled = true;
+  if (els.btn) { els.btn.disabled = true; els.btn.textContent = "Đã check"; }
+  const ck = state.checked[id];
+  if (ck) ensureResultRow_(id, !!ck.ok, String(ck.expected||""));
+}
 
-  let lastErr = "Sai mật khẩu";
-  for (const pv of variants) {
-    try {
-      const res = await apiCallCompat_(
-        ["loginUser","login","authLogin","loginV2"],
-        {
-          username: u,
-          name: u,
-          userName: u,
-          userId: (USER && USER.userId) ? USER.userId : "",
-          quizId: QUIZ.quizId || getQuizId(),
-          ...buildAuthFields_(pv),
-          ...buildUsersSheetHint_(),
-          ua: navigator.userAgent || ""
-        }
-      );
-      return res;
-    } catch(e){
-      lastErr = (e && e.message) ? e.message : lastErr;
+const registerBackdrop = document.getElementById("registerBackdrop");
+const registerDesc = document.getElementById("registerDesc");
+document.getElementById("btnRegisterNo").addEventListener("click", () => closeRegisterPrompt_(false));
+document.getElementById("btnRegisterYes").addEventListener("click", () => closeRegisterPrompt_(true));
+registerBackdrop.addEventListener("click", (e) => { if (e.target === registerBackdrop) closeRegisterPrompt_(false); });
+
+let REG_PROMPT = { open:false, resolve:null, username:"" };
+function openRegisterPrompt_(username){
+  return new Promise((resolve) => {
+    REG_PROMPT.open = true;
+    REG_PROMPT.resolve = resolve;
+    REG_PROMPT.username = String(username||"").trim();
+    registerDesc.textContent = `Username "${REG_PROMPT.username}" chưa đăng ký, bạn có muốn đăng ký không?`;
+    registerBackdrop.classList.add("show");
+    registerBackdrop.setAttribute("aria-hidden","false");
+  });
+}
+function closeRegisterPrompt_(ans){
+  if (!REG_PROMPT.open) return;
+  registerBackdrop.classList.remove("show");
+  registerBackdrop.setAttribute("aria-hidden","true");
+  const res = REG_PROMPT.resolve;
+  REG_PROMPT.open = false;
+  REG_PROMPT.resolve = null;
+  REG_PROMPT.username = "";
+  if (res) res(!!ans);
+}
+
+const pinBackdrop = document.getElementById("pinBackdrop");
+const pinTitle = document.getElementById("pinTitle");
+const pinDesc = document.getElementById("pinDesc");
+const pinDots = document.getElementById("pinDots");
+const pinKeypad = document.getElementById("pinKeypad");
+const pinNote = document.getElementById("pinNote");
+const pinWrap = document.getElementById("pinWrap");
+document.getElementById("btnClosePin").addEventListener("click", () => closePinModal_("cancel"));
+
+let PIN_KEYS_BUILT = false;
+let PIN_MODAL = {
+  open: false, resolve: null, reject: null,
+  username: "", mode: "login", step: "one",
+  pinLen: 4, value: "", first: "", old: "",
+  dotEls: [], submitting: false, noteDefault: "",
+  onSubmit: null, onVerifyOld: null, onFinalizeChange: null
+};
+function buildPinKeypadOnce_(){
+  if (PIN_KEYS_BUILT) return;
+  PIN_KEYS_BUILT = true;
+  pinKeypad.innerHTML = "";
+  const keys = ["1","2","3","4","5","6","7","8","9","CLEAR","0","⌫"];
+  keys.forEach(k => {
+    const b = document.createElement("button");
+    b.className = "pinKey" + ((k==="CLEAR"||k==="⌫") ? " small" : "");
+    b.type = "button";
+    b.textContent = k;
+    b.addEventListener("click", () => onPinKey_(k));
+    pinKeypad.appendChild(b);
+  });
+}
+function buildDots_(n){
+  pinDots.innerHTML = "";
+  PIN_MODAL.dotEls = [];
+  for (let i=0;i<n;i++){
+    const d = document.createElement("div");
+    d.className = "dot";
+    pinDots.appendChild(d);
+    PIN_MODAL.dotEls.push(d);
+  }
+}
+function updateDots_(){
+  const valLen = PIN_MODAL.value.length;
+  for (let i=0;i<PIN_MODAL.dotEls.length;i++){
+    const el = PIN_MODAL.dotEls[i];
+    if (!el) continue;
+    el.classList.toggle("filled", i < valLen);
+  }
+}
+function setPinNote_(msg, type=""){
+  if (type === "error") pinNote.classList.add("error");
+  else pinNote.classList.remove("error");
+  pinNote.textContent = String(msg || "");
+}
+function pinErrorPulse_(msg){
+  PIN_MODAL.value = "";
+  updateDots_();
+  pinDots.classList.add("error");
+  if (pinWrap) {
+    pinWrap.classList.remove("shake");
+    void pinWrap.offsetWidth;
+    pinWrap.classList.add("shake");
+  }
+  setPinNote_(msg || "Sai mật khẩu", "error");
+  SFX.bad();
+  setTimeout(() => {
+    pinDots.classList.remove("error");
+    if (pinWrap) pinWrap.classList.remove("shake");
+    setPinNote_(PIN_MODAL.noteDefault || "");
+  }, 520);
+}
+function updatePinHeader_(){
+  const u = PIN_MODAL.username || "";
+  const mode = PIN_MODAL.mode;
+  let title = "", desc = "";
+  if (mode === "login") { title = "Đăng nhập"; desc = `Username: ${u}`; }
+  else if (mode === "set") {
+    if (PIN_MODAL.step === "one") { title = "Đăng ký"; desc = `Tạo mật khẩu ${PIN_MODAL.pinLen} số`; }
+    else { title = "Xác nhận mật khẩu"; desc = `Nhập lại ${PIN_MODAL.pinLen} số`; }
+  } else if (mode === "change") {
+    if (PIN_MODAL.step === "old") { title = "Đổi mật khẩu"; desc = "Nhập mật khẩu hiện tại"; }
+    else if (PIN_MODAL.step === "new1") { title = "Mật khẩu mới"; desc = `Nhập ${PIN_MODAL.pinLen} số`; }
+    else { title = "Xác nhận mật khẩu mới"; desc = `Nhập lại ${PIN_MODAL.pinLen} số`; }
+  }
+  pinTitle.textContent = title;
+  pinDesc.textContent = desc;
+  PIN_MODAL.noteDefault = (isAdminName(u) || isAdminName(state.name)) ? `Tài khoản tuankhoi dùng mật khẩu 6 số.` : `Mật khẩu chỉ gồm số.`;
+  setPinNote_(PIN_MODAL.noteDefault);
+}
+function openPinModal_({ username, mode="login", pinLen=4, firstPin="", onSubmit=null, onVerifyOld=null, onFinalizeChange=null }){
+  return new Promise((resolve, reject) => {
+    PIN_MODAL.open = true;
+    PIN_MODAL.resolve = resolve;
+    PIN_MODAL.reject = reject;
+    PIN_MODAL.username = String(username||"").trim();
+    PIN_MODAL.mode = mode;
+    PIN_MODAL.pinLen = Math.max(4, Number(pinLen)||4);
+    PIN_MODAL.value = "";
+    PIN_MODAL.first = "";
+    PIN_MODAL.old = "";
+    PIN_MODAL.submitting = false;
+    PIN_MODAL.onSubmit = (typeof onSubmit === "function") ? onSubmit : null;
+    PIN_MODAL.onVerifyOld = (typeof onVerifyOld === "function") ? onVerifyOld : null;
+    PIN_MODAL.onFinalizeChange = (typeof onFinalizeChange === "function") ? onFinalizeChange : null;
+    if (mode === "set") PIN_MODAL.step = firstPin ? "confirm" : "one";
+    else if (mode === "change") PIN_MODAL.step = "old";
+    else PIN_MODAL.step = "one";
+    if (mode === "set" && firstPin) PIN_MODAL.first = String(firstPin||"");
+    buildPinKeypadOnce_();
+    buildDots_(PIN_MODAL.pinLen);
+    updatePinHeader_();
+    updateDots_();
+    pinBackdrop.classList.add("show");
+    pinBackdrop.setAttribute("aria-hidden", "false");
+  });
+}
+function closePinModal_(why){
+  if (!PIN_MODAL.open) return;
+  pinBackdrop.classList.remove("show");
+  pinBackdrop.setAttribute("aria-hidden", "true");
+  const rej = PIN_MODAL.reject;
+  PIN_MODAL.open = false;
+  PIN_MODAL.resolve = null;
+  PIN_MODAL.reject = null;
+  PIN_MODAL.submitting = false;
+  PIN_MODAL.onSubmit = null;
+  PIN_MODAL.onVerifyOld = null;
+  PIN_MODAL.onFinalizeChange = null;
+  if (why === "ok") return;
+  if (rej) rej(new Error("cancel"));
+}
+pinBackdrop.addEventListener("click", (e) => { if (e.target === pinBackdrop) closePinModal_("cancel"); });
+
+async function submitLoginOrStay_(pin){
+  if (!PIN_MODAL.onSubmit) return null;
+  if (PIN_MODAL.submitting) return null;
+  PIN_MODAL.submitting = true;
+  try{
+    setPinNote_("Đang kiểm tra…");
+    pinNote.classList.remove("error");
+    const out = await PIN_MODAL.onSubmit(pin);
+    if (out && out.ok) {
+      const data = (out.data !== undefined) ? out.data : pin;
+      const res = PIN_MODAL.resolve;
+      closePinModal_("ok");
+      if (res) res(data);
+      SFX.ok();
+      return true;
+    }
+    pinErrorPulse_((out && out.message) ? out.message : "Sai mật khẩu");
+    return false;
+  } catch(e){
+    pinErrorPulse_("Sai mật khẩu");
+    return false;
+  } finally { PIN_MODAL.submitting = false; }
+}
+async function verifyOldOrStay_(oldPin){
+  if (!PIN_MODAL.onVerifyOld) return true;
+  if (PIN_MODAL.submitting) return false;
+  PIN_MODAL.submitting = true;
+  try{
+    setPinNote_("Đang kiểm tra…");
+    pinNote.classList.remove("error");
+    const out = await PIN_MODAL.onVerifyOld(oldPin);
+    if (out && out.ok) return true;
+    pinErrorPulse_((out && out.message) ? out.message : "Sai mật khẩu");
+    return false;
+  } catch(e){
+    pinErrorPulse_("Sai mật khẩu");
+    return false;
+  } finally { PIN_MODAL.submitting = false; }
+}
+async function finalizeChangeOrStay_(payload){
+  if (!PIN_MODAL.onFinalizeChange) return { ok:true };
+  if (PIN_MODAL.submitting) return { ok:false, message:"Đang xử lý…" };
+  PIN_MODAL.submitting = true;
+  try{
+    setPinNote_("Đang lưu…");
+    pinNote.classList.remove("error");
+    const out = await PIN_MODAL.onFinalizeChange(payload);
+    if (out && out.ok) return { ok:true };
+    return { ok:false, message: (out && out.message) ? out.message : "Không đổi được", resetStep: (out && out.resetStep) ? out.resetStep : "old" };
+  } catch(e){
+    return { ok:false, message:"Không đổi được", resetStep:"old" };
+  } finally { PIN_MODAL.submitting = false; }
+}
+async function onPinKey_(k){
+  if (!PIN_MODAL.open) return;
+  if (PIN_MODAL.submitting) return;
+
+  if (k === "CLEAR") { PIN_MODAL.value = ""; updateDots_(); SFX.soft(); return; }
+  if (k === "⌫") { PIN_MODAL.value = PIN_MODAL.value.slice(0, -1); updateDots_(); SFX.soft(); return; }
+
+  if (PIN_MODAL.value.length >= PIN_MODAL.pinLen) return;
+  PIN_MODAL.value += String(k);
+  updateDots_();
+  SFX.soft();
+
+  if (PIN_MODAL.value.length !== PIN_MODAL.pinLen) return;
+
+  const mode = PIN_MODAL.mode;
+
+  if (mode === "login") {
+    const pin = PIN_MODAL.value;
+    if (PIN_MODAL.onSubmit) { await submitLoginOrStay_(pin); return; }
+    const res = PIN_MODAL.resolve;
+    closePinModal_("ok");
+    if (res) res(pin);
+    return;
+  }
+
+  if (mode === "set") {
+    if (PIN_MODAL.step === "one") {
+      PIN_MODAL.first = PIN_MODAL.value;
+      PIN_MODAL.value = "";
+      PIN_MODAL.step = "confirm";
+      updatePinHeader_();
+      updateDots_();
+      return;
+    } else {
+      const pin1 = PIN_MODAL.first;
+      const pin2 = PIN_MODAL.value;
+      if (pin1 !== pin2) {
+        pinErrorPulse_("Mật khẩu không khớp");
+        PIN_MODAL.value = "";
+        PIN_MODAL.first = "";
+        PIN_MODAL.step = "one";
+        updatePinHeader_();
+        updateDots_();
+        return;
+      }
+      const res = PIN_MODAL.resolve;
+      closePinModal_("ok");
+      if (res) res(pin2);
+      SFX.ok();
+      return;
     }
   }
-  throw new Error(lastErr);
+
+  if (mode === "change") {
+    if (PIN_MODAL.step === "old") {
+      const oldPin = PIN_MODAL.value;
+      const ok = await verifyOldOrStay_(oldPin);
+      if (!ok) {
+        PIN_MODAL.value = "";
+        PIN_MODAL.old = "";
+        PIN_MODAL.step = "old";
+        updatePinHeader_();
+        updateDots_();
+        return;
+      }
+      PIN_MODAL.old = oldPin;
+      PIN_MODAL.value = "";
+      PIN_MODAL.step = "new1";
+      updatePinHeader_();
+      updateDots_();
+      return;
+    }
+    if (PIN_MODAL.step === "new1") {
+      PIN_MODAL.first = PIN_MODAL.value;
+      PIN_MODAL.value = "";
+      PIN_MODAL.step = "confirm";
+      updatePinHeader_();
+      updateDots_();
+      return;
+    }
+    const new1 = PIN_MODAL.first;
+    const new2 = PIN_MODAL.value;
+    if (new1 !== new2) {
+      pinErrorPulse_("Mật khẩu mới không khớp");
+      PIN_MODAL.value = "";
+      PIN_MODAL.first = "";
+      PIN_MODAL.step = "new1";
+      updatePinHeader_();
+      updateDots_();
+      return;
+    }
+    const out = await finalizeChangeOrStay_({ oldPin: PIN_MODAL.old, newPin: new2 });
+    if (!out || !out.ok) {
+      pinErrorPulse_(out && out.message ? out.message : "Không đổi được");
+      const resetStep = (out && out.resetStep) ? out.resetStep : "old";
+      if (resetStep === "new1") {
+        PIN_MODAL.step = "new1";
+        PIN_MODAL.value = "";
+        PIN_MODAL.first = "";
+      } else {
+        PIN_MODAL.step = "old";
+        PIN_MODAL.value = "";
+        PIN_MODAL.first = "";
+        PIN_MODAL.old = "";
+      }
+      updatePinHeader_();
+      updateDots_();
+      return;
+    }
+    const res = PIN_MODAL.resolve;
+    closePinModal_("ok");
+    if (res) res({ oldPin: PIN_MODAL.old, newPin: new2 });
+    SFX.ok();
+    return;
+  }
 }
 
-async function apiRegisterUser_(username, pin){
-  const userId = randId("u");
-  const u = String(username||"").trim();
-  const p = String(pin||"");
+const profileBackdrop = document.getElementById("profileBackdrop");
+document.getElementById("btnCloseProfile").addEventListener("click", closeProfileModal_);
+profileBackdrop.addEventListener("click", (e) => { if (e.target === profileBackdrop) closeProfileModal_(); });
 
-  return await apiCallCompat_(
-    ["registerUser","signup","createUser","register"],
-    {
-      userId,
-      username: u,
-      name: u,
-      userName: u,
-      quizId: QUIZ.quizId || getQuizId(),
-      ...buildAuthFields_(p),
-      ...buildUsersSheetHint_(),
-      ua: navigator.userAgent || ""
+function openProfileModal_(){
+  if (!state.name) return;
+  document.getElementById("profileUsername").textContent = state.name;
+  document.getElementById("profileRole").textContent = isAdminName(state.name) ? "ADMIN" : "USER";
+  document.getElementById("profileSub").textContent = "Quản lý tài khoản";
+  const hintEl = document.getElementById("profileRenameHint");
+  const newUsernameEl = document.getElementById("newUsername");
+  const btnSaveNewUsernameEl = document.getElementById("btnSaveNewUsername");
+
+  if (isAdminName(state.name)) {
+    hintEl.textContent = "Tài khoản tuankhoi không được đổi username.";
+    if (newUsernameEl) {
+      newUsernameEl.value = "";
+      newUsernameEl.disabled = true;
+      newUsernameEl.placeholder = "Không áp dụng cho tuankhoi";
     }
-  );
-}
-
-/* ✅ đổi signature để không bị dính state.name khi optimistic */
-async function apiChangeUsername_(oldUsername, newUsername){
-  return await apiCallCompat_(
-    ["changeUsername","renameUser","updateUsername"],
-    {
-      userId: (USER && USER.userId) ? USER.userId : "",
-      oldUsername: String(oldUsername||"").trim(),
-      username: String(oldUsername||"").trim(),
-      newUsername: String(newUsername||"").trim(),
-      quizId: QUIZ.quizId || getQuizId(),
-      ...buildUsersSheetHint_(),
-      ua: navigator.userAgent || ""
+    if (btnSaveNewUsernameEl) btnSaveNewUsernameEl.disabled = true;
+  } else {
+    const last = Number((USER && USER.lastRenameAtMs) ? USER.lastRenameAtMs : 0) || 0;
+    const now = Date.now();
+    const DAY = 24*60*60*1000;
+    const nextOk = last ? (last + 30*DAY) : 0;
+    const canRename = (!last) || (now >= nextOk);
+    hintEl.textContent = canRename ? "Có thể đổi username ngay bây giờ." : "Có thể đổi username vào " + formatTs(nextOk);
+    if (newUsernameEl) {
+      newUsernameEl.disabled = false;
+      newUsernameEl.placeholder = "Username mới";
     }
-  );
-}
-
-/* ✅ đổi mật khẩu: thử nhiều key + thử biến thể oldPin */
-async function apiChangePassword_(username, oldPin, newPin){
-  const u = String(username||"").trim();
-  const o = String(oldPin||"");
-  const n = String(newPin||"");
-
-  const oldVariants = pinVariants_(o);
-  let lastErr = "Sai mật khẩu cũ hoặc server lỗi";
-
-  for (const ov of oldVariants) {
-    try {
-      const res = await apiCallCompat_(
-        ["changePassword","changePin","updatePassword","setPassword"],
-        {
-          userId: (USER && USER.userId) ? USER.userId : "",
-          username: u,
-          name: u,
-          userName: u,
-
-          oldPin: ov,
-          newPin: n,
-
-          oldPassword: ov,
-          newPassword: n,
-
-          oldPass: ov,
-          newPass: n,
-
-          oldPwd: ov,
-          newPwd: n,
-
-          old_pin: ov,
-          new_pin: n,
-
-          old_password: ov,
-          new_password: n,
-
-          quizId: QUIZ.quizId || getQuizId(),
-          ...buildUsersSheetHint_(),
-          ua: navigator.userAgent || ""
-        }
-      );
-      return res;
-    } catch(e){
-      lastErr = (e && e.message) ? e.message : lastErr;
-    }
+    if (btnSaveNewUsernameEl) btnSaveNewUsernameEl.disabled = false;
   }
 
-  throw new Error(lastErr);
+  document.getElementById("newUsername").value = "";
+  profileBackdrop.classList.add("show");
+  profileBackdrop.setAttribute("aria-hidden","false");
+}
+function closeProfileModal_(){
+  profileBackdrop.classList.remove("show");
+  profileBackdrop.setAttribute("aria-hidden","true");
 }
 
-/********************
- * Gate view
- ********************/
 function renderGateView() {
   setView("gate");
   setDiscussFabVisible(false);
@@ -1918,7 +1777,6 @@ function renderGateView() {
   if (hasName) {
     const admin = isAdminName(knownName);
     const buttonLabel = (state.finalized && state.result) ? "📊 Xem kết quả" : "➡️ Vào làm";
-
     c.innerHTML = `
       <div class="row1">
         <p class="vi">Xin chào, <b>${escapeHtml(knownName)}</b> ${admin ? `<span class="adminBadgeInline">ADMIN</span>` : ``}</p>
@@ -1953,14 +1811,9 @@ function renderGateView() {
     const btnEnter = c.querySelector("#btnEnter");
     btnEnter.addEventListener("click", () => {
       if (!QUIZ_LOADED) { toast("Đang tải đề…"); return; }
-      if (QUIZ.requireAccessCode && !String(state.accessCode||"").trim()){
-        toast("Thiếu mã truy cập.");
-        return;
-      }
-
+      if (QUIZ.requireAccessCode && !String(state.accessCode||"").trim()){ toast("Thiếu mã truy cập."); return; }
       if (state.finalized) renderResultView();
       else renderQuizView();
-
       document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
     });
 
@@ -1969,7 +1822,6 @@ function renderGateView() {
     return;
   }
 
-  // USERNAME INPUT MODE
   c.innerHTML = `
     <div class="row1">
       <p class="vi">Nhập USERNAME</p>
@@ -1995,35 +1847,18 @@ function renderGateView() {
 
   async function finalizeLogin_(u, serverUserId){
     if (!u || !u.username) { toast("Đăng nhập lỗi"); return; }
-
     const uname = String(u.username||"").trim();
-    // ✅ KHÔNG tự sinh userId ngẫu nhiên khi login tài khoản đã có
     let bestUserId = String(u.userId || serverUserId || "").trim();
-
-    // nếu server không trả userId: thử lấy lại từ checkUsername
     if (!bestUserId) {
-      // nếu đang có USER local cùng username thì ưu tiên giữ lại
-      if (USER && USER.userId && normalizeForFilter(USER.username) === normalizeForFilter(uname)) {
-        bestUserId = USER.userId;
-      } else {
-        try {
-          const ck = await apiCheckUsername_(uname);
-          const uid = pickUserId_(ck);
-          if (uid) bestUserId = String(uid);
-        } catch(e){}
+      if (USER && USER.userId && normalizeForFilter(USER.username) === normalizeForFilter(uname)) bestUserId = USER.userId;
+      else {
+        try { const ck = await apiCheckUsername_(uname); const uid = pickUserId_(ck); if (uid) bestUserId = String(uid); } catch(e){}
       }
     }
-
-    USER = {
-      userId: bestUserId,          // có thể trống
-      username: uname,
-      lastRenameAtMs: Number(u.lastRenameAtMs || 0) || 0
-    };
+    USER = { userId: bestUserId, username: uname, lastRenameAtMs: Number(u.lastRenameAtMs || 0) || 0 };
     saveUser(USER);
 
     state.name = USER.username;
-
-    // cacheId: chỉ set theo userId nếu có; không thì giữ cacheId cũ để không “đứt” progress
     if (USER.userId) state.cacheId = USER.userId;
     ensureCacheId();
 
@@ -2038,75 +1873,48 @@ function renderGateView() {
 
   async function flowLogin_(username, pinLen, serverUserId){
     setGateStatus("Đăng nhập: nhập mật khẩu…");
-
     const u = await openPinModal_({
-      username,
-      mode:"login",
-      pinLen,
+      username, mode:"login", pinLen,
       onSubmit: async (pin) => {
         if (!isDigitsOnly(pin)) return { ok:false, message:"Mật khẩu chỉ gồm số" };
-
-        // admin front-end fallback
         if (isAdminName(username)) {
           if (String(pin) !== ADMIN_PIN) return { ok:false, message:"Sai mật khẩu" };
         }
-
-        // ✅ try loginUser (compat + pin variants)
         try{
           const res = await apiLoginUser_(username, pin);
           const user = (res && res.user) ? res.user : res;
           const nu = normalizeUserObj_(user) || user;
           if (nu && nu.username) return { ok:true, data: nu };
-
-          // nếu server trả format khác -> vẫn cho qua, nhưng KHÔNG tự sinh userId
           return { ok:true, data: { userId: serverUserId || "", username, lastRenameAtMs: 0 } };
         } catch(e){
-          // ✅ fallback: nếu checkUsername trả được password thì verify tại client (kèm bỏ 0 đầu)
           try{
             const ck = await apiCheckUsername_(username);
             const secret = extractServerPassword_(ck) || extractServerPassword_(ck && ck.user ? ck.user : null);
             const uid = pickUserId_(ck) || serverUserId || "";
-
             if (secret) {
               const pList = pinVariants_(pin);
-              for (const pv of pList) {
-                if (String(secret) === String(pv)) {
-                  return { ok:true, data: { userId: uid, username: String(username||"").trim(), lastRenameAtMs: Number(ck.lastRenameAtMs||0)||0 } };
-                }
-              }
+              for (const pv of pList) if (String(secret) === String(pv)) return { ok:true, data: { userId: uid, username: String(username||"").trim(), lastRenameAtMs: Number(ck.lastRenameAtMs||0)||0 } };
             }
           } catch(_e){}
           return { ok:false, message:"Sai mật khẩu" };
         }
       }
     });
-
     await finalizeLogin_(u, serverUserId);
     toast("Đăng nhập thành công");
   }
 
   async function flowRegister_(username, pinLen, firstPin){
     setGateStatus("Đăng ký: tạo mật khẩu…");
-
     const pin = await openPinModal_({ username, mode:"set", pinLen, firstPin: firstPin || "" });
 
     if (!isDigitsOnly(pin)) { toast("Mật khẩu chỉ gồm số"); return; }
     if (String(pin).length !== pinLen) { toast(`Mật khẩu phải ${pinLen} số`); return; }
-
-    // ✅ tránh lỗi sheet auto bỏ số 0 đầu nếu cột password đang là number
-    if (!isAdminName(username) && String(pin).startsWith("0")) {
-      toast("Mật khẩu không nên bắt đầu bằng 0 (Sheet có thể tự bỏ số 0 đầu).");
-      return;
-    }
-
-    if (isAdminName(username) && String(pin) !== ADMIN_PIN) {
-      toast("Tài khoản tuankhoi dùng mật khẩu 6 số cố định");
-      return;
-    }
+    if (!isAdminName(username) && String(pin).startsWith("0")) { toast("Mật khẩu không nên bắt đầu bằng 0"); return; }
+    if (isAdminName(username) && String(pin) !== ADMIN_PIN) { toast("Tài khoản tuankhoi dùng mật khẩu 6 số cố định"); return; }
 
     setGateStatus("Đang tạo tài khoản…");
     const res = await apiRegisterUser_(username, pin);
-
     const uRaw = res.user ? res.user : res;
     const u = normalizeUserObj_(uRaw) || uRaw;
     if (!u || !u.username) throw new Error("registerUser lỗi.");
@@ -2149,38 +1957,20 @@ function renderGateView() {
         exists = pickExists_(ck);
         serverUserId = pickUserId_(ck);
         serverPinLen = pickPinLen_(ck);
-      } catch(e){
-        exists = null;
-      }
+      } catch(e){ exists = null; }
 
-      if (exists === true) {
-        const wantLen = serverPinLen || defaultPinLen;
-        await flowLogin_(username, wantLen, serverUserId);
-        return;
-      }
-
+      if (exists === true) { await flowLogin_(username, serverPinLen || defaultPinLen, serverUserId); return; }
       if (exists === false) {
         setGateStatus(`Username "${username}" chưa đăng ký.`);
         const ok = await openRegisterPrompt_(username);
-        if (!ok) {
-          toast("Bạn có thể nhập username khác");
-          return;
-        }
+        if (!ok) { toast("Bạn có thể nhập username khác"); return; }
         await flowRegister_(username, defaultPinLen, "");
         return;
       }
-
-      // fallback khi không check được
       setGateStatus("Không kiểm tra được. Thử đăng nhập…");
-      const wantLen = serverPinLen || defaultPinLen;
-      await flowLogin_(username, wantLen, serverUserId);
-      return;
-
+      await flowLogin_(username, serverPinLen || defaultPinLen, serverUserId);
     } catch (e) {
-      if (e && e.message === "cancel") {
-      } else {
-        toast((e && e.message) ? e.message : String(e));
-      }
+      if (!(e && e.message === "cancel")) toast((e && e.message) ? e.message : String(e));
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = "➡️ Tiếp tục";
@@ -2189,17 +1979,12 @@ function renderGateView() {
   };
 
   saveBtn.addEventListener("click", doFlow);
-  nameInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); doFlow(); }
-  });
+  nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); doFlow(); } });
 
   setGateReady(GATE.ready);
   setGateStatus(GATE.status);
 }
 
-/********************
- * Quiz rendering
- ********************/
 function buildQuizHTML() {
   const order = state.order && state.order.length ? state.order : QUIZ.vocabs.map(v => v.id);
   let html = "";
@@ -2267,61 +2052,15 @@ function renderQuizView() {
   }
 }
 
-/********************
- * Auto-grade: chấm ngầm khi nhập
- ********************/
 const gradeTimers = new Map();
-const gradeToken = new Map();
-const gradeInFlight = new Set();
-const lockAfterGrade = new Set();
-
-function getCardEls_(id){
-  const card = content.querySelector(`[data-qcard="${CSS.escape(String(id))}"]`);
-  if (!card) return null;
-  const input = card.querySelector(`.ansInput[data-qid="${CSS.escape(String(id))}"]`);
-  const btn = card.querySelector(`[data-check="${CSS.escape(String(id))}"]`);
-  const res = card.querySelector(`[data-result="${CSS.escape(String(id))}"]`);
-  return { card, input, btn, res };
-}
-
-function ensureResultRow_(id, ok, expected){
-  const els = getCardEls_(id);
-  if (!els) return;
-  const { card } = els;
-
-  let row = card.querySelector(`[data-result="${CSS.escape(String(id))}"]`);
-  if (!row) {
-    row = document.createElement("div");
-    row.className = "resultRow";
-    row.setAttribute("data-result", String(id));
-    card.appendChild(row);
-  }
-  row.innerHTML = `
-    <div>${ok ? `<span class="oktxt">ĐÚNG ✅</span>` : `<span class="badtxt">SAI ❌</span>`}</div>
-    <div>${ok ? `` : `<span class="muted">Đáp án:</span> <b>${escapeHtml(expected || "")}</b>`}</div>
-  `;
-}
-
-function lockUI_(id){
-  const els = getCardEls_(id);
-  if (!els) return;
-  if (els.input) els.input.disabled = true;
-  if (els.btn) {
-    els.btn.disabled = true;
-    els.btn.textContent = "Đã check";
-  }
-  const ck = state.checked[id];
-  if (ck) ensureResultRow_(id, !!ck.ok, String(ck.expected||""));
-}
-
-async function gradeOne_(id, ans, { lock = false } = {}){
-  if (!state.name) return;
-  if (QUIZ.requireAccessCode && !String(state.accessCode||"").trim()) return;
-
-  const akey = answerKey(ans);
+function gradeOneLocal_(id, ans, { lock = false } = {}){
   const existed = state.checked && state.checked[id];
   if (existed && existed.locked) return;
 
+  const v = VMAP.get(id);
+  if (!v) return;
+
+  const akey = answerKey(ans);
   if (existed && existed.lastKey === akey && !!existed.gradedAtMs) {
     if (lock && !existed.locked) {
       existed.locked = true;
@@ -2332,60 +2071,24 @@ async function gradeOne_(id, ans, { lock = false } = {}){
     return;
   }
 
-  const token = randId("g");
-  gradeToken.set(id, token);
-  gradeInFlight.add(id);
+  const g = gradeLocal_(v, ans);
+  state.checked[id] = {
+    locked: !!lock,
+    ok: !!g.ok,
+    expected: String(g.expected || ""),
+    lastKey: akey,
+    gradedAtMs: Date.now()
+  };
 
-  try {
-    const res = await postJSON({
-      action: "gradeOne",
-      name: state.name,
-      userId: USER && USER.userId ? USER.userId : "",
-      quizId: QUIZ.quizId || getQuizId(),
-      accessCode: state.accessCode || "",
-      cacheId: state.cacheId,
-      attemptId: state.attemptId,
-      vocabId: id,
-      answer: String(ans || "").trim(),
-      ua: navigator.userAgent || ""
-    });
+  scheduleSave({ mirror: true });
+  scheduleCloudSave();
+  updateStats();
 
-    if (gradeToken.get(id) !== token) return;
-
-    if (!res || !res.ok || !res.item) throw new Error("Lỗi chấm.");
-
-    state.checked[id] = {
-      locked: !!lock,
-      ok: !!res.item.ok,
-      expected: String(res.item.expected || ""),
-      lastKey: akey,
-      gradedAtMs: Date.now()
-    };
-
-    scheduleSave({ mirror: true });
-    scheduleCloudSave();
-    updateStats();
-
-    if (lockAfterGrade.has(id)) {
-      lockAfterGrade.delete(id);
-      state.checked[id].locked = true;
-      scheduleSave({ mirror: true });
-      scheduleCloudSave();
-      lockUI_(id);
-      return;
-    }
-
-    if (lock) lockUI_(id);
-  } catch (e) {
-    if (lock) toast("Check lỗi");
-  } finally {
-    gradeInFlight.delete(id);
-  }
+  if (lock) lockUI_(id);
 }
-
-function scheduleAutoGrade_(id, delayMs = 550){
+function scheduleAutoGrade_(id, delayMs = 500){
   if (gradeTimers.has(id)) clearTimeout(gradeTimers.get(id));
-  const t = setTimeout(async () => {
+  const t = setTimeout(() => {
     gradeTimers.delete(id);
 
     const ans = String(state.answers[id] ?? "").trim();
@@ -2402,14 +2105,11 @@ function scheduleAutoGrade_(id, delayMs = 550){
       return;
     }
 
-    await gradeOne_(id, ans, { lock: false });
+    gradeOneLocal_(id, ans, { lock: false });
   }, delayMs);
   gradeTimers.set(id, t);
 }
 
-/********************
- * Events: input / enter / blur
- ********************/
 function onInput(e) {
   const t = e.target;
   if (!t || !t.classList.contains("ansInput")) return;
@@ -2425,8 +2125,7 @@ function onInput(e) {
   scheduleSave();
   scheduleCloudSave();
   updateStats();
-
-  scheduleAutoGrade_(id, 550);
+  scheduleAutoGrade_(id, 500);
 }
 
 function focusNextInput_(id){
@@ -2437,33 +2136,26 @@ function focusNextInput_(id){
     try { inputs[idx + 1].scrollIntoView({ block: "nearest", behavior: "smooth" }); } catch(e){}
   }
 }
-
 function onKeyDown(e){
   const t = e.target;
   if (!t || !t.classList.contains("ansInput")) return;
-
   if (e.key === "Enter") {
     e.preventDefault();
     const id = Number(t.dataset.qid);
     if (!isFinite(id)) return;
-
     scheduleAutoGrade_(id, 0);
     focusNextInput_(id);
+    SFX.soft();
   }
 }
-
 function onFocusOut(e){
   const t = e.target;
   if (!t || !t.classList.contains("ansInput")) return;
   const id = Number(t.dataset.qid);
   if (!isFinite(id)) return;
-
   scheduleAutoGrade_(id, 0);
 }
 
-/********************
- * Click: Check
- ********************/
 function onClick(e) {
   const btn = e.target.closest("[data-check]");
   if (!btn) return;
@@ -2472,7 +2164,6 @@ function onClick(e) {
   if (!isFinite(id)) return;
 
   if (!state.name) { toast("Thiếu username"); renderGateView(); return; }
-  if (!gasAvailable()) { toast("Thiếu API_URL"); return; }
   if (QUIZ.requireAccessCode && !String(state.accessCode||"").trim()){
     toast("Thiếu mã truy cập.");
     renderGateView();
@@ -2488,68 +2179,34 @@ function onClick(e) {
   scheduleSave();
   scheduleCloudSave();
 
-  if (!ans) { toast("Chưa nhập"); return; }
-
-  if (gradeInFlight.has(id)) {
-    lockAfterGrade.add(id);
-    btn.disabled = true;
-    btn.textContent = "…";
-    return;
-  }
-
-  const akey = answerKey(ans);
-  if (existed && existed.lastKey === akey && !!existed.gradedAtMs) {
-    existed.locked = true;
-    scheduleSave({ mirror: true });
-    scheduleCloudSave();
-    lockUI_(id);
-    toast(existed.ok ? "ĐÚNG" : "SAI");
-    updateStats();
-    return;
-  }
+  if (!ans) { toast("Chưa nhập"); SFX.bad(); return; }
 
   btn.disabled = true;
   btn.textContent = "…";
-  gradeOne_(id, ans, { lock: true }).then(() => {
-    const ck = state.checked[id];
-    if (ck) toast(ck.ok ? "ĐÚNG" : "SAI");
-  }).finally(() => {
-    const ck = state.checked[id];
-    if (!(ck && ck.locked)) {
-      btn.disabled = false;
-      btn.textContent = "Check";
-    }
-  });
+  gradeOneLocal_(id, ans, { lock: true });
+  const ck = state.checked[id];
+  if (ck) {
+    toast(ck.ok ? "ĐÚNG" : "SAI");
+    if (ck.ok) SFX.ok(); else SFX.bad();
+  }
 }
 
-/********************
- * Wrong popup
- ********************/
 const wrongBackdrop = document.getElementById("wrongBackdrop");
 const wrongBody = document.getElementById("wrongBody");
 document.getElementById("btnCloseWrong").addEventListener("click", () => closeWrongPopup());
 wrongBackdrop.addEventListener("click", (e) => { if (e.target === wrongBackdrop) closeWrongPopup(); });
 
-function openWrongPopup() {
-  wrongBackdrop.classList.add("show");
-  wrongBackdrop.setAttribute("aria-hidden", "false");
-}
-function closeWrongPopup() {
-  wrongBackdrop.classList.remove("show");
-  wrongBackdrop.setAttribute("aria-hidden", "true");
-}
-
+function openWrongPopup() { wrongBackdrop.classList.add("show"); wrongBackdrop.setAttribute("aria-hidden", "false"); }
+function closeWrongPopup() { wrongBackdrop.classList.remove("show"); wrongBackdrop.setAttribute("aria-hidden", "true"); }
 function buildWrongPopupContent() {
   wrongBody.innerHTML = "";
   const r = state.result;
   if (!r) return;
-
   const wrong = r.wrong || [];
   if (!wrong.length) {
     wrongBody.innerHTML = `<div class="card"><span class="oktxt">Không sai ✅</span></div>`;
     return;
   }
-
   wrong.forEach((w) => {
     const box = document.createElement("div");
     box.className = "card";
@@ -2565,83 +2222,216 @@ function buildWrongPopupContent() {
   });
 }
 
-/********************
- * Leaderboard
- ********************/
+const LB = {
+  table: null,
+  tbody: null,
+  rowByKey: new Map(),
+  lastRows: [],
+  lastMyRank: 0
+};
+
+function lbKey_(name){ return normalizeName(name); }
+function lbBestKey_(){ return `lb_best::${getQuizId()}::${normalizeForFilter(state.name||"")}`; }
+function getLocalBestScore_(){
+  try { return Number(localStorage.getItem(lbBestKey_()) || "0") || 0; } catch(e){ return 0; }
+}
+function setLocalBestScore_(score10){
+  const s = Number(score10||0) || 0;
+  if (!state.name) return;
+  const cur = getLocalBestScore_();
+  if (s > cur) {
+    try { localStorage.setItem(lbBestKey_(), String(s)); } catch(e){}
+  }
+}
+function normalizeLbRows_(rows){
+  const out = [];
+  for (const r of (rows||[])) {
+    const name = String(r.name || r.username || "").trim();
+    if (!name) continue;
+    const score10 = Number(r.score10 ?? r.score ?? r.point ?? 0) || 0;
+    out.push({ name, score10, isAdmin: !!r.isAdmin || isAdminName(name) });
+  }
+  return out;
+}
+function patchWithLocalBest_(serverRows){
+  const base = normalizeLbRows_(serverRows);
+  const myName = String(state.name||"").trim();
+  const myBest = Math.max(getLocalBestScore_(), state.result ? Number(state.result.score10||0) : 0);
+  if (myName && myBest > 0) {
+    const k = lbKey_(myName);
+    const i = base.findIndex(x => lbKey_(x.name) === k);
+    if (i >= 0) {
+      if (myBest > base[i].score10) base[i].score10 = myBest;
+      base[i].isAdmin = base[i].isAdmin || isAdminName(myName);
+      base[i]._local = true;
+    } else {
+      base.push({ name: myName, score10: myBest, isAdmin: isAdminName(myName), _local: true });
+    }
+  }
+  const withIdx = base.map((r,i)=>({ ...r, _i:i }));
+  withIdx.sort((a,b) => (b.score10 - a.score10) || (a._i - b._i));
+  return withIdx;
+}
+function ensureLbTable_(box){
+  if (LB.table && LB.table.isConnected) return;
+  box.innerHTML = `
+    <table class="table">
+      <colgroup>
+        <col style="width:74px" />
+        <col />
+        <col style="width:92px" />
+      </colgroup>
+      <thead><tr><th>#</th><th>Tên</th><th>Điểm</th></tr></thead>
+      <tbody id="lbTbody"></tbody>
+    </table>
+  `;
+  LB.table = box.querySelector("table");
+  LB.tbody = box.querySelector("#lbTbody");
+  LB.rowByKey = new Map();
+  LB.lastRows = [];
+  LB.lastMyRank = 0;
+}
+function buildLbRowHTML_(rk, r, isMe){
+  const medal = rk === 1 ? `<span class="medal m1">🥇</span>` :
+                rk === 2 ? `<span class="medal m2">🥈</span>` :
+                rk === 3 ? `<span class="medal m3">🥉</span>` : "";
+  const adminTag = r.isAdmin ? `<span class="adminBadgeInline">ADMIN</span>` : ``;
+  const meTag = isMe ? `<span class="meBadge">Bạn</span>` : ``;
+
+  return `
+    <td><span class="rankpill">${medal}<span>${rk}</span></span></td>
+    <td>
+      <div class="lbNameWrap">
+        <span class="lbNameText">${escapeHtml(r.name)}</span>
+        <span class="lbBadges">${meTag}${adminTag}</span>
+      </div>
+    </td>
+    <td><b>${Number(r.score10).toFixed(1)}</b>/10</td>
+  `;
+}
+function applyRowClass_(tr, rk, isMe){
+  const trClass = rk === 1 ? "toprow1" : rk === 2 ? "toprow2" : rk === 3 ? "toprow3" : "";
+  const rowClass = `${trClass} ${isMe ? "meRow" : ""}`.trim();
+  tr.className = rowClass;
+}
+function renderLeaderboard_(box, rows, { animate=false } = {}){
+  ensureLbTable_(box);
+  const tbody = LB.tbody;
+  if (!tbody) return;
+
+  const prevRects = new Map();
+  const prevMyRank = LB.lastMyRank || 0;
+  if (animate) {
+    Array.from(tbody.querySelectorAll("tr[data-key]")).forEach(tr => {
+      prevRects.set(tr.dataset.key, tr.getBoundingClientRect());
+    });
+  }
+
+  const meK = lbKey_(state.name);
+  const frag = document.createDocumentFragment();
+
+  let newMyRank = 0;
+
+  rows.slice(0,30).forEach((r, idx) => {
+    const rk = idx + 1;
+    const key = lbKey_(r.name);
+    const isMe = !!(meK && key === meK);
+    if (isMe) newMyRank = rk;
+
+    let tr = LB.rowByKey.get(key);
+    if (!tr || !tr.isConnected) {
+      tr = document.createElement("tr");
+      tr.dataset.key = key;
+      LB.rowByKey.set(key, tr);
+    }
+    applyRowClass_(tr, rk, isMe);
+    tr.innerHTML = buildLbRowHTML_(rk, r, isMe);
+    frag.appendChild(tr);
+  });
+
+  tbody.innerHTML = "";
+  tbody.appendChild(frag);
+
+  if (animate && prevRects.size) {
+    const rowsNow = Array.from(tbody.querySelectorAll("tr[data-key]"));
+    rowsNow.forEach(tr => {
+      const key = tr.dataset.key;
+      const prev = prevRects.get(key);
+      if (!prev) return;
+      const now = tr.getBoundingClientRect();
+      const dy = prev.top - now.top;
+      if (!dy) return;
+      tr.style.transform = `translateY(${dy}px)`;
+      tr.style.transition = "transform 0s";
+    });
+
+    requestAnimationFrame(() => {
+      const rowsNow2 = Array.from(tbody.querySelectorAll("tr[data-key]"));
+      rowsNow2.forEach(tr => {
+        if (!tr.style.transform) return;
+        tr.style.transition = "transform 520ms cubic-bezier(.2,.9,.2,1)";
+        tr.style.transform = "";
+      });
+      setTimeout(() => {
+        rowsNow2.forEach(tr => { tr.style.transition = ""; tr.style.transform = ""; });
+      }, 560);
+    });
+  }
+
+  LB.lastRows = rows;
+  LB.lastMyRank = newMyRank || 0;
+
+  if (prevMyRank && newMyRank && newMyRank < prevMyRank) {
+    const meRow = tbody.querySelector(`tr[data-key="${CSS.escape(meK)}"]`);
+    if (meRow) {
+      meRow.classList.remove("rankPop");
+      void meRow.offsetWidth;
+      meRow.classList.add("rankPop");
+    }
+    SFX.rankUp();
+  }
+}
+
 async function fetchLeaderboard() {
   const box = document.getElementById("lbBox");
   if (!box) return;
 
-  const meNorm = normalizeName(state.name);
-
   try {
     const res = await postJSON({ action: "getLeaderboard", limit: 30, quizId: QUIZ.quizId || getQuizId() });
-    const rows = (res && res.rows) ? res.rows : [];
-    if (!rows.length) {
-      box.innerHTML = `<div class="muted">Chưa có dữ liệu.</div>`;
-      return;
+    const serverRows = (res && res.rows) ? res.rows : [];
+    if (!serverRows.length) { box.innerHTML = `<div class="muted">Chưa có dữ liệu.</div>`; return; }
+
+    const serverNorm = normalizeLbRows_(serverRows).slice(0,30);
+    renderLeaderboard_(box, serverNorm, { animate: false });
+
+    const patched = patchWithLocalBest_(serverRows).slice(0,30);
+
+    const sameOrder = (() => {
+      if (serverNorm.length !== patched.length) return false;
+      for (let i=0;i<serverNorm.length;i++){
+        if (lbKey_(serverNorm[i].name) !== lbKey_(patched[i].name)) return false;
+        if (Math.abs((serverNorm[i].score10||0) - (patched[i].score10||0)) > 1e-9) return false;
+      }
+      return true;
+    })();
+
+    if (!sameOrder) {
+      requestAnimationFrame(() => {
+        renderLeaderboard_(box, patched, { animate: true });
+      });
+    } else {
+      LB.lastRows = patched;
     }
-
-    const uniqueRows = rows.slice(0, 30);
-
-    box.innerHTML = `
-      <table class="table">
-        <colgroup>
-          <col style="width:74px" />
-          <col />
-          <col style="width:92px" />
-        </colgroup>
-        <thead><tr><th>#</th><th>Tên</th><th>Điểm</th></tr></thead>
-        <tbody>
-          ${uniqueRows.map((r, index) => {
-            const rk = index + 1;
-            const medal = rk === 1 ? `<span class="medal m1">🥇</span>` :
-                          rk === 2 ? `<span class="medal m2">🥈</span>` :
-                          rk === 3 ? `<span class="medal m3">🥉</span>` : "";
-            const trClass = rk === 1 ? "toprow1" :
-                            rk === 2 ? "toprow2" :
-                            rk === 3 ? "toprow3" : "";
-            const isMe = normalizeName(r.name) === meNorm;
-            const rowClass = `${trClass} ${isMe ? "meRow" : ""}`.trim();
-
-            const admin = !!r.isAdmin || isAdminName(r.name);
-            const adminTag = admin ? `<span class="adminBadgeInline">ADMIN</span>` : ``;
-
-            const nameCell = isMe
-              ? `<span class="meName lbName">${escapeHtml(r.name)}</span><span class="meBadge">Bạn</span>${adminTag}`
-              : `<span class="lbName">${escapeHtml(r.name)}</span>${adminTag}`;
-
-            return `
-              <tr class="${rowClass}">
-                <td><span class="rankpill">${medal}<span>${rk}</span></span></td>
-                <td>${nameCell}</td>
-                <td><b>${Number(r.score10).toFixed(1)}</b>/10</td>
-              </tr>
-            `;
-          }).join("")}
-        </tbody>
-      </table>
-    `;
   } catch (err) {
     box.innerHTML = `Lỗi BXH: ${escapeHtml(err && err.message ? err.message : String(err))}`;
   }
 }
 
-/********************
- * Discussion - OPTIMISTIC UI
- ********************/
-const DISCUSS_MAX = 120;
-
-let DISCUSS = {
-  loaded: false,
-  loading: false,
-  tree: []
-};
+let DISCUSS = { loaded: false, loading: false, tree: [] };
 let discussObserver = null;
 let openReplyRootId = "";
 const pendingTempIds = new Set();
-
-/* tombstone deleted ids (per quiz) */
+const DISCUSS_MAX = 120;
 const DISCUSS_DELETED_KEY = () => `gs_discuss_deleted_v2::${getQuizId()}`;
 let DELETED_IDS = new Set();
 
@@ -2653,25 +2443,18 @@ function loadDeletedIds_(){
   } catch(e){}
   return new Set();
 }
-function saveDeletedIds_(){
-  try { localStorage.setItem(DISCUSS_DELETED_KEY(), JSON.stringify(Array.from(DELETED_IDS))); } catch(e){}
-}
+function saveDeletedIds_(){ try { localStorage.setItem(DISCUSS_DELETED_KEY(), JSON.stringify(Array.from(DELETED_IDS))); } catch(e){} }
 function markDeleted_(id){
   const sid = String(id||"").trim();
   if (!sid) return;
   DELETED_IDS.add(sid);
   saveDeletedIds_();
 }
-function isTempId_(id){
-  return String(id||"").startsWith("tmp_");
-}
-
 function canDeleteComment_(c){
   const admin = isAdminName(state.name);
   if (admin) return true;
   return normalizeName(c.author) === normalizeName(state.name);
 }
-
 function collectIdsFromTree_(tree){
   const ids = new Set();
   for (const r of (tree||[])) {
@@ -2680,13 +2463,11 @@ function collectIdsFromTree_(tree){
   }
   return ids;
 }
-
 function filterTreeByDeleted_(tree){
   const out = [];
   for (const root of (tree||[])) {
     const rid = String(root.id);
     if (DELETED_IDS.has(rid)) continue;
-
     const replies = Array.isArray(root.replies) ? root.replies : [];
     const keptReplies = replies.filter(r => {
       const id = String(r.id);
@@ -2695,15 +2476,10 @@ function filterTreeByDeleted_(tree){
       if (pid && DELETED_IDS.has(pid)) return false;
       return true;
     });
-
-    out.push({
-      ...root,
-      replies: keptReplies
-    });
+    out.push({ ...root, replies: keptReplies });
   }
   return out;
 }
-
 function dedupeTree_(tree){
   const seen = new Set();
   const out = [];
@@ -2711,7 +2487,6 @@ function dedupeTree_(tree){
     const rid = String(root.id);
     if (seen.has(rid)) continue;
     seen.add(rid);
-
     const rseen = new Set();
     const replies = [];
     for (const r of (root.replies || [])) {
@@ -2720,12 +2495,10 @@ function dedupeTree_(tree){
       rseen.add(id);
       replies.push(r);
     }
-
     out.push({ ...root, replies });
   }
   return out;
 }
-
 function normalizeTreeFromServer_(res){
   if (res && Array.isArray(res.tree)) {
     const roots = res.tree.map(root => ({
@@ -2749,7 +2522,6 @@ function normalizeTreeFromServer_(res){
     roots.forEach(r=>r.replies.sort((a,b)=>a.createdAtMs-b.createdAtMs));
     return roots;
   }
-
   const flat = (res && Array.isArray(res.comments)) ? res.comments : [];
   const roots = [];
   const byId = new Map();
@@ -2757,29 +2529,19 @@ function normalizeTreeFromServer_(res){
     const id = String(c.id);
     if (!id) continue;
     if (byId.has(id)) continue;
-    byId.set(id, {
-      id,
-      parentId: String(c.parentId||""),
-      author: String(c.author||""),
-      createdAtMs: Number(c.createdAtMs||0) || Date.now(),
-      text: String(c.text||""),
-      replies: []
-    });
+    byId.set(id, { id, parentId: String(c.parentId||""), author: String(c.author||""), createdAtMs: Number(c.createdAtMs||0) || Date.now(), text: String(c.text||""), replies: [] });
   }
   for (const c of byId.values()) {
     if (c.parentId && byId.has(c.parentId)) {
       const p = byId.get(c.parentId);
       if (p.parentId) roots.push(c);
       else p.replies.push(c);
-    } else {
-      roots.push(c);
-    }
+    } else roots.push(c);
   }
   roots.sort((a,b)=>a.createdAtMs-b.createdAtMs);
   roots.forEach(r=>r.replies.sort((a,b)=>a.createdAtMs-b.createdAtMs));
   return roots;
 }
-
 function getDiscussionEls_(){
   return {
     section: document.getElementById("discussionSection"),
@@ -2789,25 +2551,19 @@ function getDiscussionEls_(){
     btnPostRoot: document.getElementById("btnPostRoot"),
   };
 }
-
 function renderDiscuss_(){
   const { list, rootCount, rootInput } = getDiscussionEls_();
   if (!list) return;
 
-  if (!DISCUSS.loaded && DISCUSS.loading) {
-    list.innerHTML = `<div class="muted">Đang tải…</div>`;
-    return;
-  }
+  if (!DISCUSS.loaded && DISCUSS.loading) { list.innerHTML = `<div class="muted">Đang tải…</div>`; return; }
 
   const tree = Array.isArray(DISCUSS.tree) ? DISCUSS.tree : [];
-  if (!tree.length) {
-    list.innerHTML = `<div class="muted">Chưa có bình luận nào.</div>`;
-  } else {
+  if (!tree.length) list.innerHTML = `<div class="muted">Chưa có bình luận nào.</div>`;
+  else {
     list.innerHTML = "";
     tree.forEach(root => {
       const wrap = document.createElement("div");
       wrap.className = "cmtItem";
-
       const admin = isAdminName(root.author);
       const canDel = canDeleteComment_(root);
       const timeLabel = root.pending ? "…" : formatTs(root.createdAtMs);
@@ -2853,9 +2609,8 @@ function renderDiscuss_(){
       const rWrap = wrap.querySelector(`[data-replies="${CSS.escape(String(root.id))}"]`);
       const replies = Array.isArray(root.replies) ? root.replies : [];
       if (rWrap) {
-        if (!replies.length) {
-          rWrap.innerHTML = "";
-        } else {
+        if (!replies.length) rWrap.innerHTML = "";
+        else {
           rWrap.innerHTML = "";
           replies.forEach(r => {
             const item = document.createElement("div");
@@ -2890,7 +2645,6 @@ function renderDiscuss_(){
 
   if (rootInput && rootCount) rootCount.textContent = String((rootInput.value||"").length);
 }
-
 function removeNodeById_(id){
   const tree = DISCUSS.tree || [];
   const nid = String(id);
@@ -2912,7 +2666,6 @@ function isValidDiscussText_(t){
   if (t.length > DISCUSS_MAX) return false;
   return true;
 }
-
 async function ensureDiscussionLoaded_(force=false){
   if (!state.finalized) return;
   if (DISCUSS.loading) return;
@@ -2950,16 +2703,11 @@ async function ensureDiscussionLoaded_(force=false){
       if (nowIds.has(pid)) continue;
       if (DELETED_IDS.has(pid)) continue;
 
-      if (!p.parentId) {
-        tree.push(p);
-      } else {
+      if (!p.parentId) tree.push(p);
+      else {
         const root = tree.find(x => String(x.id) === String(p.parentId));
-        if (root) {
-          root.replies = Array.isArray(root.replies) ? root.replies : [];
-          root.replies.push(p);
-        } else {
-          tree.push({ ...p, parentId:"", replies: Array.isArray(p.replies)?p.replies:[] });
-        }
+        if (root) { root.replies = Array.isArray(root.replies) ? root.replies : []; root.replies.push(p); }
+        else tree.push({ ...p, parentId:"", replies: Array.isArray(p.replies)?p.replies:[] });
       }
     }
 
@@ -2995,21 +2743,17 @@ async function optimisticAddComment_({ text, parentId }){
   };
 
   DISCUSS.tree = Array.isArray(DISCUSS.tree) ? DISCUSS.tree : [];
-  if (!node.parentId) {
-    DISCUSS.tree.push(node);
-  } else {
+  if (!node.parentId) DISCUSS.tree.push(node);
+  else {
     const root = (DISCUSS.tree||[]).find(x => String(x.id) === String(node.parentId));
-    if (root) {
-      root.replies = Array.isArray(root.replies) ? root.replies : [];
-      root.replies.push(node);
-    } else {
-      DISCUSS.tree.push({ ...node, parentId:"" });
-    }
+    if (root) { root.replies = Array.isArray(root.replies) ? root.replies : []; root.replies.push(node); }
+    else DISCUSS.tree.push({ ...node, parentId:"" });
   }
 
   (DISCUSS.tree||[]).sort((a,b)=>a.createdAtMs-b.createdAtMs);
   (DISCUSS.tree||[]).forEach(r => (r.replies||[]).sort((a,b)=>a.createdAtMs-b.createdAtMs));
   renderDiscuss_();
+  SFX.ok();
 
   try {
     const res = await postJSON({
@@ -3062,9 +2806,9 @@ async function optimisticAddComment_({ text, parentId }){
     removeNodeById_(tempId);
     renderDiscuss_();
     toast("Gửi lỗi");
+    SFX.bad();
   }
 }
-
 async function optimisticDeleteComment_(id){
   if (!state.name) { toast("Thiếu username"); return; }
   const sid = String(id||"").trim();
@@ -3078,39 +2822,31 @@ async function optimisticDeleteComment_(id){
     removeNodeById_(sid);
     renderDiscuss_();
     toast("Đã xóa");
+    SFX.soft();
     return;
   }
 
   markDeleted_(sid);
-
   removeNodeById_(sid);
   renderDiscuss_();
   toast("Đã xóa");
+  SFX.soft();
 
   try {
-    await postJSON({
-      action:"deleteComment",
-      quizId: getQuizId(),
-      userId: (USER && USER.userId) ? USER.userId : "",
-      name: state.name,
-      id: sid
-    });
+    await postJSON({ action:"deleteComment", quizId: getQuizId(), userId: (USER && USER.userId) ? USER.userId : "", name: state.name, id: sid });
   } catch (e) {}
 
   setTimeout(() => { ensureDiscussionLoaded_(true); }, 650);
 }
-
 function bindDiscussionEvents_(){
   const { rootInput, btnPostRoot, rootCount, section } = getDiscussionEls_();
   if (!section || !rootInput || !btnPostRoot || !rootCount) return;
 
-  rootInput.addEventListener("input", () => {
-    rootCount.textContent = String((rootInput.value||"").length);
-  }, { passive:true });
+  rootInput.addEventListener("input", () => { rootCount.textContent = String((rootInput.value||"").length); }, { passive:true });
 
   btnPostRoot.addEventListener("click", () => {
     const text = String(rootInput.value||"").trim();
-    if (!isValidDiscussText_(text)) { toast("Tối đa 120 ký tự"); return; }
+    if (!isValidDiscussText_(text)) { toast("Tối đa 120 ký tự"); SFX.bad(); return; }
     rootInput.value = "";
     rootCount.textContent = "0";
     optimisticAddComment_({ text, parentId:"" });
@@ -3118,19 +2854,13 @@ function bindDiscussionEvents_(){
 
   section.addEventListener("click", (e) => {
     const delBtn = e.target.closest("[data-del]");
-    if (delBtn) {
-      const id = String(delBtn.getAttribute("data-del")||"");
-      if (!id) return;
-      optimisticDeleteComment_(id);
-      return;
-    }
+    if (delBtn) { const id = String(delBtn.getAttribute("data-del")||""); if (id) optimisticDeleteComment_(id); return; }
 
     const replyBtn = e.target.closest("[data-reply]");
     if (replyBtn) {
       const rootId = String(replyBtn.getAttribute("data-reply")||"");
       openReplyRootId = (openReplyRootId === rootId) ? "" : rootId;
       renderDiscuss_();
-
       const slot = section.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
       const ta = slot ? slot.querySelector("textarea") : null;
       if (ta) ta.focus();
@@ -3138,11 +2868,7 @@ function bindDiscussionEvents_(){
     }
 
     const cancelBtn = e.target.closest("[data-cancelreply]");
-    if (cancelBtn) {
-      openReplyRootId = "";
-      renderDiscuss_();
-      return;
-    }
+    if (cancelBtn) { openReplyRootId = ""; renderDiscuss_(); return; }
 
     const sendBtn = e.target.closest("[data-sendreply]");
     if (sendBtn) {
@@ -3150,7 +2876,7 @@ function bindDiscussionEvents_(){
       const slot = section.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
       const ta = slot ? slot.querySelector("textarea") : null;
       const text = ta ? String(ta.value||"").trim() : "";
-      if (!isValidDiscussText_(text)) { toast("Tối đa 120 ký tự"); return; }
+      if (!isValidDiscussText_(text)) { toast("Tối đa 120 ký tự"); SFX.bad(); return; }
       openReplyRootId = "";
       renderDiscuss_();
       optimisticAddComment_({ text, parentId: rootId });
@@ -3167,27 +2893,80 @@ function bindDiscussionEvents_(){
     if (ct) ct.textContent = String((ta.value||"").length);
   }, { passive:true });
 }
-
 function attachDiscussionObserver_(){
-  if (discussObserver) {
-    try { discussObserver.disconnect(); } catch(e){}
-    discussObserver = null;
-  }
+  if (discussObserver) { try { discussObserver.disconnect(); } catch(e){} discussObserver = null; }
   const sec = document.getElementById("discussionSection");
   if (!sec) return;
 
   discussObserver = new IntersectionObserver((entries) => {
-    for (const ent of entries) {
-      if (ent.isIntersecting) ensureDiscussionLoaded_();
-    }
+    for (const ent of entries) if (ent.isIntersecting) ensureDiscussionLoaded_();
   }, { root: document.getElementById("shell"), threshold: 0.15 });
 
   discussObserver.observe(sec);
 }
 
-/********************
- * Result view
- ********************/
+function computeResultLocal_(){
+  const order = state.order && state.order.length ? state.order : (QUIZ.vocabs||[]).map(v=>v.id);
+  const wrong = [];
+  let correct = 0;
+
+  for (const id of order) {
+    const v = VMAP.get(id);
+    const ans = String(state.answers[id] ?? "").trim();
+    const g = v ? gradeLocal_(v, ans) : { ok:false, expected:"" };
+
+    state.checked[id] = {
+      locked: true,
+      ok: !!g.ok,
+      expected: String(g.expected || (v ? (v.meaning||"") : "")),
+      lastKey: answerKey(ans),
+      gradedAtMs: Date.now()
+    };
+
+    if (g.ok) correct++;
+    else {
+      wrong.push({
+        id,
+        word: v ? v.word : String(id),
+        user: ans,
+        expected: String(g.expected || "")
+      });
+    }
+  }
+
+  const total = order.length;
+  const score10 = total ? (correct / total) * 10 : 0;
+  return {
+    score10: Math.round(score10 * 10) / 10,
+    correctCount: correct,
+    totalCount: total,
+    wrong
+  };
+}
+
+async function pushScoreToServer_(result){
+  if (!gasAvailable()) return;
+  if (!state.name) return;
+  const payload = {
+    quizId: QUIZ.quizId || getQuizId(),
+    name: state.name,
+    userId: (USER && USER.userId) ? USER.userId : "",
+    cacheId: state.cacheId,
+    attemptId: state.attemptId,
+    score10: Number(result && result.score10 || 0) || 0,
+    correctCount: Number(result && result.correctCount || 0) || 0,
+    totalCount: Number(result && result.totalCount || 0) || 0,
+    answers: state.answers || {},
+    accessCode: state.accessCode || ""
+  };
+  try {
+    await apiCallCompat_(
+      ["submitScore","saveScore","recordScore","submitResult","finalizeAttempt"],
+      payload
+    );
+  } catch(e){}
+}
+
 function renderResultView() {
   setView("result");
   setDiscussFabVisible(true);
@@ -3261,6 +3040,7 @@ function renderResultView() {
     document.getElementById("btnShowWrong").addEventListener("click", () => {
       buildWrongPopupContent();
       openWrongPopup();
+      SFX.soft();
     });
   }
 
@@ -3278,9 +3058,6 @@ function renderResultView() {
   updateStats();
 }
 
-/********************
- * Submit
- ********************/
 function getMissingQuestions_(){
   const order = state.order && state.order.length ? state.order : (QUIZ.vocabs||[]).map(v=>v.id);
   const missing = [];
@@ -3292,110 +3069,50 @@ function getMissingQuestions_(){
   return missing;
 }
 
-async function flushPendingGrades_(){
-  for (const [id, tm] of gradeTimers.entries()) {
-    clearTimeout(tm);
-    gradeTimers.delete(id);
-  }
-
-  const order = state.order && state.order.length ? state.order : (QUIZ.vocabs||[]).map(v=>v.id);
-  const tasks = [];
-
-  for (const id of order) {
-    const ans = String(state.answers[id] ?? "").trim();
-    if (!ans) continue;
-
-    const ck = state.checked && state.checked[id];
-    if (ck && ck.locked) continue;
-
-    const akey = answerKey(ans);
-    if (ck && ck.lastKey === akey && !!ck.gradedAtMs) continue;
-
-    tasks.push(gradeOne_(id, ans, { lock: false }));
-  }
-
-  if (tasks.length) {
-    try { await Promise.allSettled(tasks); } catch(e){}
-  }
-}
-
-async function finalizeAttemptAsync_(){
-  const res = await postJSON({
-    action: "finalizeAttempt",
-    name: state.name,
-    userId: USER && USER.userId ? USER.userId : "",
-    quizId: QUIZ.quizId || getQuizId(),
-    accessCode: state.accessCode || "",
-    cacheId: state.cacheId,
-    attemptId: state.attemptId
-  });
-  return res;
-}
-
-document.getElementById("btnSubmit").addEventListener("click", () => {
+document.getElementById("btnSubmit").addEventListener("click", async () => {
   if (!state.name) { toast("Thiếu username"); renderGateView(); return; }
   if (state.finalized) return;
 
   const missing = getMissingQuestions_();
   if (missing.length) {
     let msg = "";
-    if (missing.length > 5) {
-      msg = `Bạn còn ${missing.length} câu chưa làm hoặc nhiều hơn.\nNộp vẫn tính sai các câu đó.\n\nNộp bài?`;
-    } else {
-      msg = `Bạn còn câu ${missing.join(", ")} chưa làm.\nNộp vẫn tính sai các câu đó.\n\nNộp bài?`;
-    }
+    if (missing.length > 5) msg = `Bạn còn ${missing.length} câu chưa làm hoặc nhiều hơn.\nNộp vẫn tính sai các câu đó.\n\nNộp bài?`;
+    else msg = `Bạn còn câu ${missing.join(", ")} chưa làm.\nNộp vẫn tính sai các câu đó.\n\nNộp bài?`;
     const ok = confirm(msg);
     if (!ok) return;
   }
 
   state.finalized = true;
-  state.result = null;
+
+  for (const [id, tm] of gradeTimers.entries()) { clearTimeout(tm); gradeTimers.delete(id); }
+
+  const result = computeResultLocal_();
+  state.result = result;
+
+  state.history = Array.isArray(state.history) ? state.history : [];
+  state.history.push({ ts: Date.now(), score10: result.score10, correctCount: result.correctCount, totalCount: result.totalCount });
+
+  setLocalBestScore_(result.score10);
+
   scheduleSave({ mirror: true });
   scheduleCloudSave();
+
   renderResultView();
-  toast("Đang tính điểm...");
+  toast("Xong");
+  SFX.ok();
 
-  setTimeout(async () => {
-    try {
-      await flushPendingGrades_();
+  try {
+    await pushScoreToServer_(result);
+  } catch(e){}
 
-      const res = await finalizeAttemptAsync_();
-      if (!res || !res.ok || !res.result) throw new Error("Finalize lỗi");
-
-      state.result = res.result;
-
-      state.history = Array.isArray(state.history) ? state.history : [];
-      state.history.push({
-        ts: Date.now(),
-        score10: state.result.score10,
-        correctCount: state.result.correctCount,
-        totalCount: state.result.totalCount
-      });
-
-      scheduleSave({ mirror: true });
-      scheduleCloudSave();
-
-      renderResultView();
-      toast("Xong");
-    } catch (e) {
-      state.finalized = false;
-      state.result = null;
-      scheduleSave({ mirror: true });
-      scheduleCloudSave();
-      toast("Nộp lỗi, thử lại");
-      renderQuizView();
-    } finally {
-      updateStats();
-    }
-  }, 0);
+  setTimeout(() => {
+    fetchLeaderboard();
+  }, 350);
 });
 
-/********************
- * Reset
- ********************/
 const modal = document.getElementById("modalBackdrop");
-const openModal = () => { modal.classList.add("show"); modal.setAttribute("aria-hidden", "false"); };
-const closeModal = () => { modal.classList.remove("show"); modal.setAttribute("aria-hidden", "true"); };
+const openModal = () => { modal.classList.add("show"); modal.setAttribute("aria-hidden", "false"); SFX.soft(); };
+const closeModal = () => { modal.classList.remove("show"); modal.setAttribute("aria-hidden", "true"); SFX.soft(); };
 
 document.getElementById("btnReset").addEventListener("click", openModal);
 document.getElementById("btnCancel").addEventListener("click", closeModal);
@@ -3408,24 +3125,12 @@ document.getElementById("btnConfirmReset").addEventListener("click", () => {
   const keepHist = Array.isArray(state.history) ? state.history : [];
   const keepCode = state.accessCode || "";
 
-  state = {
-    quizVersion: QUIZ_VERSION,
-    cacheId: keepCache,
-    name: keepName,
-    accessCode: keepCode,
-    attemptId: "",
-    order: [],
-    answers: {},
-    checked: {},
-    finalized: false,
-    result: null,
-    history: keepHist,
-    ts: Date.now()
-  };
+  state = { quizVersion: QUIZ_VERSION, cacheId: keepCache, name: keepName, accessCode: keepCode, attemptId: "", order: [], answers: {}, checked: {}, finalized: false, result: null, history: keepHist, ts: Date.now() };
   newAttempt();
   scheduleSave({ mirror: true });
   scheduleCloudSave();
   toast("Đã làm lại");
+  SFX.soft();
 
   GATE.ready = true;
   GATE.status = "Sẵn sàng.";
@@ -3433,16 +3138,11 @@ document.getElementById("btnConfirmReset").addEventListener("click", () => {
   updateStats();
 });
 
-/********************
- * Scroll top
- ********************/
 document.getElementById("btnScrollTop").addEventListener("click", () => {
   document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
+  SFX.soft();
 });
 
-/********************
- * Discuss button
- ********************/
 document.getElementById("btnDiscuss").addEventListener("click", async () => {
   if (!state.finalized) return;
   const sec = document.getElementById("discussionSection");
@@ -3455,62 +3155,46 @@ document.getElementById("btnDiscuss").addEventListener("click", async () => {
     const { rootInput } = getDiscussionEls_();
     if (rootInput) rootInput.focus();
   }, 350);
+
+  SFX.soft();
 });
 
-/********************
- * UserCorner click -> Profile
- ********************/
 document.getElementById("userCorner").addEventListener("click", () => {
   if (!state.name) return;
   openProfileModal_();
+  SFX.soft();
 });
 
-/********************
- * Profile actions
- ********************/
-
-/* ✅ ĐỔI USERNAME: chặn tuankhoi */
 document.getElementById("btnSaveNewUsername").addEventListener("click", async () => {
   if (!state.name) return;
-
-  // ✅ tuankhoi không được đổi
-  if (isAdminName(state.name)) {
-    toast("Tài khoản tuankhoi không được đổi username");
-    return;
-  }
+  if (isAdminName(state.name)) { toast("Tài khoản tuankhoi không được đổi username"); SFX.bad(); return; }
 
   const newU = String(document.getElementById("newUsername").value||"").trim();
   const err = validateUsername(newU);
-  if (err) { toast(err); return; }
+  if (err) { toast(err); SFX.bad(); return; }
 
   const oldName = state.name;
-  if (normalizeForFilter(newU) === normalizeForFilter(oldName)) { toast("Trùng username hiện tại"); return; }
+  if (normalizeForFilter(newU) === normalizeForFilter(oldName)) { toast("Trùng username hiện tại"); SFX.bad(); return; }
 
   const last = Number((USER && USER.lastRenameAtMs) ? USER.lastRenameAtMs : 0) || 0;
   const now = Date.now();
   const DAY = 24*60*60*1000;
-  if (last && (now - last < 30*DAY)) {
-    toast("Chưa đủ 30 ngày");
-    return;
-  }
+  if (last && (now - last < 30*DAY)) { toast("Chưa đủ 30 ngày"); SFX.bad(); return; }
 
-  // check trùng (nếu backend có)
   try{
     const ck = await apiCheckUsername_(newU);
-    if (ck && (ck.exists === true)) { toast("Username đã tồn tại"); return; }
-  } catch(e){
-  }
+    if (ck && (ck.exists === true)) { toast("Username đã tồn tại"); SFX.bad(); return; }
+  } catch(e){}
 
   const btn = document.getElementById("btnSaveNewUsername");
   const oldText = btn.textContent;
 
-  // optimistic UI: đổi liền cho mượt
   btn.disabled = true;
   btn.textContent = "⏳";
   state.name = newU;
   if (USER) {
     USER.username = newU;
-    USER.lastRenameAtMs = Date.now(); // “lưu ảo” để khóa 30 ngày ngay
+    USER.lastRenameAtMs = Date.now();
     saveUser(USER);
   }
   scheduleSave({ mirror:true });
@@ -3519,6 +3203,7 @@ document.getElementById("btnSaveNewUsername").addEventListener("click", async ()
   closeProfileModal_();
   renderGateView();
   toast("Đã đổi username (đang lưu...)");
+  SFX.ok();
 
   try{
     const res = await apiChangeUsername_(oldName, newU);
@@ -3540,16 +3225,16 @@ document.getElementById("btnSaveNewUsername").addEventListener("click", async ()
     updateStats();
     renderGateView();
     toast("Đã lưu username");
+    SFX.ok();
   } catch(e){
-    // giữ local theo yêu cầu “giả bộ lưu ảo”
     toast("Server chưa lưu được, tạm dùng username mới trên máy này");
+    SFX.soft();
   } finally {
     btn.disabled = false;
     btn.textContent = oldText;
   }
 });
 
-/* ✅ ĐỔI MẬT KHẨU: sai old pin => đỏ + rung, KHÔNG tự tắt modal */
 const btnChangePinEl = document.getElementById("btnChangePin");
 btnChangePinEl.addEventListener("click", (e) => { e.preventDefault(); }, true);
 
@@ -3569,26 +3254,18 @@ btnChangePinEl.addEventListener("pointerdown", async (e) => {
       pinLen,
       onVerifyOld: async (oldPin) => {
         if (!isDigitsOnly(oldPin)) return { ok:false, message:"Mật khẩu chỉ gồm số" };
-
         if (isAdminName(state.name)) {
           if (String(oldPin) !== ADMIN_PIN) return { ok:false, message:"Sai mật khẩu" };
           return { ok:true };
         }
-
-        // verify bằng loginUser (compat + thử bỏ 0 đầu)
-        try{
-          await apiLoginUser_(state.name, oldPin);
-          return { ok:true };
-        } catch(e){
-          // fallback: thử checkUsername nếu có password trả về
+        try { await apiLoginUser_(state.name, oldPin); return { ok:true }; }
+        catch(e){
           try{
             const ck = await apiCheckUsername_(state.name);
             const secret = extractServerPassword_(ck) || extractServerPassword_(ck && ck.user ? ck.user : null);
             if (secret) {
               const vars = pinVariants_(oldPin);
-              for (const v of vars) {
-                if (String(secret) === String(v)) return { ok:true };
-              }
+              for (const v of vars) if (String(secret) === String(v)) return { ok:true };
             }
           } catch(_e){}
           return { ok:false, message:"Sai mật khẩu" };
@@ -3597,30 +3274,19 @@ btnChangePinEl.addEventListener("pointerdown", async (e) => {
       onFinalizeChange: async ({ oldPin, newPin }) => {
         if (!isDigitsOnly(newPin)) return { ok:false, message:"Mật khẩu chỉ gồm số", resetStep:"new1" };
         if (String(newPin).length !== pinLen) return { ok:false, message:`Mật khẩu phải ${pinLen} số`, resetStep:"new1" };
+        if (isAdminName(state.name)) return { ok:false, message:"Tài khoản tuankhoi không được phép đổi mật khẩu", resetStep:"old" };
+        if (String(newPin).startsWith("0")) return { ok:false, message:"Mật khẩu không nên bắt đầu bằng 0", resetStep:"new1" };
 
-        if (isAdminName(state.name)) {
-          // admin pin cố định -> không cho đổi
-          return { ok:false, message:"Tài khoản tuankhoi không được phép đổi mật khẩu", resetStep:"old" };
-        }
-
-        // ✅ tránh lỗi sheet auto bỏ 0 đầu
-        if (String(newPin).startsWith("0")) {
-          return { ok:false, message:"Mật khẩu không nên bắt đầu bằng 0", resetStep:"new1" };
-        }
-
-        try{
-          await apiChangePassword_(state.name, oldPin, newPin);
-          return { ok:true };
-        } catch(e){
-          return { ok:false, message:"Sai mật khẩu hoặc server lỗi", resetStep:"old" };
-        }
+        try { await apiChangePassword_(state.name, oldPin, newPin); return { ok:true }; }
+        catch(e){ return { ok:false, message:"Sai mật khẩu hoặc server lỗi", resetStep:"old" }; }
       }
     });
 
     closeProfileModal_();
     toast("Đã đổi mật khẩu");
+    SFX.ok();
   } catch(e){
-    if (!(e && e.message === "cancel")) toast("Đổi mật khẩu lỗi");
+    if (!(e && e.message === "cancel")) { toast("Đổi mật khẩu lỗi"); SFX.bad(); }
   } finally {
     btnChangePinEl.dataset.busy = "0";
   }
@@ -3635,21 +3301,7 @@ document.getElementById("btnLogout").addEventListener("click", async () => {
 
   try { await Persist.remove(STORAGE_KEY); } catch(e){}
 
-  state = {
-    quizVersion: QUIZ_VERSION,
-    cacheId: "",
-    name: "",
-    accessCode: "",
-    attemptId: "",
-    order: [],
-    answers: {},
-    checked: {},
-    finalized: false,
-    result: null,
-    history: [],
-    ts: Date.now()
-  };
-
+  state = { quizVersion: QUIZ_VERSION, cacheId: "", name: "", accessCode: "", attemptId: "", order: [], answers: {}, checked: {}, finalized: false, result: null, history: [], ts: Date.now() };
   try { location.hash = ""; } catch(e){}
   ensureCacheId();
   scheduleSave({ mirror:true });
@@ -3657,32 +3309,20 @@ document.getElementById("btnLogout").addEventListener("click", async () => {
 
   closeProfileModal_();
   toast("Đã đăng xuất");
+  SFX.soft();
   renderGateView();
 });
 
-/********************
- * Load local state
- ********************/
 async function tryLoadStateLocal(){
   let raw = null;
   try { raw = Persist.mirrorGet ? Persist.mirrorGet() : null; } catch (e) {}
-  if (!raw && Persist.mode && Persist.mode.local) {
-    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {}
-  }
-  if (!raw && Persist.mode && Persist.mode.session) {
-    try { raw = sessionStorage.getItem(STORAGE_KEY); } catch (e) {}
-  }
+  if (!raw && Persist.mode && Persist.mode.local) { try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {} }
+  if (!raw && Persist.mode && Persist.mode.session) { try { raw = sessionStorage.getItem(STORAGE_KEY); } catch (e) {} }
   if (raw) {
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === "object") state = parsed;
-    } catch (e) {}
+    try { const parsed = JSON.parse(raw); if (parsed && typeof parsed === "object") state = parsed; } catch (e) {}
   }
 }
 
-/********************
- * Bootstrap load (1 call) with fallback
- ********************/
 function applyQuiz_(quizData){
   if (!quizData) return;
   QUIZ = quizData || QUIZ;
@@ -3727,17 +3367,12 @@ async function loadBootstrapOrFallback_(){
       if (u && u.username) {
         USER = { userId: String(u.userId||"").trim(), username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
         saveUser(USER);
-
-        // ✅ sync state.name để tránh lệch
         state.name = USER.username;
         if (USER.userId) state.cacheId = USER.userId;
       }
     }
 
-    if (res && res.progress && res.progress.stateJson) {
-      adoptStateFromServer_(res.progress.stateJson);
-    }
-
+    if (res && res.progress && res.progress.stateJson) adoptStateFromServer_(res.progress.stateJson);
     return;
   } catch(e){}
 
@@ -3752,9 +3387,6 @@ async function loadBootstrapOrFallback_(){
   }
 }
 
-/********************
- * Boot
- ********************/
 function parseHashCacheId() {
   try {
     const h = String(location.hash || "").replace(/^#/, "");
@@ -3764,36 +3396,18 @@ function parseHashCacheId() {
 }
 
 (async function(){
-  if (!gasAvailable()) {
-    content.innerHTML = `<div class="card"><b>Thiếu API_URL</b></div>`;
-    return;
-  }
+  if (!gasAvailable()) { content.innerHTML = `<div class="card"><b>Thiếu API_URL</b></div>`; return; }
 
   installGoogleScriptRunPolyfill();
-
   showBootLoading("Đang tải quiz, đợi xíu nha");
 
-  try {
-    setBootLoadingMsg("Đang chuẩn bị…");
-    await Persist.init();
-    await tryLoadStateLocal();
-  } catch(e){}
-
+  try { setBootLoadingMsg("Đang chuẩn bị…"); await Persist.init(); await tryLoadStateLocal(); } catch(e){}
   try { USER = loadUser(); } catch(e){ USER = null; }
-
   DELETED_IDS = loadDeletedIds_();
-
   ensureCacheId();
 
-  if (USER && USER.username) {
-    state.name = USER.username;
-    if (USER.userId) state.cacheId = USER.userId;
-  }
-
-  if (!state.cacheId) {
-    const fromHash = parseHashCacheId();
-    if (fromHash) state.cacheId = fromHash;
-  }
+  if (USER && USER.username) { state.name = USER.username; if (USER.userId) state.cacheId = USER.userId; }
+  if (!state.cacheId) { const fromHash = parseHashCacheId(); if (fromHash) state.cacheId = fromHash; }
 
   updateStats();
   scheduleSave({ mirror: true });
@@ -3801,10 +3415,8 @@ function parseHashCacheId() {
   try {
     setBootLoadingMsg("Đang tải đề…");
     await loadBootstrapOrFallback_();
-
     if (!state.attemptId) state.attemptId = randId("attempt");
     if (!state.order || !state.order.length) state.order = shuffle(QUIZ.vocabs.map(v => v.id));
-
     updateStats();
     scheduleSave({ mirror: true });
 
@@ -3817,7 +3429,6 @@ function parseHashCacheId() {
 
   hideBootLoading();
   renderGateView();
-
   startCloudAutosave();
 
   window.addEventListener("pagehide", () => {
