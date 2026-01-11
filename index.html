@@ -772,14 +772,38 @@ function gasAvailable() {
 }
 
 /********************
- * User local cache
+ * User local cache (✅ migrate dữ liệu cũ)
  ********************/
-function loadUser() {
-  try { return JSON.parse(localStorage.getItem(USER_KEY) || "null"); } catch { return null; }
+function normalizeUserObj_(u){
+  if (!u || typeof u !== "object") return null;
+
+  // migrate keys cũ: {id, name}
+  const userId = String(u.userId || u.id || "").trim();
+  const username = String(u.username || u.name || "").trim();
+  const lastRenameAtMs = Number(u.lastRenameAtMs || 0) || 0;
+
+  if (!userId || !username) return null;
+  return { userId, username, lastRenameAtMs };
 }
+
+function loadUser() {
+  try {
+    const raw = localStorage.getItem(USER_KEY) || "null";
+    const obj = JSON.parse(raw);
+    const u = normalizeUserObj_(obj);
+    // nếu migrate được thì lưu lại chuẩn luôn
+    if (u) localStorage.setItem(USER_KEY, JSON.stringify(u));
+    return u;
+  } catch { return null; }
+}
+
 function saveUser(u) {
   if (!u) localStorage.removeItem(USER_KEY);
-  else localStorage.setItem(USER_KEY, JSON.stringify(u));
+  else {
+    const norm = normalizeUserObj_(u) || null;
+    if (!norm) localStorage.removeItem(USER_KEY);
+    else localStorage.setItem(USER_KEY, JSON.stringify(norm));
+  }
 }
 
 /********************
@@ -1325,16 +1349,33 @@ function openProfileModal_(){
   document.getElementById("profileSub").textContent = "Quản lý tài khoản";
 
   const hintEl = document.getElementById("profileRenameHint");
-  const last = Number((USER && USER.lastRenameAtMs) ? USER.lastRenameAtMs : 0) || 0;
-  const now = Date.now();
-  const DAY = 24*60*60*1000;
-  const nextOk = last ? (last + 30*DAY) : 0;
-  const canRename = (!last) || (now >= nextOk);
+  const newUsernameEl = document.getElementById("newUsername");
+  const btnSaveNewUsernameEl = document.getElementById("btnSaveNewUsername");
 
-  if (canRename) {
-    hintEl.textContent = "Lần đổi hợp lệ: ngay bây giờ.";
+  // ✅ khóa đổi username với tuankhoi
+  if (isAdminName(state.name)) {
+    hintEl.textContent = "Tài khoản tuankhoi không được đổi username.";
+    if (newUsernameEl) {
+      newUsernameEl.value = "";
+      newUsernameEl.disabled = true;
+      newUsernameEl.placeholder = "Không áp dụng cho tuankhoi";
+    }
+    if (btnSaveNewUsernameEl) btnSaveNewUsernameEl.disabled = true;
   } else {
-    hintEl.textContent = "Lần đổi hợp lệ: " + formatTs(nextOk);
+    const last = Number((USER && USER.lastRenameAtMs) ? USER.lastRenameAtMs : 0) || 0;
+    const now = Date.now();
+    const DAY = 24*60*60*1000;
+    const nextOk = last ? (last + 30*DAY) : 0;
+    const canRename = (!last) || (now >= nextOk);
+
+    if (canRename) hintEl.textContent = "Lần đổi hợp lệ: ngay bây giờ.";
+    else hintEl.textContent = "Lần đổi hợp lệ: " + formatTs(nextOk);
+
+    if (newUsernameEl) {
+      newUsernameEl.disabled = false;
+      newUsernameEl.placeholder = "Username mới";
+    }
+    if (btnSaveNewUsernameEl) btnSaveNewUsernameEl.disabled = false;
   }
 
   document.getElementById("newUsername").value = "";
@@ -1634,17 +1675,77 @@ function setGateReady(ready){
 }
 
 /********************
- * Account API (new)
+ * Account API (✅ gửi cả password để match sheet)
  ********************/
+function buildAuthFields_(pinLike){
+  const p = String(pinLike ?? "");
+  return {
+    pin: p,
+    password: p,
+    pass: p,
+    pwd: p,
+    pincode: p,
+    pinCode: p
+  };
+}
+function extractServerPassword_(obj){
+  if (!obj || typeof obj !== "object") return "";
+  return String(
+    obj.password ??
+    obj.pass ??
+    obj.pwd ??
+    obj.pin ??
+    obj.pincode ??
+    obj.pinCode ??
+    ""
+  );
+}
+function pickExists_(ck){
+  if (!ck) return null;
+  if (typeof ck.exists === "boolean") return ck.exists;
+  if (ck.ok === true && typeof ck.exists === "boolean") return ck.exists;
+  return null;
+}
+function pickUserId_(ck){
+  if (!ck) return "";
+  return String(ck.userId || (ck.user && ck.user.userId) || (ck.user && ck.user.id) || ck.id || "");
+}
+function pickPinLen_(ck){
+  if (!ck) return 0;
+  return Number(ck.pinLen || (ck.user && ck.user.pinLen) || 0) || 0;
+}
+
 async function apiCheckUsername_(username){
-  return await postJSON({ action:"checkUsername", username: String(username||"").trim() });
+  const u = String(username||"").trim();
+  return await postJSON({ action:"checkUsername", username: u, name: u, userName: u });
 }
+
 async function apiLoginUser_(username, pin){
-  return await postJSON({ action:"loginUser", username: String(username||"").trim(), pin: String(pin||""), ua: navigator.userAgent || "" });
+  const u = String(username||"").trim();
+  const p = String(pin||"");
+  return await postJSON({
+    action:"loginUser",
+    username: u,
+    name: u,
+    userName: u,
+    ...buildAuthFields_(p),
+    ua: navigator.userAgent || ""
+  });
 }
+
 async function apiRegisterUser_(username, pin){
   const userId = randId("u");
-  return await postJSON({ action:"registerUser", userId, username: String(username||"").trim(), pin: String(pin||""), ua: navigator.userAgent || "" });
+  const u = String(username||"").trim();
+  const p = String(pin||"");
+  return await postJSON({
+    action:"registerUser",
+    userId,
+    username: u,
+    name: u,
+    userName: u,
+    ...buildAuthFields_(p),
+    ua: navigator.userAgent || ""
+  });
 }
 
 /* ✅ đổi signature để không bị dính state.name khi optimistic */
@@ -1658,13 +1759,24 @@ async function apiChangeUsername_(oldUsername, newUsername){
     ua: navigator.userAgent || ""
   });
 }
+
 async function apiChangePassword_(username, oldPin, newPin){
+  const u = String(username||"").trim();
+  const o = String(oldPin||"");
+  const n = String(newPin||"");
+
   return await postJSON({
     action:"changePassword",
     userId: (USER && USER.userId) ? USER.userId : "",
-    username: String(username||"").trim(),
-    oldPin: String(oldPin||""),
-    newPin: String(newPin||""),
+    username: u,
+    name: u,
+    userName: u,
+    oldPin: o,
+    newPin: n,
+    oldPassword: o,
+    newPassword: n,
+    oldPass: o,
+    newPass: n,
     ua: navigator.userAgent || ""
   });
 }
@@ -1762,6 +1874,7 @@ function renderGateView() {
   try { nameInput.focus(); } catch(e){}
 
   async function finalizeLogin_(u, serverUserId){
+    // u có thể là user object (từ server) hoặc object fake khi fallback
     if (!u || !u.username) { toast("Đăng nhập lỗi"); return; }
 
     USER = {
@@ -1799,11 +1912,25 @@ function renderGateView() {
           if (String(pin) !== ADMIN_PIN) return { ok:false, message:"Sai mật khẩu" };
         }
 
+        // ✅ try loginUser (gửi cả pin + password)
         try{
           const res = await apiLoginUser_(username, pin);
           const user = (res && res.user) ? res.user : res;
-          return { ok:true, data:user };
+          const nu = normalizeUserObj_(user) || user;
+          if (nu && nu.username) return { ok:true, data: nu };
+          // nếu server trả format khác -> vẫn cho qua minimal
+          return { ok:true, data: { userId: serverUserId || randId("u"), username, lastRenameAtMs: 0 } };
         } catch(e){
+          // ✅ fallback: nếu checkUsername trả được password thì verify tại client
+          try{
+            const ck = await apiCheckUsername_(username);
+            const secret = extractServerPassword_(ck) || extractServerPassword_(ck && ck.user ? ck.user : null);
+            const uid = pickUserId_(ck) || serverUserId || randId("u");
+
+            if (secret && String(secret) === String(pin)) {
+              return { ok:true, data: { userId: uid, username: String(username||"").trim(), lastRenameAtMs: Number(ck.lastRenameAtMs||0)||0 } };
+            }
+          } catch(_e){}
           return { ok:false, message:"Sai mật khẩu" };
         }
       }
@@ -1829,7 +1956,8 @@ function renderGateView() {
     setGateStatus("Đang tạo tài khoản…");
     const res = await apiRegisterUser_(username, pin);
 
-    const u = res.user ? res.user : res;
+    const uRaw = res.user ? res.user : res;
+    const u = normalizeUserObj_(uRaw) || uRaw;
     if (!u || !u.userId || !u.username) throw new Error("registerUser lỗi.");
 
     USER = { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
@@ -1867,11 +1995,9 @@ function renderGateView() {
 
       try {
         const ck = await apiCheckUsername_(username);
-        if (ck && typeof ck.exists === "boolean") {
-          exists = ck.exists;
-          serverUserId = String((ck && ck.userId) ? ck.userId : "");
-          serverPinLen = Number((ck && ck.pinLen) ? ck.pinLen : 0) || 0;
-        }
+        exists = pickExists_(ck);
+        serverUserId = pickUserId_(ck);
+        serverPinLen = pickPinLen_(ck);
       } catch(e){
         exists = null;
       }
@@ -3193,9 +3319,15 @@ document.getElementById("userCorner").addEventListener("click", () => {
  * Profile actions
  ********************/
 
-/* ✅ ĐỔI USERNAME: phản hồi nhanh + “lưu ảo” nếu backend lỗi */
+/* ✅ ĐỔI USERNAME: chặn tuankhoi */
 document.getElementById("btnSaveNewUsername").addEventListener("click", async () => {
   if (!state.name) return;
+
+  // ✅ tuankhoi không được đổi
+  if (isAdminName(state.name)) {
+    toast("Tài khoản tuankhoi không được đổi username");
+    return;
+  }
 
   const newU = String(document.getElementById("newUsername").value||"").trim();
   const err = validateUsername(newU);
@@ -3215,7 +3347,7 @@ document.getElementById("btnSaveNewUsername").addEventListener("click", async ()
   // check trùng (nếu backend có)
   try{
     const ck = await apiCheckUsername_(newU);
-    if (ck && ck.exists) { toast("Username đã tồn tại"); return; }
+    if (ck && (ck.exists === true)) { toast("Username đã tồn tại"); return; }
   } catch(e){
   }
 
@@ -3240,7 +3372,8 @@ document.getElementById("btnSaveNewUsername").addEventListener("click", async ()
 
   try{
     const res = await apiChangeUsername_(oldName, newU);
-    const u = (res && res.user) ? res.user : res;
+    const uRaw = (res && res.user) ? res.user : res;
+    const u = normalizeUserObj_(uRaw) || uRaw;
 
     const finalName = (u && u.username) ? u.username : newU;
     const finalLast = (u && u.lastRenameAtMs) ? u.lastRenameAtMs : (USER ? USER.lastRenameAtMs : Date.now());
@@ -3297,6 +3430,12 @@ btnChangePinEl.addEventListener("pointerdown", async (e) => {
           await apiLoginUser_(state.name, oldPin);
           return { ok:true };
         } catch(e){
+          // fallback: thử checkUsername nếu có password trả về
+          try{
+            const ck = await apiCheckUsername_(state.name);
+            const secret = extractServerPassword_(ck) || extractServerPassword_(ck && ck.user ? ck.user : null);
+            if (secret && String(secret) === String(oldPin)) return { ok:true };
+          } catch(_e){}
           return { ok:false, message:"Sai mật khẩu" };
         }
       },
@@ -3414,6 +3553,7 @@ async function loadBootstrapOrFallback_(){
       quizId: getQuizId(),
       userId: (USER && USER.userId) ? USER.userId : "",
       name: (USER && USER.username) ? USER.username : (state.name || ""),
+      username: (USER && USER.username) ? USER.username : (state.name || ""),
       cacheId: state.cacheId || ((USER && USER.userId) ? USER.userId : "")
     };
     const res = await postJSON(payload);
@@ -3422,10 +3562,15 @@ async function loadBootstrapOrFallback_(){
     else if (res && res.title && res.vocabs) applyQuiz_(res);
 
     if (res && res.me && res.me.user) {
-      const u = res.me.user;
+      const uRaw = res.me.user;
+      const u = normalizeUserObj_(uRaw) || uRaw;
       if (u && u.userId && u.username) {
         USER = { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
         saveUser(USER);
+
+        // ✅ sync state.name để tránh lệch
+        state.name = USER.username;
+        state.cacheId = USER.userId;
       }
     }
 
