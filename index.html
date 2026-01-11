@@ -1,3 +1,4 @@
+```html
 <!doctype html>
 <html lang="vi">
 <head>
@@ -463,6 +464,7 @@
     .pinKey.small{
       font-size: .95rem;
       font-weight: 950;
+      letter-spacing: .02em;
     }
     .pinNote{
       text-align:center;
@@ -608,7 +610,7 @@
 
       <div class="sectionTitle">Đổi username</div>
       <div class="muted" style="margin:0 0 10px; line-height:1.35">
-        Đổi được ngay lần đầu. Từ lần sau: 30 ngày mới đổi tiếp. Không được trùng.
+        Lưu ý: lần đầu đổi được ngay. Từ lần sau: phải đủ 30 ngày. Không được trùng.
       </div>
 
       <div class="grid2">
@@ -618,19 +620,8 @@
 
       <div class="divider"></div>
 
-      <div class="sectionTitle">Đổi mật khẩu</div>
-      <div class="muted" style="margin:0 0 10px; line-height:1.35">
-        Nhập đúng mật khẩu cũ, rồi nhập 2 lần mật khẩu mới (chỉ số). Mật khẩu giữ dạng số (không mất số 0 đầu).
-      </div>
-
-      <div style="display:grid; gap:10px;">
-        <input class="input" id="oldPin" placeholder="Mật khẩu cũ" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
-        <div class="grid2">
-          <input class="input" id="newPin1" placeholder="Mật khẩu mới" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
-          <input class="input" id="newPin2" placeholder="Nhập lại mật khẩu mới" inputmode="numeric" pattern="[0-9]*" autocomplete="off" />
-        </div>
-        <button class="btn btn-primary" id="btnSaveNewPin" style="justify-content:center;">💾 Lưu mật khẩu</button>
-      </div>
+      <div class="sectionTitle">Mật khẩu</div>
+      <button class="btn btn-primary" id="btnChangePin" style="justify-content:center; width:100%;">🔒 Đổi mật khẩu</button>
 
       <div class="divider"></div>
 
@@ -819,7 +810,7 @@ function isDigitsOnly(s){
 }
 
 /********************
- * PIN Modal (keypad)
+ * PIN Modal (keypad) - nhanh hơn (keypad build 1 lần)
  ********************/
 const pinBackdrop = document.getElementById("pinBackdrop");
 const pinTitle = document.getElementById("pinTitle");
@@ -829,36 +820,134 @@ const pinKeypad = document.getElementById("pinKeypad");
 const pinNote = document.getElementById("pinNote");
 document.getElementById("btnClosePin").addEventListener("click", () => closePinModal_("cancel"));
 
+let PIN_KEYS_BUILT = false;
+
 let PIN_MODAL = {
   open: false,
   resolve: null,
   reject: null,
   username: "",
-  mode: "login", // login | set
-  step: "one",   // one | confirm (for set)
+  mode: "login", // login | set | change
+  step: "one",   // set: one|confirm ; change: old|new1|confirm
   pinLen: 4,
   value: "",
-  first: ""
+  first: "",
+  old: "",
+  dotEls: []
 };
 
-function openPinModal_({ username, mode="login", pinLen=4 }){
+function buildPinKeypadOnce_(){
+  if (PIN_KEYS_BUILT) return;
+  PIN_KEYS_BUILT = true;
+
+  pinKeypad.innerHTML = "";
+  const keys = ["1","2","3","4","5","6","7","8","9","CLEAR","0","⌫"];
+  keys.forEach(k => {
+    const b = document.createElement("button");
+    b.className = "pinKey" + ((k==="CLEAR"||k==="⌫") ? " small" : "");
+    b.type = "button";
+    b.textContent = k;
+    b.addEventListener("click", () => onPinKey_(k));
+    pinKeypad.appendChild(b);
+  });
+}
+
+function buildDots_(n){
+  pinDots.innerHTML = "";
+  PIN_MODAL.dotEls = [];
+  for (let i=0;i<n;i++){
+    const d = document.createElement("div");
+    d.className = "dot";
+    pinDots.appendChild(d);
+    PIN_MODAL.dotEls.push(d);
+  }
+}
+
+function updateDots_(){
+  const valLen = PIN_MODAL.value.length;
+  for (let i=0;i<PIN_MODAL.dotEls.length;i++){
+    const el = PIN_MODAL.dotEls[i];
+    if (!el) continue;
+    el.classList.toggle("filled", i < valLen);
+  }
+}
+
+function updatePinHeader_(){
+  const u = PIN_MODAL.username || "";
+  const mode = PIN_MODAL.mode;
+
+  let title = "";
+  let desc = "";
+
+  if (mode === "login") {
+    title = "Nhập mật khẩu";
+    desc = `Username: ${u}`;
+  } else if (mode === "set") {
+    if (PIN_MODAL.step === "one") {
+      title = "Tạo mật khẩu";
+      desc = `Nhập ${PIN_MODAL.pinLen} số`;
+    } else {
+      title = "Nhập lại mật khẩu";
+      desc = `Nhập lại ${PIN_MODAL.pinLen} số`;
+    }
+  } else if (mode === "change") {
+    if (PIN_MODAL.step === "old") {
+      title = "Đổi mật khẩu";
+      desc = "Nhập mật khẩu hiện tại";
+    } else if (PIN_MODAL.step === "new1") {
+      title = "Mật khẩu mới";
+      desc = `Nhập ${PIN_MODAL.pinLen} số`;
+    } else {
+      title = "Nhập lại mật khẩu mới";
+      desc = `Nhập lại ${PIN_MODAL.pinLen} số`;
+    }
+  }
+
+  pinTitle.textContent = title;
+  pinDesc.textContent = desc;
+
+  if (isAdminName(u) || isAdminName(state.name)) {
+    pinNote.textContent = `Tài khoản tuankhoi dùng mật khẩu 6 số.`;
+  } else {
+    pinNote.textContent = `Mật khẩu chỉ gồm số.`;
+  }
+}
+
+function openPinModal_({ username, mode="login", pinLen=4, firstPin="" }){
   return new Promise((resolve, reject) => {
     PIN_MODAL.open = true;
     PIN_MODAL.resolve = resolve;
     PIN_MODAL.reject = reject;
     PIN_MODAL.username = String(username||"").trim();
     PIN_MODAL.mode = mode;
-    PIN_MODAL.step = "one";
     PIN_MODAL.pinLen = Math.max(4, Number(pinLen)||4);
     PIN_MODAL.value = "";
     PIN_MODAL.first = "";
+    PIN_MODAL.old = "";
 
-    renderPinModal_();
+    if (mode === "set") {
+      if (firstPin) {
+        PIN_MODAL.first = String(firstPin||"");
+        PIN_MODAL.step = "confirm"; // chỉ nhập lại 1 lần để đủ 2 lần
+      } else {
+        PIN_MODAL.step = "one";
+      }
+    } else if (mode === "change") {
+      PIN_MODAL.step = "old";
+    } else {
+      PIN_MODAL.step = "one";
+    }
+
+    buildPinKeypadOnce_();
+    buildDots_(PIN_MODAL.pinLen);
+    updatePinHeader_();
+    updateDots_();
 
     pinBackdrop.classList.add("show");
     pinBackdrop.setAttribute("aria-hidden", "false");
   });
 }
+
 function closePinModal_(why){
   if (!PIN_MODAL.open) return;
 
@@ -880,90 +969,44 @@ pinBackdrop.addEventListener("click", (e) => {
   if (e.target === pinBackdrop) closePinModal_("cancel");
 });
 
-function renderPinModal_(){
-  const u = PIN_MODAL.username || "";
-  const isSet = PIN_MODAL.mode === "set";
-
-  let title = "";
-  let desc = "";
-
-  if (!isSet) {
-    title = "Nhập mật khẩu";
-    desc = `Username: ${u}`;
-  } else {
-    if (PIN_MODAL.step === "one") {
-      title = "Tạo mật khẩu";
-      desc = `Nhập ${PIN_MODAL.pinLen} số`;
-    } else {
-      title = "Nhập lại mật khẩu";
-      desc = `Nhập lại ${PIN_MODAL.pinLen} số`;
-    }
-  }
-
-  pinTitle.textContent = title;
-  pinDesc.textContent = desc;
-
-  pinDots.innerHTML = "";
-  for (let i=0;i<PIN_MODAL.pinLen;i++){
-    const d = document.createElement("div");
-    d.className = "dot" + (i < PIN_MODAL.value.length ? " filled" : "");
-    pinDots.appendChild(d);
-  }
-
-  // keypad (1..9, 0, clear, back)
-  pinKeypad.innerHTML = "";
-  const keys = ["1","2","3","4","5","6","7","8","9","CLR","0","⌫"];
-  keys.forEach(k => {
-    const b = document.createElement("button");
-    b.className = "pinKey" + ((k==="CLR"||k==="⌫") ? " small" : "");
-    b.type = "button";
-    b.textContent = k;
-    b.addEventListener("click", () => onPinKey_(k));
-    pinKeypad.appendChild(b);
-  });
-
-  if (isAdminName(u)) {
-    pinNote.textContent = `Tài khoản tuankhoi dùng mật khẩu 6 số.`;
-  } else {
-    pinNote.textContent = isSet ? `Mật khẩu chỉ gồm số.` : `Mật khẩu chỉ gồm số.`;
-  }
-}
-
 function onPinKey_(k){
   if (!PIN_MODAL.open) return;
 
-  if (k === "CLR") {
+  if (k === "CLEAR") {
     PIN_MODAL.value = "";
-    renderPinModal_();
+    updateDots_();
     return;
   }
   if (k === "⌫") {
     PIN_MODAL.value = PIN_MODAL.value.slice(0, -1);
-    renderPinModal_();
+    updateDots_();
     return;
   }
 
   if (PIN_MODAL.value.length >= PIN_MODAL.pinLen) return;
   PIN_MODAL.value += String(k);
+  updateDots_();
 
-  renderPinModal_();
+  if (PIN_MODAL.value.length !== PIN_MODAL.pinLen) return;
 
-  if (PIN_MODAL.value.length === PIN_MODAL.pinLen) {
-    // finalize this step
-    if (PIN_MODAL.mode === "login") {
-      const pin = PIN_MODAL.value;
-      const res = PIN_MODAL.resolve;
-      closePinModal_("ok");
-      if (res) res(pin);
-      return;
-    }
+  // finalize this step
+  const mode = PIN_MODAL.mode;
 
-    // set mode
+  if (mode === "login") {
+    const pin = PIN_MODAL.value;
+    const res = PIN_MODAL.resolve;
+    closePinModal_("ok");
+    if (res) res(pin);
+    return;
+  }
+
+  if (mode === "set") {
     if (PIN_MODAL.step === "one") {
       PIN_MODAL.first = PIN_MODAL.value;
       PIN_MODAL.value = "";
       PIN_MODAL.step = "confirm";
-      renderPinModal_();
+      updatePinHeader_();
+      updateDots_();
       return;
     } else {
       const pin1 = PIN_MODAL.first;
@@ -974,7 +1017,8 @@ function onPinKey_(k){
         PIN_MODAL.value = "";
         PIN_MODAL.first = "";
         PIN_MODAL.step = "one";
-        renderPinModal_();
+        updatePinHeader_();
+        updateDots_();
         return;
       }
 
@@ -983,6 +1027,45 @@ function onPinKey_(k){
       if (res) res(pin2);
       return;
     }
+  }
+
+  if (mode === "change") {
+    if (PIN_MODAL.step === "old") {
+      PIN_MODAL.old = PIN_MODAL.value;
+      PIN_MODAL.value = "";
+      PIN_MODAL.step = "new1";
+      updatePinHeader_();
+      updateDots_();
+      return;
+    }
+    if (PIN_MODAL.step === "new1") {
+      PIN_MODAL.first = PIN_MODAL.value;
+      PIN_MODAL.value = "";
+      PIN_MODAL.step = "confirm";
+      updatePinHeader_();
+      updateDots_();
+      return;
+    }
+
+    // confirm
+    const new1 = PIN_MODAL.first;
+    const new2 = PIN_MODAL.value;
+
+    if (new1 !== new2) {
+      toast("Mật khẩu mới không khớp");
+      PIN_MODAL.value = "";
+      PIN_MODAL.first = "";
+      PIN_MODAL.step = "new1";
+      updatePinHeader_();
+      updateDots_();
+      return;
+    }
+
+    const res = PIN_MODAL.resolve;
+    const payload = { oldPin: PIN_MODAL.old, newPin: new2 };
+    closePinModal_("ok");
+    if (res) res(payload);
+    return;
   }
 }
 
@@ -998,27 +1081,22 @@ function openProfileModal_(){
 
   document.getElementById("profileUsername").textContent = state.name;
   document.getElementById("profileRole").textContent = isAdminName(state.name) ? "ADMIN" : "USER";
-  document.getElementById("profileSub").textContent = "Bấm lưu để cập nhật trực tiếp trong sheet.";
+  document.getElementById("profileSub").textContent = "Quản lý tài khoản trong sheet.";
 
   const hintEl = document.getElementById("profileRenameHint");
   const last = Number((USER && USER.lastRenameAtMs) ? USER.lastRenameAtMs : 0) || 0;
   const now = Date.now();
   const DAY = 24*60*60*1000;
-  const canRename = (!last) || (now - last >= 30*DAY);
-  if (!last) {
-    hintEl.textContent = "Bạn chưa đổi lần nào: đổi được ngay.";
-  } else if (canRename) {
-    hintEl.textContent = "Đã đủ 30 ngày: đổi được.";
+  const nextOk = last ? (last + 30*DAY) : 0;
+  const canRename = (!last) || (now >= nextOk);
+
+  if (canRename) {
+    hintEl.textContent = "Lần đổi hợp lệ: ngay bây giờ.";
   } else {
-    const remainMs = 30*DAY - (now - last);
-    const remainDays = Math.ceil(remainMs / DAY);
-    hintEl.textContent = `Chưa đủ 30 ngày. Còn khoảng ${remainDays} ngày nữa mới đổi được.`;
+    hintEl.textContent = "Lần đổi hợp lệ: " + formatTs(nextOk);
   }
 
   document.getElementById("newUsername").value = "";
-  document.getElementById("oldPin").value = "";
-  document.getElementById("newPin1").value = "";
-  document.getElementById("newPin2").value = "";
 
   profileBackdrop.classList.add("show");
   profileBackdrop.setAttribute("aria-hidden","false");
@@ -1328,7 +1406,6 @@ async function apiLoginUser_(username, pin){
 }
 async function apiRegisterUser_(username, pin){
   const userId = randId("u");
-  // keep backward compatible: still send the old fields, plus pin
   return await postJSON({ action:"registerUser", userId, username: String(username||"").trim(), pin: String(pin||""), ua: navigator.userAgent || "" });
 }
 async function apiChangeUsername_(newUsername){
@@ -1352,7 +1429,7 @@ async function apiChangePassword_(oldPin, newPin){
 }
 
 /********************
- * Gate view
+ * Gate view (fix: login chỉ nhập 1 lần, register/đổi mk mới nhập 2 lần)
  ********************/
 function renderGateView() {
   setView("gate");
@@ -1426,7 +1503,7 @@ function renderGateView() {
       <div class="meta"><span class="idx">BẮT BUỘC</span></div>
     </div>
     <div class="muted" style="margin-top:6px; line-height:1.35">
-      Tối đa 15 ký tự, chỉ a-z A-Z 0-9 và dấu _. Nếu username đã tồn tại thì sẽ yêu cầu nhập mật khẩu để đăng nhập.
+      Tối đa 15 ký tự, chỉ a-z A-Z 0-9 và dấu _. Nếu username đã tồn tại thì chỉ nhập mật khẩu để đăng nhập.
     </div>
 
     <div style="margin-top:10px; display:grid; gap:10px;">
@@ -1441,112 +1518,146 @@ function renderGateView() {
   const saveBtn = c.querySelector("#btnSaveName");
   try { nameInput.focus(); } catch(e){}
 
+  async function finalizeLogin_(u, serverUserId){
+    if (!u || !u.username) { toast("Đăng nhập lỗi"); return; }
+
+    USER = {
+      userId: u.userId || serverUserId || randId("u"),
+      username: u.username,
+      lastRenameAtMs: u.lastRenameAtMs || 0
+    };
+    saveUser(USER);
+
+    state.name = USER.username;
+    state.cacheId = USER.userId;
+    ensureCacheId();
+
+    if (!state.attemptId) state.attemptId = randId("attempt");
+    scheduleSave({ mirror: true });
+    scheduleCloudSave();
+    updateStats();
+
+    if (QUIZ_LOADED) renderQuizView();
+    else renderGateView();
+  }
+
+  async function flowLogin_(username, pinLen, serverUserId){
+    const pin = await openPinModal_({ username, mode:"login", pinLen });
+
+    if (!isDigitsOnly(pin)) { toast("Mật khẩu chỉ gồm số"); return; }
+
+    // tuankhoi: front-end check
+    if (isAdminName(username)) {
+      if (String(pin) !== ADMIN_PIN) { toast("Sai mật khẩu"); return; }
+    }
+
+    setGateStatus("Đang đăng nhập…");
+    let res;
+    try {
+      res = await apiLoginUser_(username, pin);
+    } catch(e){
+      toast("Sai mật khẩu");
+      return;
+    }
+    const u = (res && res.user) ? res.user : res;
+    await finalizeLogin_(u, serverUserId);
+    toast("Đăng nhập thành công");
+  }
+
+  async function flowRegister_(username, pinLen, firstPin){
+    const pin = await openPinModal_({ username, mode:"set", pinLen, firstPin: firstPin || "" });
+
+    if (!isDigitsOnly(pin)) { toast("Mật khẩu chỉ gồm số"); return; }
+    if (String(pin).length !== pinLen) { toast(`Mật khẩu phải ${pinLen} số`); return; }
+
+    // (Tuankhoi nếu ai đó cố tạo) yêu cầu đúng 072008
+    if (isAdminName(username) && String(pin) !== ADMIN_PIN) {
+      toast("Sai mật khẩu cho tuankhoi");
+      return;
+    }
+
+    setGateStatus("Đang tạo tài khoản…");
+    const res = await apiRegisterUser_(username, pin);
+
+    const u = res.user ? res.user : res;
+    if (!u || !u.userId || !u.username) throw new Error("registerUser lỗi.");
+
+    USER = { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
+    saveUser(USER);
+
+    state.name = USER.username;
+    state.cacheId = USER.userId;
+    ensureCacheId();
+
+    if (!state.attemptId) state.attemptId = randId("attempt");
+    scheduleSave({ mirror: true });
+    scheduleCloudSave();
+    updateStats();
+
+    toast("Đã đăng ký & đăng nhập");
+    if (QUIZ_LOADED) renderQuizView();
+    else renderGateView();
+  }
+
   const doFlow = async () => {
     let username = String(nameInput.value || "").trim();
     const err = validateUsername(username);
     if (err) { toast(err); return; }
 
-    // tuankhoi: pin length 6
-    const pinLen = isAdminName(username) ? 6 : 4;
+    // tuankhoi: 6 số; user: 4 số
+    const defaultPinLen = isAdminName(username) ? 6 : 4;
 
     try {
       saveBtn.disabled = true;
       saveBtn.textContent = "⏳";
+      setGateStatus("Đang kiểm tra…");
 
-      // 1) check exists
-      let exists = false;
+      let exists = null;          // null = unknown
       let serverUserId = "";
       let serverPinLen = 0;
 
       try {
         const ck = await apiCheckUsername_(username);
-        exists = !!(ck && ck.exists);
-        serverUserId = String((ck && ck.userId) ? ck.userId : "");
-        serverPinLen = Number((ck && ck.pinLen) ? ck.pinLen : 0) || 0;
+        if (ck && typeof ck.exists === "boolean") {
+          exists = ck.exists;
+          serverUserId = String((ck && ck.userId) ? ck.userId : "");
+          serverPinLen = Number((ck && ck.pinLen) ? ck.pinLen : 0) || 0;
+        }
       } catch(e){
-        // Nếu API chưa có action này, fallback: coi như chưa tồn tại (giữ behavior cũ)
-        exists = false;
+        exists = null;
       }
 
-      if (exists) {
-        // LOGIN
-        const wantLen = serverPinLen || pinLen;
-        const pin = await openPinModal_({ username, mode:"login", pinLen: wantLen });
+      if (exists === true) {
+        const wantLen = serverPinLen || defaultPinLen;
+        await flowLogin_(username, wantLen, serverUserId);
+        return;
+      }
 
-        if (!isDigitsOnly(pin)) { toast("Mật khẩu chỉ gồm số"); return; }
+      if (exists === false) {
+        await flowRegister_(username, defaultPinLen, "");
+        return;
+      }
 
-        // tuankhoi: front-end check
-        if (isAdminName(username)) {
-          if (String(pin) !== ADMIN_PIN) { toast("Sai mật khẩu"); return; }
-        }
+      // UNKNOWN: thử đăng nhập trước (chỉ nhập 1 lần). Nếu fail thì hỏi có đăng ký không.
+      const pinTry = await openPinModal_({ username, mode:"login", pinLen: defaultPinLen });
+      if (!isDigitsOnly(pinTry)) { toast("Mật khẩu chỉ gồm số"); return; }
+      if (isAdminName(username) && String(pinTry) !== ADMIN_PIN) { toast("Sai mật khẩu"); return; }
 
-        let res;
-        try {
-          res = await apiLoginUser_(username, pin);
-        } catch(e){
-          toast("Đăng nhập lỗi");
-          return;
-        }
-
+      setGateStatus("Đang đăng nhập…");
+      try {
+        const res = await apiLoginUser_(username, pinTry);
         const u = (res && res.user) ? res.user : res;
-        if (!u || !u.username) { toast("Đăng nhập lỗi"); return; }
-
-        USER = {
-          userId: u.userId || serverUserId || randId("u"),
-          username: u.username,
-          lastRenameAtMs: u.lastRenameAtMs || 0
-        };
-        saveUser(USER);
-
-        state.name = USER.username;
-        state.cacheId = USER.userId;
-        ensureCacheId();
-
-        if (!state.attemptId) state.attemptId = randId("attempt");
-        scheduleSave({ mirror: true });
-        scheduleCloudSave();
-        updateStats();
-
-        // vào làm luôn
-        if (QUIZ_LOADED) renderQuizView();
-        else renderGateView();
+        await finalizeLogin_(u, serverUserId);
         toast("Đăng nhập thành công");
         return;
-      }
-
-      // REGISTER (username chưa tồn tại): set PIN 4 số (trừ tuankhoi 6 số)
-      const pin = await openPinModal_({ username, mode:"set", pinLen });
-
-      if (!isDigitsOnly(pin)) { toast("Mật khẩu chỉ gồm số"); return; }
-      if (String(pin).length !== pinLen) { toast(`Mật khẩu phải ${pinLen} số`); return; }
-
-      // (Tuankhoi nếu ai đó cố tạo) yêu cầu đúng 072008
-      if (isAdminName(username) && String(pin) !== ADMIN_PIN) {
-        toast("Sai mật khẩu cho tuankhoi");
+      } catch(e){
+        const ok = confirm("Sai mật khẩu hoặc username chưa tồn tại.\nTạo tài khoản mới với username này?");
+        if (!ok) { toast("Hủy"); return; }
+        // đăng ký: nhập lại 1 lần nữa để đủ 2 lần (nhanh)
+        await flowRegister_(username, defaultPinLen, String(pinTry));
         return;
       }
 
-      const res = await apiRegisterUser_(username, pin);
-
-      const u = res.user ? res.user : res;
-      if (!u || !u.userId || !u.username) throw new Error("registerUser lỗi.");
-
-      USER = { userId: u.userId, username: u.username, lastRenameAtMs: u.lastRenameAtMs || 0 };
-      saveUser(USER);
-
-      state.name = USER.username;
-      state.cacheId = USER.userId;
-      ensureCacheId();
-
-      if (!state.attemptId) state.attemptId = randId("attempt");
-      scheduleSave({ mirror: true });
-      scheduleCloudSave();
-      updateStats();
-
-      toast("Đã đăng ký & đăng nhập");
-      // vào làm luôn
-      if (QUIZ_LOADED) renderQuizView();
-      else renderGateView();
     } catch (e) {
       if (e && e.message === "cancel") {
         // user đóng modal
@@ -1556,6 +1667,7 @@ function renderGateView() {
     } finally {
       saveBtn.disabled = false;
       saveBtn.textContent = "➡️ Tiếp tục";
+      setGateStatus(GATE.status || "Sẵn sàng.");
     }
   };
 
@@ -1752,7 +1864,6 @@ async function gradeOne_(id, ans, { lock = false } = {}){
 
     if (lock) lockUI_(id);
   } catch (e) {
-    // im lặng (ngầm) để không phá bàn phím, chỉ toast khi lock
     if (lock) toast("Check lỗi");
   } finally {
     gradeInFlight.delete(id);
@@ -1769,7 +1880,6 @@ function scheduleAutoGrade_(id, delayMs = 550){
     if (existed && existed.locked) return;
 
     if (!ans) {
-      // nếu chưa lock thì xoá kết quả chấm ngầm (để sạch)
       if (existed && !existed.locked) {
         delete state.checked[id];
         scheduleSave({ mirror: true });
@@ -1803,7 +1913,6 @@ function onInput(e) {
   scheduleCloudSave();
   updateStats();
 
-  // chấm ngầm
   scheduleAutoGrade_(id, 550);
 }
 
@@ -1825,7 +1934,6 @@ function onKeyDown(e){
     const id = Number(t.dataset.qid);
     if (!isFinite(id)) return;
 
-    // chấm ngầm nhanh khi Enter, rồi chuyển câu kế
     scheduleAutoGrade_(id, 0);
     focusNextInput_(id);
   }
@@ -1837,7 +1945,6 @@ function onFocusOut(e){
   const id = Number(t.dataset.qid);
   if (!isFinite(id)) return;
 
-  // blur -> chấm ngay (ngầm)
   scheduleAutoGrade_(id, 0);
 }
 
@@ -1870,7 +1977,6 @@ function onClick(e) {
 
   if (!ans) { toast("Chưa nhập"); return; }
 
-  // Nếu đang chấm ngầm thì đợi xong rồi lock
   if (gradeInFlight.has(id)) {
     lockAfterGrade.add(id);
     btn.disabled = true;
@@ -1878,7 +1984,6 @@ function onClick(e) {
     return;
   }
 
-  // Nếu đã có kết quả chấm ngầm cho đúng câu trả lời hiện tại -> lock ngay, khỏi gọi API
   const akey = answerKey(ans);
   if (existed && existed.lastKey === akey && !!existed.gradedAtMs) {
     existed.locked = true;
@@ -1890,14 +1995,12 @@ function onClick(e) {
     return;
   }
 
-  // Chưa có -> gọi API rồi lock
   btn.disabled = true;
   btn.textContent = "…";
   gradeOne_(id, ans, { lock: true }).then(() => {
     const ck = state.checked[id];
     if (ck) toast(ck.ok ? "ĐÚNG" : "SAI");
   }).finally(() => {
-    // nếu API fail thì mở lại nút
     const ck = state.checked[id];
     if (!(ck && ck.locked)) {
       btn.disabled = false;
@@ -1968,7 +2071,6 @@ async function fetchLeaderboard() {
 
     const uniqueRows = rows.slice(0, 30);
 
-    // NO overflow wrapper => luôn gọn trong màn hình
     box.innerHTML = `
       <table class="table">
         <colgroup>
@@ -2241,7 +2343,7 @@ function renderDiscuss_(){
       const replies = Array.isArray(root.replies) ? root.replies : [];
       if (rWrap) {
         if (!replies.length) {
-          rWrap.innerHTML = ""; // không hiện gì
+          rWrap.innerHTML = "";
         } else {
           rWrap.innerHTML = "";
           replies.forEach(r => {
@@ -2457,11 +2559,10 @@ async function optimisticDeleteComment_(id){
   const sid = String(id||"").trim();
   if (!sid) return;
 
-  // confirm
   const ok = confirm("Xóa bình luận này?");
   if (!ok) return;
 
-  if (isTempId_(sid) && pendingTempIds.has(sid)) {
+  if (String(sid).startsWith("tmp_") && pendingTempIds.has(sid)) {
     pendingTempIds.delete(sid);
     removeNodeById_(sid);
     renderDiscuss_();
@@ -2654,7 +2755,6 @@ function renderResultView() {
 
   fetchLeaderboard();
 
-  // init discussion state
   DISCUSS.loaded = false;
   DISCUSS.loading = false;
   DISCUSS.tree = [];
@@ -2682,7 +2782,6 @@ function getMissingQuestions_(){
 }
 
 async function flushPendingGrades_(){
-  // stop timers
   for (const [id, tm] of gradeTimers.entries()) {
     clearTimeout(tm);
     gradeTimers.delete(id);
@@ -2701,11 +2800,9 @@ async function flushPendingGrades_(){
     const akey = answerKey(ans);
     if (ck && ck.lastKey === akey && !!ck.gradedAtMs) continue;
 
-    // chấm ngầm thiếu (hiếm) -> cho vào task
     tasks.push(gradeOne_(id, ans, { lock: false }));
   }
 
-  // chờ vừa đủ để finalize có dữ liệu; UI đã chuyển sang kết quả nên không "chờ bấm"
   if (tasks.length) {
     try { await Promise.allSettled(tasks); } catch(e){}
   }
@@ -2740,7 +2837,6 @@ document.getElementById("btnSubmit").addEventListener("click", () => {
     if (!ok) return;
   }
 
-  // UI: chuyển sang kết quả liền
   state.finalized = true;
   state.result = null;
   scheduleSave({ mirror: true });
@@ -2748,7 +2844,6 @@ document.getElementById("btnSubmit").addEventListener("click", () => {
   renderResultView();
   toast("Đang tính điểm...");
 
-  // tính sau (không làm user thấy “bấm không ăn”)
   setTimeout(async () => {
     try {
       await flushPendingGrades_();
@@ -2772,7 +2867,6 @@ document.getElementById("btnSubmit").addEventListener("click", () => {
       renderResultView();
       toast("Xong");
     } catch (e) {
-      // nếu lỗi finalize -> quay lại làm bài
       state.finalized = false;
       state.result = null;
       scheduleSave({ mirror: true });
@@ -2881,12 +2975,11 @@ document.getElementById("btnSaveNewUsername").addEventListener("click", async ()
     return;
   }
 
-  // check duplicate
   try{
     const ck = await apiCheckUsername_(newU);
     if (ck && ck.exists) { toast("Username đã tồn tại"); return; }
   } catch(e){
-    // nếu backend chưa có -> vẫn thử đổi (backend sẽ tự báo lỗi nếu có)
+    // backend có thể chưa có checkUsername -> vẫn thử đổi, backend sẽ tự báo lỗi nếu trùng
   }
 
   const btn = document.getElementById("btnSaveNewUsername");
@@ -2898,7 +2991,6 @@ document.getElementById("btnSaveNewUsername").addEventListener("click", async ()
     const res = await apiChangeUsername_(newU);
     const u = (res && res.user) ? res.user : res;
 
-    // expect updated: username, lastRenameAtMs
     const finalName = (u && u.username) ? u.username : newU;
     const finalLast = (u && u.lastRenameAtMs) ? u.lastRenameAtMs : Date.now();
 
@@ -2924,29 +3016,36 @@ document.getElementById("btnSaveNewUsername").addEventListener("click", async ()
   }
 });
 
-document.getElementById("btnSaveNewPin").addEventListener("click", async () => {
+// ĐỔI MẬT KHẨU: chỉ 1 nút -> mở keypad (nhập old 1 lần, new 2 lần)
+document.getElementById("btnChangePin").addEventListener("click", async () => {
   if (!state.name) return;
 
-  const oldPin = String(document.getElementById("oldPin").value||"").trim();
-  const p1 = String(document.getElementById("newPin1").value||"").trim();
-  const p2 = String(document.getElementById("newPin2").value||"").trim();
-
-  if (!oldPin || !p1 || !p2) { toast("Thiếu thông tin"); return; }
-  if (!isDigitsOnly(oldPin) || !isDigitsOnly(p1) || !isDigitsOnly(p2)) { toast("Mật khẩu chỉ gồm số"); return; }
-  if (p1 !== p2) { toast("Mật khẩu mới không khớp"); return; }
-
-  // tuankhoi: new pin should still be numeric (any length ok), backend sẽ quản lý.
-  const btn = document.getElementById("btnSaveNewPin");
+  const btn = document.getElementById("btnChangePin");
   const oldText = btn.textContent;
+  const pinLen = isAdminName(state.name) ? 6 : 4;
 
   try{
     btn.disabled = true;
     btn.textContent = "⏳";
-    await apiChangePassword_(oldPin, p1);
+
+    const pins = await openPinModal_({ username: state.name, mode:"change", pinLen });
+    const oldPin = String(pins && pins.oldPin ? pins.oldPin : "").trim();
+    const newPin = String(pins && pins.newPin ? pins.newPin : "").trim();
+
+    if (!oldPin || !newPin) { toast("Thiếu thông tin"); return; }
+    if (!isDigitsOnly(oldPin) || !isDigitsOnly(newPin)) { toast("Mật khẩu chỉ gồm số"); return; }
+
+    if (isAdminName(state.name) && String(oldPin) !== ADMIN_PIN) { toast("Sai mật khẩu"); return; }
+
+    await apiChangePassword_(oldPin, newPin);
     toast("Đã đổi mật khẩu");
     closeProfileModal_();
   } catch(e){
-    toast("Đổi mật khẩu lỗi");
+    if (e && e.message === "cancel") {
+      // user đóng modal
+    } else {
+      toast("Đổi mật khẩu lỗi");
+    }
   } finally {
     btn.disabled = false;
     btn.textContent = oldText;
@@ -2960,10 +3059,8 @@ document.getElementById("btnLogout").addEventListener("click", async () => {
   try { saveUser(null); } catch(e){}
   USER = null;
 
-  // clear local progress for safety
   try { await Persist.remove(STORAGE_KEY); } catch(e){}
 
-  // reset state (keep quiz loaded)
   state = {
     quizVersion: QUIZ_VERSION,
     cacheId: "",
@@ -3152,3 +3249,4 @@ function parseHashCacheId() {
 </script>
 </body>
 </html>
+```
