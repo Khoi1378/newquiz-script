@@ -30,6 +30,13 @@
                   linear-gradient(120deg, var(--bg1) 0%, var(--bg2) 100%);
       overflow: hidden;
     }
+
+    /* giảm delay cảm giác trên mobile */
+    .btn, .pinKey, .cmtBtn, .btn-x {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 110px; }
     .wrap { max-width: 980px; margin: 0 auto; padding: 0 14px; }
 
@@ -38,7 +45,7 @@
       position: fixed;
       top: 10px;
       left: 12px;
-      z-index: 10002;
+      z-index: 10010; /* thấp hơn modal */
       display: none;
       align-items: center;
       gap: 8px;
@@ -291,13 +298,19 @@
       width: 100%;
     }
 
+    /* ===== MODAL STACK FIX (quan trọng) ===== */
     .modal-backdrop {
       position: fixed; inset: 0; background: rgba(0,0,0,.35);
       display: none; align-items: center; justify-content: center;
       padding: 16px;
-      z-index: 10001;
+      z-index: 20000; /* cao hơn hết phần UI */
     }
     .modal-backdrop.show { display: flex; }
+    #modalBackdrop { z-index: 20010; }   /* reset confirm */
+    #wrongBackdrop { z-index: 20020; }   /* wrong popup */
+    #profileBackdrop { z-index: 20030; } /* profile */
+    #pinBackdrop { z-index: 20040; }     /* PIN modal luôn ở trên cùng */
+
     .modal {
       width: 100%; max-width: 620px;
       background: #fff;
@@ -338,7 +351,7 @@
       opacity: 0; pointer-events: none;
       transition: opacity .18s ease, transform .18s ease;
       max-width: calc(100% - 28px);
-      z-index: 10003;
+      z-index: 20050;
       text-align: center;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
@@ -348,7 +361,7 @@
       position: fixed;
       right: 14px;
       bottom: 18px;
-      z-index: 10002;
+      z-index: 10010; /* dưới modal */
       display: none;
     }
     .btn-discuss-mini{
@@ -607,6 +620,15 @@
 
       <div class="divider"></div>
 
+      <!-- ✅ ĐƯA MẬT KHẨU LÊN TRÊN CÙNG -->
+      <div class="sectionTitle">Mật khẩu</div>
+      <div class="muted" style="margin:0 0 10px; line-height:1.35">
+        Đổi mật khẩu sẽ yêu cầu: mật khẩu hiện tại (1 lần) + mật khẩu mới (2 lần).
+      </div>
+      <button class="btn btn-primary" id="btnChangePin" style="justify-content:center; width:100%;">🔒 Đổi mật khẩu</button>
+
+      <div class="divider"></div>
+
       <div class="sectionTitle">Đổi username</div>
       <div class="muted" style="margin:0 0 10px; line-height:1.35">
         Lưu ý: lần đầu đổi được ngay. Từ lần sau: phải đủ 30 ngày. Không được trùng.
@@ -616,11 +638,6 @@
         <input class="input" id="newUsername" placeholder="Username mới" maxlength="15" autocomplete="off"/>
         <button class="btn btn-primary" id="btnSaveNewUsername" style="justify-content:center;">💾 Lưu username</button>
       </div>
-
-      <div class="divider"></div>
-
-      <div class="sectionTitle">Mật khẩu</div>
-      <button class="btn btn-primary" id="btnChangePin" style="justify-content:center; width:100%;">🔒 Đổi mật khẩu</button>
 
       <div class="divider"></div>
 
@@ -927,7 +944,7 @@ function openPinModal_({ username, mode="login", pinLen=4, firstPin="" }){
     if (mode === "set") {
       if (firstPin) {
         PIN_MODAL.first = String(firstPin||"");
-        PIN_MODAL.step = "confirm"; // chỉ nhập lại 1 lần để đủ 2 lần
+        PIN_MODAL.step = "confirm";
       } else {
         PIN_MODAL.step = "one";
       }
@@ -988,7 +1005,6 @@ function onPinKey_(k){
 
   if (PIN_MODAL.value.length !== PIN_MODAL.pinLen) return;
 
-  // finalize this step
   const mode = PIN_MODAL.mode;
 
   if (mode === "login") {
@@ -1046,7 +1062,6 @@ function onPinKey_(k){
       return;
     }
 
-    // confirm
     const new1 = PIN_MODAL.first;
     const new2 = PIN_MODAL.value;
 
@@ -1200,7 +1215,7 @@ let state = {
   attemptId: "",
   order: [],
   answers: {},
-  checked: {},   // { [vocabId]: { locked, ok, expected, lastKey, gradedAtMs } }
+  checked: {},
   finalized: false,
   result: null,
   history: [],
@@ -1210,7 +1225,7 @@ let state = {
 let USER = null;
 
 /********************
- * View control: ẩn Nộp bài ở trang vào làm + trang kết quả
+ * View control
  ********************/
 let CURRENT_VIEW = "boot"; // boot|gate|quiz|result
 function setView(v){
@@ -1334,7 +1349,6 @@ function updateStats() {
   const btnSubmit = document.getElementById("btnSubmit");
   if (btnSubmit) btnSubmit.disabled = !canSubmit;
 
-  // Discuss button only after finished
   setDiscussFabVisible(!!(state.finalized));
 }
 
@@ -1396,31 +1410,32 @@ function setGateReady(ready){
  * Account API (new)
  ********************/
 async function apiCheckUsername_(username){
-  // expected: { exists: true/false, userId?, pinLen? }
   return await postJSON({ action:"checkUsername", username: String(username||"").trim() });
 }
 async function apiLoginUser_(username, pin){
-  // expected: { user: {userId, username, lastRenameAtMs?} } or {userId, username,...}
   return await postJSON({ action:"loginUser", username: String(username||"").trim(), pin: String(pin||""), ua: navigator.userAgent || "" });
 }
 async function apiRegisterUser_(username, pin){
   const userId = randId("u");
   return await postJSON({ action:"registerUser", userId, username: String(username||"").trim(), pin: String(pin||""), ua: navigator.userAgent || "" });
 }
-async function apiChangeUsername_(newUsername){
+
+/* ✅ đổi signature để không bị dính state.name khi optimistic */
+async function apiChangeUsername_(oldUsername, newUsername){
   return await postJSON({
     action:"changeUsername",
     userId: (USER && USER.userId) ? USER.userId : "",
-    oldUsername: state.name || "",
+    oldUsername: String(oldUsername||"").trim(),
+    username: String(oldUsername||"").trim(),     // thêm field để backend cũ cũng hiểu
     newUsername: String(newUsername||"").trim(),
     ua: navigator.userAgent || ""
   });
 }
-async function apiChangePassword_(oldPin, newPin){
+async function apiChangePassword_(username, oldPin, newPin){
   return await postJSON({
     action:"changePassword",
     userId: (USER && USER.userId) ? USER.userId : "",
-    username: state.name || "",
+    username: String(username||"").trim(),
     oldPin: String(oldPin||""),
     newPin: String(newPin||""),
     ua: navigator.userAgent || ""
@@ -1428,7 +1443,7 @@ async function apiChangePassword_(oldPin, newPin){
 }
 
 /********************
- * Gate view (fix: login chỉ nhập 1 lần, register/đổi mk mới nhập 2 lần)
+ * Gate view
  ********************/
 function renderGateView() {
   setView("gate");
@@ -1545,7 +1560,6 @@ function renderGateView() {
 
     if (!isDigitsOnly(pin)) { toast("Mật khẩu chỉ gồm số"); return; }
 
-    // tuankhoi: front-end check
     if (isAdminName(username)) {
       if (String(pin) !== ADMIN_PIN) { toast("Sai mật khẩu"); return; }
     }
@@ -1569,7 +1583,6 @@ function renderGateView() {
     if (!isDigitsOnly(pin)) { toast("Mật khẩu chỉ gồm số"); return; }
     if (String(pin).length !== pinLen) { toast(`Mật khẩu phải ${pinLen} số`); return; }
 
-    // (Tuankhoi nếu ai đó cố tạo) yêu cầu đúng 072008
     if (isAdminName(username) && String(pin) !== ADMIN_PIN) {
       toast("Sai mật khẩu cho tuankhoi");
       return;
@@ -1603,7 +1616,6 @@ function renderGateView() {
     const err = validateUsername(username);
     if (err) { toast(err); return; }
 
-    // tuankhoi: 6 số; user: 4 số
     const defaultPinLen = isAdminName(username) ? 6 : 4;
 
     try {
@@ -1611,7 +1623,7 @@ function renderGateView() {
       saveBtn.textContent = "⏳";
       setGateStatus("Đang kiểm tra…");
 
-      let exists = null;          // null = unknown
+      let exists = null;
       let serverUserId = "";
       let serverPinLen = 0;
 
@@ -1637,7 +1649,6 @@ function renderGateView() {
         return;
       }
 
-      // UNKNOWN: thử đăng nhập trước (chỉ nhập 1 lần). Nếu fail thì hỏi có đăng ký không.
       const pinTry = await openPinModal_({ username, mode:"login", pinLen: defaultPinLen });
       if (!isDigitsOnly(pinTry)) { toast("Mật khẩu chỉ gồm số"); return; }
       if (isAdminName(username) && String(pinTry) !== ADMIN_PIN) { toast("Sai mật khẩu"); return; }
@@ -1652,14 +1663,12 @@ function renderGateView() {
       } catch(e){
         const ok = confirm("Sai mật khẩu hoặc username chưa tồn tại.\nTạo tài khoản mới với username này?");
         if (!ok) { toast("Hủy"); return; }
-        // đăng ký: nhập lại 1 lần nữa để đủ 2 lần (nhanh)
         await flowRegister_(username, defaultPinLen, String(pinTry));
         return;
       }
 
     } catch (e) {
       if (e && e.message === "cancel") {
-        // user đóng modal
       } else {
         toast((e && e.message) ? e.message : String(e));
       }
@@ -1750,12 +1759,12 @@ function renderQuizView() {
 }
 
 /********************
- * Auto-grade: chấm ngầm khi nhập (debounce) để nộp bài nhanh
+ * Auto-grade: chấm ngầm khi nhập
  ********************/
-const gradeTimers = new Map();     // id -> timer
-const gradeToken = new Map();      // id -> token (chống response cũ)
-const gradeInFlight = new Set();   // id in flight
-const lockAfterGrade = new Set();  // id: user bấm Check khi đang chấm
+const gradeTimers = new Map();
+const gradeToken = new Map();
+const gradeInFlight = new Set();
+const lockAfterGrade = new Set();
 
 function getCardEls_(id){
   const card = content.querySelector(`[data-qcard="${CSS.escape(String(id))}"]`);
@@ -1804,7 +1813,6 @@ async function gradeOne_(id, ans, { lock = false } = {}){
   const existed = state.checked && state.checked[id];
   if (existed && existed.locked) return;
 
-  // Nếu đã chấm đúng y key này rồi thì khỏi gọi lại
   if (existed && existed.lastKey === akey && !!existed.gradedAtMs) {
     if (lock && !existed.locked) {
       existed.locked = true;
@@ -1815,7 +1823,6 @@ async function gradeOne_(id, ans, { lock = false } = {}){
     return;
   }
 
-  // chống spam
   const token = randId("g");
   gradeToken.set(id, token);
   gradeInFlight.add(id);
@@ -1834,7 +1841,6 @@ async function gradeOne_(id, ans, { lock = false } = {}){
       ua: navigator.userAgent || ""
     });
 
-    // stale response
     if (gradeToken.get(id) !== token) return;
 
     if (!res || !res.ok || !res.item) throw new Error("Lỗi chấm.");
@@ -1851,7 +1857,6 @@ async function gradeOne_(id, ans, { lock = false } = {}){
     scheduleCloudSave();
     updateStats();
 
-    // nếu user bấm Check trong lúc đang chấm ngầm
     if (lockAfterGrade.has(id)) {
       lockAfterGrade.delete(id);
       state.checked[id].locked = true;
@@ -1948,7 +1953,7 @@ function onFocusOut(e){
 }
 
 /********************
- * Click: Check (nhỏ) - lock + hiện đúng/sai ngay
+ * Click: Check
  ********************/
 function onClick(e) {
   const btn = e.target.closest("[data-check]");
@@ -2052,7 +2057,7 @@ function buildWrongPopupContent() {
 }
 
 /********************
- * Leaderboard (NO % , NO horizontal scroll)
+ * Leaderboard
  ********************/
 async function fetchLeaderboard() {
   const box = document.getElementById("lbBox");
@@ -2319,7 +2324,6 @@ function renderDiscuss_(){
       `;
       list.appendChild(wrap);
 
-      // reply form
       const slot = wrap.querySelector(`[data-slot="${CSS.escape(String(root.id))}"]`);
       if (slot && openReplyRootId === String(root.id)) {
         slot.innerHTML = `
@@ -2337,7 +2341,6 @@ function renderDiscuss_(){
         `;
       }
 
-      // replies (1 level) - KHÔNG hiện "chưa có trả lời"
       const rWrap = wrap.querySelector(`[data-replies="${CSS.escape(String(root.id))}"]`);
       const replies = Array.isArray(root.replies) ? root.replies : [];
       if (rWrap) {
@@ -2674,7 +2677,7 @@ function attachDiscussionObserver_(){
 }
 
 /********************
- * Result view (hiện ngay; nếu chưa có result => "đang tính điểm...")
+ * Result view
  ********************/
 function renderResultView() {
   setView("result");
@@ -2767,7 +2770,7 @@ function renderResultView() {
 }
 
 /********************
- * Submit: hiện trang kết quả LIỀN, rồi tính điểm sau
+ * Submit
  ********************/
 function getMissingQuestions_(){
   const order = state.order && state.order.length ? state.order : (QUIZ.vocabs||[]).map(v=>v.id);
@@ -2929,7 +2932,7 @@ document.getElementById("btnScrollTop").addEventListener("click", () => {
 });
 
 /********************
- * Discuss button: scroll xuống phần thảo luận (chỉ sau khi xong)
+ * Discuss button
  ********************/
 document.getElementById("btnDiscuss").addEventListener("click", async () => {
   if (!state.finalized) return;
@@ -2956,6 +2959,8 @@ document.getElementById("userCorner").addEventListener("click", () => {
 /********************
  * Profile actions
  ********************/
+
+/* ✅ ĐỔI USERNAME: phản hồi nhanh + “lưu ảo” nếu backend lỗi */
 document.getElementById("btnSaveNewUsername").addEventListener("click", async () => {
   if (!state.name) return;
 
@@ -2963,8 +2968,8 @@ document.getElementById("btnSaveNewUsername").addEventListener("click", async ()
   const err = validateUsername(newU);
   if (err) { toast(err); return; }
 
-  const old = state.name;
-  if (normalizeForFilter(newU) === normalizeForFilter(old)) { toast("Trùng username hiện tại"); return; }
+  const oldName = state.name;
+  if (normalizeForFilter(newU) === normalizeForFilter(oldName)) { toast("Trùng username hiện tại"); return; }
 
   const last = Number((USER && USER.lastRenameAtMs) ? USER.lastRenameAtMs : 0) || 0;
   const now = Date.now();
@@ -2974,24 +2979,38 @@ document.getElementById("btnSaveNewUsername").addEventListener("click", async ()
     return;
   }
 
+  // check trùng (nếu backend có)
   try{
     const ck = await apiCheckUsername_(newU);
     if (ck && ck.exists) { toast("Username đã tồn tại"); return; }
   } catch(e){
-    // backend có thể chưa có checkUsername -> vẫn thử đổi, backend sẽ tự báo lỗi nếu trùng
   }
 
   const btn = document.getElementById("btnSaveNewUsername");
   const oldText = btn.textContent;
-  try{
-    btn.disabled = true;
-    btn.textContent = "⏳";
 
-    const res = await apiChangeUsername_(newU);
+  // optimistic UI: đổi liền cho mượt
+  btn.disabled = true;
+  btn.textContent = "⏳";
+  state.name = newU;
+  if (USER) {
+    USER.username = newU;
+    USER.lastRenameAtMs = Date.now(); // “lưu ảo” để khóa 30 ngày ngay
+    saveUser(USER);
+  }
+  scheduleSave({ mirror:true });
+  scheduleCloudSave();
+  updateStats();
+  closeProfileModal_();
+  renderGateView();
+  toast("Đã đổi username (đang lưu...)");
+
+  try{
+    const res = await apiChangeUsername_(oldName, newU);
     const u = (res && res.user) ? res.user : res;
 
     const finalName = (u && u.username) ? u.username : newU;
-    const finalLast = (u && u.lastRenameAtMs) ? u.lastRenameAtMs : Date.now();
+    const finalLast = (u && u.lastRenameAtMs) ? u.lastRenameAtMs : (USER ? USER.lastRenameAtMs : Date.now());
 
     state.name = finalName;
     if (USER) {
@@ -3003,31 +3022,39 @@ document.getElementById("btnSaveNewUsername").addEventListener("click", async ()
     scheduleSave({ mirror:true });
     scheduleCloudSave();
     updateStats();
-
-    toast("Đã đổi username");
-    closeProfileModal_();
     renderGateView();
+    toast("Đã lưu username");
   } catch(e){
-    toast("Đổi username lỗi");
+    // giữ local theo yêu cầu “giả bộ lưu ảo”
+    toast("Server chưa lưu được, tạm dùng username mới trên máy này");
   } finally {
     btn.disabled = false;
     btn.textContent = oldText;
   }
 });
 
-// ĐỔI MẬT KHẨU: chỉ 1 nút -> mở keypad (nhập old 1 lần, new 2 lần)
-document.getElementById("btnChangePin").addEventListener("click", async () => {
-  if (!state.name) return;
+/* ✅ ĐỔI MẬT KHẨU: PIN modal luôn nổi trên cùng + phản hồi ngay (pointerdown) */
+const btnChangePinEl = document.getElementById("btnChangePin");
+btnChangePinEl.addEventListener("click", (e) => { e.preventDefault(); }, true);
 
-  const btn = document.getElementById("btnChangePin");
-  const oldText = btn.textContent;
+btnChangePinEl.addEventListener("pointerdown", async (e) => {
+  if (!state.name) return;
+  if (btnChangePinEl.dataset.busy === "1") return;
+
+  // mở “ngay lập tức”
+  e.preventDefault();
+  btnChangePinEl.dataset.busy = "1";
+
+  const oldText = btnChangePinEl.textContent;
   const pinLen = isAdminName(state.name) ? 6 : 4;
 
   try{
-    btn.disabled = true;
-    btn.textContent = "⏳";
-
+    // không set ⏳ trước khi mở modal để cảm giác “bấm là hiện”
     const pins = await openPinModal_({ username: state.name, mode:"change", pinLen });
+
+    btnChangePinEl.disabled = true;
+    btnChangePinEl.textContent = "⏳";
+
     const oldPin = String(pins && pins.oldPin ? pins.oldPin : "").trim();
     const newPin = String(pins && pins.newPin ? pins.newPin : "").trim();
 
@@ -3036,20 +3063,24 @@ document.getElementById("btnChangePin").addEventListener("click", async () => {
 
     if (isAdminName(state.name) && String(oldPin) !== ADMIN_PIN) { toast("Sai mật khẩu"); return; }
 
-    await apiChangePassword_(oldPin, newPin);
-    toast("Đã đổi mật khẩu");
+    // phản hồi nhanh: đóng profile trước, toast trước
     closeProfileModal_();
-  } catch(e){
-    if (e && e.message === "cancel") {
-      // user đóng modal
-    } else {
-      toast("Đổi mật khẩu lỗi");
+    toast("Đang lưu mật khẩu...");
+
+    try{
+      await apiChangePassword_(state.name, oldPin, newPin);
+      toast("Đã đổi mật khẩu");
+    } catch(err){
+      toast("Server chưa lưu được, mật khẩu chưa đổi");
     }
+  } catch(e){
+    if (!(e && e.message === "cancel")) toast("Đổi mật khẩu lỗi");
   } finally {
-    btn.disabled = false;
-    btn.textContent = oldText;
+    btnChangePinEl.disabled = false;
+    btnChangePinEl.textContent = oldText;
+    btnChangePinEl.dataset.busy = "0";
   }
-});
+}, { passive:false });
 
 document.getElementById("btnLogout").addEventListener("click", async () => {
   const ok = confirm("Đăng xuất?");
@@ -3204,7 +3235,6 @@ function parseHashCacheId() {
 
   ensureCacheId();
 
-  // nếu có USER local -> auto login (không hỏi mật khẩu)
   if (USER && USER.userId && USER.username) {
     state.name = USER.username;
     state.cacheId = USER.userId;
@@ -3248,4 +3278,3 @@ function parseHashCacheId() {
 </script>
 </body>
 </html>
-```
