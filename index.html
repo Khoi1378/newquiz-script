@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
   <title>Đăng ký chỗ ngồi 12A11</title>
 
-  <!-- Montserrat Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
@@ -116,7 +115,6 @@
     }
 
     .muted { color: var(--muted); font-weight: 650; }
-
     .input {
       width: 100%;
       border-radius: 14px; border: 2px solid #e5e7eb;
@@ -130,7 +128,6 @@
       background: #fff;
     }
 
-    /* Submit bar */
     .submitbar {
       position: fixed;
       left: 0; right: 0; bottom: 0;
@@ -156,7 +153,6 @@
       font-size: .88rem;
     }
 
-    /* Modal */
     .modal-backdrop {
       position: fixed; inset: 0; background: rgba(0,0,0,.35);
       display: none; align-items: center; justify-content: center;
@@ -179,9 +175,7 @@
     .modal p { margin: 0 0 12px; color: var(--muted); font-weight: 650; font-size: .92rem; line-height: 1.35; }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
     .btn-ghost { background: #fff; color: #111827; border: 1px solid #e5e7eb; box-shadow: none; }
-    .btn-danger { background: var(--bad); color: #fff; border: 0; }
 
-    /* Toast */
     .toast {
       position: fixed; left: 50%; bottom: 88px; transform: translateX(-50%);
       background: rgba(17,24,39,.92); color: #fff;
@@ -195,7 +189,6 @@
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
 
-    /* BUS MAP */
     .bus {
       border: 2px solid rgba(17,24,39,.9);
       border-radius: 18px;
@@ -278,11 +271,9 @@
     }
     .seat:hover { transform: translateY(-1px); }
     .seat:active { transform: translateY(0px); }
-
     .seat .id { font-weight: 1000; letter-spacing: .01em; }
     .seat .sub { font-weight: 800; font-size: .78rem; color: rgba(17,24,39,.70); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* trạng thái ghế */
     .free {
       background: linear-gradient(135deg, rgba(34,197,94,.18), rgba(34,197,94,.06));
       border-color: rgba(34,197,94,.45);
@@ -365,7 +356,6 @@
     </div>
   </div>
 
-  <!-- Submit bar -->
   <div class="submitbar" id="submitBar" style="display:none;">
     <div class="submitwrap">
       <button class="btn btn-primary btn-big" id="btnConfirm">✅ XÁC NHẬN CHỖ</button>
@@ -375,7 +365,6 @@
 
   <div class="toast" id="toast"></div>
 
-  <!-- Name Modal -->
   <div class="modal-backdrop" id="nameBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="nameTitle">
       <h3 id="nameTitle">Nhập TÊN để đăng nhập</h3>
@@ -389,7 +378,6 @@
     </div>
   </div>
 
-  <!-- Rename Confirmation Modal -->
   <div class="modal-backdrop" id="renameBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
       <h3 id="renameTitle">Đổi tên đăng nhập?</h3>
@@ -408,7 +396,7 @@
 /********************
  * ✅ ĐỔI LINK EXEC Ở ĐÂY
  ********************/
-const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbyJAssql3jTGvhkajUcY4Dk8rf50PAd5vy3muVDHh9xCG0ioDraygKy54fo72ymsnNc8w/exec"; // ví dụ: https://script.google.com/macros/s/XXXXX/exec
+const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbwQqtBrfUKOOYAG3LM8-JlYzie-xA4vsCSNWp_TGs9WSFnukAy1WITZzzqGrei5_JEMwA/exec";
 
 /********************
  * Utilities
@@ -432,13 +420,10 @@ function normalizeName(s){
 }
 
 function preventZoom() {
-  // chặn ctrl +/-, ctrl+wheel
   window.addEventListener('keydown', (e) => {
     if (e.ctrlKey || e.metaKey) {
       const k = e.key;
-      if (k === '+' || k === '-' || k === '=' || k === '_' || k === '0') {
-        e.preventDefault();
-      }
+      if (k === '+' || k === '-' || k === '=' || k === '_' || k === '0') e.preventDefault();
     }
   }, { passive: false });
 
@@ -457,7 +442,7 @@ function buildUrl(params) {
   return u.toString();
 }
 
-function jsonp(params, timeoutMs=9000) {
+function jsonp(params, timeoutMs=12000) {
   return new Promise((resolve, reject) => {
     const cb = "__cb_" + Math.random().toString(16).slice(2);
     const url = buildUrl(Object.assign({}, params, { callback: cb }));
@@ -469,7 +454,7 @@ function jsonp(params, timeoutMs=9000) {
       done = true;
       try { delete window[cb]; } catch(e){}
       try { s.remove(); } catch(e){}
-      reject(new Error("timeout"));
+      reject(new Error("JSONP timeout (exec trả HTML/redirect hoặc sai quyền)"));
     }, timeoutMs);
 
     window[cb] = (data) => {
@@ -487,7 +472,7 @@ function jsonp(params, timeoutMs=9000) {
       clearTimeout(timer);
       try { delete window[cb]; } catch(e){}
       try { s.remove(); } catch(e){}
-      reject(new Error("net"));
+      reject(new Error("JSONP network error (không load được exec)"));
     };
 
     s.src = url;
@@ -496,13 +481,17 @@ function jsonp(params, timeoutMs=9000) {
 }
 
 async function api(params) {
-  // thử fetch trước (nếu CORS ok), không thì fallback jsonp
   const url = buildUrl(Object.assign({}, params, { fmt: "json" }));
   try {
     const r = await fetch(url, { cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
-    const j = await r.json();
-    return j;
+    const txt = await r.text();
+    try {
+      return JSON.parse(txt);
+    } catch (e) {
+      // trả HTML => fallback jsonp
+      throw new Error("Exec không trả JSON (có thể là HTML/redirect).");
+    }
   } catch (e) {
     return await jsonp(params);
   }
@@ -517,10 +506,7 @@ const LS_CLIENT = LS_PREFIX + "client";
 const LS_TS = LS_PREFIX + "ts";
 const MAX_AGE_MS = 30 * 24 * 3600 * 1000;
 
-const me = {
-  name: "",
-  client: ""
-};
+const me = { name: "", client: "" };
 
 function loadLocal() {
   let ts = 0;
@@ -534,7 +520,6 @@ function loadLocal() {
   }
   if (!me.client) me.client = randId("c");
 }
-
 function saveLocal() {
   try {
     localStorage.setItem(LS_NAME, me.name);
@@ -547,7 +532,7 @@ function saveLocal() {
  * App State
  ********************/
 let snapshot = null;
-let seatIndex = new Map(); // id -> seatObj
+let seatIndex = new Map();
 let pollTimer = null;
 
 const content = document.getElementById("content");
@@ -580,8 +565,23 @@ function setLoadingView() {
   `;
 }
 
+function showExecErrorView(title, detail, extra="") {
+  showSubmitBar(false);
+  content.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">${escapeHtml(title)}</p>
+        <div class="meta"><span class="idx">LỖI</span></div>
+      </div>
+      <div class="muted" style="margin-top:10px; line-height:1.45">
+        ${escapeHtml(detail || "Không rõ nguyên nhân")}
+        ${extra ? `<div style="margin-top:8px"><b>Chi tiết:</b> ${escapeHtml(extra)}</div>` : ""}
+      </div>
+    </div>
+  `;
+}
+
 function buildSeatClass(seatObj) {
-  // status từ snapshot seat object
   const now = snapshot ? Number(snapshot.ts || Date.now()) : Date.now();
 
   const confirmedBy = String(seatObj.confirmedBy || "");
@@ -592,7 +592,7 @@ function buildSeatClass(seatObj) {
 
   if (confirmedBy) return { cls: "confirmed", disabled: true, sub: confirmedName ? confirmedName : "Đã đặt" };
 
-  if (holdBy && holdAt && (now - holdAt <= 60*1000 + 5000)) { // dư 5s an toàn hiển thị
+  if (holdBy && holdAt && (now - holdAt <= 60*1000 + 5000)) {
     if (holdBy === me.client) return { cls: "myhold", disabled: false, sub: "Bạn đang chọn" };
     return { cls: "otherhold", disabled: true, sub: holdName ? holdName : "Đang chọn" };
   }
@@ -634,7 +634,6 @@ function renderMainView() {
       </div>
     </div>
   `;
-
   renderBus();
 }
 
@@ -642,10 +641,9 @@ function renderBus() {
   const bus = document.getElementById("busMap");
   if (!bus) return;
 
-  const rows = ["A","B","C","D","E","F","G","H","I"]; // 9 hàng -> 36 chỗ
+  const rows = ["A","B","C","D","E","F","G","H","I"];
   const html = [];
 
-  // FRONT: driver + door
   html.push(`
     <div class="busTop">
       <div class="driver">👨‍✈️ TÀI XẾ (không chọn)</div>
@@ -667,7 +665,7 @@ function renderBus() {
       const id = ids[i];
       const seatObj = seatIndex.get(id) || { id };
       const st = buildSeatClass(seatObj);
-      const disabled = st.disabled || !me.name; // chưa login => không cho chọn
+      const disabled = st.disabled || !me.name;
       rowBtns.push(`
         <button class="seat ${st.cls}" data-seat="${id}" ${disabled ? "disabled" : ""}>
           <div class="id">${escapeHtml(id)}</div>
@@ -723,13 +721,14 @@ btnSaveName.addEventListener("click", async () => {
   saveLocal();
   closeNameModal();
 
-  // log + đồng bộ tên lên server
   try {
     const res = await api({ action: "login", name: me.name, client: me.client, ua: navigator.userAgent || "" });
     if (res && res.ok) applySnapshot(res.data);
-  } catch(e) {}
+    else toast("Login lỗi: " + (res?.code || "UNKNOWN"));
+  } catch(e) {
+    toast("Login lỗi: " + (e?.message || e));
+  }
 
-  toast("Đã đăng nhập");
   renderMainView();
 });
 
@@ -737,7 +736,7 @@ nameInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") { e.preventDefault(); btnSaveName.click(); }
 });
 
-// Rename modal
+// Rename
 const renameBackdrop = document.getElementById("renameBackdrop");
 const renameInput = document.getElementById("renameInput");
 const btnRenameCancel = document.getElementById("btnRenameCancel");
@@ -769,9 +768,11 @@ btnRenameOk.addEventListener("click", async () => {
   try {
     const res = await api({ action: "setName", name: me.name, client: me.client, ua: navigator.userAgent || "" });
     if (res && res.ok) applySnapshot(res.data);
-  } catch(e) {}
+    else toast("Đổi tên lỗi: " + (res?.code || "UNKNOWN"));
+  } catch(e) {
+    toast("Đổi tên lỗi: " + (e?.message || e));
+  }
 
-  toast("Đã đổi tên");
   renderMainView();
 });
 
@@ -792,32 +793,30 @@ async function loadSnapshotFirst() {
   setLoadingView();
   updateTopbar();
 
-  const res = await api({ action: "snapshot", client: me.client });
-  if (!res || !res.ok) {
-    content.innerHTML = `
-      <div class="card">
-        <div class="row1">
-          <p class="vi">Không tải được dữ liệu</p>
-          <div class="meta"><span class="idx">LỖI</span></div>
-        </div>
-        <div class="muted" style="margin-top:10px">Hãy kiểm tra link exec hoặc quyền Web App.</div>
-      </div>
-    `;
-    showSubmitBar(false);
-    toast("Lỗi tải dữ liệu");
+  try {
+    const res = await api({ action: "snapshot", client: me.client });
+    if (!res) {
+      showExecErrorView("Không tải được dữ liệu", "Exec trả rỗng", "Không nhận được phản hồi từ /exec");
+      return false;
+    }
+    if (!res.ok) {
+      showExecErrorView(
+        "Không tải được dữ liệu",
+        "Exec báo lỗi",
+        `${res.code || "UNKNOWN"}: ${res.message || ""}`
+      );
+      return false;
+    }
+    applySnapshot(res.data);
+    return true;
+  } catch (e) {
+    showExecErrorView("Không tải được dữ liệu", "Không gọi được exec hoặc exec trả HTML/redirect", String(e?.message || e));
     return false;
   }
-
-  applySnapshot(res.data);
-  return true;
 }
 
 async function holdSeat(seatId) {
-  if (!me.name) {
-    // ✅ chỉ mở modal sau khi đã load snapshot
-    openNameModal("");
-    return;
-  }
+  if (!me.name) { openNameModal(""); return; }
 
   const seatObj = seatIndex.get(seatId);
   if (!seatObj) return;
@@ -825,7 +824,6 @@ async function holdSeat(seatId) {
   const st = buildSeatClass(seatObj);
   if (st.cls === "confirmed" || st.cls === "otherhold") return;
 
-  // Optimistic UI: tô hồng ngay
   if (snapshot && snapshot.my) snapshot.my.hold = seatId;
   renderMainView();
 
@@ -833,12 +831,10 @@ async function holdSeat(seatId) {
 
   if (!res || !res.ok) {
     if (res && (res.code === "TAKEN" || res.code === "HELD")) {
-      toast("Đã có người chọn trước");
-      // ✅ yêu cầu: nếu đã có người xác nhận mà nhận lệnh mới -> load lại web
+      toast((res.code === "TAKEN") ? "Ghế đã có người xác nhận" : "Ghế đang có người chọn");
       if (res.code === "TAKEN") setTimeout(() => location.reload(), 700);
-      // nếu HELD thì thôi, tự poll sẽ cập nhật
     } else {
-      toast("Lỗi giữ chỗ");
+      toast("Lỗi giữ chỗ: " + (res?.code || "UNKNOWN"));
     }
     return;
   }
@@ -860,10 +856,8 @@ async function confirmSeat() {
     if (res && res.code === "TAKEN") {
       toast("Ghế đã có người xác nhận");
       setTimeout(() => location.reload(), 700);
-    } else if (res && res.code === "NOT_HELD") {
-      toast("Ghế này chưa được bạn giữ chỗ");
     } else {
-      toast("Lỗi xác nhận");
+      toast("Lỗi xác nhận: " + (res?.code || "UNKNOWN"));
     }
     btnConfirm.disabled = false;
     return;
@@ -886,9 +880,7 @@ function startPolling() {
         applySnapshot(res.data);
         renderMainView();
       }
-    } catch(e) {
-      // im lặng để không spam
-    }
+    } catch(e) {}
   }, 900);
 }
 
@@ -899,10 +891,9 @@ document.getElementById("btnScrollTop").addEventListener("click", () => {
   document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
 });
 document.getElementById("btnRename").addEventListener("click", () => {
-  if (!snapshot) return; // chưa load thì không làm gì
+  if (!snapshot) return;
   openRenameModal();
 });
-
 btnConfirm.addEventListener("click", confirmSeat);
 
 /********************
@@ -915,12 +906,9 @@ btnConfirm.addEventListener("click", confirmSeat);
   const ok = await loadSnapshotFirst();
   if (!ok) return;
 
-  // ✅ tuyệt đối không hỏi tên trước khi load xong: (đã xong mới xử lý)
   if (me.name) {
-    // log login (không block UI)
     api({ action: "login", name: me.name, client: me.client, ua: navigator.userAgent || "" }).catch(()=>{});
   } else {
-    // chưa từng login -> popup nhập tên
     openNameModal("");
   }
 
