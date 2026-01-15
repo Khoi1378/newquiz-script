@@ -13,10 +13,29 @@
     :root {
       --bg1: #ffecd2; --bg2: #fcb69f;
       --card: #fff; --text: #1f2937; --muted: #6b7280;
-      --primary: #7c3aed; --ok: #16a34a; --bad: #dc2626; --warn: #f59e0b;
+      --primary: #7c3aed;
       --border: #e5e7eb; --soft: #f8fafc;
       --shadow: 0 14px 40px rgba(0,0,0,.10);
       --radius: 18px;
+
+      /* seat colors */
+      --c-free-bg1: rgba(34,197,94,.18);
+      --c-free-bg2: rgba(34,197,94,.06);
+      --c-free-br: rgba(34,197,94,.45);
+      --c-free-glow: rgba(34,197,94,.08);
+
+      --c-confirm-bg1: rgba(156,163,175,.28);
+      --c-confirm-bg2: rgba(156,163,175,.12);
+      --c-confirm-br: rgba(156,163,175,.65);
+
+      --c-myhold-bg1: rgba(251,113,133,.30);
+      --c-myhold-bg2: rgba(124,58,237,.10);
+      --c-myhold-br: rgba(251,113,133,.70);
+      --c-myhold-glow: rgba(251,113,133,.12);
+
+      --c-otherhold-bg1: rgba(245,158,11,.26);
+      --c-otherhold-bg2: rgba(245,158,11,.10);
+      --c-otherhold-br: rgba(245,158,11,.70);
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -29,7 +48,6 @@
       overflow: hidden;
       touch-action: pan-y;
     }
-
     #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 120px; }
     .wrap { max-width: 980px; margin: 0 auto; padding: 0 14px; }
 
@@ -41,11 +59,12 @@
       border: 0; cursor: pointer;
       border-radius: 999px; padding: 10px 14px;
       font-weight: 900; font-size: .9rem;
-      transition: transform .16s ease, filter .16s ease;
+      transition: transform .10s ease, filter .10s ease;
       display: inline-flex; align-items: center; gap: 8px;
       user-select: none; white-space: nowrap;
       box-shadow: 0 12px 24px rgba(0,0,0,.12);
       background: #fff; color: #111827; border: 1px solid #e5e7eb;
+      -webkit-tap-highlight-color: transparent;
     }
     .btn:hover { transform: translateY(-1px); filter: brightness(.98); }
     .btn:active { transform: translateY(0px); }
@@ -92,7 +111,7 @@
     .progressfill {
       height: 100%; width: 0%;
       background: linear-gradient(90deg, #22c55e, #a78bfa);
-      transition: width .25s ease;
+      transition: width .18s ease;
     }
 
     .content { padding: 12px 0 0; }
@@ -113,14 +132,14 @@
       background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe;
       white-space: nowrap;
     }
-
     .muted { color: var(--muted); font-weight: 650; }
+
     .input {
       width: 100%;
       border-radius: 14px; border: 2px solid #e5e7eb;
       padding: 11px 12px; font-size: .95rem; font-weight: 700;
       outline: none; background: var(--soft);
-      transition: border-color .15s ease, box-shadow .15s ease;
+      transition: border-color .12s ease, box-shadow .12s ease;
     }
     .input:focus {
       border-color: rgba(124,58,237,.55);
@@ -150,7 +169,8 @@
       text-align: center;
       color: var(--muted);
       font-weight: 700;
-      font-size: .88rem;
+      font-size: .86rem;
+      line-height: 1.35;
     }
 
     .modal-backdrop {
@@ -254,6 +274,7 @@
       user-select:none;
     }
 
+    /* ✅ FAST seat: no heavy shadow transitions, no relayout on click */
     .seat {
       width: 100%;
       border-radius: 16px;
@@ -265,53 +286,71 @@
       display: grid;
       gap: 2px;
       align-content: start;
-      transition: transform .10s ease, filter .10s ease, box-shadow .12s ease, border-color .12s ease;
       user-select: none;
       min-height: 56px;
+
+      transition: transform .08s ease, filter .08s ease, border-color .10s ease, background-color .10s ease;
+      will-change: transform;
+      -webkit-tap-highlight-color: transparent;
     }
     .seat:hover { transform: translateY(-1px); }
-    .seat:active { transform: translateY(0px); }
+    .seat:active { transform: translateY(0px) scale(.995); }
     .seat .id { font-weight: 1000; letter-spacing: .01em; }
-    .seat .sub { font-weight: 800; font-size: .78rem; color: rgba(17,24,39,.70); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    .free {
-      background: linear-gradient(135deg, rgba(34,197,94,.18), rgba(34,197,94,.06));
-      border-color: rgba(34,197,94,.45);
-      box-shadow: 0 0 0 5px rgba(34,197,94,.08);
+    .seat .sub {
+      font-weight: 850;
+      font-size: .76rem;                 /* nhỏ hơn chút */
+      color: rgba(17,24,39,.72);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .confirmed {
-      background: linear-gradient(135deg, rgba(156,163,175,.28), rgba(156,163,175,.12));
-      border-color: rgba(156,163,175,.65);
+
+    /* states */
+    .free{
+      background: linear-gradient(135deg, var(--c-free-bg1), var(--c-free-bg2));
+      border-color: var(--c-free-br);
+      box-shadow: 0 0 0 5px var(--c-free-glow);
+    }
+    .confirmed{
+      background: linear-gradient(135deg, var(--c-confirm-bg1), var(--c-confirm-bg2));
+      border-color: var(--c-confirm-br);
       opacity: .92;
       cursor: not-allowed;
+      box-shadow: none;
     }
-    .myhold {
-      background: linear-gradient(135deg, rgba(251,113,133,.30), rgba(124,58,237,.10));
-      border-color: rgba(251,113,133,.70);
-      box-shadow: 0 0 0 6px rgba(251,113,133,.12);
+    .myhold{
+      background: linear-gradient(135deg, var(--c-myhold-bg1), var(--c-myhold-bg2));
+      border-color: var(--c-myhold-br);
+      box-shadow: 0 0 0 6px var(--c-myhold-glow);
     }
-    .otherhold {
-      background: linear-gradient(135deg, rgba(245,158,11,.26), rgba(245,158,11,.10));
-      border-color: rgba(245,158,11,.70);
+    .otherhold{
+      background: linear-gradient(135deg, var(--c-otherhold-bg1), var(--c-otherhold-bg2));
+      border-color: var(--c-otherhold-br);
       cursor: not-allowed;
+      box-shadow: none;
     }
     .seat[disabled] { opacity: .95; transform:none !important; }
 
-    .legendGrid { display:grid; gap:10px; margin-top:10px; }
-    .legendItem{
-      display:flex; gap:10px; align-items:center;
+    /* ✅ Legend inline top (no duplicate card) */
+    .legendBar{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:10px;
+      padding: 10px 12px;
       border-radius: 16px;
       border: 1px dashed rgba(229,231,235,.95);
       background:#fff;
-      padding: 10px 12px;
       font-weight: 850;
+      align-items:center;
+    }
+    .legendItem{
+      display:flex; gap:8px; align-items:center;
+      white-space:nowrap;
     }
     .dot {
-      width: 16px; height: 16px; border-radius: 6px; border: 1px solid rgba(0,0,0,.12);
-      box-shadow: 0 10px 22px rgba(0,0,0,.08);
+      width: 14px; height: 14px; border-radius: 6px; border: 1px solid rgba(0,0,0,.12);
+      box-shadow: 0 10px 22px rgba(0,0,0,.06);
       flex: 0 0 auto;
     }
-    .dot.free { background: rgba(34,197,94,.45); }
     .dot.confirmed { background: rgba(156,163,175,.70); }
     .dot.myhold { background: rgba(251,113,133,.70); }
     .dot.otherhold { background: rgba(245,158,11,.80); }
@@ -323,6 +362,7 @@
       .seat { min-height: 54px; padding: 10px 10px; }
       .seatRow, .seatHeader { gap: 8px; }
       .bus { padding: 10px; }
+      .seat .sub { font-size: .74rem; } /* mobile nhỏ hơn nữa */
     }
   </style>
 </head>
@@ -359,7 +399,7 @@
   <div class="submitbar" id="submitBar" style="display:none;">
     <div class="submitwrap">
       <button class="btn btn-primary btn-big" id="btnConfirm">✅ XÁC NHẬN CHỖ</button>
-      <div class="subhint" id="submitHint">Chọn ghế xanh để giữ chỗ (hồng), rồi bấm xác nhận (xám)</div>
+      <div class="subhint" id="submitHint">Bấm ghế để chọn • Bấm “Xác nhận chỗ” để chốt</div>
     </div>
   </div>
 
@@ -410,13 +450,23 @@ function toast(msg) {
   const t = document.getElementById("toast");
   t.textContent = msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 1600);
+  setTimeout(() => t.classList.remove("show"), 1400);
 }
 function randId(prefix="id") {
   return prefix + "_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
 }
 function normalizeName(s){
   return String(s||"").trim().replace(/\s+/g," ");
+}
+function shortNameForSeat(full){
+  // "Hiểu Gia" -> "H Gia", "Khôi" -> "Khôi"
+  const parts = normalizeName(full).split(" ").filter(Boolean);
+  if (!parts.length) return "";
+  if (parts.length === 1) return parts[0];
+  const first = parts[0];
+  const last = parts[parts.length - 1];
+  const ch = first[0] ? first[0].toUpperCase() : "";
+  return (ch ? (ch + " " + last) : last);
 }
 
 function preventZoom() {
@@ -441,7 +491,6 @@ function buildUrl(params) {
   u.searchParams.set("_", Date.now().toString(16));
   return u.toString();
 }
-
 function jsonp(params, timeoutMs=12000) {
   return new Promise((resolve, reject) => {
     const cb = "__cb_" + Math.random().toString(16).slice(2);
@@ -454,7 +503,7 @@ function jsonp(params, timeoutMs=12000) {
       done = true;
       try { delete window[cb]; } catch(e){}
       try { s.remove(); } catch(e){}
-      reject(new Error("JSONP timeout (exec trả HTML/redirect hoặc sai quyền)"));
+      reject(new Error("JSONP timeout"));
     }, timeoutMs);
 
     window[cb] = (data) => {
@@ -472,26 +521,21 @@ function jsonp(params, timeoutMs=12000) {
       clearTimeout(timer);
       try { delete window[cb]; } catch(e){}
       try { s.remove(); } catch(e){}
-      reject(new Error("JSONP network error (không load được exec)"));
+      reject(new Error("JSONP network error"));
     };
 
     s.src = url;
     document.head.appendChild(s);
   });
 }
-
 async function api(params) {
   const url = buildUrl(Object.assign({}, params, { fmt: "json" }));
   try {
     const r = await fetch(url, { cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
     const txt = await r.text();
-    try {
-      return JSON.parse(txt);
-    } catch (e) {
-      // trả HTML => fallback jsonp
-      throw new Error("Exec không trả JSON (có thể là HTML/redirect).");
-    }
+    try { return JSON.parse(txt); }
+    catch (e) { throw new Error("Not JSON"); }
   } catch (e) {
     return await jsonp(params);
   }
@@ -500,7 +544,7 @@ async function api(params) {
 /********************
  * Local storage (tên + clientId) — 30 ngày
  ********************/
-const LS_PREFIX = "seat_12A11_v1::";
+const LS_PREFIX = "seat_12A11_v2::";
 const LS_NAME = LS_PREFIX + "name";
 const LS_CLIENT = LS_PREFIX + "client";
 const LS_TS = LS_PREFIX + "ts";
@@ -530,20 +574,39 @@ function saveLocal() {
 
 /********************
  * App State
+ * ✅ tốc độ: render 1 lần, sau đó chỉ PATCH DOM theo diff
  ********************/
 let snapshot = null;
-let seatIndex = new Map();
+let seatIndex = new Map();           // id -> seatObj
 let pollTimer = null;
 
 const content = document.getElementById("content");
 const submitBar = document.getElementById("submitBar");
 const btnConfirm = document.getElementById("btnConfirm");
 
+const rows = ["A","B","C","D","E","F","G","H","I"];
+const SEATS = (() => {
+  const out = [];
+  for (const r of rows) for (let i=1;i<=4;i++) out.push(r+i);
+  return out;
+})();
+
+// DOM cache for instant updates
+const seatDom = new Map(); // id -> {btn, subEl}
+let appRendered = false;
+let pendingHoldSeat = "";  // local optimistic hold
+let inflight = { hold:false, confirm:false, poll:false };
+
 function showSubmitBar(show) { submitBar.style.display = show ? "" : "none"; }
+
+function mySeatNow(){
+  const my = snapshot && snapshot.my ? snapshot.my : { confirmed:"", hold:"" };
+  return (my.confirmed || my.hold || pendingHoldSeat || "");
+}
 
 function updateTopbar() {
   document.getElementById("whoName").textContent = me.name ? me.name : "—";
-  const mySeat = (snapshot && snapshot.my) ? (snapshot.my.confirmed || snapshot.my.hold || "") : "";
+  const mySeat = mySeatNow();
   document.getElementById("mySeat").textContent = mySeat ? mySeat : "—";
 
   const cc = snapshot ? Number(snapshot.confirmedCount || 0) : 0;
@@ -581,7 +644,11 @@ function showExecErrorView(title, detail, extra="") {
   `;
 }
 
-function buildSeatClass(seatObj) {
+/********************
+ * Seat state -> class/disabled/subtext
+ * ✅ subtext: confirmed -> hiển thị tên rút gọn (không "...")
+ ********************/
+function classifySeat(seatObj) {
   const now = snapshot ? Number(snapshot.ts || Date.now()) : Date.now();
 
   const confirmedBy = String(seatObj.confirmedBy || "");
@@ -590,23 +657,32 @@ function buildSeatClass(seatObj) {
   const holdName = String(seatObj.holdName || "");
   const holdAt = seatObj.holdAt ? Number(seatObj.holdAt) : 0;
 
-  if (confirmedBy) return { cls: "confirmed", disabled: true, sub: confirmedName ? confirmedName : "Đã đặt" };
-
-  if (holdBy && holdAt && (now - holdAt <= 60*1000 + 5000)) {
-    if (holdBy === me.client) return { cls: "myhold", disabled: false, sub: "Bạn đang chọn" };
-    return { cls: "otherhold", disabled: true, sub: holdName ? holdName : "Đang chọn" };
+  // confirmed
+  if (confirmedBy) {
+    const nm = confirmedName ? shortNameForSeat(confirmedName) : "Đã đặt";
+    return { cls: "confirmed", disabled: true, sub: nm };
   }
 
-  return { cls: "free", disabled: false, sub: "Trống" };
+  // hold (valid)
+  if (holdBy && holdAt && (now - holdAt <= 60*1000 + 5000)) {
+    if (holdBy === me.client) return { cls: "myhold", disabled: false, sub: "Bạn đang chọn" };
+    return { cls: "otherhold", disabled: true, sub: holdName ? shortNameForSeat(holdName) : "Đang chọn" };
+  }
+
+  // optimistic local hold (instant UI)
+  if (pendingHoldSeat && seatObj && String(seatObj.id||"") === pendingHoldSeat) {
+    return { cls: "myhold", disabled: false, sub: "Bạn đang chọn" };
+  }
+
+  // free
+  return { cls: "free", disabled: false, sub: "" }; // ✅ bỏ chữ "Trống"
 }
 
-function renderMainView() {
+/********************
+ * ✅ One-time render + FAST DOM patch
+ ********************/
+function renderMainViewOnce() {
   updateTopbar();
-
-  const myHold = snapshot && snapshot.my ? snapshot.my.hold : "";
-  const canConfirm = !!(me.name && myHold);
-
-  btnConfirm.disabled = !canConfirm;
   showSubmitBar(!!me.name);
 
   content.innerHTML = `
@@ -615,33 +691,19 @@ function renderMainView() {
         <p class="vi">Sơ đồ ghế (36 chỗ)</p>
         <div class="meta"><span class="idx">LIVE</span></div>
       </div>
-      <div class="muted" style="margin-top:6px">
-        Ghế <b>xanh</b> = trống • <b>hồng</b> = bạn đang chọn • <b>vàng</b> = người khác đang chọn • <b>xám</b> = đã xác nhận
+
+      <!-- ✅ Chú thích màu đưa lên ngay đầu, và bỏ "ghế trống" -->
+      <div class="legendBar" style="margin-top:10px">
+        <div class="legendItem"><span class="dot myhold"></span> Bạn đang chọn</div>
+        <div class="legendItem"><span class="dot otherhold"></span> Người khác đang chọn</div>
+        <div class="legendItem"><span class="dot confirmed"></span> Đã xác nhận</div>
       </div>
+
       <div style="margin-top:12px" class="bus" id="busMap"></div>
     </div>
-
-    <div class="card">
-      <div class="row1">
-        <p class="vi">Chú thích màu</p>
-        <div class="meta"><span class="idx">TRẠNG THÁI</span></div>
-      </div>
-      <div class="legendGrid">
-        <div class="legendItem"><span class="dot free"></span> Ghế trống (chưa đăng ký)</div>
-        <div class="legendItem"><span class="dot myhold"></span> Bạn đang chọn (giữ chỗ)</div>
-        <div class="legendItem"><span class="dot otherhold"></span> Người khác đang chọn (bạn không chọn được)</div>
-        <div class="legendItem"><span class="dot confirmed"></span> Đã xác nhận (không chọn được)</div>
-      </div>
-    </div>
   `;
-  renderBus();
-}
 
-function renderBus() {
   const bus = document.getElementById("busMap");
-  if (!bus) return;
-
-  const rows = ["A","B","C","D","E","F","G","H","I"];
   const html = [];
 
   html.push(`
@@ -659,39 +721,89 @@ function renderBus() {
 
   for (const r of rows) {
     const ids = [r+"1", r+"2", r+"3", r+"4"];
-    const rowBtns = [];
+    html.push(`<div class="seatRow">`);
 
-    for (let i = 0; i < ids.length; i++) {
-      const id = ids[i];
-      const seatObj = seatIndex.get(id) || { id };
-      const st = buildSeatClass(seatObj);
-      const disabled = st.disabled || !me.name;
-      rowBtns.push(`
-        <button class="seat ${st.cls}" data-seat="${id}" ${disabled ? "disabled" : ""}>
-          <div class="id">${escapeHtml(id)}</div>
-          <div class="sub">${escapeHtml(st.sub)}</div>
-        </button>
-      `);
-      if (i === 1) rowBtns.push(`<div class="aisle" aria-hidden="true"></div>`);
-    }
-
-    html.push(`
-      <div class="seatRow">
-        ${rowBtns.join("")}
-        <div class="rowTag">${escapeHtml(r)}</div>
-      </div>
-    `);
+    // left 1,2
+    html.push(seatButtonHTML_(ids[0]));
+    html.push(seatButtonHTML_(ids[1]));
+    html.push(`<div class="aisle" aria-hidden="true"></div>`);
+    // right 3,4
+    html.push(seatButtonHTML_(ids[2]));
+    html.push(seatButtonHTML_(ids[3]));
+    // row tag
+    html.push(`<div class="rowTag">${escapeHtml(r)}</div>`);
+    html.push(`</div>`);
   }
 
   bus.innerHTML = html.join("");
 
+  // cache dom refs
+  seatDom.clear();
   bus.querySelectorAll(".seat").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-seat");
-      if (!id) return;
-      await holdSeat(id);
-    });
+    const id = btn.getAttribute("data-seat");
+    seatDom.set(id, { btn, subEl: btn.querySelector(".sub") });
   });
+
+  // ✅ event delegation (fast)
+  bus.addEventListener("click", onSeatClick, { passive: true });
+
+  appRendered = true;
+  patchAllSeats();        // apply initial states
+  patchConfirmBar();
+}
+
+function seatButtonHTML_(id){
+  const seatObj = seatIndex.get(id) || { id };
+  const st = classifySeat(seatObj);
+  const disabled = st.disabled || !me.name;
+  return `
+    <button class="seat ${st.cls}" data-seat="${id}" ${disabled ? "disabled" : ""}>
+      <div class="id">${escapeHtml(id)}</div>
+      <div class="sub">${escapeHtml(st.sub || "")}</div>
+    </button>
+  `;
+}
+
+function patchConfirmBar(){
+  const my = snapshot && snapshot.my ? snapshot.my : { confirmed:"", hold:"" };
+  const hold = my.hold || pendingHoldSeat || "";
+  const canConfirm = !!(me.name && hold);
+  btnConfirm.disabled = !canConfirm;
+  showSubmitBar(!!me.name);
+}
+
+function patchAllSeats(){
+  // full patch but only updates if changed class/text/disabled
+  for (const id of SEATS) patchSeat(id);
+  patchConfirmBar();
+  updateTopbar();
+}
+
+function patchSeat(id){
+  const dom = seatDom.get(id);
+  if (!dom) return;
+
+  const seatObj = seatIndex.get(id) || { id };
+  const st = classifySeat(seatObj);
+  const disabled = st.disabled || !me.name;
+
+  const btn = dom.btn;
+  const subEl = dom.subEl;
+
+  // class diff
+  // keep base "seat", remove 4 state classes then add current
+  if (!btn.classList.contains(st.cls) || btn._lastCls !== st.cls) {
+    btn.classList.remove("free","confirmed","myhold","otherhold");
+    btn.classList.add(st.cls);
+    btn._lastCls = st.cls;
+  }
+
+  // disabled diff
+  if (!!btn.disabled !== !!disabled) btn.disabled = !!disabled;
+
+  // sub text diff
+  const subText = st.sub || "";
+  if (subEl && subEl.textContent !== subText) subEl.textContent = subText;
 }
 
 /********************
@@ -729,7 +841,8 @@ btnSaveName.addEventListener("click", async () => {
     toast("Login lỗi: " + (e?.message || e));
   }
 
-  renderMainView();
+  if (!appRendered) renderMainViewOnce();
+  else patchAllSeats();
 });
 
 nameInput.addEventListener("keydown", (e) => {
@@ -773,7 +886,7 @@ btnRenameOk.addEventListener("click", async () => {
     toast("Đổi tên lỗi: " + (e?.message || e));
   }
 
-  renderMainView();
+  patchAllSeats();
 });
 
 renameInput.addEventListener("keydown", (e) => {
@@ -787,6 +900,10 @@ function applySnapshot(data) {
   snapshot = data;
   seatIndex = new Map();
   (snapshot.seats || []).forEach(s => seatIndex.set(String(s.id||"").toUpperCase(), s));
+
+  // ✅ nếu server đã ghi hold/confirm thì bỏ optimistic
+  const my = snapshot && snapshot.my ? snapshot.my : null;
+  if (my && (my.hold || my.confirmed)) pendingHoldSeat = "";
 }
 
 async function loadSnapshotFirst() {
@@ -800,11 +917,7 @@ async function loadSnapshotFirst() {
       return false;
     }
     if (!res.ok) {
-      showExecErrorView(
-        "Không tải được dữ liệu",
-        "Exec báo lỗi",
-        `${res.code || "UNKNOWN"}: ${res.message || ""}`
-      );
+      showExecErrorView("Không tải được dữ liệu", "Exec báo lỗi", `${res.code || "UNKNOWN"}: ${res.message || ""}`);
       return false;
     }
     applySnapshot(res.data);
@@ -815,70 +928,160 @@ async function loadSnapshotFirst() {
   }
 }
 
-async function holdSeat(seatId) {
+/********************
+ * ✅ Ultra-fast seat interactions
+ * - UI update INSTANT (optimistic) with DOM patch only
+ * - Network request runs after, then patch again with server truth
+ * - Poll won't override while holding in-flight
+ ********************/
+function onSeatClick(e){
+  const btn = e.target.closest(".seat");
+  if (!btn) return;
+  const id = btn.getAttribute("data-seat");
+  if (!id) return;
+  holdSeatFast(id);
+}
+
+async function holdSeatFast(seatId) {
   if (!me.name) { openNameModal(""); return; }
 
   const seatObj = seatIndex.get(seatId);
   if (!seatObj) return;
 
-  const st = buildSeatClass(seatObj);
+  const st = classifySeat(seatObj);
   if (st.cls === "confirmed" || st.cls === "otherhold") return;
 
+  // ✅ optimistic: set pendingHoldSeat immediately
+  pendingHoldSeat = seatId;
+
+  // update snapshot.my.hold locally too (so topbar/button instant)
   if (snapshot && snapshot.my) snapshot.my.hold = seatId;
-  renderMainView();
 
-  const res = await api({ action: "hold", seat: seatId, name: me.name, client: me.client });
-
-  if (!res || !res.ok) {
-    if (res && (res.code === "TAKEN" || res.code === "HELD")) {
-      toast((res.code === "TAKEN") ? "Ghế đã có người xác nhận" : "Ghế đang có người chọn");
-      if (res.code === "TAKEN") setTimeout(() => location.reload(), 700);
-    } else {
-      toast("Lỗi giữ chỗ: " + (res?.code || "UNKNOWN"));
-    }
-    return;
+  // patch only affected seats: old hold + new hold (fastest)
+  // find previous hold
+  let prevHold = "";
+  if (snapshot && snapshot.my) prevHold = snapshot.my.hold || "";
+  // (prevHold đã bị set = seatId, nên dùng cached prev from before)
+  // => ta compute prev by scanning seatIndex holdBy==me.client
+  let existingHold = "";
+  for (const s of (snapshot?.seats || [])) {
+    if (String(s.holdBy||"") === me.client) { existingHold = String(s.id||""); break; }
   }
 
-  applySnapshot(res.data);
-  renderMainView();
+  // patch minimal
+  if (existingHold && existingHold !== seatId) patchSeat(existingHold);
+  patchSeat(seatId);
+  patchConfirmBar();
+  updateTopbar();
+
+  // ✅ network (debounce + ignore old responses)
+  const reqId = Date.now().toString(16) + Math.random().toString(16).slice(2);
+  holdSeatFast._lastReq = reqId;
+
+  inflight.hold = true;
+  try {
+    const res = await api({ action: "hold", seat: seatId, name: me.name, client: me.client });
+
+    // ignore if newer request already started
+    if (holdSeatFast._lastReq !== reqId) return;
+
+    if (!res || !res.ok) {
+      inflight.hold = false;
+
+      if (res && (res.code === "TAKEN" || res.code === "HELD")) {
+        toast((res.code === "TAKEN") ? "Ghế đã có người xác nhận" : "Ghế đang có người chọn");
+        if (res.code === "TAKEN") setTimeout(() => location.reload(), 650);
+      } else {
+        toast("Lỗi giữ chỗ: " + (res?.code || "UNKNOWN"));
+      }
+
+      // revert optimistic by reloading snapshot once
+      try {
+        const snap = await api({ action: "snapshot", client: me.client });
+        if (snap && snap.ok) applySnapshot(snap.data);
+      } catch(e){}
+      pendingHoldSeat = "";
+      patchAllSeats();
+      return;
+    }
+
+    applySnapshot(res.data);
+    pendingHoldSeat = "";
+    inflight.hold = false;
+
+    // patch all (server truth)
+    patchAllSeats();
+  } catch (e) {
+    inflight.hold = false;
+    toast("Lỗi mạng khi giữ chỗ");
+    // try refresh
+    try {
+      const snap = await api({ action: "snapshot", client: me.client });
+      if (snap && snap.ok) applySnapshot(snap.data);
+    } catch(e){}
+    pendingHoldSeat = "";
+    patchAllSeats();
+  }
 }
 
-async function confirmSeat() {
+async function confirmSeatFast() {
   if (!me.name) return;
-  const myHold = snapshot && snapshot.my ? snapshot.my.hold : "";
-  if (!myHold) { toast("Bạn chưa chọn ghế"); return; }
 
+  const hold = snapshot && snapshot.my ? (snapshot.my.hold || pendingHoldSeat || "") : (pendingHoldSeat || "");
+  if (!hold) { toast("Bạn chưa chọn ghế"); return; }
+
+  if (inflight.confirm) return;
+  inflight.confirm = true;
+
+  // ✅ UI instant: disable button only, no re-render
   btnConfirm.disabled = true;
 
-  const res = await api({ action: "confirm", seat: myHold, name: me.name, client: me.client });
+  try {
+    const res = await api({ action: "confirm", seat: hold, name: me.name, client: me.client });
 
-  if (!res || !res.ok) {
-    if (res && res.code === "TAKEN") {
-      toast("Ghế đã có người xác nhận");
-      setTimeout(() => location.reload(), 700);
-    } else {
-      toast("Lỗi xác nhận: " + (res?.code || "UNKNOWN"));
+    if (!res || !res.ok) {
+      inflight.confirm = false;
+
+      if (res && res.code === "TAKEN") {
+        toast("Ghế đã có người xác nhận");
+        setTimeout(() => location.reload(), 650);
+      } else {
+        toast("Lỗi xác nhận: " + (res?.code || "UNKNOWN"));
+      }
+
+      btnConfirm.disabled = false;
+      return;
     }
-    btnConfirm.disabled = false;
-    return;
-  }
 
-  applySnapshot(res.data);
-  toast("Đã xác nhận!");
-  renderMainView();
+    applySnapshot(res.data);
+    pendingHoldSeat = "";
+    inflight.confirm = false;
+
+    toast("Đã xác nhận!");
+    patchAllSeats();
+  } catch (e) {
+    inflight.confirm = false;
+    toast("Lỗi mạng khi xác nhận");
+    btnConfirm.disabled = false;
+  }
 }
 
 /********************
  * Polling (live)
+ * ✅ tránh giật: không re-render toàn bộ, chỉ patch, và không override khi đang click
  ********************/
 function startPolling() {
   if (pollTimer) clearInterval(pollTimer);
+
   pollTimer = setInterval(async () => {
+    if (inflight.hold || inflight.confirm) return;
+
     try {
       const res = await api({ action: "snapshot", client: me.client });
       if (res && res.ok) {
         applySnapshot(res.data);
-        renderMainView();
+        if (!appRendered) renderMainViewOnce();
+        else patchAllSeats();
       }
     } catch(e) {}
   }, 900);
@@ -894,7 +1097,7 @@ document.getElementById("btnRename").addEventListener("click", () => {
   if (!snapshot) return;
   openRenameModal();
 });
-btnConfirm.addEventListener("click", confirmSeat);
+btnConfirm.addEventListener("click", confirmSeatFast);
 
 /********************
  * Boot
@@ -906,13 +1109,17 @@ btnConfirm.addEventListener("click", confirmSeat);
   const ok = await loadSnapshotFirst();
   if (!ok) return;
 
+  // ✅ quan trọng: không ép nhập tên khi chưa load xong (đã load xong mới hỏi)
+  if (!appRendered) renderMainViewOnce();
+
   if (me.name) {
-    api({ action: "login", name: me.name, client: me.client, ua: navigator.userAgent || "" }).catch(()=>{});
+    api({ action: "login", name: me.name, client: me.client, ua: navigator.userAgent || "" })
+      .then(res => { if(res && res.ok){ applySnapshot(res.data); patchAllSeats(); } })
+      .catch(()=>{});
   } else {
     openNameModal("");
   }
 
-  renderMainView();
   startPolling();
 })();
 </script>
