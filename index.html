@@ -1123,7 +1123,7 @@ async function confirmFlow(targetSeat){
 
     if (!res || !res.ok) {
       inflight.confirm = false;
-      toast(res?.code === "TAKEN" ? "Ghế đã có người xác nhận" : ("Lỗi xác nhận: " + (res?.code || "UNKNOWN")));
+      toast(res?.code === "TAKEN" ? "Ghế đã có người xác nhận" : ("Lỗi xác nhận, ấn xác nhận lại nha: " + (res?.code || "UNKNOWN")));
 
       try {
         const snap = await api({ action: "snapshot", client: me.client });
