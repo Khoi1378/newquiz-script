@@ -262,6 +262,11 @@
       align-items: stretch;
       margin: 8px 0;
     }
+    /* ✅ Hàng H đặc biệt: 5 ghế (có ghế giữa) */
+    .seatRow.five {
+      grid-template-columns: 1fr 1fr 1fr 1fr 1fr .6fr;
+    }
+
     .aisle {
       border-radius: 14px;
       background: rgba(229,231,235,.45);
@@ -359,6 +364,7 @@
       .seatRow, .seatHeader { gap: 8px; }
       .bus { padding: 10px; }
       .seat .sub { font-size: .73rem; }
+      .seatRow.five { grid-template-columns: 1fr 1fr 1fr 1fr 1fr .6fr; }
     }
   </style>
 </head>
@@ -376,14 +382,14 @@
           <div class="logo">🚌</div>
           <div class="titles">
             <h1 id="appTitle">Đăng ký chỗ ngồi 12A11</h1>
-            <div class="tiny" id="appSub">Xe khách 36 chỗ • hihi</div>
+            <div class="tiny" id="appSub">Xe khách 29 chỗ • Live realtime</div>
           </div>
         </div>
 
         <div class="stats">
           <div class="pill">Người: <strong id="whoName">—</strong></div>
           <div class="pill">Chỗ bạn: <strong id="mySeat">—</strong></div>
-          <div class="pill">Đã đặt: <strong id="confirmedCount">0</strong>/36</div>
+          <div class="pill">Đã đặt: <strong id="confirmedCount">0</strong>/29</div>
           <div class="progressline"><div class="progressfill" id="progressFill"></div></div>
         </div>
       </div>
@@ -439,6 +445,8 @@ const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbz1cw-l4lJaO5F-NzQ
 /********************
  * Utilities
  ********************/
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
 function escapeHtml(s) {
   return String(s ?? "")
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
@@ -540,7 +548,7 @@ async function api(params) {
 /********************
  * Local storage — 30 ngày
  ********************/
-const LS_PREFIX = "seat_12A11_v4::";
+const LS_PREFIX = "seat_12A11_v5::";
 const LS_NAME = LS_PREFIX + "name";
 const LS_CLIENT = LS_PREFIX + "client";
 const LS_TS = LS_PREFIX + "ts";
@@ -569,7 +577,36 @@ function saveLocal() {
 }
 
 /********************
- * App State (FAST)
+ * ✅ Seat layout (29 chỗ)
+ * - Xoá H và I cũ
+ * - Tạo hàng H mới (vị trí cuối, thay cho hàng G cũ) có 5 ghế: H1 H2 H3 H4 H5 (có ghế giữa)
+ * - Các hàng còn lại giữ nguyên tên: A B C D E F
+ ********************/
+const ROWS_LAYOUT = [
+  { label: "A", type: "std" },
+  { label: "B", type: "std" },
+  { label: "C", type: "std" },
+  { label: "D", type: "std" },
+  { label: "E", type: "std" },
+  { label: "F", type: "std" },
+  { label: "H", type: "five" }, // hàng đặc biệt 5 ghế
+];
+
+const SEATS = (() => {
+  const out = [];
+  for (const row of ROWS_LAYOUT) {
+    if (row.type === "std") {
+      for (let i = 1; i <= 4; i++) out.push(row.label + i);
+    } else if (row.type === "five") {
+      for (let i = 1; i <= 5; i++) out.push(row.label + i);
+    }
+  }
+  return out;
+})();
+const TOTAL_SEATS = SEATS.length; // = 29
+
+/********************
+ * App State
  ********************/
 let snapshot = null;
 let seatIndex = new Map();
@@ -581,30 +618,19 @@ const btnConfirm = document.getElementById("btnConfirm");
 const btnConfirmLabel = document.getElementById("btnConfirmLabel");
 const submitHint = document.getElementById("submitHint");
 
-const rows = ["A","B","C","D","E","F","G","H","I"];
-const SEATS = (() => {
-  const out = [];
-  for (const r of rows) for (let i=1;i<=4;i++) out.push(r+i);
-  return out;
-})();
-
 const seatDom = new Map();
 let appRendered = false;
 
-// Local override: click seat -> đỏ đúng ghế NGAY
+// Local override (giảm nhảy chỗ)
 let localHoldSeat = "";
 let localHoldTs = 0;
 
 let inflight = { hold:false, confirm:false };
-
-// ✅ queue confirm nếu user bấm xác nhận lúc hold đang gửi
 let confirmQueued = false;
 let confirmQueuedSeat = "";
 
-// confirm UI state
 let confirmUiState = "ready"; // ready | loading | done
 function setConfirmUiState(state){
-  if (confirmUiState === state) return;
   confirmUiState = state;
   if (state === "loading") btnConfirmLabel.textContent = "⏳ ĐANG XÁC NHẬN...";
   else if (state === "done") btnConfirmLabel.textContent = "✅ ĐÃ XÁC NHẬN";
@@ -617,14 +643,24 @@ function mySeatNow(){
   return (my.confirmed || my.hold || localHoldSeat || "");
 }
 
+function calcConfirmedCount(){
+  let c = 0;
+  for (const id of SEATS) {
+    const s = seatIndex.get(id);
+    if (s && String(s.confirmedBy || "")) c++;
+  }
+  return c;
+}
+
 function updateTopbar() {
   document.getElementById("whoName").textContent = me.name ? me.name : "—";
   const mySeat = mySeatNow();
   document.getElementById("mySeat").textContent = mySeat ? mySeat : "—";
 
-  const cc = snapshot ? Number(snapshot.confirmedCount || 0) : 0;
+  const cc = snapshot ? (Number(snapshot.confirmedCount || 0) || calcConfirmedCount()) : 0;
   document.getElementById("confirmedCount").textContent = String(cc);
-  const pct = snapshot ? Math.round((cc / 36) * 100) : 0;
+
+  const pct = TOTAL_SEATS ? Math.round((cc / TOTAL_SEATS) * 100) : 0;
   document.getElementById("progressFill").style.width = pct + "%";
 }
 
@@ -670,24 +706,20 @@ function classifySeat(seatObj) {
   const holdName = String(seatObj.holdName || "");
   const holdAt = seatObj.holdAt ? Number(seatObj.holdAt) : 0;
 
-  // confirmed
   if (confirmedBy) {
     const nm = confirmedName ? shortNameForSeat(confirmedName) : "Đã đặt";
     return { cls: "confirmed", disabled: true, sub: nm };
   }
 
-  // local override -> chỉ 1 ghế đỏ
   if (localHoldSeat) {
     if (id === localHoldSeat) {
       return { cls: "myhold", disabled: false, sub: "Bạn đang chọn" };
     }
-    // nếu server còn báo ghế cũ holdBy=me -> ép FREE để khỏi 2 ghế đỏ
     if (holdBy === me.client && holdAt && (now - holdAt <= 60*1000 + 5000)) {
       return { cls: "free", disabled: false, sub: "" };
     }
   }
 
-  // hold valid
   if (holdBy && holdAt && (now - holdAt <= 60*1000 + 5000)) {
     if (holdBy === me.client) return { cls: "myhold", disabled: false, sub: "Bạn đang chọn" };
     return { cls: "otherhold", disabled: true, sub: holdName ? shortNameForSeat(holdName) : "Đang chọn" };
@@ -699,6 +731,18 @@ function classifySeat(seatObj) {
 /********************
  * Render once + patch
  ********************/
+function seatButtonHTML_(id){
+  const seatObj = seatIndex.get(id) || { id };
+  const st = classifySeat(seatObj);
+  const disabled = st.disabled || !me.name;
+  return `
+    <button class="seat ${st.cls}" data-seat="${id}" ${disabled ? "disabled" : ""}>
+      <div class="id">${escapeHtml(id)}</div>
+      <div class="sub">${escapeHtml(st.sub || "")}</div>
+    </button>
+  `;
+}
+
 function renderMainViewOnce() {
   updateTopbar();
   showSubmitBar(!!me.name);
@@ -706,7 +750,7 @@ function renderMainViewOnce() {
   content.innerHTML = `
     <div class="card">
       <div class="row1">
-        <p class="vi">Sơ đồ ghế (36 chỗ)</p>
+        <p class="vi">Sơ đồ ghế (${TOTAL_SEATS} chỗ)</p>
         <div class="meta"><span class="idx">LIVE</span></div>
       </div>
 
@@ -736,16 +780,30 @@ function renderMainViewOnce() {
     </div>
   `);
 
-  for (const r of rows) {
-    const ids = [r+"1", r+"2", r+"3", r+"4"];
-    html.push(`<div class="seatRow">`);
-    html.push(seatButtonHTML_(ids[0]));
-    html.push(seatButtonHTML_(ids[1]));
-    html.push(`<div class="aisle" aria-hidden="true"></div>`);
-    html.push(seatButtonHTML_(ids[2]));
-    html.push(seatButtonHTML_(ids[3]));
-    html.push(`<div class="rowTag">${escapeHtml(r)}</div>`);
-    html.push(`</div>`);
+  for (const row of ROWS_LAYOUT) {
+    const r = row.label;
+
+    if (row.type === "std") {
+      const ids = [r+"1", r+"2", r+"3", r+"4"];
+      html.push(`<div class="seatRow">`);
+      html.push(seatButtonHTML_(ids[0]));
+      html.push(seatButtonHTML_(ids[1]));
+      html.push(`<div class="aisle" aria-hidden="true"></div>`);
+      html.push(seatButtonHTML_(ids[2]));
+      html.push(seatButtonHTML_(ids[3]));
+      html.push(`<div class="rowTag">${escapeHtml(r)}</div>`);
+      html.push(`</div>`);
+    } else if (row.type === "five") {
+      const ids = [r+"1", r+"2", r+"3", r+"4", r+"5"];
+      html.push(`<div class="seatRow five">`);
+      html.push(seatButtonHTML_(ids[0]));
+      html.push(seatButtonHTML_(ids[1]));
+      html.push(seatButtonHTML_(ids[2])); // ✅ ghế giữa
+      html.push(seatButtonHTML_(ids[3]));
+      html.push(seatButtonHTML_(ids[4]));
+      html.push(`<div class="rowTag">${escapeHtml(r)}</div>`);
+      html.push(`</div>`);
+    }
   }
 
   bus.innerHTML = html.join("");
@@ -760,18 +818,6 @@ function renderMainViewOnce() {
 
   appRendered = true;
   patchAllSeats();
-}
-
-function seatButtonHTML_(id){
-  const seatObj = seatIndex.get(id) || { id };
-  const st = classifySeat(seatObj);
-  const disabled = st.disabled || !me.name;
-  return `
-    <button class="seat ${st.cls}" data-seat="${id}" ${disabled ? "disabled" : ""}>
-      <div class="id">${escapeHtml(id)}</div>
-      <div class="sub">${escapeHtml(st.sub || "")}</div>
-    </button>
-  `;
 }
 
 function updateSubmitHint(){
@@ -819,12 +865,6 @@ function patchConfirmBar(){
   updateSubmitHint();
 }
 
-function patchAllSeats(){
-  for (const id of SEATS) patchSeat(id);
-  patchConfirmBar();
-  updateTopbar();
-}
-
 function patchSeat(id){
   const dom = seatDom.get(id);
   if (!dom) return;
@@ -845,6 +885,12 @@ function patchSeat(id){
 
   const subText = st.sub || "";
   if (subEl && subEl.textContent !== subText) subEl.textContent = subText;
+}
+
+function patchAllSeats(){
+  for (const id of SEATS) patchSeat(id);
+  patchConfirmBar();
+  updateTopbar();
 }
 
 /********************
@@ -942,11 +988,19 @@ function applySnapshot(data) {
   seatIndex = new Map();
   (snapshot.seats || []).forEach(s => seatIndex.set(String(s.id||"").toUpperCase(), s));
 
-  // nếu server đã ghi hold/confirm -> bỏ local override để đồng bộ
+  // ✅ giảm nhảy chỗ: chỉ bỏ localHoldSeat khi server phản ánh đúng ghế local
   const my = snapshot && snapshot.my ? snapshot.my : null;
-  if (my && (my.hold || my.confirmed)) {
-    localHoldSeat = "";
-    localHoldTs = 0;
+  const srvHold = String(my?.hold || "");
+  const srvConf = String(my?.confirmed || "");
+
+  if (localHoldSeat) {
+    if ((srvHold && srvHold === localHoldSeat) || (srvConf && srvConf === localHoldSeat)) {
+      localHoldSeat = "";
+      localHoldTs = 0;
+    } else if (localHoldTs && (Date.now() - localHoldTs > 6500) && (srvHold || srvConf)) {
+      localHoldSeat = "";
+      localHoldTs = 0;
+    }
   }
 }
 
@@ -976,6 +1030,10 @@ async function loadSnapshotFirst() {
  * Ultra-fast select
  ********************/
 function onSeatClick(e){
+  if (inflight.confirm || confirmQueued) {
+    toast("Đang xác nhận… chờ xíu nha");
+    return;
+  }
   const btn = e.target.closest(".seat");
   if (!btn) return;
   const id = btn.getAttribute("data-seat");
@@ -986,14 +1044,11 @@ function onSeatClick(e){
 async function holdSeatUltraFast(seatId) {
   if (!me.name) { openNameModal(""); return; }
 
-  const seatObj = seatIndex.get(seatId);
-  if (!seatObj) return;
-
+  const seatObj = seatIndex.get(seatId) || { id: seatId };
   const stNow = classifySeat(seatObj);
   if (stNow.cls === "confirmed" || stNow.cls === "otherhold") return;
 
-  // ✅ UI INSTANT: chuyển đỏ ngay ghế vừa bấm, và bỏ đỏ ghế trước ngay
-  const prev = localHoldSeat; // CHỈ prev đỏ local
+  const prev = localHoldSeat;
   localHoldSeat = seatId;
   localHoldTs = Date.now();
 
@@ -1002,7 +1057,6 @@ async function holdSeatUltraFast(seatId) {
   patchConfirmBar();
   updateTopbar();
 
-  // ✅ request id: chỉ nhận response mới nhất
   const reqId = Date.now().toString(16) + Math.random().toString(16).slice(2);
   holdSeatUltraFast._lastReq = reqId;
 
@@ -1010,29 +1064,26 @@ async function holdSeatUltraFast(seatId) {
   try {
     const res = await api({ action: "hold", seat: seatId, name: me.name, client: me.client });
 
-    if (holdSeatUltraFast._lastReq !== reqId) return; // response cũ
+    if (holdSeatUltraFast._lastReq !== reqId) return;
 
     if (!res || !res.ok) {
       inflight.hold = false;
 
-      if (res && (res.code === "TAKEN" || res.code === "HELD")) {
-        toast(res.code === "TAKEN" ? "Ghế đã có người xác nhận" : "Ghế đang có người chọn");
-      } else {
-        toast("Lỗi giữ chỗ: " + (res?.code || "UNKNOWN"));
-      }
+      toast(
+        res?.code === "TAKEN" ? "Ghế đã có người xác nhận" :
+        res?.code === "HELD" ? "Ghế đang có người chọn" :
+        ("Lỗi giữ chỗ: " + (res?.code || "UNKNOWN"))
+      );
 
-      // refresh snapshot để đúng trạng thái
       try {
         const snap = await api({ action: "snapshot", client: me.client });
         if (snap && snap.ok) applySnapshot(snap.data);
       } catch(e){}
 
-      // clear local nếu fail
       localHoldSeat = "";
       localHoldTs = 0;
       patchAllSeats();
 
-      // nếu đang queue confirm thì hủy
       confirmQueued = false;
       confirmQueuedSeat = "";
       patchConfirmBar();
@@ -1044,7 +1095,6 @@ async function holdSeatUltraFast(seatId) {
 
     patchAllSeats();
 
-    // ✅ nếu user đã bấm xác nhận trong lúc đang hold -> chạy tiếp confirm
     if (confirmQueued) {
       const target = confirmQueuedSeat || (snapshot?.my?.hold || localHoldSeat || "");
       confirmQueued = false;
@@ -1074,9 +1124,7 @@ async function holdSeatUltraFast(seatId) {
 }
 
 /********************
- * ✅ Confirm flow (fix 2 vấn đề)
- * 1) Bấm confirm quá nhanh sau khi chọn: sẽ TỰ hold lại (nếu cần) rồi mới confirm
- * 2) Đã xác nhận vẫn đổi chỗ được: chọn ghế khác -> confirm lại
+ * Confirm: nhanh cảm giác (watch snapshot)
  ********************/
 function seatHasMyHoldNow(seatId){
   const s = seatIndex.get(seatId);
@@ -1085,26 +1133,84 @@ function seatHasMyHoldNow(seatId){
   return String(s.holdBy||"") === me.client && s.holdAt && (now - Number(s.holdAt) <= 60*1000 + 5000);
 }
 
+function finalizeConfirmSuccess(targetSeat){
+  inflight.confirm = false;
+  confirmQueued = false;
+  confirmQueuedSeat = "";
+  localHoldSeat = "";
+  localHoldTs = 0;
+
+  setConfirmUiState("done");
+  toast("Đã xác nhận!");
+  patchAllSeats();
+}
+
+async function confirmWatchLoop(reqId, targetSeat){
+  const start = Date.now();
+  while (inflight.confirm && confirmFlow._lastReq === reqId && (Date.now() - start) < 12000) {
+    await sleep(650);
+    if (!inflight.confirm || confirmFlow._lastReq !== reqId) return;
+
+    try {
+      const snap = await api({ action: "snapshot", client: me.client });
+      if (!inflight.confirm || confirmFlow._lastReq !== reqId) return;
+
+      if (snap && snap.ok) {
+        applySnapshot(snap.data);
+
+        const my = snapshot && snapshot.my ? snapshot.my : {};
+        const conf = String(my.confirmed || "");
+        if (conf === targetSeat) {
+          finalizeConfirmSuccess(targetSeat);
+          return;
+        }
+
+        const s = seatIndex.get(targetSeat);
+        if (s && s.confirmedBy && String(s.confirmedBy) !== me.client) {
+          inflight.confirm = false;
+          toast("Ghế đã có người xác nhận");
+          patchAllSeats();
+          return;
+        }
+      }
+    } catch(e){}
+  }
+
+  if (inflight.confirm && confirmFlow._lastReq === reqId) {
+    inflight.confirm = false;
+    toast("Xác nhận đang chậm, hệ thống sẽ tự cập nhật…");
+    patchAllSeats();
+  }
+}
+
 async function confirmFlow(targetSeat){
   if (!me.name) return;
   if (!targetSeat) { toast("Bạn chưa chọn ghế"); return; }
   if (inflight.confirm) return;
 
+  const reqId = Date.now().toString(16) + Math.random().toString(16).slice(2);
+  confirmFlow._lastReq = reqId;
+
   inflight.confirm = true;
-  patchConfirmBar(); // -> loading
+  patchConfirmBar();
+
+  confirmWatchLoop(reqId, targetSeat);
 
   try {
-    // ✅ nếu server chưa kịp hold ghế (do bấm confirm quá nhanh) -> hold lại trước
     if (!seatHasMyHoldNow(targetSeat)) {
       inflight.hold = true;
       const hres = await api({ action: "hold", seat: targetSeat, name: me.name, client: me.client });
       inflight.hold = false;
 
+      if (confirmFlow._lastReq !== reqId) return;
+
       if (!hres || !hres.ok) {
         inflight.confirm = false;
-        toast(hres?.code === "TAKEN" ? "Ghế đã có người xác nhận" :
-              hres?.code === "HELD" ? "Ghế đang có người chọn" :
-              ("Không giữ được ghế: " + (hres?.code || "UNKNOWN")));
+        toast(
+          hres?.code === "TAKEN" ? "Ghế đã có người xác nhận" :
+          hres?.code === "HELD" ? "Ghế đang có người chọn" :
+          ("Không giữ được ghế: " + (hres?.code || "UNKNOWN"))
+        );
 
         try {
           const snap = await api({ action: "snapshot", client: me.client });
@@ -1115,34 +1221,40 @@ async function confirmFlow(targetSeat){
       }
 
       applySnapshot(hres.data);
-      patchAllSeats(); // cập nhật UI ngay (vẫn loading trên nút)
-    }
-
-    // ✅ confirm (đổi chỗ cũng dùng confirm luôn)
-    const res = await api({ action: "confirm", seat: targetSeat, name: me.name, client: me.client });
-
-    if (!res || !res.ok) {
-      inflight.confirm = false;
-      toast(res?.code === "TAKEN" ? "Ghế đã có người xác nhận" : ("Lỗi xác nhận, ấn xác nhận lại nha: " + (res?.code || "UNKNOWN")));
-
-      try {
-        const snap = await api({ action: "snapshot", client: me.client });
-        if (snap && snap.ok) applySnapshot(snap.data);
-      } catch(e){}
       patchAllSeats();
-      return;
     }
 
-    applySnapshot(res.data);
-    localHoldSeat = "";
-    localHoldTs = 0;
+    api({ action: "confirm", seat: targetSeat, name: me.name, client: me.client })
+      .then(res => {
+        if (confirmFlow._lastReq !== reqId) return;
+        if (!inflight.confirm) return;
 
-    inflight.confirm = false;
-    toast("Đã xác nhận!");
-    patchAllSeats();
+        if (res && res.ok) {
+          applySnapshot(res.data);
+          const my = snapshot && snapshot.my ? snapshot.my : {};
+          if (String(my.confirmed || "") === targetSeat) {
+            finalizeConfirmSuccess(targetSeat);
+          } else {
+            patchAllSeats();
+          }
+        } else {
+          inflight.confirm = false;
+          toast("Lỗi xác nhận: " + (res?.code || "UNKNOWN"));
+          patchAllSeats();
+        }
+      })
+      .catch(() => {
+        if (confirmFlow._lastReq !== reqId) return;
+        if (!inflight.confirm) return;
+        inflight.confirm = false;
+        toast("Lỗi mạng khi xác nhận");
+        patchAllSeats();
+      });
+
   } catch (e) {
+    if (confirmFlow._lastReq !== reqId) return;
     inflight.confirm = false;
-    toast("Lỗi mạng khi xác nhận");
+    toast("Lỗi khi xác nhận");
     patchAllSeats();
   }
 }
@@ -1154,16 +1266,12 @@ function onConfirmClick(){
   const confirmed = String(my.confirmed || "");
   const hold = String(my.hold || localHoldSeat || "");
 
-  // nếu đang loading / queue -> bỏ
   if (inflight.confirm) return;
-
-  // nếu đã confirmed và không chọn ghế khác -> thôi
   if (confirmed && (!hold || hold === confirmed)) return;
 
   const target = hold || "";
   if (!target) { toast("Bạn chưa chọn ghế"); return; }
 
-  // ✅ nếu hold đang gửi -> queue confirm và hiển thị "đang xác nhận"
   if (inflight.hold) {
     confirmQueued = true;
     confirmQueuedSeat = target;
@@ -1202,6 +1310,7 @@ document.getElementById("btnScrollTop").addEventListener("click", () => {
 });
 document.getElementById("btnRename").addEventListener("click", () => {
   if (!snapshot) return;
+  if (inflight.confirm || confirmQueued) { toast("Đang xác nhận…"); return; }
   openRenameModal();
 });
 btnConfirm.addEventListener("click", onConfirmClick);
