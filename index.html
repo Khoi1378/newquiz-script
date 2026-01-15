@@ -726,7 +726,7 @@ function renderMainViewOnce() {
   html.push(`
     <div class="busTop">
       <div class="driver">👨‍✈️ TÀI XẾ</div>
-      <div class="door">CỬA RA VÀO 🚪</div>
+      <div class="door">CỬA🚪</div>
     </div>
 
     <div class="seatHeader">
@@ -784,7 +784,7 @@ function updateSubmitHint(){
     return;
   }
   if (confirmed && (!hold || hold === confirmed)) {
-    submitHint.textContent = "Bạn đã xác nhận. Muốn đổi chỗ: chọn ghế khác rồi bấm xác nhận.";
+    submitHint.textContent = "Đã xác nhận. Muốn đổi chỗ: chọn ghế khác rồi bấm xác nhận.";
   } else {
     submitHint.textContent = "Bấm ghế để chọn • Bấm “Xác nhận chỗ”";
   }
