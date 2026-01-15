@@ -387,7 +387,7 @@
         </div>
 
         <div class="stats">
-          <div class="pill">Người: <strong id="whoName">—</strong></div>
+          <div class="pill">Tên: <strong id="whoName">—</strong></div>
           <div class="pill">Chỗ bạn: <strong id="mySeat">—</strong></div>
           <div class="pill">Đã đặt: <strong id="confirmedCount">0</strong>/29</div>
           <div class="progressline"><div class="progressfill" id="progressFill"></div></div>
@@ -411,7 +411,7 @@
 
   <div class="modal-backdrop" id="nameBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="nameTitle">
-      <h3 id="nameTitle">Nhập TÊN để đăng nhập</h3>
+      <h3 id="nameTitle">Nhập TÊN để chọn chỗ ngồi</h3>
       <p>Tên là <b>bắt buộc</b>. Nhập tên thật nha</p>
       <div style="display:grid; gap:10px; margin-top:10px;">
         <input id="nameInput" class="input" placeholder="VD: Khôi" autocomplete="name" maxlength="24" />
@@ -424,7 +424,7 @@
 
   <div class="modal-backdrop" id="renameBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
-      <h3 id="renameTitle">Đổi tên đăng nhập?</h3>
+      <h3 id="renameTitle">Đổi tên?</h3>
       <p>Tên mới sẽ cập nhật lên ghế bạn đang giữ / đã xác nhận.</p>
       <div style="display:grid; gap:10px; margin-top:10px;">
         <input id="renameInput" class="input" placeholder="Nhập tên mới..." maxlength="24" />
@@ -583,7 +583,7 @@ function saveLocal() {
  * - Các hàng còn lại giữ nguyên tên: A B C D E F
  ********************/
 const ROWS_LAYOUT = [
-  { label: "A", type: "std" },
+  { label: "A", type: "top" },
   { label: "B", type: "std" },
   { label: "C", type: "std" },
   { label: "D", type: "std" },
@@ -595,16 +595,39 @@ const ROWS_LAYOUT = [
 
 const SEATS = (() => {
   const out = [];
+  const DISABLED_SEATS = new Set(); // ghế không chọn được (HDV)
+
   for (const row of ROWS_LAYOUT) {
     if (row.type === "std") {
-      for (let i = 1; i <= 4; i++) out.push(row.label + i);
+      for (let i = 1; i <= 4; i++) {
+        out.push(row.label + i);
+      }
+
     } else if (row.type === "five") {
-      for (let i = 1; i <= 5; i++) out.push(row.label + i);
+      for (let i = 1; i <= 5; i++) {
+        out.push(row.label + i);
+      }
+
+    } else if (row.type === "top") {
+      // A1, A2 là HDV (không chọn)
+      for (let i = 1; i <= 4; i++) {
+        const seat = row.label + i;
+        out.push(seat);
+
+        if (i <= 2) {
+          DISABLED_SEATS.add(seat); // HDV
+        }
+      }
     }
   }
-  return out;
+
+  return {
+    seats: out,
+    disabled: DISABLED_SEATS
+  };
 })();
-const TOTAL_SEATS = SEATS.length; // = 29
+
+const TOTAL_SEATS = SEATS.seats.length;
 
 /********************
  * App State
