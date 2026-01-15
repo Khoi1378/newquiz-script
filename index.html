@@ -376,7 +376,7 @@
           <div class="logo">🚌</div>
           <div class="titles">
             <h1 id="appTitle">Đăng ký chỗ ngồi 12A11</h1>
-            <div class="tiny" id="appSub">Xe khách 36 chỗ • Live realtime</div>
+            <div class="tiny" id="appSub">Xe khách 36 chỗ • hihi</div>
           </div>
         </div>
 
@@ -394,7 +394,9 @@
 
   <div class="submitbar" id="submitBar" style="display:none;">
     <div class="submitwrap">
-      <button class="btn btn-primary btn-big" id="btnConfirm">✅ XÁC NHẬN CHỖ</button>
+      <button class="btn btn-primary btn-big" id="btnConfirm">
+        <span id="btnConfirmLabel">✅ XÁC NHẬN CHỖ</span>
+      </button>
       <div class="subhint" id="submitHint">Bấm ghế để chọn • Bấm “Xác nhận chỗ” để chốt</div>
     </div>
   </div>
@@ -404,7 +406,7 @@
   <div class="modal-backdrop" id="nameBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="nameTitle">
       <h3 id="nameTitle">Nhập TÊN để đăng nhập</h3>
-      <p>Tên là <b>bắt buộc</b>. Không cần nhập lại nếu đã từng đăng nhập trên thiết bị này.</p>
+      <p>Tên là <b>bắt buộc</b>. Nhập tên thật nha</p>
       <div style="display:grid; gap:10px; margin-top:10px;">
         <input id="nameInput" class="input" placeholder="VD: Khôi" autocomplete="name" maxlength="24" />
         <div class="modal-actions">
@@ -455,7 +457,6 @@ function normalizeName(s){
   return String(s||"").trim().replace(/\s+/g," ");
 }
 function shortNameForSeat(full){
-  // "Hiểu Gia" -> "H Gia"
   const parts = normalizeName(full).split(" ").filter(Boolean);
   if (!parts.length) return "";
   if (parts.length === 1) return parts[0];
@@ -539,7 +540,7 @@ async function api(params) {
 /********************
  * Local storage — 30 ngày
  ********************/
-const LS_PREFIX = "seat_12A11_v3::";
+const LS_PREFIX = "seat_12A11_v4::";
 const LS_NAME = LS_PREFIX + "name";
 const LS_CLIENT = LS_PREFIX + "client";
 const LS_TS = LS_PREFIX + "ts";
@@ -577,6 +578,8 @@ let pollTimer = null;
 const content = document.getElementById("content");
 const submitBar = document.getElementById("submitBar");
 const btnConfirm = document.getElementById("btnConfirm");
+const btnConfirmLabel = document.getElementById("btnConfirmLabel");
+const submitHint = document.getElementById("submitHint");
 
 const rows = ["A","B","C","D","E","F","G","H","I"];
 const SEATS = (() => {
@@ -585,17 +588,28 @@ const SEATS = (() => {
   return out;
 })();
 
-const seatDom = new Map(); // id -> {btn, subEl}
+const seatDom = new Map();
 let appRendered = false;
 
-// ✅ Local UI hold (để click A là lên A NGAY, và chỉ 1 ghế đỏ)
-//   server có thể chưa kịp đổi, nhưng UI luôn theo click cuối.
+// Local override: click seat -> đỏ đúng ghế NGAY
 let localHoldSeat = "";
 let localHoldTs = 0;
 
-// inflight
 let inflight = { hold:false, confirm:false };
 
+// ✅ queue confirm nếu user bấm xác nhận lúc hold đang gửi
+let confirmQueued = false;
+let confirmQueuedSeat = "";
+
+// confirm UI state
+let confirmUiState = "ready"; // ready | loading | done
+function setConfirmUiState(state){
+  if (confirmUiState === state) return;
+  confirmUiState = state;
+  if (state === "loading") btnConfirmLabel.textContent = "⏳ ĐANG XÁC NHẬN...";
+  else if (state === "done") btnConfirmLabel.textContent = "✅ ĐÃ XÁC NHẬN";
+  else btnConfirmLabel.textContent = "✅ XÁC NHẬN CHỖ";
+}
 function showSubmitBar(show) { submitBar.style.display = show ? "" : "none"; }
 
 function mySeatNow(){
@@ -645,8 +659,6 @@ function showExecErrorView(title, detail, extra="") {
 
 /********************
  * Seat classification
- * ✅ RULE: nếu localHoldSeat đang có -> UI chỉ cho GHẾ localHoldSeat là myhold
- *         ghế holdBy==me.client cũ sẽ bị coi là free ngay lập tức (tránh 2 ghế đỏ)
  ********************/
 function classifySeat(seatObj) {
   const now = snapshot ? Number(snapshot.ts || Date.now()) : Date.now();
@@ -664,12 +676,12 @@ function classifySeat(seatObj) {
     return { cls: "confirmed", disabled: true, sub: nm };
   }
 
-  // ✅ local hold overrides everything (for super-fast UI)
+  // local override -> chỉ 1 ghế đỏ
   if (localHoldSeat) {
     if (id === localHoldSeat) {
       return { cls: "myhold", disabled: false, sub: "Bạn đang chọn" };
     }
-    // if server still says old seat is held by me -> force FREE visually
+    // nếu server còn báo ghế cũ holdBy=me -> ép FREE để khỏi 2 ghế đỏ
     if (holdBy === me.client && holdAt && (now - holdAt <= 60*1000 + 5000)) {
       return { cls: "free", disabled: false, sub: "" };
     }
@@ -681,7 +693,6 @@ function classifySeat(seatObj) {
     return { cls: "otherhold", disabled: true, sub: holdName ? shortNameForSeat(holdName) : "Đang chọn" };
   }
 
-  // free
   return { cls: "free", disabled: false, sub: "" };
 }
 
@@ -714,8 +725,8 @@ function renderMainViewOnce() {
 
   html.push(`
     <div class="busTop">
-      <div class="driver">👨‍✈️ TÀI XẾ (không chọn)</div>
-      <div class="door">CỬA 🚪</div>
+      <div class="driver">👨‍✈️ TÀI XẾ</div>
+      <div class="door">CỬA RA VÀO 🚪</div>
     </div>
 
     <div class="seatHeader">
@@ -763,15 +774,49 @@ function seatButtonHTML_(id){
   `;
 }
 
+function updateSubmitHint(){
+  const my = snapshot && snapshot.my ? snapshot.my : { confirmed:"", hold:"" };
+  const confirmed = String(my.confirmed || "");
+  const hold = String(my.hold || localHoldSeat || "");
+
+  if (confirmUiState === "loading") {
+    submitHint.textContent = "Đang xác nhận… vui lòng chờ";
+    return;
+  }
+  if (confirmed && (!hold || hold === confirmed)) {
+    submitHint.textContent = "Bạn đã xác nhận. Muốn đổi chỗ: chọn ghế khác rồi bấm xác nhận.";
+  } else {
+    submitHint.textContent = "Bấm ghế để chọn • Bấm “Xác nhận chỗ”";
+  }
+}
+
 function patchConfirmBar(){
   const my = snapshot && snapshot.my ? snapshot.my : { confirmed:"", hold:"" };
-  const alreadyConfirmed = !!my.confirmed;
+  const confirmed = String(my.confirmed || "");
+  const hold = String(my.hold || localHoldSeat || "");
 
-  const hold = (my.hold || localHoldSeat || "");
-  const canConfirm = !!(me.name && hold && !alreadyConfirmed);
+  const changing = !!(confirmed && hold && hold !== confirmed);
+  const canPress = !!(me.name && hold && (changing || !confirmed));
 
-  btnConfirm.disabled = !canConfirm;
   showSubmitBar(!!me.name);
+
+  if (inflight.confirm || confirmQueued) {
+    setConfirmUiState("loading");
+    btnConfirm.disabled = true;
+    updateSubmitHint();
+    return;
+  }
+
+  if (confirmed && !changing) {
+    setConfirmUiState("done");
+    btnConfirm.disabled = true;
+    updateSubmitHint();
+    return;
+  }
+
+  setConfirmUiState("ready");
+  btnConfirm.disabled = !canPress;
+  updateSubmitHint();
 }
 
 function patchAllSeats(){
@@ -897,7 +942,7 @@ function applySnapshot(data) {
   seatIndex = new Map();
   (snapshot.seats || []).forEach(s => seatIndex.set(String(s.id||"").toUpperCase(), s));
 
-  // ✅ nếu server đã ghi hold/confirm -> bỏ local override để đồng bộ
+  // nếu server đã ghi hold/confirm -> bỏ local override để đồng bộ
   const my = snapshot && snapshot.my ? snapshot.my : null;
   if (my && (my.hold || my.confirmed)) {
     localHoldSeat = "";
@@ -928,7 +973,7 @@ async function loadSnapshotFirst() {
 }
 
 /********************
- * ✅ Super-fast select (click A -> đỏ đúng A NGAY, không 2 ghế đỏ)
+ * Ultra-fast select
  ********************/
 function onSeatClick(e){
   const btn = e.target.closest(".seat");
@@ -947,15 +992,12 @@ async function holdSeatUltraFast(seatId) {
   const stNow = classifySeat(seatObj);
   if (stNow.cls === "confirmed" || stNow.cls === "otherhold") return;
 
-  // ✅ LOCAL UI FIRST (instant)
-  const prev = localHoldSeat || (snapshot && snapshot.my ? String(snapshot.my.hold || "") : "");
+  // ✅ UI INSTANT: chuyển đỏ ngay ghế vừa bấm, và bỏ đỏ ghế trước ngay
+  const prev = localHoldSeat; // CHỈ prev đỏ local
   localHoldSeat = seatId;
   localHoldTs = Date.now();
 
-  // update topbar/confirm instantly
-  if (snapshot && snapshot.my) snapshot.my.hold = seatId;
-
-  if (prev && prev !== seatId) patchSeat(prev); // sẽ bị force free ngay
+  if (prev && prev !== seatId) patchSeat(prev);
   patchSeat(seatId);
   patchConfirmBar();
   updateTopbar();
@@ -968,14 +1010,13 @@ async function holdSeatUltraFast(seatId) {
   try {
     const res = await api({ action: "hold", seat: seatId, name: me.name, client: me.client });
 
-    if (holdSeatUltraFast._lastReq !== reqId) return; // response cũ, bỏ qua
+    if (holdSeatUltraFast._lastReq !== reqId) return; // response cũ
 
     if (!res || !res.ok) {
       inflight.hold = false;
 
       if (res && (res.code === "TAKEN" || res.code === "HELD")) {
         toast(res.code === "TAKEN" ? "Ghế đã có người xác nhận" : "Ghế đang có người chọn");
-        if (res.code === "TAKEN") setTimeout(() => location.reload(), 650);
       } else {
         toast("Lỗi giữ chỗ: " + (res?.code || "UNKNOWN"));
       }
@@ -986,25 +1027,37 @@ async function holdSeatUltraFast(seatId) {
         if (snap && snap.ok) applySnapshot(snap.data);
       } catch(e){}
 
-      // clear local override nếu thất bại (tránh kẹt đỏ)
+      // clear local nếu fail
       localHoldSeat = "";
       localHoldTs = 0;
       patchAllSeats();
+
+      // nếu đang queue confirm thì hủy
+      confirmQueued = false;
+      confirmQueuedSeat = "";
+      patchConfirmBar();
       return;
     }
 
     applySnapshot(res.data);
     inflight.hold = false;
 
-    // server truth
     patchAllSeats();
+
+    // ✅ nếu user đã bấm xác nhận trong lúc đang hold -> chạy tiếp confirm
+    if (confirmQueued) {
+      const target = confirmQueuedSeat || (snapshot?.my?.hold || localHoldSeat || "");
+      confirmQueued = false;
+      confirmQueuedSeat = "";
+      if (target) confirmFlow(target);
+      else patchConfirmBar();
+    }
   } catch (e) {
     if (holdSeatUltraFast._lastReq !== reqId) return;
-    inflight.hold = false;
 
+    inflight.hold = false;
     toast("Lỗi mạng khi giữ chỗ");
 
-    // clear local override nếu lỗi mạng lâu (tránh kẹt)
     localHoldSeat = "";
     localHoldTs = 0;
 
@@ -1013,37 +1066,70 @@ async function holdSeatUltraFast(seatId) {
       if (snap && snap.ok) applySnapshot(snap.data);
     } catch(e){}
     patchAllSeats();
+
+    confirmQueued = false;
+    confirmQueuedSeat = "";
+    patchConfirmBar();
   }
 }
 
-async function confirmSeatFast() {
+/********************
+ * ✅ Confirm flow (fix 2 vấn đề)
+ * 1) Bấm confirm quá nhanh sau khi chọn: sẽ TỰ hold lại (nếu cần) rồi mới confirm
+ * 2) Đã xác nhận vẫn đổi chỗ được: chọn ghế khác -> confirm lại
+ ********************/
+function seatHasMyHoldNow(seatId){
+  const s = seatIndex.get(seatId);
+  if (!s) return false;
+  const now = snapshot ? Number(snapshot.ts || Date.now()) : Date.now();
+  return String(s.holdBy||"") === me.client && s.holdAt && (now - Number(s.holdAt) <= 60*1000 + 5000);
+}
+
+async function confirmFlow(targetSeat){
   if (!me.name) return;
-
-  const my = snapshot && snapshot.my ? snapshot.my : { confirmed:"", hold:"" };
-  if (my.confirmed) return;
-
-  const hold = (my.hold || localHoldSeat || "");
-  if (!hold) { toast("Bạn chưa chọn ghế"); return; }
-
+  if (!targetSeat) { toast("Bạn chưa chọn ghế"); return; }
   if (inflight.confirm) return;
-  inflight.confirm = true;
 
-  btnConfirm.disabled = true; // UI instant
+  inflight.confirm = true;
+  patchConfirmBar(); // -> loading
 
   try {
-    const res = await api({ action: "confirm", seat: hold, name: me.name, client: me.client });
+    // ✅ nếu server chưa kịp hold ghế (do bấm confirm quá nhanh) -> hold lại trước
+    if (!seatHasMyHoldNow(targetSeat)) {
+      inflight.hold = true;
+      const hres = await api({ action: "hold", seat: targetSeat, name: me.name, client: me.client });
+      inflight.hold = false;
+
+      if (!hres || !hres.ok) {
+        inflight.confirm = false;
+        toast(hres?.code === "TAKEN" ? "Ghế đã có người xác nhận" :
+              hres?.code === "HELD" ? "Ghế đang có người chọn" :
+              ("Không giữ được ghế: " + (hres?.code || "UNKNOWN")));
+
+        try {
+          const snap = await api({ action: "snapshot", client: me.client });
+          if (snap && snap.ok) applySnapshot(snap.data);
+        } catch(e){}
+        patchAllSeats();
+        return;
+      }
+
+      applySnapshot(hres.data);
+      patchAllSeats(); // cập nhật UI ngay (vẫn loading trên nút)
+    }
+
+    // ✅ confirm (đổi chỗ cũng dùng confirm luôn)
+    const res = await api({ action: "confirm", seat: targetSeat, name: me.name, client: me.client });
 
     if (!res || !res.ok) {
       inflight.confirm = false;
+      toast(res?.code === "TAKEN" ? "Ghế đã có người xác nhận" : ("Lỗi xác nhận: " + (res?.code || "UNKNOWN")));
 
-      if (res && res.code === "TAKEN") {
-        toast("Ghế đã có người xác nhận");
-        setTimeout(() => location.reload(), 650);
-      } else {
-        toast("Lỗi xác nhận: " + (res?.code || "UNKNOWN"));
-      }
-
-      btnConfirm.disabled = false;
+      try {
+        const snap = await api({ action: "snapshot", client: me.client });
+        if (snap && snap.ok) applySnapshot(snap.data);
+      } catch(e){}
+      patchAllSeats();
       return;
     }
 
@@ -1057,19 +1143,45 @@ async function confirmSeatFast() {
   } catch (e) {
     inflight.confirm = false;
     toast("Lỗi mạng khi xác nhận");
-    btnConfirm.disabled = false;
+    patchAllSeats();
   }
+}
+
+function onConfirmClick(){
+  if (!me.name) { openNameModal(""); return; }
+
+  const my = snapshot && snapshot.my ? snapshot.my : { confirmed:"", hold:"" };
+  const confirmed = String(my.confirmed || "");
+  const hold = String(my.hold || localHoldSeat || "");
+
+  // nếu đang loading / queue -> bỏ
+  if (inflight.confirm) return;
+
+  // nếu đã confirmed và không chọn ghế khác -> thôi
+  if (confirmed && (!hold || hold === confirmed)) return;
+
+  const target = hold || "";
+  if (!target) { toast("Bạn chưa chọn ghế"); return; }
+
+  // ✅ nếu hold đang gửi -> queue confirm và hiển thị "đang xác nhận"
+  if (inflight.hold) {
+    confirmQueued = true;
+    confirmQueuedSeat = target;
+    patchConfirmBar();
+    return;
+  }
+
+  confirmFlow(target);
 }
 
 /********************
  * Polling (live)
- * ✅ không giật + không override khi đang bấm/đang gửi hold
  ********************/
 function startPolling() {
   if (pollTimer) clearInterval(pollTimer);
 
   pollTimer = setInterval(async () => {
-    if (inflight.hold || inflight.confirm) return;
+    if (inflight.hold || inflight.confirm || confirmQueued) return;
 
     try {
       const res = await api({ action: "snapshot", client: me.client });
@@ -1092,7 +1204,7 @@ document.getElementById("btnRename").addEventListener("click", () => {
   if (!snapshot) return;
   openRenameModal();
 });
-btnConfirm.addEventListener("click", confirmSeatFast);
+btnConfirm.addEventListener("click", onConfirmClick);
 
 /********************
  * Boot
