@@ -380,7 +380,7 @@
         </div>
 
         <div class="stats">
-          <div class="pill">Người: <strong id="whoName">—</strong></div>
+          <div class="pill">Tên: <strong id="whoName">—</strong></div>
           <div class="pill">Chỗ bạn: <strong id="mySeat">—</strong></div>
           <div class="pill">Đã đặt: <strong id="confirmedCount">0</strong>/29</div>
           <div class="progressline"><div class="progressfill" id="progressFill"></div></div>
@@ -405,7 +405,7 @@
   <div class="modal-backdrop" id="nameBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="nameTitle">
       <h3 id="nameTitle">Nhập TÊN để đăng nhập</h3>
-      <p>Tên là <b>bắt buộc</b>. Nhập tên thật nha</p>
+      <p>Tên là <b>bắt buộc</b>. Nhập tên thật hoặc biệt danh mà ai cũng biết nha.</p>
       <div style="display:grid; gap:10px; margin-top:10px;">
         <input id="nameInput" class="input" placeholder="VD: Khôi" autocomplete="name" maxlength="24" />
         <div class="modal-actions">
@@ -543,8 +543,8 @@ function saveLocal(){
 }
 
 const FIXED_SEATS=new Map([
-  ["A1","HDV (Chỗ của HVD)"],
-  ["A2","HDV (Chỗ của HVD)"],
+  ["A1","HDV"],
+  ["A2","HDV"],
   ["F3","B Long"],
   ["F4","B Long"],
 ]);
