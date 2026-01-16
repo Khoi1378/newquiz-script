@@ -262,16 +262,27 @@
       align-items: stretch;
       margin: 8px 0;
     }
-    /* ✅ Hàng H đặc biệt: 5 ghế (có ghế giữa) */
     .seatRow.five {
       grid-template-columns: 1fr 1fr 1fr 1fr 1fr .6fr;
     }
 
     .aisle {
       border-radius: 14px;
+      background: transparent;
+      border: 0;
+      position: relative;
+      overflow: visible;
+    }
+    .aisle::before{
+      content:"";
+      position:absolute;
+      left:0; right:0;
+      top:-8px; bottom:-8px;
+      border-radius: 14px;
       background: rgba(229,231,235,.45);
       border: 1px solid rgba(229,231,235,.9);
     }
+
     .rowTag {
       display:flex; align-items:center; justify-content:flex-end;
       font-weight: 950; color: #111827;
@@ -333,6 +344,8 @@
     }
     .seat[disabled] { opacity: .95; transform:none !important; }
 
+    .seat.pairF34 { grid-column: 4 / span 2; }
+
     .legendBar{
       display:flex; gap:10px; flex-wrap:wrap;
       margin-top:10px;
@@ -352,6 +365,7 @@
       box-shadow: 0 10px 22px rgba(0,0,0,.06);
       flex: 0 0 auto;
     }
+    .dot.free { background: rgba(34,197,94,.75); }
     .dot.confirmed { background: rgba(156,163,175,.70); }
     .dot.myhold { background: rgba(251,113,133,.70); }
     .dot.otherhold { background: rgba(245,158,11,.80); }
@@ -365,6 +379,7 @@
       .bus { padding: 10px; }
       .seat .sub { font-size: .73rem; }
       .seatRow.five { grid-template-columns: 1fr 1fr 1fr 1fr 1fr .6fr; }
+      .aisle::before{ top:-8px; bottom:-8px; }
     }
   </style>
 </head>
@@ -437,14 +452,8 @@
   </div>
 
 <script>
-/********************
- * ✅ ĐỔI LINK EXEC Ở ĐÂY
- ********************/
 const GAS_EXEC_URL = "https://script.google.com/macros/s/AKfycbz1cw-l4lJaO5F-NzQqlehJ1v8PGXaw4nK0yMe-F90Z5b2EMnBdmI-UMG67LYbzGijLyg/exec";
 
-/********************
- * Utilities
- ********************/
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 function escapeHtml(s) {
@@ -486,9 +495,6 @@ function preventZoom() {
   }, { passive: false });
 }
 
-/********************
- * JSONP + fetch fallback
- ********************/
 function buildUrl(params) {
   const u = new URL(GAS_EXEC_URL);
   Object.entries(params).forEach(([k,v]) => u.searchParams.set(k, v));
@@ -545,9 +551,6 @@ async function api(params) {
   }
 }
 
-/********************
- * Local storage — 30 ngày
- ********************/
 const LS_PREFIX = "seat_12A11_v5::";
 const LS_NAME = LS_PREFIX + "name";
 const LS_CLIENT = LS_PREFIX + "client";
@@ -576,12 +579,11 @@ function saveLocal() {
   } catch(e) {}
 }
 
-/********************
- * ✅ Seat layout (29 chỗ)
- * - Xoá H và I cũ
- * - Tạo hàng H mới (vị trí cuối, thay cho hàng G cũ) có 5 ghế: H1 H2 H3 H4 H5 (có ghế giữa)
- * - Các hàng còn lại giữ nguyên tên: A B C D E F
- ********************/
+const FIXED_SEATS = new Map([
+  ["A1", "HDV (Chỗ của HVD)"],
+  ["A2", "HDV (Chỗ của HVD)"],
+]);
+
 const ROWS_LAYOUT = [
   { label: "A", type: "std" },
   { label: "B", type: "std" },
@@ -590,7 +592,7 @@ const ROWS_LAYOUT = [
   { label: "E", type: "std" },
   { label: "F", type: "std" },
   { label: "G", type: "std" },
-  { label: "H", type: "five" }, // hàng đặc biệt 5 ghế
+  { label: "H", type: "five" },
 ];
 
 const SEATS = (() => {
@@ -604,11 +606,8 @@ const SEATS = (() => {
   }
   return out;
 })();
-const TOTAL_SEATS = SEATS.length; // = 29
+const TOTAL_SEATS = SEATS.length;
 
-/********************
- * App State
- ********************/
 let snapshot = null;
 let seatIndex = new Map();
 let pollTimer = null;
@@ -622,7 +621,6 @@ const submitHint = document.getElementById("submitHint");
 const seatDom = new Map();
 let appRendered = false;
 
-// Local override (giảm nhảy chỗ)
 let localHoldSeat = "";
 let localHoldTs = 0;
 
@@ -630,7 +628,7 @@ let inflight = { hold:false, confirm:false };
 let confirmQueued = false;
 let confirmQueuedSeat = "";
 
-let confirmUiState = "ready"; // ready | loading | done
+let confirmUiState = "ready";
 function setConfirmUiState(state){
   confirmUiState = state;
   if (state === "loading") btnConfirmLabel.textContent = "⏳ ĐANG XÁC NHẬN...";
@@ -694,13 +692,18 @@ function showExecErrorView(title, detail, extra="") {
   `;
 }
 
-/********************
- * Seat classification
- ********************/
+function seatIsBlocked(id){
+  return FIXED_SEATS.has(String(id||"").toUpperCase());
+}
+
 function classifySeat(seatObj) {
   const now = snapshot ? Number(snapshot.ts || Date.now()) : Date.now();
 
-  const id = String(seatObj.id || "");
+  const id = String(seatObj.id || "").toUpperCase();
+  if (seatIsBlocked(id)) {
+    return { cls: "confirmed", disabled: true, sub: FIXED_SEATS.get(id) || "" };
+  }
+
   const confirmedBy = String(seatObj.confirmedBy || "");
   const confirmedName = String(seatObj.confirmedName || "");
   const holdBy = String(seatObj.holdBy || "");
@@ -729,13 +732,85 @@ function classifySeat(seatObj) {
   return { cls: "free", disabled: false, sub: "" };
 }
 
-/********************
- * Render once + patch
- ********************/
+function seatIsAvailableForPick(id){
+  const s = seatIndex.get(id) || { id };
+  const st = classifySeat(s);
+  return (st.cls === "free" || st.cls === "myhold");
+}
+
+function classifyF34Pair(){
+  const f3 = seatIndex.get("F3") || { id:"F3" };
+  const f4 = seatIndex.get("F4") || { id:"F4" };
+
+  const st3 = classifySeat(f3);
+  const st4 = classifySeat(f4);
+
+  const my = snapshot && snapshot.my ? snapshot.my : { confirmed:"", hold:"" };
+  const myHold = String(my.hold || "");
+  const myConf = String(my.confirmed || "");
+
+  const myHolding3 = (localHoldSeat === "F3") || (myHold === "F3");
+  const myHolding4 = (localHoldSeat === "F4") || (myHold === "F4");
+
+  const myConfirm3 = (myConf === "F3");
+  const myConfirm4 = (myConf === "F4");
+
+  if (myHolding3 || myHolding4) {
+    return { cls:"myhold", disabled:false, sub:"Bạn đang chọn" };
+  }
+
+  const anyFree = (st3.cls === "free") || (st4.cls === "free");
+  const anyMine = (st3.cls === "myhold") || (st4.cls === "myhold");
+  const anyOtherHold = (st3.cls === "otherhold") || (st4.cls === "otherhold");
+  const anyConfirmed = (st3.cls === "confirmed") || (st4.cls === "confirmed");
+  const bothLocked = !anyFree && !anyMine;
+
+  if (bothLocked) {
+    if (anyConfirmed) return { cls:"confirmed", disabled:true, sub:"Đã đặt" };
+    if (anyOtherHold) return { cls:"otherhold", disabled:true, sub:"Đang chọn" };
+    return { cls:"confirmed", disabled:true, sub:"Không khả dụng" };
+  }
+
+  if (anyConfirmed || anyOtherHold) {
+    return { cls:"free", disabled:false, sub:"Còn 1 ghế trống" };
+  }
+
+  if (myConfirm3 || myConfirm4) {
+    return { cls:"free", disabled:false, sub:"Chọn để đổi chỗ" };
+  }
+
+  return { cls:"free", disabled:false, sub:"" };
+}
+
+function resolveF34Click(){
+  const my = snapshot && snapshot.my ? snapshot.my : { confirmed:"", hold:"" };
+  const myHold = String(my.hold || "");
+  if (myHold === "F3" || myHold === "F4") return myHold;
+
+  if (localHoldSeat === "F3" || localHoldSeat === "F4") return localHoldSeat;
+
+  if (seatIsAvailableForPick("F3")) return "F3";
+  if (seatIsAvailableForPick("F4")) return "F4";
+
+  return "";
+}
+
 function seatButtonHTML_(id){
+  if (id === "F3F4") {
+    const st = classifyF34Pair();
+    const disabled = st.disabled || !me.name;
+    return `
+      <button class="seat ${st.cls} pairF34" data-seat="F3F4" ${disabled ? "disabled" : ""}>
+        <div class="id">F3–F4</div>
+        <div class="sub">${escapeHtml(st.sub || "")}</div>
+      </button>
+    `;
+  }
+
   const seatObj = seatIndex.get(id) || { id };
   const st = classifySeat(seatObj);
   const disabled = st.disabled || !me.name;
+
   return `
     <button class="seat ${st.cls}" data-seat="${id}" ${disabled ? "disabled" : ""}>
       <div class="id">${escapeHtml(id)}</div>
@@ -756,6 +831,7 @@ function renderMainViewOnce() {
       </div>
 
       <div class="legendBar" style="margin-top:10px">
+        <div class="legendItem"><span class="dot free"></span> Chỗ trống</div>
         <div class="legendItem"><span class="dot myhold"></span> Bạn đang chọn</div>
         <div class="legendItem"><span class="dot otherhold"></span> Người khác đang chọn</div>
         <div class="legendItem"><span class="dot confirmed"></span> Đã xác nhận</div>
@@ -790,8 +866,12 @@ function renderMainViewOnce() {
       html.push(seatButtonHTML_(ids[0]));
       html.push(seatButtonHTML_(ids[1]));
       html.push(`<div class="aisle" aria-hidden="true"></div>`);
-      html.push(seatButtonHTML_(ids[2]));
-      html.push(seatButtonHTML_(ids[3]));
+      if (r === "F") {
+        html.push(seatButtonHTML_("F3F4"));
+      } else {
+        html.push(seatButtonHTML_(ids[2]));
+        html.push(seatButtonHTML_(ids[3]));
+      }
       html.push(`<div class="rowTag">${escapeHtml(r)}</div>`);
       html.push(`</div>`);
     } else if (row.type === "five") {
@@ -799,7 +879,7 @@ function renderMainViewOnce() {
       html.push(`<div class="seatRow five">`);
       html.push(seatButtonHTML_(ids[0]));
       html.push(seatButtonHTML_(ids[1]));
-      html.push(seatButtonHTML_(ids[2])); // ✅ ghế giữa
+      html.push(seatButtonHTML_(ids[2]));
       html.push(seatButtonHTML_(ids[3]));
       html.push(seatButtonHTML_(ids[4]));
       html.push(`<div class="rowTag">${escapeHtml(r)}</div>`);
@@ -812,7 +892,7 @@ function renderMainViewOnce() {
   seatDom.clear();
   bus.querySelectorAll(".seat").forEach(btn => {
     const id = btn.getAttribute("data-seat");
-    seatDom.set(id, { btn, subEl: btn.querySelector(".sub") });
+    seatDom.set(id, { btn, subEl: btn.querySelector(".sub"), idEl: btn.querySelector(".id") });
   });
 
   bus.addEventListener("click", onSeatClick, { passive: true });
@@ -870,12 +950,24 @@ function patchSeat(id){
   const dom = seatDom.get(id);
   if (!dom) return;
 
-  const seatObj = seatIndex.get(id) || { id };
-  const st = classifySeat(seatObj);
-  const disabled = st.disabled || !me.name;
+  let st, disabled, subText, labelText;
+
+  if (id === "F3F4") {
+    st = classifyF34Pair();
+    disabled = st.disabled || !me.name;
+    subText = st.sub || "";
+    labelText = "F3–F4";
+  } else {
+    const seatObj = seatIndex.get(id) || { id };
+    st = classifySeat(seatObj);
+    disabled = st.disabled || !me.name;
+    subText = st.sub || "";
+    labelText = id;
+  }
 
   const btn = dom.btn;
   const subEl = dom.subEl;
+  const idEl = dom.idEl;
 
   if (!btn.classList.contains(st.cls) || btn._lastCls !== st.cls) {
     btn.classList.remove("free","confirmed","myhold","otherhold");
@@ -884,19 +976,17 @@ function patchSeat(id){
   }
   if (!!btn.disabled !== !!disabled) btn.disabled = !!disabled;
 
-  const subText = st.sub || "";
+  if (idEl && idEl.textContent !== labelText) idEl.textContent = labelText;
   if (subEl && subEl.textContent !== subText) subEl.textContent = subText;
 }
 
 function patchAllSeats(){
   for (const id of SEATS) patchSeat(id);
+  patchSeat("F3F4");
   patchConfirmBar();
   updateTopbar();
 }
 
-/********************
- * Modals
- ********************/
 const nameBackdrop = document.getElementById("nameBackdrop");
 const nameInput = document.getElementById("nameInput");
 const btnSaveName = document.getElementById("btnSaveName");
@@ -937,7 +1027,6 @@ nameInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") { e.preventDefault(); btnSaveName.click(); }
 });
 
-// Rename
 const renameBackdrop = document.getElementById("renameBackdrop");
 const renameInput = document.getElementById("renameInput");
 const btnRenameCancel = document.getElementById("btnRenameCancel");
@@ -981,15 +1070,11 @@ renameInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") { e.preventDefault(); btnRenameOk.click(); }
 });
 
-/********************
- * API actions
- ********************/
 function applySnapshot(data) {
   snapshot = data;
   seatIndex = new Map();
   (snapshot.seats || []).forEach(s => seatIndex.set(String(s.id||"").toUpperCase(), s));
 
-  // ✅ giảm nhảy chỗ: chỉ bỏ localHoldSeat khi server phản ánh đúng ghế local
   const my = snapshot && snapshot.my ? snapshot.my : null;
   const srvHold = String(my?.hold || "");
   const srvConf = String(my?.confirmed || "");
@@ -1027,9 +1112,6 @@ async function loadSnapshotFirst() {
   }
 }
 
-/********************
- * Ultra-fast select
- ********************/
 function onSeatClick(e){
   if (inflight.confirm || confirmQueued) {
     toast("Đang xác nhận… chờ xíu nha");
@@ -1037,13 +1119,23 @@ function onSeatClick(e){
   }
   const btn = e.target.closest(".seat");
   if (!btn) return;
-  const id = btn.getAttribute("data-seat");
+  let id = btn.getAttribute("data-seat");
   if (!id) return;
+
+  if (id === "F3F4") {
+    const pick = resolveF34Click();
+    if (!pick) return;
+    id = pick;
+  }
+
+  if (seatIsBlocked(id)) return;
+
   holdSeatUltraFast(id);
 }
 
 async function holdSeatUltraFast(seatId) {
   if (!me.name) { openNameModal(""); return; }
+  if (seatIsBlocked(seatId)) return;
 
   const seatObj = seatIndex.get(seatId) || { id: seatId };
   const stNow = classifySeat(seatObj);
@@ -1055,6 +1147,7 @@ async function holdSeatUltraFast(seatId) {
 
   if (prev && prev !== seatId) patchSeat(prev);
   patchSeat(seatId);
+  patchSeat("F3F4");
   patchConfirmBar();
   updateTopbar();
 
@@ -1124,9 +1217,6 @@ async function holdSeatUltraFast(seatId) {
   }
 }
 
-/********************
- * Confirm: nhanh cảm giác (watch snapshot)
- ********************/
 function seatHasMyHoldNow(seatId){
   const s = seatIndex.get(seatId);
   if (!s) return false;
@@ -1188,6 +1278,7 @@ async function confirmFlow(targetSeat){
   if (!me.name) return;
   if (!targetSeat) { toast("Bạn chưa chọn ghế"); return; }
   if (inflight.confirm) return;
+  if (seatIsBlocked(targetSeat)) return;
 
   const reqId = Date.now().toString(16) + Math.random().toString(16).slice(2);
   confirmFlow._lastReq = reqId;
@@ -1272,6 +1363,7 @@ function onConfirmClick(){
 
   const target = hold || "";
   if (!target) { toast("Bạn chưa chọn ghế"); return; }
+  if (seatIsBlocked(target)) return;
 
   if (inflight.hold) {
     confirmQueued = true;
@@ -1283,9 +1375,6 @@ function onConfirmClick(){
   confirmFlow(target);
 }
 
-/********************
- * Polling (live)
- ********************/
 function startPolling() {
   if (pollTimer) clearInterval(pollTimer);
 
@@ -1303,9 +1392,6 @@ function startPolling() {
   }, 900);
 }
 
-/********************
- * Buttons
- ********************/
 document.getElementById("btnScrollTop").addEventListener("click", () => {
   document.getElementById("shell").scrollTo({ top: 0, behavior: "smooth" });
 });
@@ -1316,9 +1402,6 @@ document.getElementById("btnRename").addEventListener("click", () => {
 });
 btnConfirm.addEventListener("click", onConfirmClick);
 
-/********************
- * Boot
- ********************/
 (async () => {
   preventZoom();
   loadLocal();
