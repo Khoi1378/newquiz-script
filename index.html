@@ -1,99 +1,380 @@
 <!doctype html>
-<html>
+<html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <title>tuankhoi.site - Quiz Store</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
+
   <style>
-    body{font-family:system-ui,Arial;margin:24px;max-width:900px}
-    header{display:flex;justify-content:space-between;align-items:center;gap:12px}
-    .card{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0}
-    .muted{color:#666}
-    button{padding:8px 10px;border-radius:10px;border:1px solid #ccc;background:#fff;cursor:pointer}
-    input{padding:8px 10px;border-radius:10px;border:1px solid #ccc}
-    a{color:#06c;text-decoration:none}
+    :root{
+      --bg1:#ffecd2; --bg2:#fcb69f;
+      --card:#fff; --text:#1f2937; --muted:#6b7280;
+      --primary:#7c3aed; --border:#e5e7eb; --soft:#f8fafc;
+      --shadow:0 14px 40px rgba(0,0,0,.10);
+      --radius:18px;
+      --admin:#2563eb;
+      --bad:#dc2626;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
+        linear-gradient(120deg,var(--bg1) 0%, var(--bg2) 100%);
+      overflow:hidden;
+    }
+    #shell{height:100vh; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 0 80px}
+    .wrap{max-width:980px; margin:0 auto; padding:0 14px}
+
+    .topbar{
+      margin-top:10px;
+      background:rgba(255,255,255,.86);
+      border:1px solid rgba(229,231,235,.9);
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,.06);
+      padding:14px;
+      display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    }
+    .titlebox{display:flex; gap:10px; align-items:center; flex:1 1 360px; min-width:240px}
+    .logo{
+      width:42px; height:42px; border-radius:16px;
+      background:linear-gradient(135deg,#a78bfa,#fb7185);
+      display:flex; align-items:center; justify-content:center;
+      color:#fff; font-weight:900;
+      box-shadow:0 10px 22px rgba(124,58,237,.18);
+      user-select:none;
+    }
+    .titles h1{font-size:1.02rem; margin:0; font-weight:800}
+    .titles .tiny{margin-top:3px; font-size:.86rem; color:var(--muted); font-weight:650}
+
+    .card{
+      background:var(--card);
+      border:2px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+      margin:12px 0;
+    }
+    .row1{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap}
+    .vi{margin:0; font-weight:900; font-size:1.04rem; line-height:1.25}
+    .muted{color:var(--muted); font-weight:650}
+
+    .btn{
+      border:0; cursor:pointer;
+      border-radius:999px; padding:10px 14px;
+      font-weight:900; font-size:.9rem;
+      transition:transform .16s ease, filter .16s ease;
+      display:inline-flex; align-items:center; gap:8px;
+      user-select:none; white-space:nowrap;
+      box-shadow:0 12px 24px rgba(0,0,0,.12);
+      background:#fff; color:#111827; border:1px solid #e5e7eb;
+    }
+    .btn:hover{transform:translateY(-1px); filter:brightness(.98)}
+    .btn:active{transform:translateY(0)}
+    .btn-primary{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff; border:0;
+      box-shadow:0 12px 24px rgba(124,58,237,.18);
+    }
+    .btn-danger{ background:var(--bad); color:#fff; border:0; box-shadow:0 12px 24px rgba(220,38,38,.18); }
+
+    .pill{
+      background:#f3f4f6; border:1px solid #e5e7eb;
+      border-radius:999px; padding:8px 12px;
+      font-weight:800; font-size:.9rem; color:#374151; white-space:nowrap;
+    }
+    .badge-admin{
+      padding:4px 8px; border-radius:999px; font-weight:950; font-size:.78rem;
+      background:rgba(37,99,235,.12);
+      border:1px solid rgba(37,99,235,.35);
+      color:var(--admin); white-space:nowrap;
+    }
+
+    .input{
+      width:100%;
+      border-radius:14px; border:2px solid #e5e7eb;
+      padding:11px 12px; font-size:.95rem; font-weight:700;
+      outline:none; background:var(--soft);
+      transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    .input:focus{
+      border-color:rgba(124,58,237,.55);
+      box-shadow:0 0 0 5px rgba(124,58,237,.10);
+      background:#fff;
+    }
+
+    .grid2{display:grid; grid-template-columns: 1fr 160px; gap:10px; align-items:center}
+    @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
+
+    a{color:#4c1d95; text-decoration:none; font-weight:900}
     a:hover{text-decoration:underline}
+
+    .toast{
+      position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+      background:rgba(17,24,39,.92); color:#fff;
+      padding:10px 12px; border-radius:14px;
+      font-weight:800; font-size:.9rem;
+      opacity:0; pointer-events:none;
+      transition:opacity .18s ease, transform .18s ease;
+      max-width:calc(100% - 28px);
+      z-index:20050; text-align:center;
+    }
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px)}
+    code{background:#f6f6f6; padding:2px 6px; border-radius:8px; border:1px solid #eee}
   </style>
 </head>
+
 <body>
-  <header>
-    <div>
-      <h1 style="margin:0">Quiz Store</h1>
-      <div class="muted">Kệ hàng quiz - chọn quiz để làm</div>
-    </div>
-    <div id="authBox"></div>
-  </header>
+  <div id="shell">
+    <div class="wrap">
 
-  <div id="list"></div>
-
-  <p class="muted"><a href="/admin">Admin panel</a></p>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="module">
-    import { listStore, me, login, register, logout } from "./lib/api.js";
-
-    const authBox = document.getElementById("authBox");
-    const listEl = document.getElementById("list");
-
-    function renderAuth(meOut){
-      if(meOut?.ok){
-        authBox.innerHTML = `
-          <div class="muted">Xin chào <b>${meOut.me.username}</b> (${meOut.me.role})</div>
-          <button id="btnLogout">Logout</button>
-        `;
-        document.getElementById("btnLogout").onclick = async () => { await logout(); location.reload(); };
-        return;
-      }
-      authBox.innerHTML = `
-        <input id="u" placeholder="username (thường)" />
-        <input id="p" placeholder="pin" type="password" style="width:120px" />
-        <button id="btnLogin">Login</button>
-        <button id="btnReg">Register</button>
-      `;
-      document.getElementById("btnLogin").onclick = async () => {
-        const u = document.getElementById("u").value;
-        const p = document.getElementById("p").value;
-        const out = await login(u,p);
-        if(!out.ok) return alert(out.error || "login fail");
-        location.reload();
-      };
-      document.getElementById("btnReg").onclick = async () => {
-        const u = document.getElementById("u").value;
-        const p = document.getElementById("p").value;
-        const out = await register(u,p);
-        if(!out.ok) return alert(out.error || "register fail");
-        location.reload();
-      };
-    }
-
-    function renderList(items){
-      if(!items?.length){
-        listEl.innerHTML = `<div class="card">Chưa có quiz nào public.</div>`;
-        return;
-      }
-      listEl.innerHTML = items.map(q => `
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
-            <div>
-              <div style="font-size:18px"><b>${q.title}</b></div>
-              <div class="muted">${q.sub || ""}</div>
-              <div class="muted">Link: <code>/q/${q.quiz_id}</code></div>
-            </div>
-            <div>
-              <a href="/q/${q.quiz_id}"><button>Làm quiz</button></a>
-            </div>
+      <div class="topbar">
+        <div class="titlebox">
+          <div class="logo">Hi!</div>
+          <div class="titles">
+            <h1>Quiz Store</h1>
+            <div class="tiny">Kệ hàng quiz — chọn quiz để làm</div>
           </div>
         </div>
-      `).join("");
-    }
 
-    // init
-    const meOut = await me().catch(()=>({ok:false}));
-    renderAuth(meOut);
+        <div id="mePill" class="pill">Chưa đăng nhập</div>
+      </div>
 
-    const out = await listStore();
-    if(!out.ok) alert(out.error || "load store fail");
-    renderList(out.items || []);
-  </script>
+      <div class="card" id="authCard">
+        <div class="row1">
+          <p class="vi">Tài khoản</p>
+          <div class="muted">username tự chuyển <b>chữ thường</b></div>
+        </div>
+
+        <div style="margin-top:10px" class="grid2">
+          <input id="u" class="input" placeholder="username (a-z 0-9 _)" maxlength="15" autocomplete="off" />
+          <input id="p" class="input" placeholder="pin" type="password" inputmode="numeric" />
+        </div>
+
+        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end">
+          <button class="btn" id="btnReg">Đăng ký</button>
+          <button class="btn btn-primary" id="btnLogin">Đăng nhập</button>
+          <button class="btn btn-danger" id="btnLogout" style="display:none">Logout</button>
+        </div>
+
+        <div class="muted" style="margin-top:8px" id="authHint"></div>
+      </div>
+
+      <div class="card">
+        <div class="row1">
+          <p class="vi">Danh sách quiz</p>
+          <div class="muted"><a href="/admin">Admin panel</a></div>
+        </div>
+        <div id="list" style="margin-top:10px"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+/** ======================
+ *  CONFIG (DÁN KEY Ở ĐÂY)
+ *  ====================== */
+const SUPABASE_URL = "PASTE_SUPABASE_URL";
+const SUPABASE_ANON_KEY = "PASTE_SUPABASE_ANON_KEY";
+
+/** storage */
+const TOKEN_KEY = "tk_token_v1";
+
+/** UI helpers */
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=String(msg||"");
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 1300);
+}
+function normUsername(u){
+  return String(u||"").trim().toLowerCase();
+}
+function getToken(){ return localStorage.getItem(TOKEN_KEY) || ""; }
+function setToken(t){ if(!t) localStorage.removeItem(TOKEN_KEY); else localStorage.setItem(TOKEN_KEY, t); }
+
+/** call PostgREST RPC directly (ổn định hơn module import) */
+async function rpc(fn, args){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(args || {})
+  });
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch {}
+  if(!res.ok){
+    const msg = (data && (data.message || data.error_description || data.hint)) ? (data.message || data.error_description || data.hint) : text;
+    throw new Error(msg || ("RPC failed: " + fn));
+  }
+  return data;
+}
+
+/** API wrappers */
+async function apiMe(){
+  const token = getToken();
+  if(!token) return { ok:false, error:"NOT_LOGGED_IN" };
+  return await rpc("api_me", { p_token: token });
+}
+async function apiLogin(username, pin){
+  return await rpc("api_login", { p_username: username, p_pin: String(pin||"") });
+}
+async function apiRegister(username, pin){
+  return await rpc("api_register", { p_username: username, p_pin: String(pin||"") });
+}
+async function apiLogout(){
+  const token = getToken();
+  if(token) {
+    try { await rpc("api_logout", { p_token: token }); } catch {}
+  }
+  setToken("");
+  return { ok:true };
+}
+async function apiListStore(){
+  return await rpc("api_list_public_quizzes", {});
+}
+
+/** Render */
+const mePill = document.getElementById("mePill");
+const authHint = document.getElementById("authHint");
+const btnLogin = document.getElementById("btnLogin");
+const btnReg = document.getElementById("btnReg");
+const btnLogout = document.getElementById("btnLogout");
+const listEl = document.getElementById("list");
+const uEl = document.getElementById("u");
+const pEl = document.getElementById("p");
+
+function setMeUI(meOut){
+  if(meOut && meOut.ok){
+    const u = meOut.me.username;
+    const role = meOut.me.role;
+    mePill.innerHTML = `Xin chào <b>${u}</b> ${role==="admin" ? `<span class="badge-admin">ADMIN</span>`:""}`;
+    authHint.textContent = "Đã đăng nhập.";
+    btnLogout.style.display = "inline-flex";
+    btnLogin.style.display = "none";
+    btnReg.style.display = "none";
+    uEl.disabled = true;
+    pEl.disabled = true;
+    return;
+  }
+  mePill.textContent = "Chưa đăng nhập";
+  authHint.textContent = "Login để lưu progress / leaderboard / comment.";
+  btnLogout.style.display = "none";
+  btnLogin.style.display = "inline-flex";
+  btnReg.style.display = "inline-flex";
+  uEl.disabled = false;
+  pEl.disabled = false;
+}
+
+function renderList(items){
+  if(!items || !items.length){
+    listEl.innerHTML = `<div class="muted">Chưa có quiz public.</div>`;
+    return;
+  }
+  listEl.innerHTML = items.map(q => `
+    <div class="card" style="box-shadow:none; border-width:1px; margin:10px 0">
+      <div class="row1">
+        <div>
+          <div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div>
+          <div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div>
+          <div class="muted" style="margin-top:6px">Link: <code>/q/${escapeHtml(q.quiz_id)}</code></div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end">
+          <a href="/q/${encodeURIComponent(q.quiz_id)}"><button class="btn btn-primary">Làm quiz</button></a>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+function escapeHtml(s){
+  return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
+/** Events */
+uEl.addEventListener("input", () => {
+  const v = normUsername(uEl.value);
+  if(uEl.value !== v) uEl.value = v; // auto lower
+}, { passive:true });
+
+btnLogin.onclick = async () => {
+  const u = normUsername(uEl.value);
+  const p = String(pEl.value||"");
+  if(!u) return toast("Thiếu username");
+  if(!p) return toast("Thiếu pin");
+  try{
+    btnLogin.disabled = true;
+    const out = await apiLogin(u,p);
+    if(!out || !out.ok) return toast(out?.error || "login fail");
+    setToken(out.token);
+    toast("Login OK");
+    await boot();
+  }catch(e){
+    toast(e.message || "login error");
+  }finally{
+    btnLogin.disabled = false;
+  }
+};
+
+btnReg.onclick = async () => {
+  const u = normUsername(uEl.value);
+  const p = String(pEl.value||"");
+  if(!u) return toast("Thiếu username");
+  if(!p) return toast("Thiếu pin");
+  try{
+    btnReg.disabled = true;
+    const out = await apiRegister(u,p);
+    if(!out || !out.ok) return toast(out?.error || "register fail");
+    setToken(out.token);
+    toast("Register OK");
+    await boot();
+  }catch(e){
+    toast(e.message || "register error");
+  }finally{
+    btnReg.disabled = false;
+  }
+};
+
+btnLogout.onclick = async () => {
+  await apiLogout();
+  toast("Đã logout");
+  await boot();
+};
+
+/** Boot */
+async function boot(){
+  // me
+  const meOut = await apiMe().catch(()=>({ok:false}));
+  setMeUI(meOut);
+
+  // store
+  const store = await apiListStore().catch(e=>({ok:false,error:e.message}));
+  if(!store.ok){
+    listEl.innerHTML = `<div class="muted">Lỗi load store: ${escapeHtml(store.error||"")}</div>`;
+    return;
+  }
+  renderList(store.items||[]);
+}
+
+// run
+if(SUPABASE_URL.includes("PASTE_") || SUPABASE_ANON_KEY.includes("PASTE_")){
+  toast("Chưa dán SUPABASE_URL / ANON_KEY trong index.html");
+}
+boot();
+</script>
 </body>
 </html>
