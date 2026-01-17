@@ -3,8 +3,8 @@
     { "source": "/spin1", "destination": "/spin1/index.html" },
     { "source": "/spin1/", "destination": "/spin1/index.html" },
 
-    { "source": "/admin", "destination": "/admin/index.html" },
-    { "source": "/admin/", "destination": "/admin/index.html" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/admin/", "destination": "/admin.html" },
 
     { "source": "/q", "destination": "/q/index.html" },
     { "source": "/q/", "destination": "/q/index.html" },
