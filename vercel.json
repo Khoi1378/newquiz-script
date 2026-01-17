@@ -1,15 +1,20 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "trailingSlash": false,
   "rewrites": [
+    { "source": "/admin", "destination": "/admin/index.html" },
+    { "source": "/admin/", "destination": "/admin/index.html" },
+
     { "source": "/spin1", "destination": "/spin1/index.html" },
     { "source": "/spin1/", "destination": "/spin1/index.html" },
-
-    { "source": "/admin", "destination": "/admin.html" },
-    { "source": "/admin/", "destination": "/admin.html" },
 
     { "source": "/q", "destination": "/q/index.html" },
     { "source": "/q/", "destination": "/q/index.html" },
 
-    { "source": "/q/:id", "destination": "/q/:id.html" },
-    { "source": "/q/:id/", "destination": "/q/:id.html" }
+    { "source": "/q/:id", "destination": "/q/index.html" },
+    { "source": "/q/:id/", "destination": "/q/index.html" },
+
+    { "source": "/q/:id.html", "destination": "/q/index.html" },
+    { "source": "/q/:id.html/", "destination": "/q/index.html" }
   ]
 }
