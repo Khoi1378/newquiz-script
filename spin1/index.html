@@ -128,27 +128,41 @@
     .wheelBox{position:relative;display:flex;justify-content:center}
     canvas{
       width:100%;
-      max-width:600px; /* làm vòng quay to hơn */
+      max-width:600px;
       height:auto;
       aspect-ratio:1/1;
       background:linear-gradient(180deg, rgba(248,250,252,.9), rgba(255,255,255,.6));
       border-radius:18px;
       border:2px solid rgba(229,231,235,.95);
       box-shadow:0 16px 40px rgba(0,0,0,.08);
+      position:relative;
+      z-index:1;
     }
 
-    /* KIM Ở DƯỚI */
+    /* ✅ KIM Ở DƯỚI - ĐÂM VÀO TRONG VÒNG */
     .pointer{
       position:absolute;
-      bottom:-10px; left:50%;
+      left:50%;
       transform:translateX(-50%);
+      bottom:34px;              /* kéo kim lên để chồng vào vòng */
       width:0;height:0;
       border-left:16px solid transparent;
       border-right:16px solid transparent;
-      border-top:30px solid var(--warn);
+      border-top:34px solid var(--warn);
       filter:drop-shadow(0 14px 18px rgba(0,0,0,.25));
-      z-index:5;
+      z-index:4;
       pointer-events:none;
+    }
+    /* cái “đế kim” tròn cho giống kim thật */
+    .pointer::after{
+      content:"";
+      position:absolute;
+      left:50%; transform:translateX(-50%);
+      top:-10px;
+      width:18px;height:18px;border-radius:999px;
+      background:#fff;
+      border:2px solid rgba(229,231,235,.95);
+      box-shadow:0 10px 22px rgba(0,0,0,.10);
     }
 
     table{width:100%;border-collapse:separate;border-spacing:0;border:2px solid var(--border);border-radius:16px;overflow:hidden;background:#fff}
@@ -167,7 +181,6 @@
     }
     .ok{color:var(--ok)} .bad{color:var(--bad)}
 
-    /* popup + toast (giống style cũ) */
     .modal-backdrop{
       position:fixed;inset:0;background:rgba(0,0,0,.35);
       display:none;align-items:center;justify-content:center;
@@ -183,6 +196,7 @@
     }
     .modal h3{margin:4px 0 6px;font-size:1.02rem}
     .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
     .toast{
       position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
       background:rgba(17,24,39,.92);color:#fff;
@@ -273,13 +287,27 @@
 
   <div class="toast" id="toast"></div>
 
-  <!-- Popup -->
+  <!-- ✅ Popup kết quả -->
   <div class="modal-backdrop" id="popup" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="popTitle">
       <h3 id="popTitle">🎉 Chúc mừng!</h3>
       <div id="popupMsg" class="muted" style="font-weight:800;line-height:1.4"></div>
       <div class="modal-actions" style="margin-top:12px">
         <button id="btnClosePop" class="btn btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Popup nhập tên khi mới vào -->
+  <div class="modal-backdrop" id="namePopup" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="namePopTitle">
+      <h3 id="namePopTitle">Nhập tên để tham gia</h3>
+      <div class="muted" style="font-weight:800;line-height:1.4;margin-bottom:10px">
+        Bạn phải nhập tên trước khi quay.
+      </div>
+      <input id="namePopupInput" class="input" placeholder="Nhập tên (tối đa 24 ký tự)" maxlength="24" autocomplete="off" style="width:100%"/>
+      <div class="modal-actions" style="margin-top:12px">
+        <button id="btnNamePopSave" class="btn btn-primary">💾 Lưu & vào quay</button>
       </div>
     </div>
   </div>
@@ -360,10 +388,40 @@ const spinHint = document.getElementById("spinHint");
 const adminTag = document.getElementById("adminTag");
 const adminCol = document.getElementById("adminCol");
 
+/* popup kết quả */
 const popup = document.getElementById("popup");
 const popupMsg = document.getElementById("popupMsg");
 document.getElementById("btnClosePop").onclick = ()=>{ popup.classList.remove("show"); popup.setAttribute("aria-hidden","true"); };
 popup.addEventListener("click",(e)=>{ if(e.target===popup){ popup.classList.remove("show"); popup.setAttribute("aria-hidden","true"); } });
+
+/* ✅ popup nhập tên */
+const namePopup = document.getElementById("namePopup");
+const namePopupInput = document.getElementById("namePopupInput");
+const btnNamePopSave = document.getElementById("btnNamePopSave");
+
+function openNamePopup(){
+  namePopup.classList.add("show");
+  namePopup.setAttribute("aria-hidden","false");
+  // sync giá trị hiện có
+  namePopupInput.value = nameInput.value || getNameCache() || "";
+  setTimeout(()=>{ try{ namePopupInput.focus(); }catch{} }, 50);
+}
+function closeNamePopup(){
+  namePopup.classList.remove("show");
+  namePopup.setAttribute("aria-hidden","true");
+}
+function saveNameFromPopup(){
+  const nm = namePopupInput.value.trim().replace(/\s+/g," ");
+  if(!nm){ toast("Bạn chưa nhập tên"); return; }
+  setNameCache(nm);
+  nameInput.value = nm;
+  closeNamePopup();
+  toast("Đã lưu tên");
+  updateGateState();
+}
+btnNamePopSave.onclick = saveNameFromPopup;
+namePopup.addEventListener("click",(e)=>{ /* không cho bấm nền để tắt */ });
+namePopupInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); saveNameFromPopup(); } });
 
 let ME = null;
 let ROWS = [];
@@ -387,12 +445,11 @@ const ctx = canvas.getContext("2d");
 function drawWheel(rot){
   const w = canvas.width, h = canvas.height;
   const cx = w/2, cy = h/2;
-  const R = Math.min(w,h)*0.46; // to hơn
+  const R = Math.min(w,h)*0.46;
   const step = Math.PI*2/TOTAL;
 
   ctx.clearRect(0,0,w,h);
 
-  // nền vòng
   ctx.save();
   ctx.translate(cx,cy);
   ctx.rotate(rot);
@@ -408,24 +465,24 @@ function drawWheel(rot){
     ctx.arc(0,0,R,a0,a1);
     ctx.closePath();
 
-    // màu theo UI cũ (tím / hồng nhạt), taken thì xám
+    // ✅ “xoá khỏi vòng”: segment đã lấy -> xám + mờ rõ hơn
     ctx.fillStyle = isTaken
-      ? "rgba(107,114,128,.18)"
+      ? "rgba(107,114,128,.10)"
       : (i%2===0 ? "rgba(124,58,237,.24)" : "rgba(251,113,133,.20)");
     ctx.fill();
 
-    ctx.strokeStyle = "rgba(31,41,55,.14)";
+    ctx.strokeStyle = isTaken ? "rgba(31,41,55,.08)" : "rgba(31,41,55,.14)";
     ctx.lineWidth = 3;
     ctx.stroke();
 
-    // text
+    // label
     const mid = (a0+a1)/2;
     ctx.save();
     ctx.rotate(mid);
     ctx.translate(R*0.70,0);
     ctx.rotate(Math.PI/2);
 
-    ctx.fillStyle = isTaken ? "rgba(107,114,128,.75)" : "rgba(31,41,55,.88)";
+    ctx.fillStyle = isTaken ? "rgba(107,114,128,.55)" : "rgba(31,41,55,.88)";
     ctx.font = "900 46px Montserrat, system-ui, Segoe UI, Arial";
     ctx.textAlign="center";
     ctx.textBaseline="middle";
@@ -450,7 +507,6 @@ function drawWheel(rot){
   ctx.lineWidth = 6;
   ctx.stroke();
 
-  // chấm giữa
   ctx.beginPath();
   ctx.arc(0,0,R*0.045,0,Math.PI*2);
   ctx.fillStyle = "rgba(31,41,55,.75)";
@@ -459,11 +515,11 @@ function drawWheel(rot){
   ctx.restore();
 }
 
-/* KIM Ở DƯỚI => target là góc +pi/2 */
+/* kim ở dưới => target là +pi/2 */
 function targetRotationForTopic(topic){
   const step = Math.PI*2/TOTAL;
   const center = (topic-1)*step + step/2;
-  let base = (Math.PI - center); // (-pi/2 + center + rot) = +pi/2
+  let base = (Math.PI - center);
   const spins = 6 + Math.floor(Math.random()*3);
   return base + spins*(Math.PI*2);
 }
@@ -505,7 +561,7 @@ function renderTable(){
   }).join("") || `<tr><td colspan="5" class="muted">Chưa có ai quay.</td></tr>`;
 }
 
-/* ====== state gate ====== */
+/* ====== gate ====== */
 function updateGateState(){
   const name = nameInput.value.trim().replace(/\s+/g," ");
   const nn = normName(name);
@@ -521,7 +577,7 @@ function updateGateState(){
     btnSpin.disabled = true;
   }else if(mine){
     statusTag.textContent = "Bạn đã quay";
-    spinHint.textContent = `Bạn đã quay ra Chủ đề ${mine.topic}. (Không quay lại được đâu)`;
+    spinHint.textContent = `Bạn đã quay ra Chủ đề ${mine.topic}.`;
     btnSpin.disabled = true;
   }else{
     statusTag.innerHTML = `<span class="ok">Sẵn sàng</span>`;
@@ -529,7 +585,6 @@ function updateGateState(){
     btnSpin.disabled = false;
   }
 
-  // status pill
   const admin = (ME && ME.role==="admin") ? ` <span class="adminBadgeInline">ADMIN</span>` : "";
   statusPill.innerHTML = `Đã quay: <b>${ROWS.length}</b>/${TOTAL}${admin}`;
 }
@@ -562,7 +617,6 @@ btnSave.onclick = ()=>{
 };
 
 nameInput.addEventListener("input", ()=>{
-  // ép gọn khoảng trắng, nhưng không ép lowercase để hiển thị đẹp
   const v = nameInput.value.replace(/\s+/g," ");
   if(nameInput.value !== v) nameInput.value = v;
   updateGateState();
@@ -579,7 +633,10 @@ btnSpin.onclick = async ()=>{
   if(spinning) return;
 
   const nm = nameInput.value.trim().replace(/\s+/g," ");
-  if(!nm){ toast("Nhập tên trước"); updateGateState(); return; }
+  if(!nm){
+    openNamePopup();   // ✅ chưa có tên thì bật popup nhập tên
+    return;
+  }
 
   setNameCache(nm);
 
@@ -598,6 +655,10 @@ btnSpin.onclick = async ()=>{
     const row = out.row;
     const topic = Number(row.topic);
 
+    // ✅ quay xong “xoá chủ đề khỏi vòng” ngay lập tức (mờ segment liền)
+    taken.add(topic);
+    drawWheel(rotation);
+
     const target = targetRotationForTopic(topic);
     await animateTo(target, 2350);
 
@@ -605,7 +666,7 @@ btnSpin.onclick = async ()=>{
     popup.classList.add("show");
     popup.setAttribute("aria-hidden","false");
 
-    await loadList();
+    await loadList(); // đồng bộ lại từ server
   }catch(e){
     toast(e.message||"Lỗi");
     await loadList();
@@ -656,7 +717,12 @@ rowsEl.addEventListener("click", async (e)=>{
   drawWheel(rotation);
   await loadList();
 
-  // auto refresh (KHÔNG hiện hướng dẫn thừa)
+  // ✅ mới vào: nếu chưa có tên -> bật popup nhập tên
+  if(!nameInput.value.trim()){
+    openNamePopup();
+  }
+
+  // auto refresh (không show chữ hướng dẫn)
   setInterval(()=>loadList().catch(()=>{}), REFRESH_MS);
 })();
 </script>
