@@ -1,143 +1,362 @@
 <!doctype html>
-<html>
+<html lang="vi">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Result</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
+  <title>Kết quả</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
+
   <style>
-    body{font-family:system-ui,Arial;margin:24px;max-width:900px}
-    .muted{color:#666}
-    .card{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0}
-    button{padding:8px 10px;border-radius:10px;border:1px solid #ccc;background:#fff;cursor:pointer}
-    input{padding:10px 12px;border-radius:10px;border:1px solid #ccc;width:100%}
-    textarea{padding:10px 12px;border-radius:10px;border:1px solid #ccc;width:100%;min-height:90px}
-    hr{border:none;border-top:1px solid #eee;margin:16px 0}
+    :root {
+      --bg1: #ffecd2; --bg2: #fcb69f;
+      --card: #fff; --text: #1f2937; --muted: #6b7280;
+      --primary: #7c3aed; --ok: #16a34a; --bad: #dc2626;
+      --border: #e5e7eb;
+      --shadow: 0 14px 40px rgba(0,0,0,.10);
+      --radius: 18px;
+      --admin: #2563eb;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
+                  linear-gradient(120deg, var(--bg1) 0%, var(--bg2) 100%);
+      overflow:hidden;
+    }
+    #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px}
+    .wrap{max-width:980px;margin:0 auto;padding:0 14px}
+    .topbar{
+      margin-top:10px;background:rgba(255,255,255,.86);
+      border:1px solid rgba(229,231,235,.9);border-radius:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,.06);
+      padding:14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+    }
+    .titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
+    .logo{
+      width:42px;height:42px;border-radius:16px;
+      background:linear-gradient(135deg,#a78bfa,#fb7185);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:900;box-shadow:0 10px 22px rgba(124,58,237,.18);
+      user-select:none;
+    }
+    .titles h1{font-size:1.02rem;margin:0;font-weight:800}
+    .titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
+
+    .card{
+      background:var(--card);
+      border:2px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;margin:12px 0;
+    }
+    .row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25}
+    .idx{
+      font-size:.78rem;font-weight:900;padding:6px 10px;border-radius:999px;
+      background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;white-space:nowrap;
+    }
+    .muted{color:var(--muted);font-weight:650}
+    .pill{
+      background:#f3f4f6;border:1px solid #e5e7eb;border-radius:999px;padding:8px 12px;
+      font-weight:800;font-size:.9rem;color:#374151;white-space:nowrap;
+      display:inline-flex;gap:6px;align-items:center;
+    }
+    .pill strong{color:var(--primary)}
+    .oktxt{color:var(--ok);font-weight:1000}
+    .badtxt{color:var(--bad);font-weight:1000}
+
+    .btn{
+      border:0;cursor:pointer;border-radius:999px;padding:10px 14px;
+      font-weight:900;font-size:.9rem;
+      display:inline-flex;align-items:center;gap:8px;
+      box-shadow:0 12px 24px rgba(0,0,0,.12);
+      background:#fff;color:#111827;border:1px solid #e5e7eb;
+    }
+    .btn-primary{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff;border:0;box-shadow:0 12px 24px rgba(124,58,237,.18);
+    }
+
+    .table{
+      width:100%;border-collapse:separate;border-spacing:0;
+      overflow:hidden;border-radius:16px;border:1px solid #e5e7eb;background:#fff;
+      table-layout:fixed;
+    }
+    .table th,.table td{
+      padding:10px 10px;border-bottom:1px solid #e5e7eb;text-align:left;
+      font-weight:750;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;
+    }
+    .table th{background:#f8fafc;font-weight:900}
+    .table tr:last-child td{border-bottom:0}
+
+    .toast{
+      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+      background:rgba(17,24,39,.92);color:#fff;padding:10px 12px;border-radius:14px;
+      font-weight:800;font-size:.9rem;opacity:0;pointer-events:none;
+      transition:opacity .18s ease, transform .18s ease;
+      max-width:calc(100% - 28px);z-index:20050;text-align:center;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
   </style>
 </head>
+
 <body>
-  <div id="app">Loading...</div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="module">
-    import { getQuiz, getLeaderboard, getComments, addComment, me } from "./lib/api.js";
-
-    function getQuizIdFromPath(){
-      const parts = location.pathname.split("/").filter(Boolean);
-      // /q/<id>/result
-      return parts[1] || "";
-    }
-    const quizId = getQuizIdFromPath();
-    const app = document.getElementById("app");
-
-    const quizOut = await getQuiz(quizId, null);
-    if(!quizOut.ok){ app.textContent = quizOut.error; throw new Error(quizOut.error); }
-
-    const last = JSON.parse(localStorage.getItem("tk_last_result_"+quizId) || "null");
-
-    const meOut = await me().catch(()=>({ok:false}));
-
-    const lb = await getLeaderboard(quizId, 30).catch(()=>({ok:false, items:[]}));
-    const cm = await getComments(quizId).catch(()=>({ok:false, items:[]}));
-
-    function esc(s){return (s??"").toString().replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
-
-    function render(){
-      app.innerHTML = `
-        <h2 style="margin:0">${esc(quizOut.quiz.title)} - Kết quả</h2>
-        <div class="muted">Quiz: <code>${quizId}</code></div>
-        <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
-          <a href="/q/${quizId}"><button>Làm lại</button></a>
-          <a href="/"><button>Về kệ hàng</button></a>
-        </div>
-
-        <hr/>
-
-        <div class="card">
-          <h3 style="margin-top:0">Kết quả gần nhất</h3>
-          ${last ? `
-            <div>Điểm: <b>${last.score10}</b> | Đúng: <b>${last.correct}</b>/${last.total}</div>
-            <details style="margin-top:10px">
-              <summary>Xem chi tiết</summary>
-              <div style="margin-top:10px">
-                ${(last.details||[]).map(d=>`
-                  <div class="card">
-                    <div><b>vocab_id:</b> ${d.vocab_id}</div>
-                    <div><b>Trả lời:</b> ${esc(d.user_answer||"")}</div>
-                    <div><b>KQ:</b> ${d.ok ? "✅" : "❌"} | <span class="muted">Expected:</span> ${esc(d.expected||"")}</div>
-                  </div>
-                `).join("")}
-              </div>
-            </details>
-          ` : `<div class="muted">Chưa có kết quả local. Hãy submit bài từ trang quiz.</div>`}
-        </div>
-
-        <div class="card">
-          <h3 style="margin-top:0">Leaderboard</h3>
-          ${renderLB(lb.items||[])}
-        </div>
-
-        <div class="card">
-          <h3 style="margin-top:0">Thảo luận</h3>
-          ${meOut.ok ? `
-            <textarea id="cText" placeholder="Viết bình luận..."></textarea>
-            <button id="btnSend" style="margin-top:8px">Gửi</button>
-          ` : `<div class="muted">Bạn cần login ở trang chủ để bình luận.</div>`}
-          <hr/>
-          <div id="comments"></div>
-        </div>
-      `;
-
-      const cWrap = app.querySelector("#comments");
-      cWrap.innerHTML = renderComments(cm.items||[]);
-
-      if(meOut.ok){
-        app.querySelector("#btnSend").onclick = async ()=>{
-          const t = app.querySelector("#cText").value.trim();
-          if(!t) return;
-          const out = await addComment(quizId, null, t);
-          if(!out.ok) return alert(out.error || "add comment fail");
-          location.reload();
-        };
-      }
-    }
-
-    function renderLB(items){
-      if(!items.length) return `<div class="muted">Chưa có ai.</div>`;
-      return `<ol>` + items.map(i=>`
-        <li><b>${esc(i.name)}</b> — ${i.score10}${i.is_admin ? ' <span class="muted">(admin)</span>' : ''}</li>
-      `).join("") + `</ol>`;
-    }
-
-    function renderComments(items){
-      if(!items.length) return `<div class="muted">Chưa có bình luận.</div>`;
-      // group by parent (1 level)
-      const byParent = new Map();
-      for(const c of items){
-        const key = c.parent_id || "root";
-        if(!byParent.has(key)) byParent.set(key, []);
-        byParent.get(key).push(c);
-      }
-      const roots = byParent.get("root") || [];
-      return roots.map(c => {
-        const replies = byParent.get(c.id) || [];
-        return `
-          <div class="card">
-            <div><b>${esc(c.user.username)}</b> <span class="muted">${new Date(c.created_at).toLocaleString()}</span></div>
-            <div style="margin-top:6px">${esc(c.text)}</div>
-            ${replies.length ? `<div style="margin-top:10px;padding-left:14px;border-left:3px solid #eee">
-              ${replies.map(r=>`
-                <div class="card">
-                  <div><b>${esc(r.user.username)}</b> <span class="muted">${new Date(r.created_at).toLocaleString()}</span></div>
-                  <div style="margin-top:6px">${esc(r.text)}</div>
-                </div>
-              `).join("")}
-            </div>` : ``}
+  <div id="shell">
+    <div class="wrap">
+      <div class="topbar">
+        <div class="titlebox">
+          <div class="logo">✅</div>
+          <div class="titles">
+            <h1 id="title">Kết quả</h1>
+            <div class="tiny" id="sub"></div>
           </div>
-        `;
-      }).join("");
-    }
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+          <a class="btn" id="btnBackStore" href="/">← Store</a>
+          <a class="btn btn-primary" id="btnBackQuiz" href="/q/abcde">↩️ Làm lại</a>
+        </div>
+      </div>
 
-    render();
-  </script>
+      <div id="summary" class="card"></div>
+      <div id="wrong" class="card"></div>
+      <div id="lb" class="card"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
+
+const TOKEN_KEY = "tk_token_v2";
+
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = String(msg||"");
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 1400);
+}
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function sbHeaders(){
+  const key = String(SUPABASE_ANON_KEY||"").trim();
+  return {
+    "apikey": key,
+    "Authorization": "Bearer " + key,
+    "Content-Type": "application/json"
+  };
+}
+async function sbGet(path){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{ headers: sbHeaders() });
+  const txt = await res.text();
+  let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
+  if(!res.ok){
+    const msg = (data && (data.message||data.error||data.hint||data.details))
+      ? (data.message||data.error||data.hint||data.details)
+      : txt;
+    throw new Error(msg || "REST GET error");
+  }
+  return data;
+}
+function getToken(){ try { return (localStorage.getItem(TOKEN_KEY)||"").trim(); } catch { return ""; } }
+
+const qs = new URLSearchParams(location.search);
+const quizId = String(qs.get("quiz")||"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
+const attemptId = String(qs.get("attempt")||"").trim();
+
+document.getElementById("btnBackQuiz").href = quizId ? `/q/${quizId}` : "/";
+
+function renderSummary({ title, sub, username, score10, correctCount, totalCount, when }){
+  document.getElementById("title").textContent = title || "Kết quả";
+  document.getElementById("sub").textContent = sub || "";
+
+  document.getElementById("summary").innerHTML = `
+    <div class="row1">
+      <p class="vi">Tổng kết</p>
+      <div class="idx">DONE</div>
+    </div>
+    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
+      <span class="pill">Tên: <strong>${escapeHtml(username||"—")}</strong></span>
+      <span class="pill">Điểm: <strong>${Number(score10||0).toFixed(1)}/10</strong></span>
+      <span class="pill">Đúng: <strong>${Number(correctCount||0)}</strong>/${Number(totalCount||0)}</span>
+      <span class="pill">Thời gian: <strong>${escapeHtml(when||"")}</strong></span>
+    </div>
+  `;
+}
+function renderWrong(list){
+  if(!Array.isArray(list) || !list.length){
+    document.getElementById("wrong").innerHTML = `
+      <div class="row1">
+        <p class="vi">Câu sai</p>
+        <div class="idx">0</div>
+      </div>
+      <div class="muted" style="margin-top:10px"><span class="oktxt">Không sai ✅</span></div>
+    `;
+    return;
+  }
+
+  const rows = list.map((w,i)=>`
+    <tr>
+      <td style="width:70px">${i+1}</td>
+      <td>${escapeHtml(w.word||"")}</td>
+      <td>${escapeHtml(w.user_answer||w.user||"")}</td>
+      <td>${escapeHtml(w.expected||"")}</td>
+    </tr>
+  `).join("");
+
+  document.getElementById("wrong").innerHTML = `
+    <div class="row1">
+      <p class="vi">Câu sai</p>
+      <div class="idx">${list.length}</div>
+    </div>
+    <div style="margin-top:10px; overflow:auto">
+      <table class="table">
+        <thead><tr><th>#</th><th>Từ</th><th>Bạn viết</th><th>Đáp án</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+function renderLeaderboard(rows, myName){
+  if(!Array.isArray(rows) || !rows.length){
+    document.getElementById("lb").innerHTML = `
+      <div class="row1"><p class="vi">Bảng xếp hạng</p><div class="idx">TOP</div></div>
+      <div class="muted" style="margin-top:10px">Chưa có dữ liệu.</div>
+    `;
+    return;
+  }
+  const key = (s)=>String(s||"").trim().toLowerCase();
+  const myK = key(myName);
+
+  const body = rows.slice(0,30).map((r,i)=>{
+    const isMe = myK && key(r.name)===myK;
+    return `
+      <tr ${isMe ? `style="background: rgba(124,58,237,.10)"` : ``}>
+        <td style="width:70px"><b>${i+1}</b></td>
+        <td>${escapeHtml(r.name||"")}${r.is_admin ? ` <span style="color:${'#2563eb'}; font-weight:900">(ADMIN)</span>`:''}${isMe?` <span style="color:${'#4c1d95'}; font-weight:900">(Bạn)</span>`:''}</td>
+        <td style="width:110px"><b>${Number(r.score10||0).toFixed(1)}</b>/10</td>
+      </tr>
+    `;
+  }).join("");
+
+  document.getElementById("lb").innerHTML = `
+    <div class="row1"><p class="vi">Bảng xếp hạng</p><div class="idx">TOP</div></div>
+    <div style="margin-top:10px; overflow:auto">
+      <table class="table">
+        <thead><tr><th>#</th><th>Tên</th><th>Điểm</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function fmtTs(ts){
+  try{
+    const d = ts ? new Date(ts) : new Date();
+    const pad = (n)=>String(n).padStart(2,"0");
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
+  }catch{ return ""; }
+}
+
+(async function boot(){
+  if(!quizId){
+    renderSummary({ title:"Kết quả", sub:"Sai link (thiếu quiz)", username:"—", score10:0, correctCount:0, totalCount:0, when:"" });
+    renderWrong([]);
+    renderLeaderboard([], "");
+    return;
+  }
+
+  // render nhanh từ sessionStorage nếu có
+  let cached = null;
+  try{
+    cached = JSON.parse(sessionStorage.getItem(`tk_last_result::${quizId}`)||"null");
+  }catch{}
+  if(cached && cached.result){
+    renderSummary({
+      title: cached.title || "Kết quả",
+      sub: cached.sub || "",
+      username: cached.me?.username || "—",
+      score10: cached.result.score10,
+      correctCount: cached.result.correctCount,
+      totalCount: cached.result.totalCount,
+      when: fmtTs(cached.ts)
+    });
+    renderWrong(cached.result.wrong || []);
+  } else {
+    renderSummary({ title:"Kết quả", sub:"", username:"—", score10:0, correctCount:0, totalCount:0, when:"" });
+    document.getElementById("wrong").innerHTML = `<div class="muted">Đang tải…</div>`;
+  }
+
+  // fetch quiz meta
+  let qTitle = "", qSub = "";
+  try{
+    const q = await sbGet(`quizzes?quiz_id=eq.${quizId}&select=title,sub&limit=1`);
+    if(Array.isArray(q) && q[0]){ qTitle = q[0].title || ""; qSub = q[0].sub || ""; }
+  }catch{}
+
+  // fetch attempt + answers (nếu có attemptId)
+  let username = cached?.me?.username || "";
+  let score10 = cached?.result?.score10 || 0;
+  let correctCount = cached?.result?.correctCount || 0;
+  let totalCount = cached?.result?.totalCount || 0;
+  let wrongList = cached?.result?.wrong || [];
+  let when = cached?.ts ? fmtTs(cached.ts) : "";
+
+  if(attemptId){
+    try{
+      const at = await sbGet(`attempts?attempt_id=eq.${encodeURIComponent(attemptId)}&select=attempt_id,created_at,score10,correct_count,total_count,user_id&limit=1`);
+      const a = Array.isArray(at) ? at[0] : null;
+
+      if(a){
+        when = fmtTs(a.created_at);
+        score10 = Number(a.score10||0);
+        correctCount = Number(a.correct_count||0);
+        totalCount = Number(a.total_count||0);
+
+        // lấy answers + vocab để dựng wrong
+        // NOTE: có thể fail nếu RLS chặn join
+        const ans = await sbGet(`attempt_answers?attempt_id=eq.${encodeURIComponent(attemptId)}&select=user_answer,ok,expected,vocab:vocabs(word)&limit=500`);
+        const list = (ans||[]).filter(x=>x && x.ok===false).map(x=>({
+          word: x.vocab?.word || "",
+          user_answer: x.user_answer || "",
+          expected: x.expected || ""
+        }));
+        wrongList = list;
+
+        // username: nếu bạn muốn lấy từ app_users theo user_id thì cần policy/RPC riêng; tạm lấy từ cache
+      }
+    }catch(e){
+      // giữ cache
+    }
+  }
+
+  renderSummary({
+    title: qTitle || cached?.title || "Kết quả",
+    sub: qSub || cached?.sub || "",
+    username: username || "—",
+    score10, correctCount, totalCount,
+    when
+  });
+  renderWrong(wrongList);
+
+  // leaderboard
+  try{
+    const rows = await sbGet(`v_leaderboard?quiz_id=eq.${quizId}&select=name,is_admin,score10&order=score10.desc&limit=30`);
+    renderLeaderboard(rows||[], username||"");
+  }catch(e){
+    renderLeaderboard([], "");
+  }
+})();
+</script>
 </body>
 </html>
