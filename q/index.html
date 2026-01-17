@@ -1,7 +1,37 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quiz</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:24px;max-width:980px}
+    .card{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0}
+    .muted{color:#666}
+    code{background:#f6f6f6;padding:2px 6px;border-radius:8px}
+    pre{white-space:pre-wrap}
+  </style>
+</head>
+<body>
+  <h1>Quiz runner</h1>
+  <p class="muted"><a href="/">← về store</a></p>
+
+  <div class="card">
+    <div>URL:</div>
+    <div><code id="u"></code></div>
+    <div style="margin-top:10px">quiz_id parse:</div>
+    <div><code id="id"></code></div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:800">Load quiz</div>
+    <div class="muted" style="margin-top:6px">Nếu lỗi sẽ hiện ở dưới (không trắng trang).</div>
+    <pre id="out" class="muted"></pre>
+  </div>
+
 <script>
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
-
 const TOKEN_KEY = "tk_token_v2";
 
 function getToken(){
@@ -9,8 +39,7 @@ function getToken(){
 }
 
 function getQuizIdFromUrl(){
-  // /q/abcde  OR /q/abcde.html  OR /q/abcde/
-  const p = location.pathname;
+  const p = location.pathname; // /q/abcde or /q/abcde.html
   const m = p.match(/^\/q\/([^\/]+)\/?$/);
   let id = m ? m[1] : "";
   id = id.replace(/\.html$/i,"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
@@ -18,34 +47,22 @@ function getQuizIdFromUrl(){
 }
 
 async function rpc(fn, args){
-  const token = getToken();
-
-  const headers = {
-    "apikey": SUPABASE_ANON_KEY,
-    "Content-Type":"application/json"
-  };
-
-  // Chỉ set Authorization khi có token thật (đỡ loạn)
-  if(token){
-    headers["Authorization"] = "Bearer " + token;
-  }
-
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
     method:"POST",
-    headers,
-    body: JSON.stringify(args || {})
+    headers:{
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify(args||{})
   });
-
   const txt = await res.text();
   let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
-
   if(!res.ok){
-    const msg =
-      (data && (data.message||data.error||data.hint||data.details))
-        ? (data.message||data.error||data.hint||data.details)
-        : txt;
-
-    throw new Error(msg || ("RPC error: " + fn));
+    const msg = (data && (data.message||data.error||data.hint||data.details))
+      ? (data.message||data.error||data.hint||data.details)
+      : txt;
+    throw new Error(msg || "RPC error");
   }
   return data;
 }
@@ -54,18 +71,18 @@ document.getElementById("u").textContent = location.href;
 const id = getQuizIdFromUrl();
 document.getElementById("id").textContent = id || "(không có)";
 
-document.getElementById("btn").onclick = async ()=>{
+(async ()=>{
   const out = document.getElementById("out");
-  out.textContent = "Loading...";
   try{
-    if(!id) throw new Error("Thiếu quiz_id trên URL. Vào /q/abcde để test.");
-
-    // p_token vẫn truyền để function dùng, ngoài ra Authorization cũng có token nếu đã login
-    const data = await rpc("api_get_quiz", { p_quiz_id: id, p_token: getToken() });
-
+    if(!id) throw new Error("Thiếu quiz_id. Vào dạng /q/abcde");
+    out.textContent = "Loading...";
+    const token = getToken();
+    const data = await rpc("api_get_quiz", { p_quiz_id: id, p_token: token });
     out.textContent = JSON.stringify(data, null, 2);
   }catch(e){
     out.textContent = "Error: " + (e.message || e);
   }
-};
+})();
 </script>
+</body>
+</html>
