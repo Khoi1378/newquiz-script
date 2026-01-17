@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Quiz</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:0;background:#f6f7fb}
+    .wrap{max-width:900px;margin:0 auto;padding:14px}
+    .card{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:14px;margin:12px 0}
+    .muted{color:#6b7280}
+    .btn{padding:10px 12px;border-radius:12px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-weight:800}
+    .btnP{background:#7c3aed;color:#fff;border:0}
+    .opt{display:flex;gap:10px;align-items:flex-start;border:1px solid #e5e7eb;border-radius:12px;padding:10px;margin-top:8px;cursor:pointer}
+    .opt.sel{border-color:#7c3aed;background:rgba(124,58,237,.06)}
+    .top{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card top">
+    <div>
+      <div style="font-weight:900;font-size:1.1rem" id="t">—</div>
+      <div class="muted" id="sub">—</div>
+    </div>
+    <div class="muted" id="me">—</div>
+  </div>
+
+  <div id="app"></div>
+
+  <div class="card" id="actions" style="display:none">
+    <button class="btn btnP" id="submit">✅ NỘP BÀI</button>
+    <div class="muted" id="hint" style="margin-top:8px">Không chọn tính sai.</div>
+  </div>
+
+  <div class="card" id="result" style="display:none"></div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o"; // nhớ giống index.html
+const TOKEN_KEY = "tk_token_v2";
+
+function getToken(){ return localStorage.getItem(TOKEN_KEY)||""; }
+
+async function rpc(fn,args){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
+    method:"POST",
+    headers:{
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: "Bearer " + SUPABASE_ANON_KEY,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify(args||{})
+  });
+  const txt = await res.text();
+  const data = txt ? JSON.parse(txt) : null;
+  if(!res.ok) throw new Error(data?.message||data?.error||txt||"rpc error");
+  return data;
+}
+
+function quizIdFromUrl(){
+  const m = location.pathname.match(/\/q\/([a-z0-9]{5})/i);
+  return m ? m[1].toLowerCase() : "";
+}
+
+let QUIZ=null, ITEMS=[], ANSWERS={}; // ANSWERS[id]= "A/B/C/D"
+
+function render(){
+  const app=document.getElementById("app");
+  if(!ITEMS.length){
+    app.innerHTML = `<div class="card">Quiz chưa có câu hỏi (chưa import). Quay lại admin và Publish lại.</div>`;
+    return;
+  }
+  app.innerHTML = ITEMS.map((q,idx)=>{
+    const opts = (q.options||[]);
+    return `
+      <div class="card" data-q="${q.id}">
+        <div style="font-weight:900">Câu ${idx+1}. ${escapeHtml(q.text)}</div>
+        ${opts.map((o,i)=>{
+          const L = "ABCD"[i];
+          const sel = (ANSWERS[q.id]===L) ? "sel":"";
+          return `<div class="opt ${sel}" data-q="${q.id}" data-a="${L}">
+            <div style="font-weight:900">${L}.</div>
+            <div>${escapeHtml(o)}</div>
+          </div>`;
+        }).join("")}
+      </div>
+    `;
+  }).join("");
+
+  document.getElementById("actions").style.display = "";
+}
+
+function escapeHtml(s){
+  return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+document.addEventListener("click",(e)=>{
+  const el = e.target.closest(".opt");
+  if(!el) return;
+  const qid = Number(el.dataset.q);
+  const a = el.dataset.a;
+  ANSWERS[qid]=a;
+  // re-render selection UI in that card
+  const card = document.querySelector(`.card[data-q="${qid}"]`);
+  card.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));
+  el.classList.add("sel");
+});
+
+document.getElementById("submit").onclick = async ()=>{
+  // grade
+  let correct=0;
+  for(const q of ITEMS){
+    if((ANSWERS[q.id]||"") === (q.answer||"").toUpperCase()) correct++;
+  }
+  const total = ITEMS.length;
+  const score10 = total ? (correct/total)*10 : 0;
+
+  document.getElementById("result").style.display="";
+  document.getElementById("result").innerHTML =
+    `<div style="font-weight:950;font-size:1.2rem">Điểm: ${score10.toFixed(1)}/10</div>
+     <div class="muted">Đúng ${correct}/${total}</div>`;
+
+  // submit lên server nếu quiz require_login
+  if(QUIZ?.require_login){
+    const tk = getToken();
+    const out = await rpc("api_submit_attempt", {
+      p_token: tk,
+      p_quiz_id: QUIZ.quiz_id,
+      p_payload: {
+        score10,
+        correctCount: correct,
+        totalCount: total,
+        answers: ANSWERS
+      }
+    }).catch(e=>({ok:false,error:e.message}));
+
+    if(out.ok) document.getElementById("result").innerHTML += `<div class="muted" style="margin-top:8px">✅ Đã lưu điểm</div>`;
+    else document.getElementById("result").innerHTML += `<div class="muted" style="margin-top:8px">⚠️ Không lưu được điểm: ${escapeHtml(out.error||"")}</div>`;
+  }else{
+    document.getElementById("result").innerHTML += `<div class="muted" style="margin-top:8px">Quiz này không yêu cầu login → không lưu điểm.</div>`;
+  }
+};
+
+(async ()=>{
+  const id = quizIdFromUrl();
+  if(!id){
+    document.getElementById("app").innerHTML = `<div class="card">Sai link quiz.</div>`;
+    return;
+  }
+
+  const q = await rpc("api_get_quiz_public",{p_quiz_id:id});
+  if(!q.ok){ document.getElementById("app").innerHTML = `<div class="card">${escapeHtml(q.error||"not ok")}</div>`; return; }
+
+  QUIZ = q.quiz;
+  document.getElementById("t").textContent = QUIZ.title || id;
+  document.getElementById("sub").textContent = QUIZ.sub || "";
+
+  if(QUIZ.require_login){
+    const tk = getToken();
+    const me = tk ? await rpc("api_me",{p_token:tk}).catch(()=>({ok:false})) : {ok:false};
+    if(!me.ok){
+      location.href = "/?next=" + encodeURIComponent(`/q/${id}`);
+      return;
+    }
+    document.getElementById("me").textContent = "Người làm: " + me.me.username;
+  }else{
+    document.getElementById("me").textContent = "Không cần đăng nhập";
+  }
+
+  const qs = await rpc("api_get_questions",{p_quiz_id:id});
+  ITEMS = (qs.items||[]).filter(x=>x.type==="mcq1" && (x.options||[]).length===4);
+  render();
+})();
+</script>
+</body>
+</html>
