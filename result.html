@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <title>Kết quả</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,16 +11,17 @@
 
   <style>
     :root {
-      --bg1: #ffecd2; --bg2: #fcb69f;
-      --card: #fff; --text: #1f2937; --muted: #6b7280;
-      --primary: #7c3aed; --ok: #16a34a; --bad: #dc2626;
-      --border: #e5e7eb;
-      --shadow: 0 14px 40px rgba(0,0,0,.10);
-      --radius: 18px;
-      --admin: #2563eb;
+      --bg1:#ffecd2; --bg2:#fcb69f;
+      --card:#fff; --text:#1f2937; --muted:#6b7280;
+      --primary:#7c3aed; --ok:#16a34a; --bad:#dc2626;
+      --border:#e5e7eb;
+      --shadow:0 14px 40px rgba(0,0,0,.10);
+      --radius:18px;
+      --admin:#2563eb;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
+    html{-webkit-text-size-adjust:100%}
     body{
       margin:0;
       font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
@@ -28,9 +29,11 @@
       background: radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
                   linear-gradient(120deg, var(--bg1) 0%, var(--bg2) 100%);
       overflow:hidden;
+      touch-action:pan-x pan-y;
     }
     #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px}
     .wrap{max-width:980px;margin:0 auto;padding:0 14px}
+
     .topbar{
       margin-top:10px;background:rgba(255,255,255,.86);
       border:1px solid rgba(229,231,235,.9);border-radius:18px;
@@ -77,11 +80,15 @@
       display:inline-flex;align-items:center;gap:8px;
       box-shadow:0 12px 24px rgba(0,0,0,.12);
       background:#fff;color:#111827;border:1px solid #e5e7eb;
+      text-decoration:none;
+      touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent;
     }
     .btn-primary{
       background:linear-gradient(135deg,#7c3aed,#fb7185);
       color:#fff;border:0;box-shadow:0 12px 24px rgba(124,58,237,.18);
     }
+    .btn[disabled]{opacity:.65;cursor:not-allowed}
 
     .table{
       width:100%;border-collapse:separate;border-spacing:0;
@@ -103,6 +110,39 @@
       max-width:calc(100% - 28px);z-index:20050;text-align:center;
     }
     .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+    /* comments UI (từ code cũ, rút gọn) */
+    .input{
+      width:100%;
+      border-radius:14px;border:2px solid #e5e7eb;
+      padding:11px 12px;font-size:.95rem;font-weight:700;
+      outline:none;background:#f8fafc;
+      transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    .input:focus{
+      border-color:rgba(124,58,237,.55);
+      box-shadow:0 0 0 5px rgba(124,58,237,.10);
+      background:#fff;
+    }
+    .cmtBox{display:grid;gap:12px}
+    .cmtItem{border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:#fff}
+    .cmtHead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+    .cmtAuthor{font-weight:950;color:#6b7280;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .adminBadgeInline{
+      padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
+      background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin);white-space:nowrap;
+    }
+    .cmtText{color:#111827;font-weight:750;line-height:1.35;white-space:pre-wrap;word-break:break-word}
+    .cmtActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;justify-content:flex-end}
+    .cmtBtn{
+      border-radius:999px;padding:7px 10px;font-weight:900;
+      border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:.82rem;
+    }
+    .cmtBtnDanger{background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.25);color:#991b1b}
+    .cmtTime{margin-top:6px;text-align:right;color:#6b7280;font-weight:800;font-size:.82rem}
+    .replyWrap{margin-top:10px;margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;display:grid;gap:10px}
+    .replyForm{margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;margin-top:10px;display:grid;gap:10px}
+    .charRow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6b7280;font-weight:800;font-size:.85rem}
   </style>
 </head>
 
@@ -125,7 +165,10 @@
 
       <div id="summary" class="card"></div>
       <div id="wrong" class="card"></div>
+
+      <!-- BXH + Comment nằm cuối -->
       <div id="lb" class="card"></div>
+      <div id="discussion" class="card"></div>
     </div>
   </div>
 
@@ -133,9 +176,10 @@
 
 <script>
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmRzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o".replace("c3VwYWJzZS","c3VwYWJzZS"); // giữ nguyên
 
 const TOKEN_KEY = "tk_token_v2";
+const NAME_KEY  = "tk_display_name_v1";
 
 function toast(msg){
   const t = document.getElementById("toast");
@@ -148,16 +192,20 @@ function escapeHtml(s) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
-function sbHeaders(){
-  const key = String(SUPABASE_ANON_KEY||"").trim();
+function getToken(){ try { return (localStorage.getItem(TOKEN_KEY)||"").trim(); } catch { return ""; } }
+function loadName(){ try { return (localStorage.getItem(NAME_KEY)||"").trim(); } catch { return ""; } }
+
+function sbHeaders({ useUserToken=true } = {}){
+  const anon = String(SUPABASE_ANON_KEY||"").trim();
+  const tk = useUserToken ? getToken() : "";
   return {
-    "apikey": key,
-    "Authorization": "Bearer " + key,
+    "apikey": anon,
+    "Authorization": "Bearer " + (tk || anon),
     "Content-Type": "application/json"
   };
 }
-async function sbGet(path){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{ headers: sbHeaders() });
+async function sbGet(path, { useUserToken=true } = {}){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{ headers: sbHeaders({useUserToken}) });
   const txt = await res.text();
   let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
   if(!res.ok){
@@ -168,7 +216,47 @@ async function sbGet(path){
   }
   return data;
 }
-function getToken(){ try { return (localStorage.getItem(TOKEN_KEY)||"").trim(); } catch { return ""; } }
+async function sbPost(path, body, { useUserToken=true, preferReturn=true } = {}){
+  const h = sbHeaders({useUserToken});
+  if(preferReturn) h["Prefer"]="return=representation";
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
+    method:"POST",
+    headers: h,
+    body: JSON.stringify(body||{})
+  });
+  const txt = await res.text();
+  let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
+  if(!res.ok){
+    const msg = (data && (data.message||data.error||data.hint||data.details))
+      ? (data.message||data.error||data.hint||data.details)
+      : txt;
+    throw new Error(msg || "REST POST error");
+  }
+  return data;
+}
+async function sbDelete(path, { useUserToken=true } = {}){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
+    method:"DELETE",
+    headers: sbHeaders({useUserToken})
+  });
+  const txt = await res.text();
+  let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
+  if(!res.ok){
+    const msg = (data && (data.message||data.error||data.hint||data.details))
+      ? (data.message||data.error||data.hint||data.details)
+      : txt;
+    throw new Error(msg || "REST DELETE error");
+  }
+  return data;
+}
+
+function fmtTs(ts){
+  try{
+    const d = ts ? new Date(ts) : new Date();
+    const pad = (n)=>String(n).padStart(2,"0");
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
+  }catch{ return ""; }
+}
 
 const qs = new URLSearchParams(location.search);
 const quizId = String(qs.get("quiz")||"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
@@ -243,7 +331,11 @@ function renderLeaderboard(rows, myName){
     return `
       <tr ${isMe ? `style="background: rgba(124,58,237,.10)"` : ``}>
         <td style="width:70px"><b>${i+1}</b></td>
-        <td>${escapeHtml(r.name||"")}${r.is_admin ? ` <span style="color:${'#2563eb'}; font-weight:900">(ADMIN)</span>`:''}${isMe?` <span style="color:${'#4c1d95'}; font-weight:900">(Bạn)</span>`:''}</td>
+        <td>
+          ${escapeHtml(r.name||"")}
+          ${r.is_admin ? ` <span style="color:${'#2563eb'}; font-weight:900">(ADMIN)</span>`:''}
+          ${isMe?` <span style="color:${'#4c1d95'}; font-weight:900">(Bạn)</span>`:''}
+        </td>
         <td style="width:110px"><b>${Number(r.score10||0).toFixed(1)}</b>/10</td>
       </tr>
     `;
@@ -260,80 +352,271 @@ function renderLeaderboard(rows, myName){
   `;
 }
 
-function fmtTs(ts){
+/** ===== COMMENTS (table: comments OR quiz_comments) ===== */
+const DISCUSS_MAX = 120;
+let DISC = { table:"comments", loaded:false, tree:[], openReply:"" };
+
+function discussionHtml(username){
+  return `
+    <div class="row1"><p class="vi">Thảo luận</p><div class="idx">💬</div></div>
+
+    <div style="margin-top:10px; display:grid; gap:10px;">
+      <div class="charRow">
+        <div><b>Viết bình luận</b> <span class="muted">(Tên: <b>${escapeHtml(username||"—")}</b>)</span></div>
+        <div><span id="rootCount">0</span>/${DISCUSS_MAX}</div>
+      </div>
+      <textarea id="rootInput" class="input" rows="3" maxlength="${DISCUSS_MAX}" placeholder="Nhập bình luận..."></textarea>
+      <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="btnPostRoot" style="justify-content:center;">➕ Gửi</button>
+      </div>
+      <div id="discussList" class="cmtBox"></div>
+    </div>
+  `;
+}
+
+function formatTsMs(ms){
   try{
-    const d = ts ? new Date(ts) : new Date();
+    const d = new Date(Number(ms||0));
     const pad = (n)=>String(n).padStart(2,"0");
     return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
   }catch{ return ""; }
 }
 
+function toMs(ts){
+  const d = new Date(ts);
+  const t = d.getTime();
+  return isFinite(t) ? t : Date.now();
+}
+
+function buildTree(rows){
+  const byId = new Map();
+  rows.forEach(r=>{
+    byId.set(String(r.id), {
+      id: String(r.id),
+      parent_id: r.parent_id ? String(r.parent_id) : "",
+      author: String(r.author||""),
+      created_at: r.created_at,
+      createdAtMs: toMs(r.created_at),
+      text: String(r.text||""),
+      replies: []
+    });
+  });
+
+  const roots = [];
+  for(const node of byId.values()){
+    if(node.parent_id && byId.has(node.parent_id)){
+      byId.get(node.parent_id).replies.push(node);
+    }else{
+      roots.push(node);
+    }
+  }
+
+  roots.sort((a,b)=>a.createdAtMs-b.createdAtMs);
+  roots.forEach(r=>r.replies.sort((a,b)=>a.createdAtMs-b.createdAtMs));
+  return roots;
+}
+
+function canDeleteComment(c, myName, isAdmin){
+  if(isAdmin) return true;
+  const a = String(c.author||"").trim().toLowerCase();
+  const m = String(myName||"").trim().toLowerCase();
+  return !!m && a === m;
+}
+
+function renderDiscussion(myName, isAdmin){
+  const list = document.getElementById("discussList");
+  if(!list) return;
+
+  const tree = DISC.tree || [];
+  if(!tree.length){
+    list.innerHTML = `<div class="muted">Chưa có bình luận nào.</div>`;
+    return;
+  }
+
+  list.innerHTML = "";
+  tree.forEach(root=>{
+    const wrap = document.createElement("div");
+    wrap.className = "cmtItem";
+
+    const adminTag = (String(root.author||"").trim().toLowerCase() === "tuankhoi") ? `<span class="adminBadgeInline">ADMIN</span>` : ``;
+    const delBtn = canDeleteComment(root, myName, isAdmin) ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(root.id)}">Xóa</button>` : ``;
+
+    wrap.innerHTML = `
+      <div class="cmtHead">
+        <div class="cmtAuthor">
+          <span>${escapeHtml(root.author||"—")}</span>
+          ${adminTag}
+        </div>
+      </div>
+      <div class="cmtText">${escapeHtml(root.text||"")}</div>
+
+      <div class="cmtActions">
+        <button class="cmtBtn" data-reply="${escapeHtml(root.id)}">Trả lời</button>
+        ${delBtn}
+      </div>
+      <div class="cmtTime">${escapeHtml(formatTsMs(root.createdAtMs))}</div>
+
+      <div class="replySlot" data-slot="${escapeHtml(root.id)}"></div>
+      <div class="replyWrap" data-replies="${escapeHtml(root.id)}"></div>
+    `;
+
+    list.appendChild(wrap);
+
+    const slot = wrap.querySelector(`[data-slot="${CSS.escape(String(root.id))}"]`);
+    if(slot && DISC.openReply === String(root.id)){
+      slot.innerHTML = `
+        <div class="replyForm">
+          <div class="charRow">
+            <div><b>Trả lời</b></div>
+            <div><span data-ct>0</span>/${DISCUSS_MAX}</div>
+          </div>
+          <textarea class="input" rows="2" maxlength="${DISCUSS_MAX}" placeholder="Nhập trả lời..."></textarea>
+          <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
+            <button class="btn btn-primary" data-sendreply="${escapeHtml(root.id)}" style="justify-content:center;">Gửi</button>
+            <button class="btn" data-cancelreply style="justify-content:center;">Hủy</button>
+          </div>
+        </div>
+      `;
+    }
+
+    const rWrap = wrap.querySelector(`[data-replies="${CSS.escape(String(root.id))}"]`);
+    if(rWrap){
+      rWrap.innerHTML = "";
+      (root.replies||[]).forEach(r=>{
+        const item = document.createElement("div");
+        item.className = "cmtItem";
+        item.style.margin = "0";
+
+        const rAdminTag = (String(r.author||"").trim().toLowerCase() === "tuankhoi") ? `<span class="adminBadgeInline">ADMIN</span>` : ``;
+        const rDelBtn = canDeleteComment(r, myName, isAdmin) ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(r.id)}">Xóa</button>` : ``;
+
+        item.innerHTML = `
+          <div class="cmtHead">
+            <div class="cmtAuthor">
+              <span>${escapeHtml(r.author||"—")}</span>
+              ${rAdminTag}
+            </div>
+          </div>
+          <div class="cmtText">${escapeHtml(r.text||"")}</div>
+          <div class="cmtActions">${rDelBtn}</div>
+          <div class="cmtTime">${escapeHtml(formatTsMs(r.createdAtMs))}</div>
+        `;
+        rWrap.appendChild(item);
+      });
+    }
+  });
+}
+
+async function tryGetCommentsTable(){
+  // ưu tiên comments, nếu lỗi thì thử quiz_comments
+  try{
+    await sbGet(`comments?quiz_id=eq.${quizId}&select=id&limit=1`);
+    return "comments";
+  }catch(e){
+    await sbGet(`quiz_comments?quiz_id=eq.${quizId}&select=id&limit=1`);
+    return "quiz_comments";
+  }
+}
+
+async function loadComments(){
+  if(!quizId) return;
+  if(!DISC.table){
+    try{ DISC.table = await tryGetCommentsTable(); }
+    catch(e){
+      // không có bảng comment
+      DISC.table = "";
+      return;
+    }
+  }
+  if(!DISC.table) return;
+
+  const rows = await sbGet(`${DISC.table}?quiz_id=eq.${quizId}&select=id,parent_id,author,text,created_at&order=created_at.asc&limit=300`);
+  DISC.tree = buildTree(Array.isArray(rows)?rows:[]);
+  DISC.loaded = true;
+}
+
+async function addComment({ text, parent_id, author }){
+  if(!DISC.table) return;
+  const payload = {
+    quiz_id: quizId,
+    parent_id: parent_id || null,
+    author: author || "",
+    text: text || ""
+  };
+  const res = await sbPost(DISC.table, payload, {preferReturn:true});
+  const row = Array.isArray(res) ? res[0] : res;
+  return row;
+}
+
+async function deleteComment(id){
+  if(!DISC.table) return;
+  // DELETE /rest/v1/comments?id=eq.xxx
+  await sbDelete(`${DISC.table}?id=eq.${encodeURIComponent(id)}`);
+}
+
+/** ===== Boot ===== */
 (async function boot(){
   if(!quizId){
     renderSummary({ title:"Kết quả", sub:"Sai link (thiếu quiz)", username:"—", score10:0, correctCount:0, totalCount:0, when:"" });
     renderWrong([]);
     renderLeaderboard([], "");
+    document.getElementById("discussion").innerHTML = `<div class="muted">Sai link (thiếu ?quiz=abcde).</div>`;
     return;
   }
 
   // render nhanh từ sessionStorage nếu có
   let cached = null;
-  try{
-    cached = JSON.parse(sessionStorage.getItem(`tk_last_result::${quizId}`)||"null");
-  }catch{}
-  if(cached && cached.result){
-    renderSummary({
-      title: cached.title || "Kết quả",
-      sub: cached.sub || "",
-      username: cached.me?.username || "—",
-      score10: cached.result.score10,
-      correctCount: cached.result.correctCount,
-      totalCount: cached.result.totalCount,
-      when: fmtTs(cached.ts)
-    });
-    renderWrong(cached.result.wrong || []);
-  } else {
-    renderSummary({ title:"Kết quả", sub:"", username:"—", score10:0, correctCount:0, totalCount:0, when:"" });
-    document.getElementById("wrong").innerHTML = `<div class="muted">Đang tải…</div>`;
-  }
+  try{ cached = JSON.parse(sessionStorage.getItem(`tk_last_result::${quizId}`)||"null"); }catch{}
+  const fallbackName = loadName();
 
-  // fetch quiz meta
-  let qTitle = "", qSub = "";
-  try{
-    const q = await sbGet(`quizzes?quiz_id=eq.${quizId}&select=title,sub&limit=1`);
-    if(Array.isArray(q) && q[0]){ qTitle = q[0].title || ""; qSub = q[0].sub || ""; }
-  }catch{}
-
-  // fetch attempt + answers (nếu có attemptId)
-  let username = cached?.me?.username || "";
+  let username = (cached && cached.me && cached.me.username) ? cached.me.username : (fallbackName || "");
   let score10 = cached?.result?.score10 || 0;
   let correctCount = cached?.result?.correctCount || 0;
   let totalCount = cached?.result?.totalCount || 0;
   let wrongList = cached?.result?.wrong || [];
   let when = cached?.ts ? fmtTs(cached.ts) : "";
 
+  // quick render
+  renderSummary({
+    title: cached?.title || "Kết quả",
+    sub: cached?.sub || "",
+    username: username || "—",
+    score10, correctCount, totalCount,
+    when
+  });
+  renderWrong(wrongList);
+
+  // fetch quiz meta
+  let qTitle="", qSub="";
+  try{
+    const q = await sbGet(`quizzes?quiz_id=eq.${quizId}&select=title,sub&limit=1`);
+    if(Array.isArray(q) && q[0]){ qTitle=q[0].title||""; qSub=q[0].sub||""; }
+  }catch{}
+
+  // fetch attempt nếu có attemptId
   if(attemptId){
     try{
-      const at = await sbGet(`attempts?attempt_id=eq.${encodeURIComponent(attemptId)}&select=attempt_id,created_at,score10,correct_count,total_count,user_id&limit=1`);
+      const at = await sbGet(`attempts?attempt_id=eq.${encodeURIComponent(attemptId)}&select=attempt_id,created_at,score10,correct_count,total_count,name&limit=1`);
       const a = Array.isArray(at) ? at[0] : null;
-
       if(a){
         when = fmtTs(a.created_at);
         score10 = Number(a.score10||0);
         correctCount = Number(a.correct_count||0);
         totalCount = Number(a.total_count||0);
+        if(a.name && !username) username = String(a.name);
 
-        // lấy answers + vocab để dựng wrong
-        // NOTE: có thể fail nếu RLS chặn join
-        const ans = await sbGet(`attempt_answers?attempt_id=eq.${encodeURIComponent(attemptId)}&select=user_answer,ok,expected,vocab:vocabs(word)&limit=500`);
-        const list = (ans||[]).filter(x=>x && x.ok===false).map(x=>({
-          word: x.vocab?.word || "",
-          user_answer: x.user_answer || "",
-          expected: x.expected || ""
-        }));
-        wrongList = list;
-
-        // username: nếu bạn muốn lấy từ app_users theo user_id thì cần policy/RPC riêng; tạm lấy từ cache
+        // load wrong from attempt_answers join vocabs
+        try{
+          const ans = await sbGet(`attempt_answers?attempt_id=eq.${encodeURIComponent(attemptId)}&select=user_answer,ok,expected,vocab:vocabs(word)&limit=2000`);
+          const list = (ans||[]).filter(x=>x && x.ok===false).map(x=>({
+            word: x.vocab?.word || "",
+            user_answer: x.user_answer || "",
+            expected: x.expected || ""
+          }));
+          wrongList = list;
+        }catch(e){
+          // nếu RLS chặn join -> vẫn dùng cached.wrong
+        }
       }
     }catch(e){
       // giữ cache
@@ -349,13 +632,115 @@ function fmtTs(ts){
   });
   renderWrong(wrongList);
 
-  // leaderboard
+  // leaderboard (view v_leaderboard)
   try{
     const rows = await sbGet(`v_leaderboard?quiz_id=eq.${quizId}&select=name,is_admin,score10&order=score10.desc&limit=30`);
     renderLeaderboard(rows||[], username||"");
   }catch(e){
     renderLeaderboard([], "");
   }
+
+  // discussion
+  const discussionEl = document.getElementById("discussion");
+  discussionEl.innerHTML = discussionHtml(username || fallbackName || "—");
+
+  const rootInput = document.getElementById("rootInput");
+  const rootCount = document.getElementById("rootCount");
+  const btnPostRoot = document.getElementById("btnPostRoot");
+
+  rootInput.addEventListener("input", ()=>{ rootCount.textContent = String((rootInput.value||"").length); }, {passive:true});
+
+  // load comments
+  let isAdmin = false; // nếu bạn muốn lấy admin từ token/me thì có thể bổ sung sau
+  try{
+    await loadComments();
+    renderDiscussion(username || fallbackName || "", isAdmin);
+  }catch(e){
+    discussionEl.innerHTML += `<div class="muted" style="margin-top:10px">Không có hệ thống comment trên Supabase (chưa có bảng comments).</div>`;
+  }
+
+  btnPostRoot.addEventListener("click", async ()=>{
+    const text = String(rootInput.value||"").trim();
+    if(!text || text.length > DISCUSS_MAX){ toast("Tối đa 120 ký tự"); return; }
+    if(!(username || fallbackName)){ toast("Thiếu tên (vào quiz nhập tên trước)"); return; }
+
+    rootInput.value = ""; rootCount.textContent = "0";
+    try{
+      await addComment({ text, parent_id:null, author:(username||fallbackName) });
+      await loadComments();
+      renderDiscussion(username||fallbackName, isAdmin);
+      toast("Đã gửi");
+    }catch(e){
+      toast("Gửi lỗi");
+    }
+  });
+
+  discussionEl.addEventListener("click", async (e)=>{
+    const delBtn = e.target.closest("[data-del]");
+    if(delBtn){
+      const id = String(delBtn.getAttribute("data-del")||"");
+      if(!id) return;
+      if(!confirm("Xóa bình luận này?")) return;
+      try{
+        await deleteComment(id);
+        await loadComments();
+        renderDiscussion(username||fallbackName, isAdmin);
+        toast("Đã xóa");
+      }catch(err){
+        toast("Xóa lỗi (có thể do RLS)");
+      }
+      return;
+    }
+
+    const replyBtn = e.target.closest("[data-reply]");
+    if(replyBtn){
+      const rootId = String(replyBtn.getAttribute("data-reply")||"");
+      DISC.openReply = (DISC.openReply === rootId) ? "" : rootId;
+      renderDiscussion(username||fallbackName, isAdmin);
+      const slot = discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
+      const ta = slot ? slot.querySelector("textarea") : null;
+      if(ta) ta.focus();
+      return;
+    }
+
+    const cancelBtn = e.target.closest("[data-cancelreply]");
+    if(cancelBtn){
+      DISC.openReply = "";
+      renderDiscussion(username||fallbackName, isAdmin);
+      return;
+    }
+
+    const sendBtn = e.target.closest("[data-sendreply]");
+    if(sendBtn){
+      const rootId = String(sendBtn.getAttribute("data-sendreply")||"");
+      const slot = discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
+      const ta = slot ? slot.querySelector("textarea") : null;
+      const text = ta ? String(ta.value||"").trim() : "";
+      if(!text || text.length > DISCUSS_MAX){ toast("Tối đa 120 ký tự"); return; }
+
+      DISC.openReply = "";
+      renderDiscussion(username||fallbackName, isAdmin);
+
+      try{
+        await addComment({ text, parent_id: rootId, author:(username||fallbackName) });
+        await loadComments();
+        renderDiscussion(username||fallbackName, isAdmin);
+        toast("Đã gửi");
+      }catch(err){
+        toast("Gửi lỗi");
+      }
+      return;
+    }
+  });
+
+  discussionEl.addEventListener("input", (e)=>{
+    const ta = e.target;
+    if(!(ta && ta.tagName === "TEXTAREA")) return;
+    const form = ta.closest(".replyForm");
+    if(!form) return;
+    const ct = form.querySelector("[data-ct]");
+    if(ct) ct.textContent = String((ta.value||"").length);
+  }, {passive:true});
 })();
 </script>
 </body>
