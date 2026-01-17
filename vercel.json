@@ -8,7 +8,8 @@
 
     { "source": "/q", "destination": "/q/index.html" },
     { "source": "/q/", "destination": "/q/index.html" },
-    { "source": "/q/:id", "destination": "/q/index.html" },
-    { "source": "/q/:id/", "destination": "/q/index.html" }
+
+    { "source": "/q/:id", "destination": "/q/:id.html" },
+    { "source": "/q/:id/", "destination": "/q/:id.html" }
   ]
 }
