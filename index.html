@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
   <title>tuankhoi.site - Quiz Store</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,17 +10,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
 
   <style>
-    :root{
+    :root {
       --bg1:#ffecd2; --bg2:#fcb69f;
       --card:#fff; --text:#1f2937; --muted:#6b7280;
-      --primary:#7c3aed; --border:#e5e7eb; --soft:#f8fafc;
+      --primary:#7c3aed; --ok:#16a34a; --bad:#dc2626;
+      --border:#e5e7eb; --soft:#f8fafc;
       --shadow:0 14px 40px rgba(0,0,0,.10);
       --radius:18px;
       --admin:#2563eb;
-      --bad:#dc2626;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
+    html{-webkit-text-size-adjust:100%}
     body{
       margin:0;
       font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
@@ -29,9 +30,58 @@
         radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
         linear-gradient(120deg,var(--bg1) 0%, var(--bg2) 100%);
       overflow:hidden;
+      touch-action: pan-x pan-y;
     }
-    #shell{height:100vh; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 0 80px}
-    .wrap{max-width:980px; margin:0 auto; padding:0 14px}
+
+    .btn,.pinKey,.btn-x{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+
+    #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px;touch-action:pan-y}
+    .wrap{max-width:980px;margin:0 auto;padding:0 14px}
+
+    .userCorner{
+      position:fixed;top:10px;left:12px;z-index:10010;
+      display:none;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;
+      background:rgba(255,255,255,.55);
+      border:1px solid rgba(229,231,235,.65);
+      backdrop-filter:blur(6px);
+      box-shadow:0 10px 22px rgba(0,0,0,.06);
+      user-select:none;
+      max-width:calc(100vw - 24px);
+      cursor:pointer;
+    }
+    .userCorner .name{
+      font-weight:950;font-size:.88rem;color:rgba(31,41,55,.55);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      max-width:58vw;
+    }
+    .userCorner .adminBadge{
+      padding:4px 8px;border-radius:999px;
+      font-weight:950;font-size:.78rem;
+      background:rgba(37,99,235,.12);
+      border:1px solid rgba(37,99,235,.35);
+      color:var(--admin);
+      white-space:nowrap;
+    }
+
+    .btn{
+      border:0;cursor:pointer;border-radius:999px;padding:10px 14px;
+      font-weight:900;font-size:.9rem;
+      transition:transform .16s ease, filter .16s ease;
+      display:inline-flex;align-items:center;gap:8px;
+      user-select:none;white-space:nowrap;
+      box-shadow:0 12px 24px rgba(0,0,0,.12);
+      background:#fff;color:#111827;border:1px solid #e5e7eb;
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
+    .btn:active{transform:translateY(0)}
+    .btn-primary{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff;border:0;
+      box-shadow:0 12px 24px rgba(124,58,237,.18);
+    }
+    .btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
+    .btn-danger{background:var(--bad);color:#fff;border:0}
 
     .topbar{
       margin-top:10px;
@@ -40,68 +90,43 @@
       border-radius:18px;
       box-shadow:0 10px 30px rgba(0,0,0,.06);
       padding:14px;
-      display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
     }
-    .titlebox{display:flex; gap:10px; align-items:center; flex:1 1 360px; min-width:240px}
+    .titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
     .logo{
-      width:42px; height:42px; border-radius:16px;
+      width:42px;height:42px;border-radius:16px;
       background:linear-gradient(135deg,#a78bfa,#fb7185);
-      display:flex; align-items:center; justify-content:center;
-      color:#fff; font-weight:900;
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:900;
       box-shadow:0 10px 22px rgba(124,58,237,.18);
       user-select:none;
     }
-    .titles h1{font-size:1.02rem; margin:0; font-weight:800}
-    .titles .tiny{margin-top:3px; font-size:.86rem; color:var(--muted); font-weight:650}
+    .titles h1{font-size:1.02rem;margin:0;font-weight:800}
+    .titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
 
+    .content{padding:12px 0 0}
     .card{
       background:var(--card);
       border:2px solid var(--border);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
-      padding:14px;
-      margin:12px 0;
+      padding:14px;margin:12px 0;
     }
-    .row1{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap}
-    .vi{margin:0; font-weight:900; font-size:1.04rem; line-height:1.25}
-    .muted{color:var(--muted); font-weight:650}
-
-    .btn{
-      border:0; cursor:pointer;
-      border-radius:999px; padding:10px 14px;
-      font-weight:900; font-size:.9rem;
-      transition:transform .16s ease, filter .16s ease;
-      display:inline-flex; align-items:center; gap:8px;
-      user-select:none; white-space:nowrap;
-      box-shadow:0 12px 24px rgba(0,0,0,.12);
-      background:#fff; color:#111827; border:1px solid #e5e7eb;
-    }
-    .btn:hover{transform:translateY(-1px); filter:brightness(.98)}
-    .btn:active{transform:translateY(0)}
-    .btn-primary{
-      background:linear-gradient(135deg,#7c3aed,#fb7185);
-      color:#fff; border:0;
-      box-shadow:0 12px 24px rgba(124,58,237,.18);
-    }
-    .btn-danger{ background:var(--bad); color:#fff; border:0; box-shadow:0 12px 24px rgba(220,38,38,.18); }
-
-    .pill{
-      background:#f3f4f6; border:1px solid #e5e7eb;
-      border-radius:999px; padding:8px 12px;
-      font-weight:800; font-size:.9rem; color:#374151; white-space:nowrap;
-    }
-    .badge-admin{
-      padding:4px 8px; border-radius:999px; font-weight:950; font-size:.78rem;
-      background:rgba(37,99,235,.12);
-      border:1px solid rgba(37,99,235,.35);
-      color:var(--admin); white-space:nowrap;
+    .row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25}
+    .muted{color:var(--muted);font-weight:650}
+    .idx{
+      font-size:.78rem;font-weight:900;
+      padding:6px 10px;border-radius:999px;
+      background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;
+      white-space:nowrap;
     }
 
     .input{
       width:100%;
-      border-radius:14px; border:2px solid #e5e7eb;
-      padding:11px 12px; font-size:.95rem; font-weight:700;
-      outline:none; background:var(--soft);
+      border-radius:14px;border:2px solid #e5e7eb;
+      padding:11px 12px;font-size:.95rem;font-weight:700;
+      outline:none;background:var(--soft);
       transition:border-color .15s ease, box-shadow .15s ease;
     }
     .input:focus{
@@ -110,267 +135,732 @@
       background:#fff;
     }
 
-    .grid2{display:grid; grid-template-columns: 1fr 160px; gap:10px; align-items:center}
-    @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.35);
+      display:none;align-items:center;justify-content:center;
+      padding:16px;z-index:20000;
+    }
+    .modal-backdrop.show{display:flex}
+    #registerBackdrop{z-index:20015}
+    #profileBackdrop{z-index:20030}
+    #pinBackdrop{z-index:20040}
 
-    a{color:#4c1d95; text-decoration:none; font-weight:900}
-    a:hover{text-decoration:underline}
+    .modal{
+      width:100%;max-width:620px;
+      background:#fff;border-radius:18px;border:1px solid #e5e7eb;
+      box-shadow:0 20px 60px rgba(0,0,0,.18);
+      padding:14px;max-height:82vh;overflow:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+    .modal h3{margin:4px 0 6px;font-size:1.02rem}
+    .modal p{margin:0 0 12px;color:var(--muted);font-weight:650;font-size:.92rem;line-height:1.35}
+    .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+    .xclose{position:sticky;top:0;display:flex;justify-content:flex-end;z-index:2;margin-bottom:4px}
+    .btn-x{
+      width:56px;height:56px;border-radius:16px;
+      border:1px solid #e5e7eb;background:#fff;cursor:pointer;
+      font-weight:1000;font-size:1.8rem;line-height:1;
+      box-shadow:0 12px 24px rgba(0,0,0,.10);
+    }
 
     .toast{
-      position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
-      background:rgba(17,24,39,.92); color:#fff;
-      padding:10px 12px; border-radius:14px;
-      font-weight:800; font-size:.9rem;
-      opacity:0; pointer-events:none;
+      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+      background:rgba(17,24,39,.92);color:#fff;
+      padding:10px 12px;border-radius:14px;
+      font-weight:800;font-size:.9rem;
+      opacity:0;pointer-events:none;
       transition:opacity .18s ease, transform .18s ease;
       max-width:calc(100% - 28px);
-      z-index:20050; text-align:center;
+      z-index:20050;text-align:center;
     }
-    .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px)}
-    code{background:#f6f6f6; padding:2px 6px; border-radius:8px; border:1px solid #eee}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+    /* PIN keypad (y chang vibe cũ) */
+    .pinWrap{display:grid;gap:12px}
+    .pinDots{
+      display:flex;justify-content:center;gap:10px;
+      padding:8px 0 2px;user-select:none;
+    }
+    .dot{
+      width:14px;height:14px;border-radius:999px;
+      border:2px solid #e5e7eb;background:#fff;
+      box-shadow:0 10px 22px rgba(0,0,0,.08);
+    }
+    .dot.filled{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      border-color:rgba(124,58,237,.25);
+    }
+    .pinKeypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .pinKey{
+      height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;
+      font-weight:1000;font-size:1.25rem;cursor:pointer;
+      box-shadow:0 10px 22px rgba(0,0,0,.08);
+      transition:transform .12s ease, filter .12s ease;
+      user-select:none;
+    }
+    .pinKey:hover{transform:translateY(-1px);filter:brightness(.99)}
+    .pinKey:active{transform:translateY(0)}
+    .pinKey.small{font-size:.95rem;font-weight:950;letter-spacing:.02em}
+    .pinNote{text-align:center;color:var(--muted);font-weight:750;font-size:.9rem;line-height:1.35}
+    @keyframes shakeX{0%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-4px)}90%{transform:translateX(4px)}100%{transform:translateX(0)}}
+    .pinWrap.shake{animation:shakeX .5s ease}
+    .pinDots.error .dot{border-color:rgba(220,38,38,.65)}
+    .pinDots.error .dot.filled{
+      background:linear-gradient(135deg,#fca5a5,#dc2626);
+      border-color:rgba(220,38,38,.55);
+    }
+    .pinNote.error{color:var(--bad)}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:520px){.grid2{grid-template-columns:1fr}}
+    .adminBadgeInline{
+      padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
+      background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);
+      color:var(--admin);white-space:nowrap;
+    }
   </style>
 </head>
 
 <body>
+  <div class="userCorner" id="userCorner" title="Bấm để mở tài khoản">
+    <span class="name" id="userCornerName">—</span>
+    <span class="adminBadge" id="userCornerAdmin" style="display:none;">ADMIN</span>
+  </div>
+
   <div id="shell">
     <div class="wrap">
-
       <div class="topbar">
         <div class="titlebox">
           <div class="logo">Hi!</div>
           <div class="titles">
             <h1>Quiz Store</h1>
-            <div class="tiny">Kệ hàng quiz — chọn quiz để làm</div>
+            <div class="tiny">Chọn quiz để làm</div>
           </div>
         </div>
-
-        <div id="mePill" class="pill">Chưa đăng nhập</div>
+        <div class="muted" id="statusPill">—</div>
       </div>
 
-      <div class="card" id="authCard">
-        <div class="row1">
-          <p class="vi">Tài khoản</p>
-          <div class="muted">username tự chuyển <b>chữ thường</b></div>
-        </div>
-
-        <div style="margin-top:10px" class="grid2">
-          <input id="u" class="input" placeholder="username (a-z 0-9 _)" maxlength="15" autocomplete="off" />
-          <input id="p" class="input" placeholder="pin" type="password" inputmode="numeric" />
-        </div>
-
-        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end">
-          <button class="btn" id="btnReg">Đăng ký</button>
-          <button class="btn btn-primary" id="btnLogin">Đăng nhập</button>
-          <button class="btn btn-danger" id="btnLogout" style="display:none">Logout</button>
-        </div>
-
-        <div class="muted" style="margin-top:8px" id="authHint"></div>
-      </div>
-
-      <div class="card">
-        <div class="row1">
-          <p class="vi">Danh sách quiz</p>
-          <div class="muted"><a href="/admin">Admin panel</a></div>
-        </div>
-        <div id="list" style="margin-top:10px"></div>
-      </div>
-
+      <div class="content" id="content"></div>
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
+  <!-- Register prompt -->
+  <div class="modal-backdrop" id="registerBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
+      <h3 id="registerTitle">Đăng ký tài khoản?</h3>
+      <p id="registerDesc">Username chưa đăng ký. Bạn có muốn đăng ký không?</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btnRegisterNo">Nhập lại</button>
+        <button class="btn btn-primary" id="btnRegisterYes">Đăng ký</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIN keypad -->
+  <div class="modal-backdrop" id="pinBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+      <div class="xclose">
+        <button class="btn-x" id="btnClosePin" aria-label="Đóng">✕</button>
+      </div>
+      <h3 id="pinTitle">Mật khẩu</h3>
+      <p id="pinDesc">Nhập mật khẩu số.</p>
+
+      <div class="pinWrap" id="pinWrap">
+        <div class="pinDots" id="pinDots"></div>
+        <div class="pinKeypad" id="pinKeypad"></div>
+        <div class="pinNote" id="pinNote"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile modal -->
+  <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+      <div class="xclose">
+        <button class="btn-x" id="btnCloseProfile" aria-label="Đóng">✕</button>
+      </div>
+      <h3 id="profileTitle">Tài khoản</h3>
+      <p id="profileSub">Quản lý username & mật khẩu.</p>
+
+      <div class="card" style="margin:10px 0 0; box-shadow:none;">
+        <div class="row1">
+          <p class="vi" style="margin:0">Username: <b id="profileUsername">—</b></p>
+          <div><span class="idx" id="profileRole">USER</span></div>
+        </div>
+        <div class="muted" id="profileHint" style="margin-top:8px; line-height:1.35"></div>
+      </div>
+
+      <div style="height:1px;background:#e5e7eb;margin:12px 0;"></div>
+
+      <div class="vi" style="font-size:.98rem;margin:0 0 6px;">Mật khẩu</div>
+      <button class="btn btn-primary" id="btnChangePin" style="justify-content:center; width:100%;">🔒 Đổi mật khẩu</button>
+
+      <div style="height:1px;background:#e5e7eb;margin:12px 0;"></div>
+
+      <div class="vi" style="font-size:.98rem;margin:0 0 6px;">Đổi username</div>
+      <div class="grid2">
+        <input class="input" id="newUsername" placeholder="Username mới" maxlength="15" autocomplete="off"/>
+        <button class="btn btn-primary" id="btnSaveNewUsername" style="justify-content:center;">💾 Lưu</button>
+      </div>
+
+      <div style="height:1px;background:#e5e7eb;margin:12px 0;"></div>
+
+      <button class="btn btn-danger" id="btnLogout" style="justify-content:center; width:100%;">🚪 Đăng xuất</button>
+    </div>
+  </div>
+
 <script>
-/** ======================
- *  CONFIG (DÁN KEY Ở ĐÂY)
- *  ====================== */
+/* ================== CONFIG ================== */
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
-/** storage */
-const TOKEN_KEY = "tk_token_v1";
+/* ================== STORAGE ================== */
+const TOKEN_KEY = "tk_token_v2";
 
-/** UI helpers */
+/* ================== UI HELPERS ================== */
 function toast(msg){
   const t=document.getElementById("toast");
   t.textContent=String(msg||"");
   t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"), 1300);
+  setTimeout(()=>t.classList.remove("show"),1200);
+}
+function escapeHtml(s){
+  return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
 function normUsername(u){
   return String(u||"").trim().toLowerCase();
 }
+function validateUsername(u){
+  u = normUsername(u);
+  if(!u) return "Chưa nhập username.";
+  if(u.length>15) return "Username tối đa 15 ký tự.";
+  if(!/^[a-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z 0-9 và dấu _ (không viết hoa).";
+  return null;
+}
 function getToken(){ return localStorage.getItem(TOKEN_KEY) || ""; }
 function setToken(t){ if(!t) localStorage.removeItem(TOKEN_KEY); else localStorage.setItem(TOKEN_KEY, t); }
+function safeNextPath(){
+  try{
+    const u = new URL(location.href);
+    const n = (u.searchParams.get("next")||"").trim();
+    if(n.startsWith("/")) return n;
+  }catch{}
+  return "";
+}
 
-/** call PostgREST RPC directly (ổn định hơn module import) */
+/* ================== SUPABASE RPC ================== */
 async function rpc(fn, args){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
-    method: "POST",
-    headers: {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
+    method:"POST",
+    headers:{
       "apikey": SUPABASE_ANON_KEY,
       "Authorization": "Bearer " + SUPABASE_ANON_KEY,
-      "Content-Type": "application/json"
+      "Content-Type":"application/json"
     },
-    body: JSON.stringify(args || {})
+    body: JSON.stringify(args||{})
   });
-  const text = await res.text();
-  let data = null;
-  try { data = text ? JSON.parse(text) : null; } catch {}
+  const txt = await res.text();
+  let data=null;
+  try{ data = txt ? JSON.parse(txt) : null; }catch{}
   if(!res.ok){
-    const msg = (data && (data.message || data.error_description || data.hint)) ? (data.message || data.error_description || data.hint) : text;
-    throw new Error(msg || ("RPC failed: " + fn));
+    const msg = (data && (data.message||data.error||data.hint)) ? (data.message||data.error||data.hint) : txt;
+    throw new Error(msg || `RPC failed: ${fn}`);
   }
   return data;
 }
 
-/** API wrappers */
-async function apiMe(){
-  const token = getToken();
-  if(!token) return { ok:false, error:"NOT_LOGGED_IN" };
-  return await rpc("api_me", { p_token: token });
-}
-async function apiLogin(username, pin){
-  return await rpc("api_login", { p_username: username, p_pin: String(pin||"") });
-}
-async function apiRegister(username, pin){
-  return await rpc("api_register", { p_username: username, p_pin: String(pin||"") });
-}
-async function apiLogout(){
-  const token = getToken();
-  if(token) {
-    try { await rpc("api_logout", { p_token: token }); } catch {}
-  }
-  setToken("");
-  return { ok:true };
-}
-async function apiListStore(){
-  return await rpc("api_list_public_quizzes", {});
-}
+const API = {
+  me: (token)=>rpc("api_me",{p_token:token}),
+  logout:(token)=>rpc("api_logout",{p_token:token}),
+  checkUsername:(username)=>rpc("api_check_username",{p_username:username}),
+  login:(username,pin)=>rpc("api_login",{p_username:username,p_pin:String(pin||"")}),
+  register:(username,pin)=>rpc("api_register",{p_username:username,p_pin:String(pin||"")}),
+  listStore:()=>rpc("api_list_public_quizzes",{}),
+  changeUsername:(token,newU)=>rpc("api_change_username",{p_token:token,p_new_username:newU}),
+  changePin:(token,oldPin,newPin)=>rpc("api_change_pin",{p_token:token,p_old_pin:String(oldPin||""),p_new_pin:String(newPin||"")})
+};
 
-/** Render */
-const mePill = document.getElementById("mePill");
-const authHint = document.getElementById("authHint");
-const btnLogin = document.getElementById("btnLogin");
-const btnReg = document.getElementById("btnReg");
-const btnLogout = document.getElementById("btnLogout");
-const listEl = document.getElementById("list");
-const uEl = document.getElementById("u");
-const pEl = document.getElementById("p");
+/* ================== STATE ================== */
+let ME = null; // {username, role}
+let STORE = [];
 
-function setMeUI(meOut){
-  if(meOut && meOut.ok){
-    const u = meOut.me.username;
-    const role = meOut.me.role;
-    mePill.innerHTML = `Xin chào <b>${u}</b> ${role==="admin" ? `<span class="badge-admin">ADMIN</span>`:""}`;
-    authHint.textContent = "Đã đăng nhập.";
-    btnLogout.style.display = "inline-flex";
-    btnLogin.style.display = "none";
-    btnReg.style.display = "none";
-    uEl.disabled = true;
-    pEl.disabled = true;
+/* ================== USER CORNER + PROFILE ================== */
+const userCorner = document.getElementById("userCorner");
+const userCornerName = document.getElementById("userCornerName");
+const userCornerAdmin = document.getElementById("userCornerAdmin");
+const statusPill = document.getElementById("statusPill");
+
+const profileBackdrop = document.getElementById("profileBackdrop");
+document.getElementById("btnCloseProfile").onclick = closeProfileModal;
+profileBackdrop.addEventListener("click",(e)=>{ if(e.target===profileBackdrop) closeProfileModal(); });
+
+function updateUserCorner(){
+  if(!ME || !ME.username){
+    userCorner.style.display="none";
+    statusPill.textContent="Chưa đăng nhập";
     return;
   }
-  mePill.textContent = "Chưa đăng nhập";
-  authHint.textContent = "Login để lưu progress / leaderboard / comment.";
-  btnLogout.style.display = "none";
-  btnLogin.style.display = "inline-flex";
-  btnReg.style.display = "inline-flex";
-  uEl.disabled = false;
-  pEl.disabled = false;
+  userCorner.style.display="inline-flex";
+  userCornerName.textContent = ME.username;
+  userCornerAdmin.style.display = (ME.role==="admin") ? "inline-flex" : "none";
+  statusPill.innerHTML = `Xin chào <b>${escapeHtml(ME.username)}</b> ${ME.role==="admin" ? `<span class="adminBadgeInline">ADMIN</span>`:""}`;
+}
+userCorner.addEventListener("click", ()=>{ if(ME) openProfileModal(); });
+
+function openProfileModal(){
+  document.getElementById("profileUsername").textContent = ME.username;
+  document.getElementById("profileRole").textContent = (ME.role==="admin") ? "ADMIN" : "USER";
+  document.getElementById("profileHint").textContent =
+    (ME.role==="admin") ? "Admin không đổi username/pin trong panel này." : "Bạn có thể đổi username (30 ngày/lần) và đổi pin 4 số.";
+  document.getElementById("newUsername").value = "";
+  profileBackdrop.classList.add("show");
+  profileBackdrop.setAttribute("aria-hidden","false");
+}
+function closeProfileModal(){
+  profileBackdrop.classList.remove("show");
+  profileBackdrop.setAttribute("aria-hidden","true");
 }
 
-function renderList(items){
-  if(!items || !items.length){
-    listEl.innerHTML = `<div class="muted">Chưa có quiz public.</div>`;
+/* ================== REGISTER PROMPT ================== */
+const registerBackdrop = document.getElementById("registerBackdrop");
+const registerDesc = document.getElementById("registerDesc");
+document.getElementById("btnRegisterNo").onclick = ()=>closeRegisterPrompt(false);
+document.getElementById("btnRegisterYes").onclick = ()=>closeRegisterPrompt(true);
+registerBackdrop.addEventListener("click",(e)=>{ if(e.target===registerBackdrop) closeRegisterPrompt(false); });
+
+let REG_PROMPT = { open:false, resolve:null, username:"" };
+function openRegisterPrompt(username){
+  return new Promise((resolve)=>{
+    REG_PROMPT.open=true;
+    REG_PROMPT.resolve=resolve;
+    REG_PROMPT.username=username;
+    registerDesc.textContent = `Username "${username}" chưa đăng ký, bạn có muốn đăng ký không?`;
+    registerBackdrop.classList.add("show");
+    registerBackdrop.setAttribute("aria-hidden","false");
+  });
+}
+function closeRegisterPrompt(ans){
+  if(!REG_PROMPT.open) return;
+  registerBackdrop.classList.remove("show");
+  registerBackdrop.setAttribute("aria-hidden","true");
+  const r = REG_PROMPT.resolve;
+  REG_PROMPT.open=false;
+  REG_PROMPT.resolve=null;
+  REG_PROMPT.username="";
+  if(r) r(!!ans);
+}
+
+/* ================== PIN MODAL (keypad) ================== */
+const pinBackdrop = document.getElementById("pinBackdrop");
+const pinTitle = document.getElementById("pinTitle");
+const pinDesc = document.getElementById("pinDesc");
+const pinDots = document.getElementById("pinDots");
+const pinKeypad = document.getElementById("pinKeypad");
+const pinNote = document.getElementById("pinNote");
+const pinWrap = document.getElementById("pinWrap");
+document.getElementById("btnClosePin").onclick = ()=>closePin("cancel");
+pinBackdrop.addEventListener("click",(e)=>{ if(e.target===pinBackdrop) closePin("cancel"); });
+
+let PIN_KEYS_BUILT = false;
+let PIN = {
+  open:false, resolve:null, reject:null,
+  username:"", mode:"login", step:"one",
+  pinLen:4, value:"", first:"", old:"", submitting:false,
+  dotEls:[]
+};
+
+function buildPinKeypadOnce(){
+  if(PIN_KEYS_BUILT) return;
+  PIN_KEYS_BUILT=true;
+  pinKeypad.innerHTML="";
+  const keys=["1","2","3","4","5","6","7","8","9","CLEAR","0","⌫"];
+  keys.forEach(k=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="pinKey" + ((k==="CLEAR"||k==="⌫")?" small":"");
+    b.textContent=k;
+    b.onclick=()=>onPinKey(k);
+    pinKeypad.appendChild(b);
+  });
+}
+function buildDots(n){
+  pinDots.innerHTML="";
+  PIN.dotEls=[];
+  for(let i=0;i<n;i++){
+    const d=document.createElement("div");
+    d.className="dot";
+    pinDots.appendChild(d);
+    PIN.dotEls.push(d);
+  }
+}
+function updateDots(){
+  const len = PIN.value.length;
+  for(let i=0;i<PIN.dotEls.length;i++){
+    PIN.dotEls[i].classList.toggle("filled", i < len);
+  }
+}
+function setPinNote(msg,type=""){
+  if(type==="error") pinNote.classList.add("error");
+  else pinNote.classList.remove("error");
+  pinNote.textContent = String(msg||"");
+}
+function pinErrorPulse(msg){
+  PIN.value="";
+  updateDots();
+  pinDots.classList.add("error");
+  pinWrap.classList.remove("shake"); void pinWrap.offsetWidth; pinWrap.classList.add("shake");
+  setPinNote(msg||"Sai mật khẩu","error");
+  setTimeout(()=>{
+    pinDots.classList.remove("error");
+    pinWrap.classList.remove("shake");
+    setPinNote("Mật khẩu chỉ gồm số.");
+  },520);
+}
+
+function updatePinHeader(){
+  const u = PIN.username;
+  if(PIN.mode==="login"){
+    pinTitle.textContent="Đăng nhập";
+    pinDesc.textContent=`Username: ${u}`;
+  }else if(PIN.mode==="set"){
+    if(PIN.step==="one"){ pinTitle.textContent="Đăng ký"; pinDesc.textContent=`Tạo mật khẩu ${PIN.pinLen} số`; }
+    else { pinTitle.textContent="Xác nhận mật khẩu"; pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`; }
+  }else if(PIN.mode==="change"){
+    if(PIN.step==="old"){ pinTitle.textContent="Đổi mật khẩu"; pinDesc.textContent="Nhập mật khẩu hiện tại"; }
+    else if(PIN.step==="new1"){ pinTitle.textContent="Mật khẩu mới"; pinDesc.textContent=`Nhập ${PIN.pinLen} số`; }
+    else { pinTitle.textContent="Xác nhận mật khẩu mới"; pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`; }
+  }
+  setPinNote("Mật khẩu chỉ gồm số.");
+}
+
+function openPin({username, mode="login", pinLen=4}){
+  return new Promise((resolve,reject)=>{
+    PIN.open=true; PIN.resolve=resolve; PIN.reject=reject;
+    PIN.username=String(username||"");
+    PIN.mode=mode;
+    PIN.pinLen=Math.max(4, Number(pinLen)||4);
+    PIN.value=""; PIN.first=""; PIN.old=""; PIN.submitting=false;
+    PIN.step = (mode==="set") ? "one" : (mode==="change" ? "old" : "one");
+    buildPinKeypadOnce();
+    buildDots(PIN.pinLen);
+    updatePinHeader();
+    updateDots();
+    pinBackdrop.classList.add("show");
+    pinBackdrop.setAttribute("aria-hidden","false");
+  });
+}
+
+function closePin(why){
+  if(!PIN.open) return;
+  pinBackdrop.classList.remove("show");
+  pinBackdrop.setAttribute("aria-hidden","true");
+  const rej = PIN.reject;
+  const res = PIN.resolve;
+  const payload = PIN._payload;
+  PIN.open=false; PIN.resolve=null; PIN.reject=null; PIN._payload=null;
+  if(why==="ok"){ if(res) res(payload); return; }
+  if(rej) rej(new Error("cancel"));
+}
+
+async function onPinKey(k){
+  if(!PIN.open || PIN.submitting) return;
+
+  if(k==="CLEAR"){ PIN.value=""; updateDots(); return; }
+  if(k==="⌫"){ PIN.value=PIN.value.slice(0,-1); updateDots(); return; }
+
+  if(PIN.value.length>=PIN.pinLen) return;
+  PIN.value += String(k);
+  updateDots();
+  if(PIN.value.length!==PIN.pinLen) return;
+
+  const val = PIN.value;
+
+  if(!/^[0-9]+$/.test(val)){
+    pinErrorPulse("Mật khẩu chỉ gồm số");
     return;
   }
-  listEl.innerHTML = items.map(q => `
-    <div class="card" style="box-shadow:none; border-width:1px; margin:10px 0">
+
+  // LOGIN
+  if(PIN.mode==="login"){
+    PIN.submitting=true;
+    try{
+      setPinNote("Đang kiểm tra…");
+      const out = await API.login(PIN.username, val);
+      if(out && out.ok){
+        setToken(out.token);
+        ME = out.me || (await API.me(out.token)).me;
+        PIN._payload = val;
+        closePin("ok");
+        toast("Đăng nhập thành công");
+        const next = safeNextPath();
+        if(next){ location.href = next; return; }
+        await boot(); // render store
+        return;
+      }
+      pinErrorPulse(out?.error || "Sai mật khẩu");
+    }catch(e){
+      pinErrorPulse("Sai mật khẩu");
+    }finally{
+      PIN.submitting=false;
+    }
+    return;
+  }
+
+  // REGISTER (set pin twice)
+  if(PIN.mode==="set"){
+    if(PIN.step==="one"){
+      PIN.first = val;
+      PIN.value = "";
+      PIN.step="confirm";
+      updatePinHeader();
+      updateDots();
+      return;
+    }else{
+      if(PIN.first !== val){
+        pinErrorPulse("Mật khẩu không khớp");
+        PIN.first=""; PIN.step="one";
+        updatePinHeader(); updateDots();
+        return;
+      }
+      PIN._payload = val;
+      closePin("ok");
+      return;
+    }
+  }
+
+  // CHANGE PIN: old -> new -> confirm
+  if(PIN.mode==="change"){
+    if(PIN.step==="old"){
+      PIN.old = val;
+      PIN.value="";
+      PIN.step="new1";
+      updatePinHeader(); updateDots();
+      return;
+    }
+    if(PIN.step==="new1"){
+      PIN.first = val;
+      PIN.value="";
+      PIN.step="confirm";
+      updatePinHeader(); updateDots();
+      return;
+    }
+    // confirm
+    if(PIN.first !== val){
+      pinErrorPulse("Mật khẩu mới không khớp");
+      PIN.first=""; PIN.step="new1";
+      updatePinHeader(); updateDots();
+      return;
+    }
+    PIN._payload = { oldPin: PIN.old, newPin: val };
+    closePin("ok");
+    return;
+  }
+}
+
+/* ================== RENDER ================== */
+const content = document.getElementById("content");
+
+function renderGate(){
+  content.innerHTML = `
+    <div class="card">
       <div class="row1">
-        <div>
+        <p class="vi">Nhập USERNAME</p>
+        <div><span class="idx">BẮT BUỘC</span></div>
+      </div>
+      <div class="muted" style="margin-top:6px; line-height:1.35">
+        Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b> (không viết hoa).<br/>
+        - Username <b>đã có</b> → hiện keypad <b>đăng nhập</b>.<br/>
+        - Username <b>chưa có</b> → hỏi và cho <b>đăng ký</b>.
+      </div>
+
+      <div style="margin-top:10px; display:grid; gap:10px;">
+        <input id="nameInput" class="input" placeholder="vd: tuankhoi123" maxlength="15" autocomplete="off"/>
+        <button id="btnContinue" class="btn btn-primary" style="justify-content:center;">➡️ Tiếp tục</button>
+        <div class="muted" id="gateStatus">Sẵn sàng.</div>
+      </div>
+    </div>
+  `;
+
+  const nameInput = document.getElementById("nameInput");
+  const btnContinue = document.getElementById("btnContinue");
+  const gateStatus = document.getElementById("gateStatus");
+
+  nameInput.addEventListener("input",()=>{ // auto lowercase giống yêu cầu
+    const v = normUsername(nameInput.value);
+    if(nameInput.value!==v) nameInput.value=v;
+  },{passive:true});
+  try{ nameInput.focus(); }catch{}
+
+  const doFlow = async ()=>{
+    const u = normUsername(nameInput.value);
+    const err = validateUsername(u);
+    if(err){ toast(err); return; }
+
+    btnContinue.disabled=true; btnContinue.textContent="⏳";
+    gateStatus.textContent="Đang kiểm tra username…";
+    try{
+      const ck = await API.checkUsername(u);
+      if(!ck.ok) throw new Error(ck.error||"check fail");
+
+      const pinLen = Number(ck.pin_len||4)||4;
+
+      if(ck.exists === true && ck.reserved === true){
+        // username từng tồn tại -> không cho đăng ký lại
+        toast("Username này đã bị giữ lại (đổi tên rồi).");
+        gateStatus.textContent="Thử username khác.";
+        return;
+      }
+
+      if(ck.exists === true){
+        gateStatus.textContent="Đăng nhập: nhập mật khẩu…";
+        await openPin({username:u, mode:"login", pinLen});
+        return;
+      }
+
+      // exists = false
+      gateStatus.textContent=`Username "${u}" chưa đăng ký.`;
+      const ok = await openRegisterPrompt(u);
+      if(!ok){ gateStatus.textContent="Bạn có thể nhập username khác."; return; }
+
+      gateStatus.textContent="Đăng ký: tạo mật khẩu…";
+      const pin = await openPin({username:u, mode:"set", pinLen: (u==="tuankhoi"?6:4)});
+      // gọi register
+      gateStatus.textContent="Đang tạo tài khoản…";
+      const out = await API.register(u, pin);
+      if(!out || !out.ok) throw new Error(out?.error || "register fail");
+      setToken(out.token);
+      ME = out.me || (await API.me(out.token)).me;
+      toast("Đã đăng ký & đăng nhập");
+      const next = safeNextPath();
+      if(next){ location.href = next; return; }
+      await boot();
+    }catch(e){
+      if(!(e && e.message==="cancel")) toast(e.message||"Lỗi");
+      gateStatus.textContent="Sẵn sàng.";
+    }finally{
+      btnContinue.disabled=false; btnContinue.textContent="➡️ Tiếp tục";
+    }
+  };
+
+  btnContinue.onclick = doFlow;
+  nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); doFlow(); }});
+}
+
+function renderStore(){
+  const adminLink = (ME && ME.role==="admin") ? `<a href="/admin" class="muted" style="font-weight:900">Admin panel</a>` : `<span class="muted"> </span>`;
+  content.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Danh sách quiz</p>
+        <div>${adminLink}</div>
+      </div>
+      <div id="storeList" style="margin-top:10px"></div>
+    </div>
+  `;
+  const list = document.getElementById("storeList");
+  if(!STORE.length){
+    list.innerHTML = `<div class="muted">Chưa có quiz public.</div>`;
+    return;
+  }
+  list.innerHTML = STORE.map(q=>`
+    <div class="card" style="box-shadow:none;border-width:1px;margin:10px 0">
+      <div class="row1">
+        <div style="min-width:0">
           <div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div>
           <div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div>
-          <div class="muted" style="margin-top:6px">Link: <code>/q/${escapeHtml(q.quiz_id)}</code></div>
+          <div class="muted" style="margin-top:6px">Link: <span class="idx">/q/${escapeHtml(q.quiz_id)}</span>
+            ${q.require_access_code ? `<span class="idx" style="background:#fff7ed;color:#9a3412;border-color:#fed7aa">CÓ MÃ</span>` : ``}
+          </div>
         </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
           <a href="/q/${encodeURIComponent(q.quiz_id)}"><button class="btn btn-primary">Làm quiz</button></a>
+          <a href="/q/${encodeURIComponent(q.quiz_id)}?next=/" style="display:none"></a>
         </div>
       </div>
     </div>
   `).join("");
 }
 
-function escapeHtml(s){
-  return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
-}
-
-/** Events */
-uEl.addEventListener("input", () => {
-  const v = normUsername(uEl.value);
-  if(uEl.value !== v) uEl.value = v; // auto lower
-}, { passive:true });
-
-btnLogin.onclick = async () => {
-  const u = normUsername(uEl.value);
-  const p = String(pEl.value||"");
-  if(!u) return toast("Thiếu username");
-  if(!p) return toast("Thiếu pin");
-  try{
-    btnLogin.disabled = true;
-    const out = await apiLogin(u,p);
-    if(!out || !out.ok) return toast(out?.error || "login fail");
-    setToken(out.token);
-    toast("Login OK");
-    await boot();
-  }catch(e){
-    toast(e.message || "login error");
-  }finally{
-    btnLogin.disabled = false;
-  }
-};
-
-btnReg.onclick = async () => {
-  const u = normUsername(uEl.value);
-  const p = String(pEl.value||"");
-  if(!u) return toast("Thiếu username");
-  if(!p) return toast("Thiếu pin");
-  try{
-    btnReg.disabled = true;
-    const out = await apiRegister(u,p);
-    if(!out || !out.ok) return toast(out?.error || "register fail");
-    setToken(out.token);
-    toast("Register OK");
-    await boot();
-  }catch(e){
-    toast(e.message || "register error");
-  }finally{
-    btnReg.disabled = false;
-  }
-};
-
-btnLogout.onclick = async () => {
-  await apiLogout();
-  toast("Đã logout");
+/* ================== PROFILE ACTIONS ================== */
+document.getElementById("btnLogout").onclick = async ()=>{
+  const ok = confirm("Đăng xuất?");
+  if(!ok) return;
+  const t = getToken();
+  try{ if(t) await API.logout(t); }catch{}
+  setToken("");
+  ME=null;
+  closeProfileModal();
+  toast("Đã đăng xuất");
   await boot();
 };
 
-/** Boot */
-async function boot(){
-  // me
-  const meOut = await apiMe().catch(()=>({ok:false}));
-  setMeUI(meOut);
-
-  // store
-  const store = await apiListStore().catch(e=>({ok:false,error:e.message}));
-  if(!store.ok){
-    listEl.innerHTML = `<div class="muted">Lỗi load store: ${escapeHtml(store.error||"")}</div>`;
-    return;
+document.getElementById("btnSaveNewUsername").onclick = async ()=>{
+  if(!ME) return;
+  if(ME.role==="admin"){ toast("Admin không đổi username."); return; }
+  const newU = normUsername(document.getElementById("newUsername").value);
+  const err = validateUsername(newU);
+  if(err){ toast(err); return; }
+  try{
+    const out = await API.changeUsername(getToken(), newU);
+    if(!out.ok) throw new Error(out.error||"rename fail");
+    ME.username = out.me.username;
+    toast("Đã đổi username");
+    closeProfileModal();
+    updateUserCorner();
+  }catch(e){
+    toast(e.message||"Không đổi được");
   }
-  renderList(store.items||[]);
+};
+
+document.getElementById("btnChangePin").onclick = async ()=>{
+  if(!ME) return;
+  if(ME.role==="admin"){ toast("Admin không đổi pin."); return; }
+  try{
+    const payload = await openPin({username: ME.username, mode:"change", pinLen:4});
+    const out = await API.changePin(getToken(), payload.oldPin, payload.newPin);
+    if(!out.ok) throw new Error(out.error||"change pin fail");
+    toast("Đã đổi mật khẩu");
+    closeProfileModal();
+  }catch(e){
+    if(!(e && e.message==="cancel")) toast("Đổi mật khẩu lỗi");
+  }
+};
+
+/* ================== BOOT ================== */
+async function boot(){
+  ME=null;
+  STORE=[];
+  updateUserCorner();
+
+  // me
+  const t = getToken();
+  if(t){
+    try{
+      const meOut = await API.me(t);
+      if(meOut && meOut.ok){
+        ME = meOut.me;
+      }else{
+        setToken("");
+      }
+    }catch{
+      setToken("");
+    }
+  }
+  updateUserCorner();
+
+  // store list (không cần login)
+  try{
+    const st = await API.listStore();
+    if(st && st.ok) STORE = st.items || [];
+  }catch{}
+
+  if(ME) renderStore();
+  else renderGate();
 }
 
-// run
 if(SUPABASE_URL.includes("PASTE_") || SUPABASE_ANON_KEY.includes("PASTE_")){
   toast("Chưa dán SUPABASE_URL / ANON_KEY trong index.html");
 }
