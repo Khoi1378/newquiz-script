@@ -1,120 +1,981 @@
 <!doctype html>
-<html>
+<html lang="vi">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <title>Admin Panel</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
+
   <style>
-    body{font-family:system-ui,Arial;margin:24px;max-width:900px}
-    .muted{color:#666}
-    .card{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0}
-    button{padding:8px 10px;border-radius:10px;border:1px solid #ccc;background:#fff;cursor:pointer}
-    input,textarea{padding:10px 12px;border-radius:10px;border:1px solid #ccc;width:100%}
-    textarea{min-height:160px;font-family:ui-monospace,Consolas,monospace}
-    label{display:block;margin-top:10px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    code{background:#f6f6f6;padding:2px 6px;border-radius:6px}
+    :root{
+      --bg1:#ffecd2; --bg2:#fcb69f;
+      --card:#fff; --text:#1f2937; --muted:#6b7280;
+      --primary:#7c3aed; --bad:#dc2626; --ok:#16a34a;
+      --border:#e5e7eb; --soft:#f8fafc;
+      --shadow:0 14px 40px rgba(0,0,0,.10);
+      --radius:18px;
+      --admin:#2563eb;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
+        linear-gradient(120deg,var(--bg1) 0%, var(--bg2) 100%);
+      overflow:hidden;
+    }
+    #shell{height:100vh; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 0 90px}
+    .wrap{max-width:1100px; margin:0 auto; padding:0 14px}
+
+    .topbar{
+      margin-top:10px;
+      background:rgba(255,255,255,.86);
+      border:1px solid rgba(229,231,235,.9);
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,.06);
+      padding:14px;
+      display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    }
+    .titlebox{display:flex; gap:10px; align-items:center; flex:1 1 420px; min-width:240px}
+    .logo{
+      width:42px; height:42px; border-radius:16px;
+      background:linear-gradient(135deg,#a78bfa,#fb7185);
+      display:flex; align-items:center; justify-content:center;
+      color:#fff; font-weight:900;
+      box-shadow:0 10px 22px rgba(124,58,237,.18);
+      user-select:none;
+    }
+    .titles h1{font-size:1.02rem; margin:0; font-weight:800}
+    .titles .tiny{margin-top:3px; font-size:.86rem; color:var(--muted); font-weight:650}
+
+    .pill{
+      background:#f3f4f6; border:1px solid #e5e7eb;
+      border-radius:999px; padding:8px 12px;
+      font-weight:900; font-size:.9rem; color:#374151; white-space:nowrap;
+      display:flex; gap:8px; align-items:center;
+    }
+    .badge-admin{
+      padding:4px 8px; border-radius:999px; font-weight:950; font-size:.78rem;
+      background:rgba(37,99,235,.12);
+      border:1px solid rgba(37,99,235,.35);
+      color:var(--admin); white-space:nowrap;
+    }
+
+    .card{
+      background:var(--card);
+      border:2px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+      margin:12px 0;
+    }
+    .row1{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap}
+    .vi{margin:0; font-weight:900; font-size:1.04rem; line-height:1.25}
+    .muted{color:var(--muted); font-weight:650}
+    .idx{
+      font-size:.78rem; font-weight:900;
+      padding:6px 10px; border-radius:999px;
+      background:#eff6ff; color:#1d4ed8; border:1px solid #dbeafe;
+      white-space:nowrap;
+    }
+    .idx.ok{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
+    .idx.warn{background:#fff7ed;color:#9a3412;border-color:#fed7aa}
+    .idx.bad{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+
+    .btn{
+      border:0; cursor:pointer;
+      border-radius:999px; padding:10px 14px;
+      font-weight:900; font-size:.9rem;
+      transition:transform .16s ease, filter .16s ease;
+      display:inline-flex; align-items:center; gap:8px;
+      user-select:none; white-space:nowrap;
+      box-shadow:0 12px 24px rgba(0,0,0,.12);
+      background:#fff; color:#111827; border:1px solid #e5e7eb;
+    }
+    .btn:hover{transform:translateY(-1px); filter:brightness(.98)}
+    .btn:active{transform:translateY(0)}
+    .btn[disabled]{opacity:.6; cursor:not-allowed; transform:none !important; filter:none !important}
+    .btn-primary{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff; border:0;
+      box-shadow:0 12px 24px rgba(124,58,237,.18);
+    }
+    .btn-danger{background:var(--bad); color:#fff; border:0; box-shadow:0 12px 24px rgba(220,38,38,.18);}
+    .btn-ghost{background:#fff; color:#111827; border:1px solid #e5e7eb; box-shadow:none}
+
+    .input, textarea, select{
+      width:100%;
+      border-radius:14px; border:2px solid #e5e7eb;
+      padding:11px 12px; font-size:.95rem; font-weight:700;
+      outline:none; background:var(--soft);
+      transition:border-color .15s ease, box-shadow .15s ease;
+      font-family:inherit;
+    }
+    textarea{min-height:160px; font-family:ui-monospace,Consolas,monospace; font-weight:650}
+    .input:focus, textarea:focus, select:focus{
+      border-color:rgba(124,58,237,.55);
+      box-shadow:0 0 0 5px rgba(124,58,237,.10);
+      background:#fff;
+    }
+    label{display:block; margin-top:10px; font-weight:900}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    .grid3{display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:10px}
+    @media(max-width:920px){ .grid3{grid-template-columns:1fr} }
+    @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
+
+    .tabs{display:flex; gap:10px; flex-wrap:wrap}
+    .tab{padding:10px 14px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; font-weight:950; cursor:pointer; box-shadow:none}
+    .tab.active{background:linear-gradient(135deg,#7c3aed,#fb7185); color:#fff; border:0}
+
+    .drop{
+      border:2px dashed #e5e7eb;
+      border-radius:18px;
+      padding:14px;
+      background:rgba(255,255,255,.6);
+      display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    }
+    .drop small{color:var(--muted); font-weight:750}
+    .coverPreview{
+      width:160px; height:96px;
+      border-radius:14px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      object-fit:cover;
+      display:none;
+    }
+
+    .toast{
+      position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+      background:rgba(17,24,39,.92); color:#fff;
+      padding:10px 12px; border-radius:14px;
+      font-weight:800; font-size:.9rem;
+      opacity:0; pointer-events:none;
+      transition:opacity .18s ease, transform .18s ease;
+      max-width:calc(100% - 28px);
+      z-index:20050; text-align:center;
+    }
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px)}
+
+    a{color:#4c1d95; text-decoration:none; font-weight:950}
+    a:hover{text-decoration:underline}
+    code{background:#f6f6f6;padding:2px 6px;border-radius:8px;border:1px solid #eee}
+    .mono{font-family:ui-monospace,Consolas,monospace}
+    .hr{height:1px;background:#e5e7eb;margin:12px 0}
   </style>
 </head>
+
 <body>
-  <h1>Admin panel</h1>
-  <p class="muted"><a href="/">← về kệ hàng</a></p>
-
-  <div id="gate" class="card">Checking login...</div>
-
-  <div id="app" style="display:none">
-    <div class="card">
-      <h2 style="margin-top:0">Tạo quiz</h2>
-      <div class="row">
-        <div>
-          <label>Quiz ID (để trống → tự sinh 5 chữ)</label>
-          <input id="quizId" placeholder="abcde" />
+  <div id="shell">
+    <div class="wrap">
+      <div class="topbar">
+        <div class="titlebox">
+          <div class="logo">A</div>
+          <div class="titles">
+            <h1>Admin Panel</h1>
+            <div class="tiny"><a href="/">← về kệ hàng</a></div>
+          </div>
         </div>
-        <div>
-          <label>Title</label>
-          <input id="title" placeholder="Tên quiz" />
-        </div>
+        <div class="pill" id="mePill">Checking…</div>
       </div>
 
-      <label>Sub</label>
-      <input id="sub" placeholder="Mô tả ngắn" />
+      <div class="card" id="gate">
+        Checking login...
+      </div>
 
-      <label>Paste HTML vocabs</label>
-      <textarea id="htmlBox" placeholder='Ví dụ:
-<div class="v" data-no="1" data-word="adaptable" data-pos="adj" data-answers="thích nghi|có thể thích nghi">có thể thích nghi</div>
-<div class="v" data-no="2" data-word="analytical" data-pos="adj" data-answers="phân tích|phan tich">phân tích</div>
+      <div id="app" style="display:none">
+        <div class="card">
+          <div class="row1">
+            <p class="vi">Bảng điều khiển</p>
+            <div class="tabs">
+              <button class="tab active" id="tabQuizzes">Quizzes</button>
+              <button class="tab" id="tabUsers">Users</button>
+            </div>
+          </div>
+          <div class="muted" style="margin-top:8px; line-height:1.35">
+            • Quiz ID chuẩn: <b>5 chữ cái latin</b> (a-z), ví dụ <code>abcde</code><br>
+            • Ảnh cover: paste Ctrl+V / kéo thả (lưu base64 vào DB — chạy được ngay với auth custom).<br>
+            • “Xem mật khẩu user”: không thể. Admin chỉ có thể <b>reset pin</b>.
+          </div>
+        </div>
+
+        <!-- QUIZZES -->
+        <div id="viewQuizzes">
+          <div class="grid3">
+            <!-- editor -->
+            <div class="card">
+              <div class="row1">
+                <p class="vi">Tạo / Sửa quiz</p>
+                <span class="idx" id="editModePill">NEW</span>
+              </div>
+
+              <div class="grid2" style="margin-top:10px">
+                <div>
+                  <label>Quiz ID (5 chữ, để trống → tự sinh)</label>
+                  <input class="input mono" id="quizId" placeholder="abcde" maxlength="5" />
+                </div>
+                <div>
+                  <label>Title</label>
+                  <input class="input" id="title" placeholder="Tên quiz" />
+                </div>
+              </div>
+
+              <label>Sub</label>
+              <input class="input" id="sub" placeholder="Mô tả ngắn" />
+
+              <div class="grid2" style="margin-top:10px">
+                <div>
+                  <label>Public / Private</label>
+                  <select id="isPublic">
+                    <option value="true">Public</option>
+                    <option value="false">Private</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Hiển thị trên Quiz Store</label>
+                  <select id="showInStore">
+                    <option value="true">Hiện</option>
+                    <option value="false">Ẩn</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid2" style="margin-top:10px">
+                <div>
+                  <label>Yêu cầu đăng nhập</label>
+                  <select id="requireLogin">
+                    <option value="true">Cần login</option>
+                    <option value="false">Không cần login (quiz mở)</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Ghim lên đầu</label>
+                  <select id="pinned">
+                    <option value="false">Không ghim</option>
+                    <option value="true">Ghim</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid2" style="margin-top:10px">
+                <div>
+                  <label>Yêu cầu mã truy cập</label>
+                  <select id="requireCode">
+                    <option value="false">Không</option>
+                    <option value="true">Có</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Mã truy cập (nếu có)</label>
+                  <input class="input mono" id="accessCode" placeholder="vd: 1234" />
+                </div>
+              </div>
+
+              <div class="hr"></div>
+
+              <div class="row1">
+                <p class="vi" style="font-size:1rem">Cover image</p>
+                <span class="idx ok" id="coverPill">NO IMAGE</span>
+              </div>
+
+              <div class="drop" id="drop">
+                <div>
+                  <div style="font-weight:950">Paste Ctrl+V / Drag & Drop</div>
+                  <small>PNG/JPG. Tự resize max 1200px để khỏi nặng.</small>
+                </div>
+                <img id="coverPreview" class="coverPreview" alt="cover preview"/>
+              </div>
+
+              <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+                <button class="btn btn-ghost" id="btnClear">Clear</button>
+                <button class="btn btn-primary" id="btnSaveQuiz">Save quiz</button>
+              </div>
+            </div>
+
+            <!-- questions import -->
+            <div class="card">
+              <div class="row1">
+                <p class="vi">Câu hỏi (import HTML)</p>
+                <span class="idx" id="qCountPill">0</span>
+              </div>
+
+              <div class="muted" style="margin-top:8px; line-height:1.35">
+                Format mới (khuyên dùng): mỗi câu là <code>&lt;div class="q"&gt;</code><br>
+                • Tự luận: <code>&lt;div class="q" data-type="essay" data-answers="đáp án|dap an"&gt;Câu hỏi&lt;/div&gt;</code><br>
+                • MCQ 1 đáp án: <code>data-type="mcq1" data-options="A|B|C|D" data-correct="2"</code><br>
+                • Short4: <code>data-type="short4" data-answers="-0,3|9999"</code> (khi làm quiz sẽ hiện 4 ô)<br>
+                • Đúng/sai 4 ý: <code>data-type="tf4" data-statements="ý1||ý2||ý3||ý4" data-keys="1,0,1,1"</code>
+              </div>
+
+              <label>Scoring</label>
+              <div class="grid2">
+                <select id="scoringMode">
+                  <option value="equal">Chia đều theo số câu</option>
+                  <option value="custom">Tự chia điểm (mỗi câu có points)</option>
+                </select>
+                <input class="input mono" id="totalScore" value="10" placeholder="Tổng điểm (vd 10)" />
+              </div>
+
+              <label>Paste HTML</label>
+              <textarea id="htmlBox" placeholder='Ví dụ:
+<div class="q" data-no="1" data-type="mcq1" data-options="2|3|4|5" data-correct="3">1+3=?</div>
+<div class="q" data-no="2" data-type="essay" data-answers="thích nghi|thich nghi">Giải thích từ adaptable</div>
 '></textarea>
 
-      <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
-        <button id="btnPreview">Preview</button>
-        <button id="btnPublish">Publish</button>
+              <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+                <button class="btn" id="btnPreview">Preview</button>
+                <button class="btn btn-primary" id="btnPublishAll">Publish (quiz + questions)</button>
+              </div>
+
+              <div id="preview" class="card" style="margin-top:12px;display:none; box-shadow:none"></div>
+            </div>
+
+            <!-- list -->
+            <div class="card">
+              <div class="row1">
+                <p class="vi">Danh sách quiz</p>
+                <button class="btn" id="btnReloadQuizzes">Reload</button>
+              </div>
+              <div class="muted" style="margin-top:6px">Click 1 quiz để load vào form bên trái.</div>
+              <div id="quizList" style="margin-top:10px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- USERS -->
+        <div id="viewUsers" style="display:none">
+          <div class="card">
+            <div class="row1">
+              <p class="vi">Users</p>
+              <div style="display:flex; gap:10px; flex-wrap:wrap">
+                <input class="input" id="userSearch" placeholder="Search username..." style="max-width:320px"/>
+                <button class="btn" id="btnReloadUsers">Reload</button>
+              </div>
+            </div>
+            <div class="muted" style="margin-top:8px; line-height:1.35">
+              • Không thể xem mật khẩu gốc. Bạn chỉ có thể reset PIN.<br>
+              • Xoá user sẽ cascade (xóa attempts/progress/comments… theo FK).
+            </div>
+            <div id="userList" style="margin-top:10px"></div>
+          </div>
+        </div>
       </div>
 
-      <div id="preview" class="card" style="margin-top:12px;display:none"></div>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="module">
-    import { me, adminCreateQuiz, adminImportVocabs } from "./lib/api.js";
-    import { parseVocabsFromHtml } from "./lib/admin-import.js";
+  <div class="toast" id="toast"></div>
 
-    const gate = document.getElementById("gate");
-    const app = document.getElementById("app");
-    const preview = document.getElementById("preview");
+<script>
+/* ================== CONFIG ================== */
+const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
+const SUPABASE_ANON_KEY = "PASTE_ANON_KEY_HERE";
 
-    const meOut = await me().catch(()=>({ok:false}));
-    if(!meOut.ok){
-      gate.innerHTML = `Bạn chưa login. Vào <a href="/">trang chủ</a> để login admin.`;
-      throw new Error("not logged in");
-    }
-    if(meOut.me.role !== "admin"){
+/* ================== STORAGE ================== */
+const TOKEN_KEY = "tk_token_v2";
+
+/* ================== UI HELPERS ================== */
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=String(msg||"");
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),1200);
+}
+function esc(s){
+  return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function getToken(){ return localStorage.getItem(TOKEN_KEY) || ""; }
+
+async function rpc(fn, args){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
+    method:"POST",
+    headers:{
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization":"Bearer " + SUPABASE_ANON_KEY,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify(args||{})
+  });
+  const txt = await res.text();
+  let data=null;
+  try{ data = txt ? JSON.parse(txt) : null; }catch{}
+  if(!res.ok){
+    const msg = (data && (data.message||data.error||data.hint)) ? (data.message||data.error||data.hint) : txt;
+    throw new Error(msg || `RPC failed: ${fn}`);
+  }
+  return data;
+}
+
+/* ================== STATE ================== */
+let ME = null;
+let QUIZZES = [];
+let USERS = [];
+let COVER_DATA_URL = ""; // base64
+
+/* ================== DOM ================== */
+const mePill = document.getElementById("mePill");
+const gate = document.getElementById("gate");
+const app = document.getElementById("app");
+
+const tabQuizzes = document.getElementById("tabQuizzes");
+const tabUsers = document.getElementById("tabUsers");
+const viewQuizzes = document.getElementById("viewQuizzes");
+const viewUsers = document.getElementById("viewUsers");
+
+function setTab(which){
+  const isQ = which==="q";
+  tabQuizzes.classList.toggle("active", isQ);
+  tabUsers.classList.toggle("active", !isQ);
+  viewQuizzes.style.display = isQ ? "" : "none";
+  viewUsers.style.display = isQ ? "none" : "";
+}
+tabQuizzes.onclick = ()=>setTab("q");
+tabUsers.onclick = ()=>setTab("u");
+
+/* ================== AUTH GATE ================== */
+async function gateCheck(){
+  const token = getToken();
+  if(!token){
+    gate.innerHTML = `Bạn chưa login. Vào <a href="/">trang chủ</a> để login admin.`;
+    mePill.textContent = "No token";
+    return false;
+  }
+  try{
+    const meOut = await rpc("api_me",{p_token:token});
+    if(!meOut.ok) throw new Error(meOut.error||"not logged");
+    ME = meOut.me;
+    const isAdmin = (ME.role==="admin") || (String(ME.username||"").toLowerCase()==="tuankhoi");
+    mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="badge-admin">ADMIN</span>`;
+    if(!isAdmin){
       gate.textContent = "Bạn không phải admin.";
-      throw new Error("not admin");
+      return false;
+    }
+    gate.innerHTML = `<span class="idx ok">OK</span> Admin: <b>${esc(ME.username)}</b>`;
+    app.style.display = "";
+    return true;
+  }catch(e){
+    gate.innerHTML = `Lỗi gate: ${esc(e.message)}. Về <a href="/">trang chủ</a> để login lại.`;
+    mePill.textContent = "Gate error";
+    return false;
+  }
+}
+
+/* ================== QUIZ EDITOR ================== */
+const quizIdEl = document.getElementById("quizId");
+const titleEl = document.getElementById("title");
+const subEl = document.getElementById("sub");
+const isPublicEl = document.getElementById("isPublic");
+const showInStoreEl = document.getElementById("showInStore");
+const requireLoginEl = document.getElementById("requireLogin");
+const pinnedEl = document.getElementById("pinned");
+const requireCodeEl = document.getElementById("requireCode");
+const accessCodeEl = document.getElementById("accessCode");
+const scoringModeEl = document.getElementById("scoringMode");
+const totalScoreEl = document.getElementById("totalScore");
+const htmlBoxEl = document.getElementById("htmlBox");
+
+const editModePill = document.getElementById("editModePill");
+const coverPill = document.getElementById("coverPill");
+const coverPreview = document.getElementById("coverPreview");
+
+function genQuizId5(){
+  const letters="abcdefghijklmnopqrstuvwxyz";
+  let s="";
+  for(let i=0;i<5;i++) s += letters[Math.floor(Math.random()*letters.length)];
+  return s;
+}
+function normalizeQuizId(x){
+  x = String(x||"").trim().toLowerCase();
+  x = x.replace(/[^a-z]/g,"").slice(0,5);
+  return x;
+}
+quizIdEl.addEventListener("input", ()=>{
+  const v = normalizeQuizId(quizIdEl.value);
+  if(quizIdEl.value !== v) quizIdEl.value = v;
+}, {passive:true});
+
+function setCoverDataUrl(dataUrl){
+  COVER_DATA_URL = dataUrl || "";
+  if(COVER_DATA_URL){
+    coverPill.textContent = "READY";
+    coverPill.className = "idx ok";
+    coverPreview.src = COVER_DATA_URL;
+    coverPreview.style.display = "";
+  }else{
+    coverPill.textContent = "NO IMAGE";
+    coverPill.className = "idx";
+    coverPreview.src = "";
+    coverPreview.style.display = "none";
+  }
+}
+setCoverDataUrl("");
+
+function readImageToDataURL(file){
+  return new Promise((resolve,reject)=>{
+    const fr = new FileReader();
+    fr.onload = ()=>resolve(String(fr.result||""));
+    fr.onerror = ()=>reject(new Error("read file error"));
+    fr.readAsDataURL(file);
+  });
+}
+
+// resize to max 1200px to reduce size
+async function downscaleDataURL(dataUrl, maxW=1200){
+  const img = new Image();
+  img.src = dataUrl;
+  await new Promise((res,rej)=>{ img.onload=res; img.onerror=()=>rej(new Error("image load error")); });
+
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  if(!w || !h) return dataUrl;
+  if(w <= maxW) return dataUrl;
+
+  const ratio = maxW / w;
+  const nw = Math.round(w * ratio);
+  const nh = Math.round(h * ratio);
+
+  const c = document.createElement("canvas");
+  c.width = nw; c.height = nh;
+  const ctx = c.getContext("2d");
+  ctx.drawImage(img, 0, 0, nw, nh);
+  return c.toDataURL("image/jpeg", 0.86);
+}
+
+// paste & drop
+const drop = document.getElementById("drop");
+drop.addEventListener("dragover",(e)=>{ e.preventDefault(); drop.style.filter="brightness(.98)"; });
+drop.addEventListener("dragleave",()=>{ drop.style.filter=""; });
+drop.addEventListener("drop", async (e)=>{
+  e.preventDefault(); drop.style.filter="";
+  const f = e.dataTransfer?.files?.[0];
+  if(!f) return;
+  if(!/^image\//.test(f.type)) return toast("Chỉ nhận ảnh");
+  const raw = await readImageToDataURL(f);
+  const scaled = await downscaleDataURL(raw);
+  setCoverDataUrl(scaled);
+  toast("Đã nhận ảnh cover");
+});
+
+window.addEventListener("paste", async (e)=>{
+  const items = e.clipboardData?.items || [];
+  const imgItem = Array.from(items).find(it=>it.type && it.type.startsWith("image/"));
+  if(!imgItem) return;
+  const f = imgItem.getAsFile();
+  if(!f) return;
+  const raw = await readImageToDataURL(f);
+  const scaled = await downscaleDataURL(raw);
+  setCoverDataUrl(scaled);
+  toast("Đã paste ảnh cover");
+}, {passive:true});
+
+/* ===== Parse questions from HTML ===== */
+function parseQuestionsFromHtml(html){
+  const doc = new DOMParser().parseFromString(`<div>${html||""}</div>`, "text/html");
+  const nodes = doc.querySelectorAll(".q, .v");
+  const out = [];
+
+  nodes.forEach((el, idx)=>{
+    const isLegacy = el.classList.contains("v");
+    if(isLegacy){
+      // legacy vocab format
+      const no = parseInt(el.getAttribute("data-no")||"",10) || (idx+1);
+      const word = (el.getAttribute("data-word")||"").trim();
+      const pos = (el.getAttribute("data-pos")||"").trim();
+      const answers = (el.getAttribute("data-answers")||"").split("|").map(s=>s.trim()).filter(Boolean);
+      const meaning = (el.textContent||"").trim() || (el.getAttribute("data-meaning")||"").trim();
+      out.push({
+        no,
+        type: "essay",
+        prompt: word || `Câu ${no}`,
+        pos,
+        meaning,
+        answers,
+        points: null,
+        meta: { legacy:true }
+      });
+      return;
     }
 
-    gate.innerHTML = `OK admin: <b>${meOut.me.username}</b>`;
-    app.style.display = "";
+    // new .q format
+    const no = parseInt(el.getAttribute("data-no")||"",10) || (idx+1);
+    const type = (el.getAttribute("data-type")||"essay").trim().toLowerCase();
+    const points = el.getAttribute("data-points") ? Number(el.getAttribute("data-points")) : null;
 
-    let lastParsed = [];
+    const prompt = (el.getAttribute("data-prompt")||"").trim() || (el.textContent||"").trim() || `Câu ${no}`;
+    const answers = (el.getAttribute("data-answers")||"").split("|").map(s=>s.trim()).filter(Boolean);
 
-    document.getElementById("btnPreview").onclick = () => {
-      const html = document.getElementById("htmlBox").value;
-      lastParsed = parseVocabsFromHtml(html);
-      preview.style.display = "";
-      preview.innerHTML = `
-        <h3 style="margin-top:0">Preview (${lastParsed.length} items)</h3>
-        <ol>${lastParsed.map(v=>`<li><b>${v.no??""}</b> ${v.word} (${v.pos||""}) — ${v.meaning}</li>`).join("")}</ol>
-      `;
+    const meta = {};
+    if(type==="mcq1"){
+      const options = (el.getAttribute("data-options")||"").split("|").map(s=>s.trim()).filter(Boolean);
+      const correct = Number(el.getAttribute("data-correct")||"") || 0; // 1-4
+      meta.options = options;
+      meta.correct = correct;
+    }else if(type==="tf4"){
+      const statements = (el.getAttribute("data-statements")||"").split("||").map(s=>s.trim()).filter(Boolean);
+      const keys = (el.getAttribute("data-keys")||"").split(",").map(s=>s.trim()).filter(Boolean).map(x=>x==="1");
+      meta.statements = statements;
+      meta.keys = keys;
+      // rule score: 0/0.25/0.5/1 by count correct (default)
+      meta.rule = { byCorrectCount: { "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 } };
+    }else if(type==="short4"){
+      meta.format = "4boxes";
+      // answers used
+    }else{
+      // essay default
+    }
+
+    out.push({ no, type, prompt, pos:"", meaning:"", answers, points, meta });
+  });
+
+  return out;
+}
+
+const preview = document.getElementById("preview");
+const qCountPill = document.getElementById("qCountPill");
+let LAST_PARSED = [];
+
+function updateQCount(){
+  qCountPill.textContent = String(LAST_PARSED.length || 0);
+}
+
+document.getElementById("btnPreview").onclick = ()=>{
+  const html = htmlBoxEl.value;
+  LAST_PARSED = parseQuestionsFromHtml(html);
+  updateQCount();
+  preview.style.display = "";
+  preview.innerHTML = `
+    <div class="row1">
+      <p class="vi" style="margin:0">Preview</p>
+      <span class="idx">${LAST_PARSED.length} items</span>
+    </div>
+    <ol style="margin:10px 0 0; padding-left:18px">
+      ${LAST_PARSED.map(q=>`
+        <li style="margin:6px 0">
+          <b>#${esc(q.no)}</b> <span class="idx">${esc(q.type)}</span>
+          ${q.points!=null ? `<span class="idx ok">${esc(q.points)}</span>`:""}
+          <div class="muted" style="margin-top:4px">${esc(q.prompt)}</div>
+        </li>
+      `).join("")}
+    </ol>
+  `;
+};
+
+function applyScoring(items){
+  const mode = scoringModeEl.value;
+  const total = Number(totalScoreEl.value || "10") || 10;
+  if(!items.length) return items;
+
+  if(mode === "equal"){
+    const per = total / items.length;
+    // round 2 decimals, last adjust
+    let sum = 0;
+    const rounded = items.map((q,i)=>{
+      const p = (i === items.length-1) ? (total - sum) : Math.round(per*100)/100;
+      sum += (i === items.length-1) ? 0 : p;
+      return { ...q, points: Math.round(p*100)/100 };
+    });
+    return rounded;
+  }
+
+  // custom: keep points, if null => 0
+  return items.map(q=>({ ...q, points: (q.points==null?0:Number(q.points)||0) }));
+}
+
+/* ===== Save quiz only ===== */
+document.getElementById("btnSaveQuiz").onclick = async ()=>{
+  try{
+    const token = getToken();
+    if(!token) return toast("Chưa login");
+
+    let qid = normalizeQuizId(quizIdEl.value);
+    if(!qid){ qid = genQuizId5(); quizIdEl.value = qid; }
+
+    const payload = {
+      p_token: token,
+      p_quiz_id: qid,
+      p_title: titleEl.value.trim(),
+      p_sub: subEl.value.trim(),
+      p_is_public: (isPublicEl.value === "true"),
+      p_show_in_store: (showInStoreEl.value === "true"),
+      p_require_login: (requireLoginEl.value === "true"),
+      p_pinned: (pinnedEl.value === "true"),
+      p_require_access_code: (requireCodeEl.value === "true"),
+      p_access_code: accessCodeEl.value.trim(),
+      p_cover_data_url: COVER_DATA_URL || "",
+      p_scoring_mode: scoringModeEl.value,
+      p_total_score: Number(totalScoreEl.value || "10") || 10
     };
 
-    document.getElementById("btnPublish").onclick = async () => {
-      const quizId = document.getElementById("quizId").value.trim();
-      const title = document.getElementById("title").value.trim();
-      const sub = document.getElementById("sub").value.trim();
-      const html = document.getElementById("htmlBox").value;
+    const out = await rpc("admin_upsert_quiz", payload);
+    toast("Saved: " + out.quiz_id);
+    editModePill.textContent = "EDIT";
+    editModePill.className = "idx ok";
+    await reloadQuizzes();
+  }catch(e){
+    toast(e.message || "Save error");
+  }
+};
 
-      const items = parseVocabsFromHtml(html);
-      if(!title) return alert("Thiếu title");
-      if(!items.length) return alert("Không parse được vocab nào. Kiểm tra format .v");
+/* ===== Publish quiz + questions ===== */
+document.getElementById("btnPublishAll").onclick = async ()=>{
+  try{
+    const token = getToken();
+    if(!token) return toast("Chưa login");
 
-      const createOut = await adminCreateQuiz({
-        quiz_id: quizId,
-        title, sub,
-        is_public: true,
-        is_hidden: false,
-        require_access_code: false
-      });
+    let qid = normalizeQuizId(quizIdEl.value);
+    if(!qid){ qid = genQuizId5(); quizIdEl.value = qid; }
 
-      if(!createOut.ok) return alert("Create quiz fail: " + (createOut.error || ""));
-      const id = createOut.quiz_id;
+    // parse
+    LAST_PARSED = parseQuestionsFromHtml(htmlBoxEl.value);
+    updateQCount();
+    if(!titleEl.value.trim()) return toast("Thiếu title");
+    if(!LAST_PARSED.length) return toast("Không parse được câu hỏi");
 
-      const importOut = await adminImportVocabs(id, items);
-      if(!importOut.ok) return alert("Import fail: " + (importOut.error || ""));
+    // scoring
+    const items = applyScoring(LAST_PARSED);
 
-      alert(`OK! Quiz created: ${id} | inserted: ${importOut.inserted}\nLink: /q/${id}`);
-      location.href = `/q/${id}`;
+    // 1) save quiz
+    await rpc("admin_upsert_quiz", {
+      p_token: token,
+      p_quiz_id: qid,
+      p_title: titleEl.value.trim(),
+      p_sub: subEl.value.trim(),
+      p_is_public: (isPublicEl.value === "true"),
+      p_show_in_store: (showInStoreEl.value === "true"),
+      p_require_login: (requireLoginEl.value === "true"),
+      p_pinned: (pinnedEl.value === "true"),
+      p_require_access_code: (requireCodeEl.value === "true"),
+      p_access_code: accessCodeEl.value.trim(),
+      p_cover_data_url: COVER_DATA_URL || "",
+      p_scoring_mode: scoringModeEl.value,
+      p_total_score: Number(totalScoreEl.value || "10") || 10
+    });
+
+    // 2) import questions
+    const out2 = await rpc("admin_import_questions", {
+      p_token: token,
+      p_quiz_id: qid,
+      p_items: items
+    });
+
+    toast(`Published: ${qid} | inserted: ${out2.inserted}`);
+    await reloadQuizzes();
+    // jump to quiz
+    location.href = `/q/${qid}`;
+  }catch(e){
+    toast(e.message || "Publish error");
+  }
+};
+
+document.getElementById("btnClear").onclick = ()=>{
+  quizIdEl.value = "";
+  titleEl.value = "";
+  subEl.value = "";
+  isPublicEl.value = "true";
+  showInStoreEl.value = "true";
+  requireLoginEl.value = "true";
+  pinnedEl.value = "false";
+  requireCodeEl.value = "false";
+  accessCodeEl.value = "";
+  scoringModeEl.value = "equal";
+  totalScoreEl.value = "10";
+  htmlBoxEl.value = "";
+  LAST_PARSED = [];
+  updateQCount();
+  preview.style.display="none";
+  preview.innerHTML="";
+  setCoverDataUrl("");
+  editModePill.textContent = "NEW";
+  editModePill.className = "idx";
+};
+
+/* ================== QUIZ LIST ================== */
+const quizList = document.getElementById("quizList");
+
+function renderQuizList(){
+  if(!QUIZZES.length){
+    quizList.innerHTML = `<div class="muted">Chưa có quiz.</div>`;
+    return;
+  }
+  quizList.innerHTML = QUIZZES.map(q=>{
+    const badges = [
+      q.pinned ? `<span class="idx ok">PINNED</span>` : "",
+      q.is_public ? `<span class="idx ok">PUBLIC</span>` : `<span class="idx warn">PRIVATE</span>`,
+      q.show_in_store ? `<span class="idx ok">STORE</span>` : `<span class="idx warn">HIDDEN</span>`,
+      q.require_login ? `<span class="idx">LOGIN</span>` : `<span class="idx ok">OPEN</span>`,
+      q.require_access_code ? `<span class="idx warn">CODE</span>` : ""
+    ].filter(Boolean).join(" ");
+
+    const img = q.cover_data_url ? `<img src="${esc(q.cover_data_url)}" style="width:100%;max-height:120px;object-fit:cover;border-radius:14px;border:1px solid #e5e7eb;margin-top:8px" />` : "";
+
+    return `
+      <div class="card" style="box-shadow:none;border-width:1px;margin:10px 0;cursor:pointer" data-qid="${esc(q.quiz_id)}">
+        <div class="row1">
+          <div style="min-width:0">
+            <div class="vi" style="font-size:1rem"><b>${esc(q.title||q.quiz_id)}</b></div>
+            <div class="muted" style="margin-top:4px">${esc(q.sub||"")}</div>
+            <div class="muted" style="margin-top:6px"><span class="idx mono">/q/${esc(q.quiz_id)}</span></div>
+            <div style="margin-top:6px">${badges}</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn" data-act="pin">${q.pinned ? "Unpin" : "Pin"}</button>
+            <button class="btn btn-danger" data-act="del">Delete</button>
+          </div>
+        </div>
+        ${img}
+      </div>
+    `;
+  }).join("");
+
+  quizList.querySelectorAll('[data-qid]').forEach(el=>{
+    el.addEventListener("click", (ev)=>{
+      const act = ev.target?.getAttribute?.("data-act");
+      const qid = el.getAttribute("data-qid");
+      if(act === "pin"){ ev.stopPropagation(); togglePin(qid); return; }
+      if(act === "del"){ ev.stopPropagation(); delQuiz(qid); return; }
+      loadQuizToForm(qid);
+    });
+  });
+}
+
+async function reloadQuizzes(){
+  const token = getToken();
+  const out = await rpc("admin_list_quizzes",{p_token: token});
+  QUIZZES = out.items || [];
+  renderQuizList();
+}
+document.getElementById("btnReloadQuizzes").onclick = ()=>reloadQuizzes().catch(e=>toast(e.message));
+
+async function togglePin(qid){
+  const token = getToken();
+  const q = QUIZZES.find(x=>x.quiz_id===qid);
+  if(!q) return;
+  await rpc("admin_set_pinned",{p_token:token, p_quiz_id:qid, p_pinned: !q.pinned});
+  toast("Updated pin");
+  await reloadQuizzes();
+}
+
+async function delQuiz(qid){
+  const ok = confirm("Xóa quiz " + qid + " ?");
+  if(!ok) return;
+  const token = getToken();
+  await rpc("admin_delete_quiz",{p_token:token, p_quiz_id:qid});
+  toast("Deleted " + qid);
+  await reloadQuizzes();
+}
+
+function loadQuizToForm(qid){
+  const q = QUIZZES.find(x=>x.quiz_id===qid);
+  if(!q) return;
+  quizIdEl.value = q.quiz_id;
+  titleEl.value = q.title || "";
+  subEl.value = q.sub || "";
+  isPublicEl.value = String(!!q.is_public);
+  showInStoreEl.value = String(!!q.show_in_store);
+  requireLoginEl.value = String(!!q.require_login);
+  pinnedEl.value = String(!!q.pinned);
+  requireCodeEl.value = String(!!q.require_access_code);
+  accessCodeEl.value = ""; // không show hash
+  scoringModeEl.value = q.scoring_mode || "equal";
+  totalScoreEl.value = String(q.total_score ?? 10);
+  setCoverDataUrl(q.cover_data_url || "");
+  editModePill.textContent = "EDIT";
+  editModePill.className = "idx ok";
+  toast("Loaded " + qid);
+}
+
+/* ================== USERS ================== */
+const userList = document.getElementById("userList");
+const userSearch = document.getElementById("userSearch");
+
+function renderUsers(){
+  const q = (userSearch.value||"").trim().toLowerCase();
+  const arr = q ? USERS.filter(u=>String(u.username||"").includes(q)) : USERS;
+
+  if(!arr.length){
+    userList.innerHTML = `<div class="muted">No users.</div>`;
+    return;
+  }
+
+  userList.innerHTML = arr.map(u=>{
+    const role = (u.role==="admin") ? `<span class="idx ok">ADMIN</span>` : `<span class="idx">USER</span>`;
+    return `
+      <div class="card" style="box-shadow:none;border-width:1px;margin:10px 0">
+        <div class="row1">
+          <div style="min-width:0">
+            <div class="vi" style="font-size:1rem"><b>${esc(u.username)}</b> ${role}</div>
+            <div class="muted" style="margin-top:6px">id: <code>${esc(u.id)}</code></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn" data-act="rename" data-id="${esc(u.id)}">Rename</button>
+            <button class="btn" data-act="reset" data-id="${esc(u.id)}">Reset PIN</button>
+            <button class="btn btn-danger" data-act="del" data-id="${esc(u.id)}">Delete</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  userList.querySelectorAll("button[data-act]").forEach(b=>{
+    b.onclick = async ()=>{
+      const act = b.getAttribute("data-act");
+      const id = b.getAttribute("data-id");
+      if(act==="del") return delUser(id);
+      if(act==="rename") return renameUser(id);
+      if(act==="reset") return resetPin(id);
     };
-  </script>
+  });
+}
+
+async function reloadUsers(){
+  const token = getToken();
+  const out = await rpc("admin_list_users",{p_token: token});
+  USERS = out.items || [];
+  renderUsers();
+}
+document.getElementById("btnReloadUsers").onclick = ()=>reloadUsers().catch(e=>toast(e.message));
+userSearch.addEventListener("input", ()=>renderUsers(), {passive:true});
+
+async function delUser(id){
+  const ok = confirm("Xóa user này? (sẽ mất progress/attempts/comments)");
+  if(!ok) return;
+  const token = getToken();
+  await rpc("admin_delete_user",{p_token:token, p_user_id:id});
+  toast("Deleted user");
+  await reloadUsers();
+}
+
+async function renameUser(id){
+  const newU = prompt("New username (lowercase, a-z0-9_):");
+  if(!newU) return;
+  const token = getToken();
+  await rpc("admin_force_rename",{p_token:token, p_user_id:id, p_new_username:newU});
+  toast("Renamed");
+  await reloadUsers();
+}
+
+async function resetPin(id){
+  const pin = prompt("Set new PIN (4-6 digits). Lưu ý: không thể xem pin cũ.");
+  if(!pin) return;
+  const token = getToken();
+  await rpc("admin_force_set_pin",{p_token:token, p_user_id:id, p_new_pin:pin});
+  toast("PIN reset");
+}
+
+/* ================== BOOT ================== */
+(async ()=>{
+  const ok = await gateCheck();
+  if(!ok) return;
+  await reloadQuizzes();
+  await reloadUsers();
+  setTab("q");
+})();
+</script>
 </body>
 </html>
