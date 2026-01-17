@@ -1,12 +1,120 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Admin</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:24px;max-width:900px}
+    .muted{color:#666}
+    .card{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0}
+    button{padding:8px 10px;border-radius:10px;border:1px solid #ccc;background:#fff;cursor:pointer}
+    input,textarea{padding:10px 12px;border-radius:10px;border:1px solid #ccc;width:100%}
+    textarea{min-height:160px;font-family:ui-monospace,Consolas,monospace}
+    label{display:block;margin-top:10px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    code{background:#f6f6f6;padding:2px 6px;border-radius:6px}
+  </style>
 </head>
 <body>
   <h1>Admin panel</h1>
-  <p>(Tạm thời chưa nối DB)</p>
-  <p><a href="/">Về trang chủ</a></p>
+  <p class="muted"><a href="/">← về kệ hàng</a></p>
+
+  <div id="gate" class="card">Checking login...</div>
+
+  <div id="app" style="display:none">
+    <div class="card">
+      <h2 style="margin-top:0">Tạo quiz</h2>
+      <div class="row">
+        <div>
+          <label>Quiz ID (để trống → tự sinh 5 chữ)</label>
+          <input id="quizId" placeholder="abcde" />
+        </div>
+        <div>
+          <label>Title</label>
+          <input id="title" placeholder="Tên quiz" />
+        </div>
+      </div>
+
+      <label>Sub</label>
+      <input id="sub" placeholder="Mô tả ngắn" />
+
+      <label>Paste HTML vocabs</label>
+      <textarea id="htmlBox" placeholder='Ví dụ:
+<div class="v" data-no="1" data-word="adaptable" data-pos="adj" data-answers="thích nghi|có thể thích nghi">có thể thích nghi</div>
+<div class="v" data-no="2" data-word="analytical" data-pos="adj" data-answers="phân tích|phan tich">phân tích</div>
+'></textarea>
+
+      <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
+        <button id="btnPreview">Preview</button>
+        <button id="btnPublish">Publish</button>
+      </div>
+
+      <div id="preview" class="card" style="margin-top:12px;display:none"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module">
+    import { me, adminCreateQuiz, adminImportVocabs } from "./lib/api.js";
+    import { parseVocabsFromHtml } from "./lib/admin-import.js";
+
+    const gate = document.getElementById("gate");
+    const app = document.getElementById("app");
+    const preview = document.getElementById("preview");
+
+    const meOut = await me().catch(()=>({ok:false}));
+    if(!meOut.ok){
+      gate.innerHTML = `Bạn chưa login. Vào <a href="/">trang chủ</a> để login admin.`;
+      throw new Error("not logged in");
+    }
+    if(meOut.me.role !== "admin"){
+      gate.textContent = "Bạn không phải admin.";
+      throw new Error("not admin");
+    }
+
+    gate.innerHTML = `OK admin: <b>${meOut.me.username}</b>`;
+    app.style.display = "";
+
+    let lastParsed = [];
+
+    document.getElementById("btnPreview").onclick = () => {
+      const html = document.getElementById("htmlBox").value;
+      lastParsed = parseVocabsFromHtml(html);
+      preview.style.display = "";
+      preview.innerHTML = `
+        <h3 style="margin-top:0">Preview (${lastParsed.length} items)</h3>
+        <ol>${lastParsed.map(v=>`<li><b>${v.no??""}</b> ${v.word} (${v.pos||""}) — ${v.meaning}</li>`).join("")}</ol>
+      `;
+    };
+
+    document.getElementById("btnPublish").onclick = async () => {
+      const quizId = document.getElementById("quizId").value.trim();
+      const title = document.getElementById("title").value.trim();
+      const sub = document.getElementById("sub").value.trim();
+      const html = document.getElementById("htmlBox").value;
+
+      const items = parseVocabsFromHtml(html);
+      if(!title) return alert("Thiếu title");
+      if(!items.length) return alert("Không parse được vocab nào. Kiểm tra format .v");
+
+      const createOut = await adminCreateQuiz({
+        quiz_id: quizId,
+        title, sub,
+        is_public: true,
+        is_hidden: false,
+        require_access_code: false
+      });
+
+      if(!createOut.ok) return alert("Create quiz fail: " + (createOut.error || ""));
+      const id = createOut.quiz_id;
+
+      const importOut = await adminImportVocabs(id, items);
+      if(!importOut.ok) return alert("Import fail: " + (importOut.error || ""));
+
+      alert(`OK! Quiz created: ${id} | inserted: ${importOut.inserted}\nLink: /q/${id}`);
+      location.href = `/q/${id}`;
+    };
+  </script>
 </body>
 </html>
