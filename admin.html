@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-  <title>Admin Panel</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
+  <title>Đăng ký chỗ ngồi 12A11</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,24 +13,67 @@
     :root{
       --bg1:#ffecd2; --bg2:#fcb69f;
       --card:#fff; --text:#1f2937; --muted:#6b7280;
-      --primary:#7c3aed; --bad:#dc2626; --ok:#16a34a;
+      --primary:#7c3aed;
       --border:#e5e7eb; --soft:#f8fafc;
       --shadow:0 14px 40px rgba(0,0,0,.10);
-      --radius:18px; --admin:#2563eb;
+      --radius:18px;
+
+      --c-free-bg1:rgba(34,197,94,.18);
+      --c-free-bg2:rgba(34,197,94,.06);
+      --c-free-br:rgba(34,197,94,.45);
+      --c-free-glow:rgba(34,197,94,.08);
+
+      --c-confirm-bg1:rgba(156,163,175,.28);
+      --c-confirm-bg2:rgba(156,163,175,.12);
+      --c-confirm-br:rgba(156,163,175,.65);
+
+      --c-myhold-bg1:rgba(251,113,133,.30);
+      --c-myhold-bg2:rgba(124,58,237,.10);
+      --c-myhold-br:rgba(251,113,133,.70);
+      --c-myhold-glow:rgba(251,113,133,.12);
+
+      --c-otherhold-bg1:rgba(245,158,11,.26);
+      --c-otherhold-bg2:rgba(245,158,11,.10);
+      --c-otherhold-br:rgba(245,158,11,.70);
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
     body{
       margin:0;
       font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       color:var(--text);
-      background:
-        radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
-        linear-gradient(120deg,var(--bg1) 0%, var(--bg2) 100%);
+      background:radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
+                linear-gradient(120deg,var(--bg1) 0%,var(--bg2) 100%);
       overflow:hidden;
+      touch-action:pan-y;
     }
-    #shell{height:100vh; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 0 110px}
-    .wrap{max-width:1180px; margin:0 auto; padding:0 14px}
+    #shell{ height:100vh; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 0 160px; }
+    .wrap{ max-width:980px; margin:0 auto; padding:0 14px; }
+
+    .actionbar{
+      position:sticky; top:10px; z-index:9999;
+      display:flex; justify-content:flex-end; gap:10px; padding:0 14px;
+    }
+    .btn{
+      border:0; cursor:pointer;
+      border-radius:999px; padding:10px 14px;
+      font-weight:900; font-size:.9rem;
+      transition:transform .10s ease, filter .10s ease;
+      display:inline-flex; align-items:center; gap:8px;
+      user-select:none; white-space:nowrap;
+      box-shadow:0 12px 24px rgba(0,0,0,.12);
+      background:#fff; color:#111827; border:1px solid #e5e7eb;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .btn:hover{ transform:translateY(-1px); filter:brightness(.98); }
+    .btn:active{ transform:translateY(0px); }
+    .btn-reset{ background:#111827; color:#fff; border:0; }
+    .btn-primary{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff; border:0;
+      box-shadow:0 12px 24px rgba(124,58,237,.18);
+    }
+    .btn[disabled]{ opacity:.55; cursor:not-allowed; transform:none !important; }
 
     .topbar{
       margin-top:10px;
@@ -41,7 +84,7 @@
       padding:14px;
       display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
     }
-    .titlebox{display:flex; gap:10px; align-items:center; flex:1 1 420px; min-width:240px}
+    .titlebox{ display:flex; gap:10px; align-items:center; flex:1 1 360px; min-width:240px; }
     .logo{
       width:42px; height:42px; border-radius:16px;
       background:linear-gradient(135deg,#a78bfa,#fb7185);
@@ -50,1348 +93,1691 @@
       box-shadow:0 10px 22px rgba(124,58,237,.18);
       user-select:none;
     }
-    .titles h1{font-size:1.02rem; margin:0; font-weight:800}
-    .titles .tiny{margin-top:3px; font-size:.86rem; color:var(--muted); font-weight:650}
+    .titles h1{ font-size:1.02rem; margin:0; font-weight:800; }
+    .titles .tiny{ margin-top:3px; font-size:.86rem; color:var(--muted); font-weight:650; }
 
+    .stats{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     .pill{
       background:#f3f4f6; border:1px solid #e5e7eb;
       border-radius:999px; padding:8px 12px;
-      font-weight:900; font-size:.9rem; color:#374151; white-space:nowrap;
-      display:flex; gap:8px; align-items:center;
+      font-weight:800; font-size:.9rem; color:#374151; white-space:nowrap;
     }
-    .badge-admin{
-      padding:4px 8px; border-radius:999px; font-weight:950; font-size:.78rem;
-      background:rgba(37,99,235,.12);
-      border:1px solid rgba(37,99,235,.35);
-      color:var(--admin); white-space:nowrap;
+    .pill strong{ color:var(--primary); }
+    .progressline{
+      height:10px; border-radius:999px; background:#f3f4f6; overflow:hidden;
+      border:1px solid #e5e7eb; width:100%; max-width:360px;
+    }
+    .progressfill{
+      height:100%; width:0%;
+      background:linear-gradient(90deg,#22c55e,#a78bfa);
+      transition:width .18s ease;
     }
 
+    .content{ padding:12px 0 0; }
     .card{
       background:var(--card);
       border:2px solid var(--border);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
-      padding:14px;
-      margin:12px 0;
+      padding:14px; margin:12px 0;
     }
-    .row1{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap}
-    .vi{margin:0; font-weight:900; font-size:1.04rem; line-height:1.25}
-    .muted{color:var(--muted); font-weight:650}
+    .row1{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .vi{ margin:0; font-weight:900; font-size:1.04rem; line-height:1.25; }
+    .meta{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
     .idx{
       font-size:.78rem; font-weight:900;
       padding:6px 10px; border-radius:999px;
       background:#eff6ff; color:#1d4ed8; border:1px solid #dbeafe;
       white-space:nowrap;
     }
-    .idx.ok{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
-    .idx.warn{background:#fff7ed;color:#9a3412;border-color:#fed7aa}
-    .idx.bad{background:#fee2e2;color:#991b1b;border-color:#fecaca}
+    .muted{ color:var(--muted); font-weight:650; }
 
-    .btn{
-      border:0; cursor:pointer;
-      border-radius:999px; padding:10px 14px;
-      font-weight:900; font-size:.9rem;
-      transition:transform .16s ease, filter .16s ease;
-      display:inline-flex; align-items:center; gap:8px;
-      user-select:none; white-space:nowrap;
-      box-shadow:0 12px 24px rgba(0,0,0,.12);
-      background:#fff; color:#111827; border:1px solid #e5e7eb;
-    }
-    .btn:hover{transform:translateY(-1px); filter:brightness(.98)}
-    .btn:active{transform:translateY(0)}
-    .btn[disabled]{opacity:.6; cursor:not-allowed; transform:none !important; filter:none !important}
-    .btn-primary{
-      background:linear-gradient(135deg,#7c3aed,#fb7185);
-      color:#fff; border:0;
-      box-shadow:0 12px 24px rgba(124,58,237,.18);
-    }
-    .btn-danger{background:var(--bad); color:#fff; border:0; box-shadow:0 12px 24px rgba(220,38,38,.18);}
-    .btn-ghost{background:#fff; color:#111827; border:1px solid #e5e7eb; box-shadow:none}
-
-    .input, textarea, select{
+    .input{
       width:100%;
       border-radius:14px; border:2px solid #e5e7eb;
       padding:11px 12px; font-size:.95rem; font-weight:700;
       outline:none; background:var(--soft);
-      transition:border-color .15s ease, box-shadow .15s ease;
-      font-family:inherit;
+      transition:border-color .12s ease, box-shadow .12s ease;
     }
-    textarea{min-height:120px; font-family:ui-monospace,Consolas,monospace; font-weight:650}
-    .input:focus, textarea:focus, select:focus{
+    .input:focus{
       border-color:rgba(124,58,237,.55);
       box-shadow:0 0 0 5px rgba(124,58,237,.10);
       background:#fff;
     }
-    label{display:block; margin-top:10px; font-weight:900}
-    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-    .grid3{display:grid; grid-template-columns:1.2fr 1.3fr 1fr; gap:10px}
-    @media(max-width:980px){ .grid3{grid-template-columns:1fr} }
-    @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 
-    .tabs{display:flex; gap:10px; flex-wrap:wrap}
-    .tab{padding:10px 14px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; font-weight:950; cursor:pointer; box-shadow:none}
-    .tab.active{background:linear-gradient(135deg,#7c3aed,#fb7185); color:#fff; border:0}
-
-    .drop{
-      border:2px dashed #e5e7eb;
+    .submitbar{
+      position:fixed;
+      left:0; right:0; bottom:0;
+      z-index:10002;
+      padding:10px 14px 14px;
+      background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.92) 25%,rgba(255,255,255,.98));
+      backdrop-filter:blur(6px);
+    }
+    .submitwrap{ max-width:980px; margin:0 auto; }
+    .btn-big{
+      width:100%;
       border-radius:18px;
-      padding:14px;
-      background:rgba(255,255,255,.6);
-      display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      padding:14px 16px;
+      font-size:1.05rem;
+      font-weight:950;
+      justify-content:center;
     }
-    .drop small{color:var(--muted); font-weight:750}
-    .coverPreview{
-      width:180px; height:108px;
-      border-radius:14px;
-      border:1px solid #e5e7eb;
+    .subhint{
+      margin-top:8px;
+      text-align:center;
+      color:var(--muted);
+      font-weight:700;
+      font-size:.86rem;
+      line-height:1.35;
+    }
+
+    .modal-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.35);
+      display:none; align-items:center; justify-content:center;
+      padding:16px;
+      z-index:10001;
+    }
+    .modal-backdrop.show{ display:flex; }
+    .modal{
+      width:100%; max-width:520px;
       background:#fff;
-      object-fit:cover;
-      display:none;
+      border-radius:18px;
+      border:1px solid #e5e7eb;
+      box-shadow:0 20px 60px rgba(0,0,0,.18);
+      padding:14px;
+      max-height:82vh;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
     }
+    .modal h3{ margin:4px 0 6px; font-size:1.02rem; }
+    .modal p{ margin:0 0 12px; color:var(--muted); font-weight:650; font-size:.92rem; line-height:1.35; }
+    .modal-actions{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
+    .btn-ghost{ background:#fff; color:#111827; border:1px solid #e5e7eb; box-shadow:none; }
+
     .toast{
-      position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+      position:fixed; left:50%; bottom:88px; transform:translateX(-50%);
       background:rgba(17,24,39,.92); color:#fff;
       padding:10px 12px; border-radius:14px;
       font-weight:800; font-size:.9rem;
       opacity:0; pointer-events:none;
       transition:opacity .18s ease, transform .18s ease;
       max-width:calc(100% - 28px);
-      z-index:20050; text-align:center;
+      z-index:10003;
+      text-align:center;
     }
-    .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px)}
-    a{color:#4c1d95; text-decoration:none; font-weight:950}
-    a:hover{text-decoration:underline}
-    code{background:#f6f6f6;padding:2px 6px;border-radius:8px;border:1px solid #eee}
-    .mono{font-family:ui-monospace,Consolas,monospace}
-    .hr{height:1px;background:#e5e7eb;margin:12px 0}
+    .toast.show{ opacity:1; transform:translateX(-50%) translateY(-4px); }
 
-    .qCard{border-width:1px; box-shadow:none}
-    .qHead{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between}
-    .qTools{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
-    .mini{padding:8px 10px; border-radius:14px; border:1px solid #e5e7eb; background:#fff; font-weight:900; cursor:pointer}
-    .mini.danger{border:0;background:var(--bad);color:#fff}
-    .mini.primary{border:0;background:linear-gradient(135deg,#7c3aed,#fb7185);color:#fff}
-    .hint{font-weight:650;color:var(--muted);line-height:1.35}
-    .hidden{display:none !important;}
+    .bus{
+      border:2px solid rgba(17,24,39,.9);
+      border-radius:18px;
+      padding:12px;
+      background:rgba(255,255,255,.72);
+      box-shadow:0 10px 30px rgba(0,0,0,.06);
+    }
+    .busTop{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-bottom:10px;
+      align-items:stretch;
+    }
+    .driver,.door{
+      border-radius:16px;
+      border:2px dashed rgba(229,231,235,.95);
+      background:#fff;
+      padding:10px 12px;
+      font-weight:950;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+    }
+    .driver{ justify-content:flex-start; }
+    .door{ justify-content:flex-end; }
+
+    .seatHeader{
+      display:grid;
+      grid-template-columns:1fr 1fr .7fr 1fr 1fr .6fr;
+      gap:10px;
+      padding:0 2px 8px;
+      align-items:center;
+    }
+    .sideLabel{
+      font-weight:950;
+      font-size:.82rem;
+      color:#374151;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      user-select:none;
+    }
+    .sideLabel.left{ grid-column:1 / span 2; }
+    .sideLabel.right{ grid-column:4 / span 2; text-align:right; }
+    .rowLabelTop{ grid-column:6; text-align:right; color:var(--muted); font-weight:900; font-size:.78rem; }
+
+    .seatRow{
+      display:grid;
+      grid-template-columns:1fr 1fr .7fr 1fr 1fr .6fr;
+      gap:10px;
+      align-items:stretch;
+      margin:8px 0;
+    }
+    .seatRow.five{ grid-template-columns:1fr 1fr 1fr 1fr 1fr .6fr; }
+
+    .aisle{
+      border-radius:14px;
+      background:rgba(229,231,235,.45);
+      border:1px solid rgba(229,231,235,.9);
+    }
+    .rowTag{
+      display:flex; align-items:center; justify-content:flex-end;
+      font-weight:950; color:#111827;
+      user-select:none;
+    }
+
+    .seat{
+      width:100%;
+      border-radius:16px;
+      border:2px solid rgba(229,231,235,.95);
+      background:#fff;
+      padding:10px 10px;
+      cursor:pointer;
+      text-align:left;
+      display:grid;
+      gap:2px;
+      align-content:start;
+      user-select:none;
+      min-height:56px;
+      transition:transform .06s ease, filter .06s ease, border-color .08s ease, background-color .08s ease;
+      will-change:transform;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .seat:hover{ transform:translateY(-1px); }
+    .seat:active{ transform:translateY(0px) scale(.995); }
+    .seat .id{ font-weight:1000; letter-spacing:.01em; }
+    .seat .sub{
+      font-weight:850;
+      font-size:.75rem;
+      color:rgba(17,24,39,.72);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .free{
+      background:linear-gradient(135deg,var(--c-free-bg1),var(--c-free-bg2));
+      border-color:var(--c-free-br);
+      box-shadow:0 0 0 5px var(--c-free-glow);
+    }
+    .confirmed{
+      background:linear-gradient(135deg,var(--c-confirm-bg1),var(--c-confirm-bg2));
+      border-color:var(--c-confirm-br);
+      opacity:.92;
+      cursor:not-allowed;
+      box-shadow:none;
+    }
+    .myhold{
+      background:linear-gradient(135deg,var(--c-myhold-bg1),var(--c-myhold-bg2));
+      border-color:var(--c-myhold-br);
+      box-shadow:0 0 0 6px var(--c-myhold-glow);
+    }
+    .otherhold{
+      background:linear-gradient(135deg,var(--c-otherhold-bg1),var(--c-otherhold-bg2));
+      border-color:var(--c-otherhold-br);
+      cursor:not-allowed;
+      box-shadow:none;
+    }
+    .seat[disabled]{ opacity:.95; transform:none !important; }
+
+    .legendBar{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:16px;
+      border:1px dashed rgba(229,231,235,.95);
+      background:#fff;
+      font-weight:850;
+      align-items:center;
+    }
+    .legendItem{ display:flex; gap:8px; align-items:center; white-space:nowrap; }
+    .dot{
+      width:14px; height:14px; border-radius:6px; border:1px solid rgba(0,0,0,.12);
+      box-shadow:0 10px 22px rgba(0,0,0,.06);
+      flex:0 0 auto;
+    }
+    .dot.free{ background:rgba(34,197,94,.75); }
+    .dot.confirmed{ background:rgba(156,163,175,.70); }
+    .dot.myhold{ background:rgba(251,113,133,.70); }
+    .dot.otherhold{ background:rgba(245,158,11,.80); }
+
+    @media (max-width:820px){
+      .progressline{ max-width:100%; }
+      .btn{ padding:9px 12px; font-size:.85rem; }
+      .btn-big{ font-size:1.02rem; padding:14px 14px; }
+      .seat{ min-height:54px; padding:10px 10px; }
+      .seatRow,.seatHeader{ gap:8px; }
+      .bus{ padding:10px; }
+      .seat .sub{ font-size:.73rem; }
+      .seatRow.five{ grid-template-columns:1fr 1fr 1fr 1fr 1fr .6fr; }
+    }
+
+    /* =========================
+       Question Builder UI (ADD-ON)
+       ========================= */
+
+    .qb-card{
+      position:relative;
+      overflow:hidden;
+    }
+    .qb-card::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:linear-gradient(135deg, rgba(124,58,237,.35), rgba(251,113,133,.25), rgba(34,197,94,.18));
+      filter:blur(18px);
+      opacity:.55;
+      pointer-events:none;
+    }
+    .qb-card > *{ position:relative; }
+
+    .qb-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      padding:6px 2px 12px;
+      border-bottom:1px dashed rgba(229,231,235,.95);
+    }
+    .qb-title{
+      font-weight:950;
+      font-size:1.08rem;
+      margin:0;
+      line-height:1.15;
+    }
+    .qb-sub{
+      margin-top:4px;
+      color:var(--muted);
+      font-weight:700;
+      font-size:.88rem;
+      line-height:1.35;
+    }
+
+    .qb-tabs{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      background:rgba(243,244,246,.85);
+      border:1px solid rgba(229,231,235,.95);
+      padding:6px;
+      border-radius:999px;
+    }
+    .qb-tab{
+      border:0;
+      background:transparent;
+      cursor:pointer;
+      border-radius:999px;
+      padding:9px 12px;
+      font-weight:950;
+      font-size:.86rem;
+      color:#111827;
+      transition:transform .10s ease, filter .10s ease, background-color .10s ease;
+      -webkit-tap-highlight-color:transparent;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .qb-tab:hover{ transform:translateY(-1px); filter:brightness(.98); }
+    .qb-tab:active{ transform:translateY(0px); }
+    .qb-tab.is-active{
+      background:#fff;
+      border:1px solid rgba(229,231,235,.95);
+      box-shadow:0 10px 24px rgba(0,0,0,.08);
+    }
+
+    .qb-body{ padding-top:12px; display:grid; gap:12px; }
+
+    .qb-panel{
+      background:rgba(255,255,255,.92);
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:16px;
+      padding:12px;
+      box-shadow:0 10px 26px rgba(0,0,0,.06);
+    }
+
+    .qb-grid{
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:10px;
+    }
+    @media (max-width:820px){
+      .qb-grid{ grid-template-columns:1fr; }
+    }
+
+    .qb-label{
+      font-weight:950;
+      font-size:.86rem;
+      color:#111827;
+      margin:0 0 6px;
+    }
+    .qb-help{
+      margin-top:6px;
+      color:var(--muted);
+      font-weight:700;
+      font-size:.82rem;
+      line-height:1.35;
+    }
+
+    .qb-select{
+      width:100%;
+      border-radius:14px;
+      border:2px solid #e5e7eb;
+      padding:11px 12px;
+      font-size:.92rem;
+      font-weight:850;
+      outline:none;
+      background:var(--soft);
+      transition:border-color .12s ease, box-shadow .12s ease;
+    }
+    .qb-select:focus{
+      border-color:rgba(124,58,237,.55);
+      box-shadow:0 0 0 5px rgba(124,58,237,.10);
+      background:#fff;
+    }
+
+    .qb-optlist{ display:grid; gap:8px; margin-top:10px; }
+    .qb-opt{
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      gap:10px;
+      align-items:center;
+      background:rgba(248,250,252,.9);
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:14px;
+      padding:10px;
+    }
+    .qb-radio{
+      width:18px; height:18px;
+      accent-color:var(--primary);
+      cursor:pointer;
+    }
+    .qb-mini{
+      border:0;
+      background:#fff;
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:12px;
+      padding:9px 10px;
+      font-weight:950;
+      cursor:pointer;
+      box-shadow:0 10px 20px rgba(0,0,0,.06);
+      -webkit-tap-highlight-color:transparent;
+      transition:transform .10s ease, filter .10s ease;
+    }
+    .qb-mini:hover{ transform:translateY(-1px); filter:brightness(.98); }
+    .qb-mini:active{ transform:translateY(0px); }
+
+    .qb-divider{
+      height:1px;
+      background:rgba(229,231,235,.95);
+      margin:12px 0;
+    }
+
+    .qb-list{
+      display:grid;
+      gap:10px;
+    }
+    .qb-item{
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:16px;
+      padding:12px;
+      background:#fff;
+      box-shadow:0 10px 22px rgba(0,0,0,.05);
+    }
+    .qb-itemTop{
+      display:flex; gap:10px; justify-content:space-between; align-items:flex-start; flex-wrap:wrap;
+    }
+    .qb-badge{
+      font-size:.78rem;
+      font-weight:950;
+      padding:6px 10px;
+      border-radius:999px;
+      background:linear-gradient(135deg, rgba(124,58,237,.14), rgba(251,113,133,.10));
+      border:1px solid rgba(124,58,237,.25);
+      white-space:nowrap;
+    }
+    .qb-itemTitle{
+      font-weight:950;
+      margin:0;
+      line-height:1.25;
+    }
+    .qb-itemMeta{
+      margin-top:6px;
+      color:var(--muted);
+      font-weight:750;
+      font-size:.86rem;
+      line-height:1.35;
+    }
+
+    /* Nút Thêm câu bám theo người tạo câu */
+    .qb-fab{
+      position:fixed;
+      left:0; right:0;
+      bottom:calc(env(safe-area-inset-bottom) + 14px);
+      z-index:10001; /* dưới submitbar (10002) để không đè nút xác nhận ghế */
+      padding:0 14px;
+      pointer-events:none;
+    }
+    .qb-fabInner{
+      max-width:980px;
+      margin:0 auto;
+      pointer-events:auto;
+    }
+    .qb-addBtn{
+      width:100%;
+      border-radius:20px !important;
+      padding:14px 16px !important;
+      font-size:1.06rem !important;
+      font-weight:1000 !important;
+      letter-spacing:.02em;
+      box-shadow:0 16px 40px rgba(124,58,237,.22) !important;
+      justify-content:center;
+    }
+    .qb-fabHint{
+      margin-top:8px;
+      text-align:center;
+      color:var(--muted);
+      font-weight:750;
+      font-size:.84rem;
+      line-height:1.35;
+    }
+    .qb-fab.is-hidden{ display:none; }
   </style>
 </head>
 
 <body>
   <div id="shell">
+    <div class="actionbar">
+      <button class="btn" id="btnScrollTop">⬆️ Lên đầu</button>
+      <button class="btn btn-reset" id="btnRename">✏️ Đổi tên</button>
+    </div>
+
     <div class="wrap">
       <div class="topbar">
         <div class="titlebox">
-          <div class="logo">A</div>
+          <div class="logo">🚌</div>
           <div class="titles">
-            <h1>Admin Panel</h1>
-            <div class="tiny"><a href="/">← về kệ hàng</a></div>
+            <h1 id="appTitle">Đăng ký chỗ ngồi 12A11</h1>
+            <div class="tiny" id="appSub">Xe khách 29 chỗ • Live realtime</div>
           </div>
         </div>
-        <div class="pill" id="mePill">Checking…</div>
+
+        <div class="stats">
+          <div class="pill">Tên: <strong id="whoName">—</strong></div>
+          <div class="pill">Chỗ bạn: <strong id="mySeat">—</strong></div>
+          <div class="pill">Đã đặt: <strong id="confirmedCount">0</strong>/29</div>
+          <div class="progressline"><div class="progressfill" id="progressFill"></div></div>
+        </div>
       </div>
 
-      <div class="card" id="gate">Checking login...</div>
+      <div class="content" id="content"></div>
 
-      <div id="app" style="display:none">
-        <div class="card">
-          <div class="row1">
-            <p class="vi">Bảng điều khiển</p>
-            <div class="tabs">
-              <button class="tab active" id="tabQuizzes">Quizzes</button>
-              <button class="tab" id="tabUsers">Users</button>
-            </div>
+      <!-- =========================
+           Question Builder UI
+           (Import vs Manual loại trừ nhau)
+           ========================= -->
+      <div class="card qb-card" id="qbRoot" style="margin-top:12px;">
+        <div class="qb-head">
+          <div style="flex:1 1 360px; min-width:260px;">
+            <p class="qb-title" style="margin:0;">🎯 Thêm câu hỏi</p>
+            <div class="qb-sub">Mặc định: Trắc nghiệm 1 đáp án • Hệ thống sẽ nhớ loại câu bạn vừa chọn cho câu kế tiếp.</div>
           </div>
-          <div class="muted" style="margin-top:8px; line-height:1.35">
-            • Quiz ID chuẩn: <b>5 chữ cái latin</b> (a-z) ví dụ <code>abcde</code>.<br>
-            • Admin không xem được mật khẩu gốc → chỉ <b>reset PIN</b> được.
+
+          <div class="qb-tabs" role="tablist" aria-label="Chọn cách thêm câu hỏi">
+            <button class="qb-tab is-active" type="button" data-qb-mode="manual">📝 Thêm thủ công</button>
+            <button class="qb-tab" type="button" data-qb-mode="import">📥 Import HTML</button>
           </div>
         </div>
 
-        <!-- QUIZZES -->
-        <div id="viewQuizzes">
-          <div class="grid3">
-            <!-- editor -->
-            <div class="card">
-              <div class="row1">
-                <p class="vi">Quiz</p>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-                  <span class="idx" id="editModePill">NEW</span>
-                  <span class="idx" id="draftPill">DRAFT: —</span>
-                </div>
+        <div class="qb-body">
+          <!-- MANUAL -->
+          <section class="qb-panel" id="qbPanelManual">
+            <div class="qb-grid">
+              <div>
+                <div class="qb-label">Nội dung câu hỏi</div>
+                <input class="input" id="qbQuestionText" placeholder="Nhập câu hỏi..." maxlength="220" />
+                <div class="qb-help">Tip: Viết ngắn gọn, rõ ý. Có thể thêm (A, B, C, D) trong đáp án nếu cần.</div>
               </div>
 
-              <div class="grid2" style="margin-top:10px">
-                <div>
-                  <label>Quiz ID (5 chữ)</label>
-                  <input class="input mono" id="quizId" placeholder="abcde" maxlength="5" />
-                  <div class="hint" id="qidHint" style="margin-top:6px">
-                    NEW: để trống rồi bấm <b>Tạo mới</b> để tự sinh ID.
-                  </div>
-                </div>
-                <div>
-                  <label>Title</label>
-                  <input class="input" id="title" placeholder="Tên quiz" />
-                </div>
-              </div>
-
-              <label>Sub</label>
-              <input class="input" id="sub" placeholder="Mô tả ngắn" />
-
-              <div class="grid2" style="margin-top:10px">
-                <div>
-                  <label>Public / Private</label>
-                  <select id="isPublic">
-                    <option value="true">Public</option>
-                    <option value="false">Private</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Hiển thị trên Quiz Store</label>
-                  <select id="showInStore">
-                    <option value="true">Hiện</option>
-                    <option value="false">Ẩn</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="grid2" style="margin-top:10px">
-                <div>
-                  <label>Yêu cầu đăng nhập</label>
-                  <select id="requireLogin">
-                    <option value="true">Cần login</option>
-                    <option value="false">Không cần login (quiz mở)</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Ghim lên đầu</label>
-                  <select id="pinned">
-                    <option value="false">Không ghim</option>
-                    <option value="true">Ghim</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="grid2" style="margin-top:10px">
-                <div>
-                  <label>Yêu cầu mã truy cập</label>
-                  <select id="requireCode">
-                    <option value="false">Không</option>
-                    <option value="true">Có</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Mã truy cập (nếu có)</label>
-                  <input class="input mono" id="accessCode" placeholder="vd: 1234" />
-                </div>
-              </div>
-
-              <div class="hr"></div>
-
-              <div class="row1">
-                <p class="vi" style="font-size:1rem">Cover image</p>
-                <span class="idx ok" id="coverPill">NO IMAGE</span>
-              </div>
-
-              <div class="drop" id="drop">
-                <div style="min-width:220px">
-                  <div style="font-weight:950">Chọn ảnh / Paste / Kéo thả</div>
-                  <small>PNG/JPG. Tự resize max 1200px để khỏi nặng.</small>
-                  <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
-                    <input id="filePick" type="file" accept="image/*" class="hidden">
-                    <button class="btn" id="btnPickImg" type="button">📷 Chọn ảnh</button>
-                    <button class="btn btn-ghost" id="btnRemoveImg" type="button">🗑️ Xóa ảnh</button>
-                  </div>
-                </div>
-                <img id="coverPreview" class="coverPreview" alt="cover preview"/>
-              </div>
-
-              <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-                <button class="btn" id="btnNewQuiz" type="button">✨ Tạo mới</button>
-                <button class="btn btn-ghost" id="btnClearDraft" type="button">🧽 Xóa nháp</button>
-                <button class="btn btn-primary" id="btnSaveQuiz" type="button">💾 Lưu quiz</button>
-              </div>
-            </div>
-
-            <!-- question builder -->
-            <div class="card">
-              <div class="row1">
-                <p class="vi">Câu hỏi</p>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-                  <span class="idx" id="qCountPill">0</span>
-                  <button class="btn" id="btnAddQ" type="button">➕ Thêm câu</button>
-                </div>
-              </div>
-
-              <div class="hint" style="margin-top:8px">
-                • Mặc định là <b>tự luận</b>. Với tự luận, nhập nhiều đáp án cách nhau bằng <b>|</b> (vd: <code>thích nghi|thich nghi</code>).<br>
-                • “Chấp nhận sai chính tả” là logic chấm ở trang làm quiz. Admin panel sẽ lưu đáp án + cờ <code>fuzzy=true</code> để bạn dùng sau.
-              </div>
-
-              <label>Chia điểm</label>
-              <div class="grid2">
-                <select id="scoringMode">
-                  <option value="equal">Chia đều theo số câu</option>
-                  <option value="custom">Tự chia điểm (mỗi câu có points)</option>
+              <div>
+                <div class="qb-label">Loại câu hỏi</div>
+                <select class="qb-select" id="qbType">
+                  <option value="mcq1">Trắc nghiệm (1 đáp án)</option>
+                  <option value="essay">Tự luận</option>
+                  <option value="tf">Đúng / Sai</option>
                 </select>
-                <input class="input mono" id="totalScore" value="10" placeholder="Tổng điểm (vd 10)" />
-              </div>
-
-              <div id="qList" style="margin-top:12px"></div>
-
-              <div class="hr"></div>
-
-              <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-                <button class="btn btn-ghost" id="btnAdvancedToggle" type="button">🧩 Nâng cao: Import HTML</button>
-                <button class="btn btn-primary" id="btnPublishAll" type="button">🚀 Publish (quiz + câu hỏi)</button>
-              </div>
-
-              <div id="advancedBox" class="card hidden" style="box-shadow:none;border-width:1px;margin-top:12px">
-                <div class="row1">
-                  <p class="vi" style="font-size:1rem">Import HTML (tùy chọn)</p>
-                  <span class="idx">ADV</span>
-                </div>
-                <div class="hint" style="margin-top:8px">
-                  Nếu bạn có sẵn định dạng <code>&lt;div class="q"&gt;</code> thì dán vào đây → bấm Import.
-                </div>
-                <label>Paste HTML</label>
-                <textarea id="htmlBox" placeholder='Ví dụ:
-<div class="q" data-type="mcq1" data-options="2|3|4|5" data-correct="3">1+3=?</div>
-<div class="q" data-type="essay" data-answers="thích nghi|thich nghi">Giải thích adaptable</div>
-'></textarea>
-                <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-                  <button class="btn" id="btnImportHtml" type="button">⬇️ Import vào danh sách câu</button>
-                </div>
+                <div class="qb-help">Bạn chọn loại nào thì câu kế tiếp sẽ mặc định loại đó.</div>
               </div>
             </div>
 
-            <!-- list -->
-            <div class="card">
-              <div class="row1">
-                <p class="vi">Danh sách quiz</p>
-                <button class="btn" id="btnReloadQuizzes" type="button">Reload</button>
+            <!-- MCQ 1 -->
+            <div id="qbMcqBox" style="margin-top:12px;">
+              <div class="qb-label">Đáp án (chọn 1 đáp án đúng)</div>
+              <div class="qb-optlist" id="qbOptList"></div>
+
+              <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+                <button class="qb-mini" type="button" id="qbAddOpt">➕ Thêm đáp án</button>
+                <button class="qb-mini" type="button" id="qbResetOpt">↩️ Reset 4 đáp án</button>
               </div>
-              <div class="muted" style="margin-top:6px">Bấm 1 quiz để load vào form (sửa quiz công khai được).</div>
-              <div id="quizList" style="margin-top:10px"></div>
             </div>
-          </div>
+
+            <!-- ESSAY -->
+            <div id="qbEssayBox" style="margin-top:12px; display:none;">
+              <div class="qb-label">Gợi ý / đáp án tham khảo (tuỳ chọn)</div>
+              <textarea class="input" id="qbEssayHint" rows="4" placeholder="Nhập gợi ý chấm / đáp án mẫu..."></textarea>
+            </div>
+
+            <!-- TRUE/FALSE -->
+            <div id="qbTfBox" style="margin-top:12px; display:none;">
+              <div class="qb-label">Chọn đáp án đúng</div>
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="btn" type="button" id="qbTfTrue">✅ Đúng</button>
+                <button class="btn" type="button" id="qbTfFalse">❌ Sai</button>
+              </div>
+              <div class="qb-help" id="qbTfPicked">Chưa chọn</div>
+            </div>
+
+            <div class="qb-divider"></div>
+
+            <div class="qb-label">Danh sách câu đã thêm</div>
+            <div class="qb-list" id="qbList"></div>
+          </section>
+
+          <!-- IMPORT -->
+          <section class="qb-panel" id="qbPanelImport" hidden>
+            <div class="qb-label">Import HTML</div>
+            <div class="muted" style="font-weight:750; line-height:1.45; margin-bottom:10px;">
+              Dán HTML vào đây. Khi bạn đang ở chế độ Import thì hệ thống sẽ <b>ẩn</b> phần thêm thủ công để tránh nhầm lẫn.
+            </div>
+            <textarea class="input" id="qbImportHtml" rows="10" placeholder="Dán HTML câu hỏi..."></textarea>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; justify-content:flex-end;">
+              <button class="btn btn-primary" type="button" id="qbDoImport">✅ Import</button>
+            </div>
+
+            <div class="qb-help">Nếu muốn quay lại thêm thủ công, bấm tab “Thêm thủ công”.</div>
+          </section>
         </div>
-
-        <!-- USERS -->
-        <div id="viewUsers" style="display:none">
-          <div class="card">
-            <div class="row1">
-              <p class="vi">Users</p>
-              <div style="display:flex; gap:10px; flex-wrap:wrap">
-                <input class="input" id="userSearch" placeholder="Search username..." style="max-width:320px"/>
-                <button class="btn" id="btnReloadUsers" type="button">Reload</button>
-              </div>
-            </div>
-            <div class="muted" style="margin-top:8px; line-height:1.35">
-              • Không thể xem mật khẩu gốc → chỉ reset PIN.<br>
-              • Xoá user sẽ cascade theo FK.
-            </div>
-            <div id="userList" style="margin-top:10px"></div>
-          </div>
-        </div>
-
       </div>
+      <!-- /Question Builder -->
+    </div>
+  </div>
+
+  <div class="submitbar" id="submitBar" style="display:none;">
+    <div class="submitwrap">
+      <button class="btn btn-primary btn-big" id="btnConfirm">
+        <span id="btnConfirmLabel">✅ XÁC NHẬN CHỖ</span>
+      </button>
+      <div class="subhint" id="submitHint">Bấm ghế để chọn • Bấm “Xác nhận chỗ” để chốt</div>
+    </div>
+  </div>
+
+  <!-- FAB: Nút Thêm câu bám theo người tạo -->
+  <div class="qb-fab" id="qbFab">
+    <div class="qb-fabInner">
+      <button class="btn btn-primary qb-addBtn" type="button" id="qbAddQuestionBtn">➕ THÊM CÂU</button>
+      <div class="qb-fabHint" id="qbFabHint">Nhập câu hỏi → chọn loại → bấm “THÊM CÂU”</div>
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
-<script>
-/* ================== CONFIG ================== */
-const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
-const TOKEN_KEY = "tk_token_v2";
+  <div class="modal-backdrop" id="nameBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="nameTitle">
+      <h3 id="nameTitle">Nhập TÊN để đăng nhập</h3>
+      <p>Tên là <b>bắt buộc</b>. Nhập tên thật hoặc biệt danh mà ai cũng biết nha.</p>
+      <div style="display:grid; gap:10px; margin-top:10px;">
+        <input id="nameInput" class="input" placeholder="VD: Khôi" autocomplete="name" maxlength="24" />
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="btnSaveName">✅ Xong</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-/* ================== UI HELPERS ================== */
-function toast(msg){
-  const t=document.getElementById("toast");
-  t.textContent=String(msg||"");
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),1300);
-}
-function esc(s){
+  <div class="modal-backdrop" id="renameBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
+      <h3 id="renameTitle">Đổi tên đăng nhập?</h3>
+      <p>Tên mới sẽ cập nhật lên ghế bạn đang giữ / đã xác nhận.</p>
+      <div style="display:grid; gap:10px; margin-top:10px;">
+        <input id="renameInput" class="input" placeholder="Nhập tên mới..." maxlength="24" />
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="btnRenameCancel">Hủy</button>
+          <button class="btn btn-primary" id="btnRenameOk">✅ Đổi tên</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const GAS_EXEC_URL="https://script.google.com/macros/s/AKfycbz1cw-l4lJaO5F-NzQqlehJ1v8PGXaw4nK0yMe-F90Z5b2EMnBdmI-UMG67LYbzGijLyg/exec";
+const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+
+function escapeHtml(s){
   return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
-function getToken(){ return localStorage.getItem(TOKEN_KEY) || ""; }
-
-/* ================== SUPABASE RPC ================== */
-async function rpc(fn, args){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
-    method:"POST",
-    headers:{
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization":"Bearer " + SUPABASE_ANON_KEY,
-      "Content-Type":"application/json"
-    },
-    body: JSON.stringify(args||{})
-  });
-  const txt = await res.text();
-  let data=null;
-  try{ data = txt ? JSON.parse(txt) : null; }catch{}
-  if(!res.ok){
-    const msg = (data && (data.message||data.error||data.hint)) ? (data.message||data.error||data.hint) : txt;
-    throw new Error(msg || `RPC failed: ${fn}`);
-  }
-  return data;
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),1200);
 }
-
-/* ================== DOM ================== */
-const mePill = document.getElementById("mePill");
-const gate = document.getElementById("gate");
-const app = document.getElementById("app");
-
-const tabQuizzes = document.getElementById("tabQuizzes");
-const tabUsers = document.getElementById("tabUsers");
-const viewQuizzes = document.getElementById("viewQuizzes");
-const viewUsers = document.getElementById("viewUsers");
-function setTab(which){
-  const isQ = which==="q";
-  tabQuizzes.classList.toggle("active", isQ);
-  tabUsers.classList.toggle("active", !isQ);
-  viewQuizzes.style.display = isQ ? "" : "none";
-  viewUsers.style.display = isQ ? "none" : "";
+function randId(prefix="id"){ return prefix+"_"+Math.random().toString(16).slice(2)+"_"+Date.now().toString(16); }
+function normalizeName(s){ return String(s||"").trim().replace(/\s+/g," "); }
+function shortNameForSeat(full){
+  const parts=normalizeName(full).split(" ").filter(Boolean);
+  if(!parts.length) return "";
+  if(parts.length===1) return parts[0];
+  const first=parts[0], last=parts[parts.length-1];
+  const ch=first[0]?first[0].toUpperCase():"";
+  return (ch?(ch+" "+last):last);
 }
-tabQuizzes.onclick = ()=>setTab("q");
-tabUsers.onclick = ()=>setTab("u");
-
-/* ================== STATE ================== */
-let ME = null;
-let QUIZZES = [];
-let USERS = [];
-let COVER_DATA_URL = ""; // base64
-
-// 🔥 Fix bug “Save ra quiz khác / link trống”:
-// luôn dùng CURRENT_QID làm nguồn sự thật khi đang edit.
-let CURRENT_QID = "";     // quiz_id đang edit (đã chọn từ list hoặc tạo mới)
-let CURRENT_MODE = "NEW"; // NEW | EDIT
-
-// Questions in UI
-let QUESTIONS = []; // array of {type,prompt,answers,points,meta}
-
-/* ================== DRAFT (persist) ================== */
-const DRAFT_NS = "admin_draft_v4";
-function draftKeyFor(qid){
-  return `${DRAFT_NS}::${qid || "NEW"}`;
-}
-const draftPill = document.getElementById("draftPill");
-let draftTimer = null;
-
-function setDraftPill(text, cls=""){
-  draftPill.textContent = text;
-  draftPill.className = "idx " + (cls||"");
-}
-
-function saveDraftSoon(){
-  if(draftTimer) clearTimeout(draftTimer);
-  draftTimer = setTimeout(saveDraftNow, 250);
-}
-
-function getFormSnapshot(){
-  return {
-    v: 1,
-    ts: Date.now(),
-    mode: CURRENT_MODE,
-    qid: CURRENT_QID || normalizeQuizId(quizIdEl.value),
-    form: {
-      quiz_id: normalizeQuizId(quizIdEl.value),
-      title: titleEl.value,
-      sub: subEl.value,
-      is_public: isPublicEl.value,
-      show_in_store: showInStoreEl.value,
-      require_login: requireLoginEl.value,
-      pinned: pinnedEl.value,
-      require_access_code: requireCodeEl.value,
-      access_code: accessCodeEl.value,
-      scoring_mode: scoringModeEl.value,
-      total_score: totalScoreEl.value,
-      cover: COVER_DATA_URL || ""
-    },
-    questions: QUESTIONS
-  };
-}
-
-function saveDraftNow(){
-  try{
-    const snap = getFormSnapshot();
-    const key = draftKeyFor(CURRENT_QID || snap.form.quiz_id || "NEW");
-    localStorage.setItem(key, JSON.stringify(snap));
-    const d = new Date(snap.ts);
-    const hh = String(d.getHours()).padStart(2,"0");
-    const mm = String(d.getMinutes()).padStart(2,"0");
-    const ss = String(d.getSeconds()).padStart(2,"0");
-    setDraftPill(`DRAFT: ${hh}:${mm}:${ss}`, "ok");
-  }catch{
-    setDraftPill("DRAFT: OFF", "warn");
-  }
-}
-
-function clearDraft(){
-  const key1 = draftKeyFor(CURRENT_QID || normalizeQuizId(quizIdEl.value) || "NEW");
-  localStorage.removeItem(key1);
-  setDraftPill("DRAFT: —");
-}
-
-function tryLoadDraft(qid){
-  const key = draftKeyFor(qid || "NEW");
-  const raw = localStorage.getItem(key);
-  if(!raw) return null;
-  try{ return JSON.parse(raw); }catch{ return null; }
-}
-
-/* ================== AUTH GATE ================== */
-async function gateCheck(){
-  const token = getToken();
-  if(!token){
-    gate.innerHTML = `Bạn chưa login. Vào <a href="/">trang chủ</a> để login admin.`;
-    mePill.textContent = "No token";
-    return false;
-  }
-  try{
-    const meOut = await rpc("api_me",{p_token:token});
-    if(!meOut.ok) throw new Error(meOut.error||"not logged");
-    ME = meOut.me;
-    const isAdmin = (ME.role==="admin") || (String(ME.username||"").toLowerCase()==="tuankhoi");
-    mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="badge-admin">ADMIN</span>`;
-    if(!isAdmin){
-      gate.textContent = "Bạn không phải admin.";
-      return false;
+function preventZoom(){
+  window.addEventListener("keydown",(e)=>{
+    if(e.ctrlKey||e.metaKey){
+      const k=e.key;
+      if(k==="+"||k==="-"||k==="="||k==="_"||k==="0") e.preventDefault();
     }
-    gate.innerHTML = `<span class="idx ok">OK</span> Admin: <b>${esc(ME.username)}</b>`;
-    app.style.display = "";
+  },{passive:false});
+  window.addEventListener("wheel",(e)=>{ if(e.ctrlKey||e.metaKey) e.preventDefault(); },{passive:false});
+}
+
+function buildUrl(params){
+  const u=new URL(GAS_EXEC_URL);
+  Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));
+  u.searchParams.set("_",Date.now().toString(16));
+  return u.toString();
+}
+function jsonp(params,timeoutMs=12000){
+  return new Promise((resolve,reject)=>{
+    const cb="__cb_"+Math.random().toString(16).slice(2);
+    const url=buildUrl(Object.assign({},params,{callback:cb}));
+    const s=document.createElement("script");
+    let done=false;
+    const timer=setTimeout(()=>{
+      if(done) return;
+      done=true;
+      try{ delete window[cb]; }catch(e){}
+      try{ s.remove(); }catch(e){}
+      reject(new Error("JSONP timeout"));
+    },timeoutMs);
+    window[cb]=(data)=>{
+      if(done) return;
+      done=true;
+      clearTimeout(timer);
+      try{ delete window[cb]; }catch(e){}
+      try{ s.remove(); }catch(e){}
+      resolve(data);
+    };
+    s.onerror=()=>{
+      if(done) return;
+      done=true;
+      clearTimeout(timer);
+      try{ delete window[cb]; }catch(e){}
+      try{ s.remove(); }catch(e){}
+      reject(new Error("JSONP network error"));
+    };
+    s.src=url;
+    document.head.appendChild(s);
+  });
+}
+async function api(params){
+  const url=buildUrl(Object.assign({},params,{fmt:"json"}));
+  try{
+    const r=await fetch(url,{cache:"no-store"});
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const txt=await r.text();
+    try{ return JSON.parse(txt); }
+    catch(e){ throw new Error("Not JSON"); }
+  }catch(e){
+    return await jsonp(params);
+  }
+}
+
+const LS_PREFIX="seat_12A11_v5::";
+const LS_NAME=LS_PREFIX+"name";
+const LS_CLIENT=LS_PREFIX+"client";
+const LS_TS=LS_PREFIX+"ts";
+const MAX_AGE_MS=30*24*3600*1000;
+
+const me={name:"",client:""};
+function loadLocal(){
+  let ts=0;
+  try{ ts=Number(localStorage.getItem(LS_TS)||0); }catch(e){}
+  if(ts&&(Date.now()-ts<=MAX_AGE_MS)){
+    try{ me.name=String(localStorage.getItem(LS_NAME)||""); }catch(e){}
+    try{ me.client=String(localStorage.getItem(LS_CLIENT)||""); }catch(e){}
+  }else{
+    try{ localStorage.removeItem(LS_NAME); localStorage.removeItem(LS_CLIENT); localStorage.removeItem(LS_TS); }catch(e){}
+    me.name=""; me.client="";
+  }
+  if(!me.client) me.client=randId("c");
+}
+function saveLocal(){
+  try{
+    localStorage.setItem(LS_NAME,me.name);
+    localStorage.setItem(LS_CLIENT,me.client);
+    localStorage.setItem(LS_TS,String(Date.now()));
+  }catch(e){}
+}
+
+const FIXED_SEATS=new Map([
+  ["A1","HDV"],
+  ["A2","HDV"],
+  ["F3","B Long"],
+  ["F4","B Long"],
+]);
+
+const ROWS_LAYOUT=[
+  {label:"A",type:"std"},
+  {label:"B",type:"std"},
+  {label:"C",type:"std"},
+  {label:"D",type:"std"},
+  {label:"E",type:"std"},
+  {label:"F",type:"std"},
+  {label:"G",type:"std"},
+  {label:"H",type:"five"},
+];
+
+const SEATS=(()=>{
+  const out=[];
+  for(const row of ROWS_LAYOUT){
+    if(row.type==="std"){ for(let i=1;i<=4;i++) out.push(row.label+i); }
+    else if(row.type==="five"){ for(let i=1;i<=5;i++) out.push(row.label+i); }
+  }
+  return out;
+})();
+const TOTAL_SEATS=SEATS.length;
+
+let snapshot=null;
+let seatIndex=new Map();
+let pollTimer=null;
+
+const content=document.getElementById("content");
+const submitBar=document.getElementById("submitBar");
+const btnConfirm=document.getElementById("btnConfirm");
+const btnConfirmLabel=document.getElementById("btnConfirmLabel");
+const submitHint=document.getElementById("submitHint");
+
+const seatDom=new Map();
+let appRendered=false;
+
+let localHoldSeat="";
+let localHoldTs=0;
+
+let inflight={hold:false,confirm:false};
+let confirmQueued=false;
+let confirmQueuedSeat="";
+
+let confirmUiState="ready";
+function setConfirmUiState(state){
+  confirmUiState=state;
+  if(state==="loading") btnConfirmLabel.textContent="⏳ ĐANG XÁC NHẬN...";
+  else if(state==="done") btnConfirmLabel.textContent="✅ ĐÃ XÁC NHẬN";
+  else btnConfirmLabel.textContent="✅ XÁC NHẬN CHỖ";
+}
+function showSubmitBar(show){ submitBar.style.display=show?"":"none"; }
+
+function mySeatNow(){
+  const my=snapshot&&snapshot.my?snapshot.my:{confirmed:"",hold:""};
+  return (my.confirmed||my.hold||localHoldSeat||"");
+}
+
+function seatIsBlocked(id){ return FIXED_SEATS.has(String(id||"").toUpperCase()); }
+
+function calcConfirmedCount(){
+  let c=0;
+  for(const id of SEATS){
+    if(seatIsBlocked(id)){ c++; continue; }
+    const s=seatIndex.get(id);
+    if(s&&String(s.confirmedBy||"")) c++;
+  }
+  return c;
+}
+
+function updateTopbar(){
+  document.getElementById("whoName").textContent=me.name?me.name:"—";
+  const mySeat=mySeatNow();
+  document.getElementById("mySeat").textContent=mySeat?mySeat:"—";
+
+  const cc=snapshot?calcConfirmedCount():0;
+  document.getElementById("confirmedCount").textContent=String(cc);
+
+  const pct=TOTAL_SEATS?Math.round((cc/TOTAL_SEATS)*100):0;
+  document.getElementById("progressFill").style.width=pct+"%";
+}
+
+function setLoadingView(){
+  showSubmitBar(false);
+  content.innerHTML=`
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Đang tải sơ đồ ghế…</p>
+        <div class="meta"><span class="idx">LOADING</span></div>
+      </div>
+      <div class="muted" style="margin-top:10px">Vui lòng chờ…</div>
+    </div>
+  `;
+}
+
+function showExecErrorView(title,detail,extra=""){
+  showSubmitBar(false);
+  content.innerHTML=`
+    <div class="card">
+      <div class="row1">
+        <p class="vi">${escapeHtml(title)}</p>
+        <div class="meta"><span class="idx">LỖI</span></div>
+      </div>
+      <div class="muted" style="margin-top:10px; line-height:1.45">
+        ${escapeHtml(detail||"Không rõ nguyên nhân")}
+        ${extra?`<div style="margin-top:8px"><b>Chi tiết:</b> ${escapeHtml(extra)}</div>`:""}
+      </div>
+    </div>
+  `;
+}
+
+function classifySeat(seatObj){
+  const now=snapshot?Number(snapshot.ts||Date.now()):Date.now();
+  const id=String(seatObj.id||"").toUpperCase();
+
+  if(seatIsBlocked(id)){
+    return {cls:"confirmed",disabled:true,sub:FIXED_SEATS.get(id)||""};
+  }
+
+  const confirmedBy=String(seatObj.confirmedBy||"");
+  const confirmedName=String(seatObj.confirmedName||"");
+  const holdBy=String(seatObj.holdBy||"");
+  const holdName=String(seatObj.holdName||"");
+  const holdAt=seatObj.holdAt?Number(seatObj.holdAt):0;
+
+  if(confirmedBy){
+    const nm=confirmedName?shortNameForSeat(confirmedName):"Đã đặt";
+    return {cls:"confirmed",disabled:true,sub:nm};
+  }
+
+  if(localHoldSeat){
+    if(id===localHoldSeat) return {cls:"myhold",disabled:false,sub:"Bạn đang chọn"};
+    if(holdBy===me.client&&holdAt&&(now-holdAt<=60*1000+5000)) return {cls:"free",disabled:false,sub:""};
+  }
+
+  if(holdBy&&holdAt&&(now-holdAt<=60*1000+5000)){
+    if(holdBy===me.client) return {cls:"myhold",disabled:false,sub:"Bạn đang chọn"};
+    return {cls:"otherhold",disabled:true,sub:holdName?shortNameForSeat(holdName):"Đang chọn"};
+  }
+
+  return {cls:"free",disabled:false,sub:""};
+}
+
+function seatButtonHTML_(id){
+  const seatObj=seatIndex.get(id)||{id};
+  const st=classifySeat(seatObj);
+  const disabled=st.disabled||!me.name;
+  return `
+    <button class="seat ${st.cls}" data-seat="${id}" ${disabled?"disabled":""}>
+      <div class="id">${escapeHtml(id)}</div>
+      <div class="sub">${escapeHtml(st.sub||"")}</div>
+    </button>
+  `;
+}
+
+function renderMainViewOnce(){
+  updateTopbar();
+  showSubmitBar(!!me.name);
+
+  content.innerHTML=`
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Sơ đồ ghế (${TOTAL_SEATS} chỗ)</p>
+        <div class="meta"><span class="idx">LIVE</span></div>
+      </div>
+
+      <div class="legendBar" style="margin-top:10px">
+        <div class="legendItem"><span class="dot free"></span> Chỗ trống</div>
+        <div class="legendItem"><span class="dot myhold"></span> Bạn đang chọn</div>
+        <div class="legendItem"><span class="dot otherhold"></span> Người khác đang chọn</div>
+        <div class="legendItem"><span class="dot confirmed"></span> Đã xác nhận</div>
+      </div>
+
+      <div style="margin-top:12px" class="bus" id="busMap"></div>
+    </div>
+  `;
+
+  const bus=document.getElementById("busMap");
+  const html=[];
+
+  html.push(`
+    <div class="busTop">
+      <div class="driver">👨‍✈️ TÀI XẾ</div>
+      <div class="door">CỬA🚪</div>
+    </div>
+    <div class="seatHeader">
+      <div class="sideLabel left">TRÁI (1–2)</div>
+      <div class="sideLabel right">PHẢI (3–4)</div>
+      <div class="rowLabelTop">HÀNG</div>
+    </div>
+  `);
+
+  for(const row of ROWS_LAYOUT){
+    const r=row.label;
+    if(row.type==="std"){
+      const ids=[r+"1",r+"2",r+"3",r+"4"];
+      html.push(`<div class="seatRow">`);
+      html.push(seatButtonHTML_(ids[0]));
+      html.push(seatButtonHTML_(ids[1]));
+      html.push(`<div class="aisle" aria-hidden="true"></div>`);
+      html.push(seatButtonHTML_(ids[2]));
+      html.push(seatButtonHTML_(ids[3]));
+      html.push(`<div class="rowTag">${escapeHtml(r)}</div>`);
+      html.push(`</div>`);
+    }else if(row.type==="five"){
+      const ids=[r+"1",r+"2",r+"3",r+"4",r+"5"];
+      html.push(`<div class="seatRow five">`);
+      html.push(seatButtonHTML_(ids[0]));
+      html.push(seatButtonHTML_(ids[1]));
+      html.push(seatButtonHTML_(ids[2]));
+      html.push(seatButtonHTML_(ids[3]));
+      html.push(seatButtonHTML_(ids[4]));
+      html.push(`<div class="rowTag">${escapeHtml(r)}</div>`);
+      html.push(`</div>`);
+    }
+  }
+
+  bus.innerHTML=html.join("");
+
+  seatDom.clear();
+  bus.querySelectorAll(".seat").forEach(btn=>{
+    const id=btn.getAttribute("data-seat");
+    seatDom.set(id,{btn,subEl:btn.querySelector(".sub")});
+  });
+
+  bus.addEventListener("click",onSeatClick,{passive:true});
+  appRendered=true;
+  patchAllSeats();
+}
+
+function updateSubmitHint(){
+  const my=snapshot&&snapshot.my?snapshot.my:{confirmed:"",hold:""};
+  const confirmed=String(my.confirmed||"");
+  const hold=String(my.hold||localHoldSeat||"");
+
+  if(confirmUiState==="loading"){ submitHint.textContent="Đang xác nhận… vui lòng chờ"; return; }
+  if(confirmed&&(!hold||hold===confirmed)) submitHint.textContent="Đã xác nhận. Muốn đổi chỗ: chọn ghế khác rồi bấm xác nhận.";
+  else submitHint.textContent="Bấm ghế để chọn • Bấm “Xác nhận chỗ”";
+}
+
+function patchConfirmBar(){
+  const my=snapshot&&snapshot.my?snapshot.my:{confirmed:"",hold:""};
+  const confirmed=String(my.confirmed||"");
+  const hold=String(my.hold||localHoldSeat||"");
+
+  const changing=!!(confirmed&&hold&&hold!==confirmed);
+  const canPress=!!(me.name&&hold&&(changing||!confirmed));
+
+  showSubmitBar(!!me.name);
+
+  if(inflight.confirm||confirmQueued){
+    setConfirmUiState("loading");
+    btnConfirm.disabled=true;
+    updateSubmitHint();
+    return;
+  }
+
+  if(confirmed&&!changing){
+    setConfirmUiState("done");
+    btnConfirm.disabled=true;
+    updateSubmitHint();
+    return;
+  }
+
+  setConfirmUiState("ready");
+  btnConfirm.disabled=!canPress;
+  updateSubmitHint();
+}
+
+function patchSeat(id){
+  const dom=seatDom.get(id);
+  if(!dom) return;
+
+  const seatObj=seatIndex.get(id)||{id};
+  const st=classifySeat(seatObj);
+  const disabled=st.disabled||!me.name;
+
+  const btn=dom.btn, subEl=dom.subEl;
+
+  if(!btn.classList.contains(st.cls)||btn._lastCls!==st.cls){
+    btn.classList.remove("free","confirmed","myhold","otherhold");
+    btn.classList.add(st.cls);
+    btn._lastCls=st.cls;
+  }
+  if(!!btn.disabled!==!!disabled) btn.disabled=!!disabled;
+
+  const subText=st.sub||"";
+  if(subEl&&subEl.textContent!==subText) subEl.textContent=subText;
+}
+
+function patchAllSeats(){
+  for(const id of SEATS) patchSeat(id);
+  patchConfirmBar();
+  updateTopbar();
+}
+
+const nameBackdrop=document.getElementById("nameBackdrop");
+const nameInput=document.getElementById("nameInput");
+const btnSaveName=document.getElementById("btnSaveName");
+
+function openNameModal(prefill=""){
+  nameInput.value=prefill||"";
+  nameBackdrop.classList.add("show");
+  nameBackdrop.setAttribute("aria-hidden","false");
+  setTimeout(()=>nameInput.focus(),50);
+}
+function closeNameModal(){
+  nameBackdrop.classList.remove("show");
+  nameBackdrop.setAttribute("aria-hidden","true");
+}
+
+btnSaveName.addEventListener("click",async()=>{
+  let nm=normalizeName(nameInput.value);
+  if(!nm){ toast("Bạn chưa nhập tên"); return; }
+  if(nm.length>24) nm=nm.slice(0,24).trim();
+
+  me.name=nm;
+  saveLocal();
+  closeNameModal();
+
+  try{
+    const res=await api({action:"login",name:me.name,client:me.client,ua:navigator.userAgent||""});
+    if(res&&res.ok) applySnapshot(res.data);
+    else toast("Login lỗi: "+(res?.code||"UNKNOWN"));
+  }catch(e){
+    toast("Login lỗi: "+(e?.message||e));
+  }
+
+  if(!appRendered) renderMainViewOnce();
+  else patchAllSeats();
+});
+
+nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); btnSaveName.click(); } });
+
+const renameBackdrop=document.getElementById("renameBackdrop");
+const renameInput=document.getElementById("renameInput");
+const btnRenameCancel=document.getElementById("btnRenameCancel");
+const btnRenameOk=document.getElementById("btnRenameOk");
+
+function openRenameModal(){
+  renameInput.value=me.name||"";
+  renameBackdrop.classList.add("show");
+  renameBackdrop.setAttribute("aria-hidden","false");
+  setTimeout(()=>renameInput.focus(),50);
+}
+function closeRenameModal(){
+  renameBackdrop.classList.remove("show");
+  renameBackdrop.setAttribute("aria-hidden","true");
+}
+
+btnRenameCancel.addEventListener("click",closeRenameModal);
+renameBackdrop.addEventListener("click",(e)=>{ if(e.target===renameBackdrop) closeRenameModal(); });
+
+btnRenameOk.addEventListener("click",async()=>{
+  let nm=normalizeName(renameInput.value);
+  if(!nm){ toast("Bạn chưa nhập tên"); return; }
+  if(nm.length>24) nm=nm.slice(0,24).trim();
+
+  me.name=nm;
+  saveLocal();
+  closeRenameModal();
+
+  try{
+    const res=await api({action:"setName",name:me.name,client:me.client,ua:navigator.userAgent||""});
+    if(res&&res.ok) applySnapshot(res.data);
+    else toast("Đổi tên lỗi: "+(res?.code||"UNKNOWN"));
+  }catch(e){
+    toast("Đổi tên lỗi: "+(e?.message||e));
+  }
+
+  patchAllSeats();
+});
+
+renameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); btnRenameOk.click(); } });
+
+function applySnapshot(data){
+  snapshot=data;
+  seatIndex=new Map();
+  (snapshot.seats||[]).forEach(s=>seatIndex.set(String(s.id||"").toUpperCase(),s));
+
+  const my=snapshot&&snapshot.my?snapshot.my:null;
+  const srvHold=String(my?.hold||"");
+  const srvConf=String(my?.confirmed||"");
+
+  if(localHoldSeat){
+    if((srvHold&&srvHold===localHoldSeat)||(srvConf&&srvConf===localHoldSeat)){
+      localHoldSeat=""; localHoldTs=0;
+    }else if(localHoldTs&&(Date.now()-localHoldTs>6500)&&(srvHold||srvConf)){
+      localHoldSeat=""; localHoldTs=0;
+    }
+  }
+}
+
+async function loadSnapshotFirst(){
+  setLoadingView();
+  updateTopbar();
+  try{
+    const res=await api({action:"snapshot",client:me.client});
+    if(!res){ showExecErrorView("Không tải được dữ liệu","Exec trả rỗng","Không nhận được phản hồi từ /exec"); return false; }
+    if(!res.ok){ showExecErrorView("Không tải được dữ liệu","Exec báo lỗi",`${res.code||"UNKNOWN"}: ${res.message||""}`); return false; }
+    applySnapshot(res.data);
     return true;
   }catch(e){
-    gate.innerHTML = `Lỗi gate: ${esc(e.message)}. Về <a href="/">trang chủ</a> để login lại.`;
-    mePill.textContent = "Gate error";
+    showExecErrorView("Không tải được dữ liệu","Không gọi được exec hoặc exec trả HTML/redirect",String(e?.message||e));
     return false;
   }
 }
 
-/* ================== QUIZ FORM ================== */
-const quizIdEl = document.getElementById("quizId");
-const titleEl = document.getElementById("title");
-const subEl = document.getElementById("sub");
-const isPublicEl = document.getElementById("isPublic");
-const showInStoreEl = document.getElementById("showInStore");
-const requireLoginEl = document.getElementById("requireLogin");
-const pinnedEl = document.getElementById("pinned");
-const requireCodeEl = document.getElementById("requireCode");
-const accessCodeEl = document.getElementById("accessCode");
-const scoringModeEl = document.getElementById("scoringMode");
-const totalScoreEl = document.getElementById("totalScore");
-
-const editModePill = document.getElementById("editModePill");
-const qidHint = document.getElementById("qidHint");
-
-const coverPill = document.getElementById("coverPill");
-const coverPreview = document.getElementById("coverPreview");
-const filePick = document.getElementById("filePick");
-document.getElementById("btnPickImg").onclick = ()=> filePick.click();
-document.getElementById("btnRemoveImg").onclick = ()=> { setCoverDataUrl(""); saveDraftSoon(); };
-
-function genQuizId5(){
-  const letters="abcdefghijklmnopqrstuvwxyz";
-  let s="";
-  for(let i=0;i<5;i++) s += letters[Math.floor(Math.random()*letters.length)];
-  return s;
-}
-function normalizeQuizId(x){
-  x = String(x||"").trim().toLowerCase();
-  x = x.replace(/[^a-z]/g,"").slice(0,5);
-  return x;
-}
-quizIdEl.addEventListener("input", ()=>{
-  const v = normalizeQuizId(quizIdEl.value);
-  if(quizIdEl.value !== v) quizIdEl.value = v;
-  // NEW mode: CURRENT_QID chưa set, draft theo input
-  if(CURRENT_MODE==="NEW") saveDraftSoon();
-},{passive:true});
-
-[
-  titleEl, subEl, isPublicEl, showInStoreEl, requireLoginEl,
-  pinnedEl, requireCodeEl, accessCodeEl, scoringModeEl, totalScoreEl
-].forEach(el=>{
-  el.addEventListener("input", saveDraftSoon, {passive:true});
-  el.addEventListener("change", saveDraftSoon, {passive:true});
-});
-
-function setMode(mode){
-  CURRENT_MODE = mode;
-  editModePill.textContent = mode;
-  editModePill.className = "idx " + (mode==="EDIT" ? "ok" : "");
-  if(mode==="EDIT"){
-    quizIdEl.setAttribute("disabled","disabled");
-    qidHint.innerHTML = `EDIT: đang sửa quiz <code>${esc(CURRENT_QID)}</code> (khóa ID để khỏi “save ra quiz khác”).`;
-  }else{
-    quizIdEl.removeAttribute("disabled");
-    qidHint.innerHTML = `NEW: để trống rồi bấm <b>Tạo mới</b> để tự sinh ID.`;
-  }
-}
-
-function setCoverDataUrl(dataUrl){
-  COVER_DATA_URL = dataUrl || "";
-  if(COVER_DATA_URL){
-    coverPill.textContent = "READY";
-    coverPill.className = "idx ok";
-    coverPreview.src = COVER_DATA_URL;
-    coverPreview.style.display = "";
-  }else{
-    coverPill.textContent = "NO IMAGE";
-    coverPill.className = "idx ok";
-    coverPreview.src = "";
-    coverPreview.style.display = "none";
-  }
-}
-
-function readImageToDataURL(file){
-  return new Promise((resolve,reject)=>{
-    const fr = new FileReader();
-    fr.onload = ()=>resolve(String(fr.result||""));
-    fr.onerror = ()=>reject(new Error("read file error"));
-    fr.readAsDataURL(file);
-  });
-}
-async function downscaleDataURL(dataUrl, maxW=1200){
-  const img = new Image();
-  img.src = dataUrl;
-  await new Promise((res,rej)=>{ img.onload=res; img.onerror=()=>rej(new Error("image load error")); });
-  const w = img.naturalWidth || img.width;
-  const h = img.naturalHeight || img.height;
-  if(!w || !h) return dataUrl;
-  if(w <= maxW) return dataUrl;
-  const ratio = maxW / w;
-  const nw = Math.round(w * ratio);
-  const nh = Math.round(h * ratio);
-  const c = document.createElement("canvas");
-  c.width = nw; c.height = nh;
-  const ctx = c.getContext("2d");
-  ctx.drawImage(img, 0, 0, nw, nh);
-  return c.toDataURL("image/jpeg", 0.86);
-}
-
-// paste & drop & pick
-const drop = document.getElementById("drop");
-drop.addEventListener("dragover",(e)=>{ e.preventDefault(); drop.style.filter="brightness(.98)"; });
-drop.addEventListener("dragleave",()=>{ drop.style.filter=""; });
-drop.addEventListener("drop", async (e)=>{
-  e.preventDefault(); drop.style.filter="";
-  const f = e.dataTransfer?.files?.[0];
-  if(!f) return;
-  if(!/^image\//.test(f.type)) return toast("Chỉ nhận ảnh");
-  const raw = await readImageToDataURL(f);
-  const scaled = await downscaleDataURL(raw);
-  setCoverDataUrl(scaled);
-  saveDraftSoon();
-  toast("Đã nhận ảnh cover");
-});
-window.addEventListener("paste", async (e)=>{
-  const items = e.clipboardData?.items || [];
-  const imgItem = Array.from(items).find(it=>it.type && it.type.startsWith("image/"));
-  if(!imgItem) return;
-  const f = imgItem.getAsFile();
-  if(!f) return;
-  const raw = await readImageToDataURL(f);
-  const scaled = await downscaleDataURL(raw);
-  setCoverDataUrl(scaled);
-  saveDraftSoon();
-  toast("Đã paste ảnh cover");
-},{passive:true});
-filePick.addEventListener("change", async ()=>{
-  const f = filePick.files?.[0];
-  if(!f) return;
-  const raw = await readImageToDataURL(f);
-  const scaled = await downscaleDataURL(raw);
-  setCoverDataUrl(scaled);
-  saveDraftSoon();
-  toast("Đã chọn ảnh cover");
-});
-
-/* ================== QUESTION BUILDER ================== */
-const qList = document.getElementById("qList");
-const qCountPill = document.getElementById("qCountPill");
-
-function updateQCount(){
-  qCountPill.textContent = String(QUESTIONS.length || 0);
-}
-
-function defaultQuestion(){
-  return {
-    type: "essay",
-    prompt: "",
-    answers: [""] , // pipe separated in UI
-    points: null,
-    meta: { fuzzy:true }
-  };
-}
-
-function renderQuestions(){
-  updateQCount();
-  if(!QUESTIONS.length){
-    qList.innerHTML = `<div class="muted">Chưa có câu hỏi. Bấm <b>Thêm câu</b>.</div>`;
-    return;
-  }
-
-  qList.innerHTML = QUESTIONS.map((q, idx)=>{
-    const no = idx+1;
-    const isCustom = (scoringModeEl.value === "custom");
-    return `
-      <div class="card qCard" data-i="${idx}">
-        <div class="qHead">
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <span class="idx">#${no}</span>
-            <select class="qType">
-              <option value="essay" ${q.type==="essay"?"selected":""}>Tự luận</option>
-              <option value="mcq1" ${q.type==="mcq1"?"selected":""}>Trắc nghiệm 1 đáp án</option>
-              <option value="short4" ${q.type==="short4"?"selected":""}>Trả lời ngắn (4 ô)</option>
-              <option value="tf4" ${q.type==="tf4"?"selected":""}>Đúng/Sai 4 ý</option>
-            </select>
-            ${isCustom ? `<input class="qPoints input mono" style="max-width:110px" placeholder="Điểm" value="${q.points??0}">` : ``}
-          </div>
-          <div class="qTools">
-            <button class="mini" data-act="up">⬆️</button>
-            <button class="mini" data-act="down">⬇️</button>
-            <button class="mini" data-act="dup">📄</button>
-            <button class="mini danger" data-act="del">🗑️</button>
-          </div>
-        </div>
-
-        <label style="margin-top:10px">Câu hỏi</label>
-        <textarea class="qPrompt" placeholder="Nhập câu hỏi...">${esc(q.prompt||"")}</textarea>
-
-        <div class="qEssay ${q.type==="essay"?"":"hidden"}">
-          <label>Đáp án (nhiều đáp án dùng dấu |)</label>
-          <input class="qAnswers input mono" placeholder="vd: thích nghi|thich nghi" value="${esc((q.answers||[]).join("|"))}">
-          <div class="hint" style="margin-top:6px">
-            Gợi ý: để “chấp nhận sai chính tả”, sau này trang làm quiz sẽ dùng fuzzy-match (panel lưu <code>meta.fuzzy=true</code>).
-          </div>
-        </div>
-
-        <div class="qMcq ${q.type==="mcq1"?"":"hidden"}">
-          <label>4 lựa chọn</label>
-          <div class="grid2">
-            <input class="qOpt" data-k="0" placeholder="A" value="${esc(q.meta?.options?.[0]||"")}">
-            <input class="qOpt" data-k="1" placeholder="B" value="${esc(q.meta?.options?.[1]||"")}">
-            <input class="qOpt" data-k="2" placeholder="C" value="${esc(q.meta?.options?.[2]||"")}">
-            <input class="qOpt" data-k="3" placeholder="D" value="${esc(q.meta?.options?.[3]||"")}">
-          </div>
-          <label>Đáp án đúng</label>
-          <select class="qCorrect">
-            <option value="1" ${(q.meta?.correct||1)==1?"selected":""}>A</option>
-            <option value="2" ${(q.meta?.correct||1)==2?"selected":""}>B</option>
-            <option value="3" ${(q.meta?.correct||1)==3?"selected":""}>C</option>
-            <option value="4" ${(q.meta?.correct||1)==4?"selected":""}>D</option>
-          </select>
-        </div>
-
-        <div class="qShort4 ${q.type==="short4"?"":"hidden"}">
-          <label>Đáp án (nhiều đáp án dùng dấu |)</label>
-          <input class="qAnswers input mono" placeholder='vd: -0,3|9999' value="${esc((q.answers||[]).join("|"))}">
-          <div class="hint" style="margin-top:6px">
-            Khi làm quiz sẽ hiện 4 ô nhập, bạn có thể cho phép <code>0-9</code>, dấu phẩy, dấu trừ (logic ở trang làm quiz).
-          </div>
-        </div>
-
-        <div class="qTf4 ${q.type==="tf4"?"":"hidden"}">
-          <label>4 ý (mỗi ý 1 dòng)</label>
-          <div style="display:grid;gap:8px">
-            <input class="qStmt" data-k="0" placeholder="Ý 1" value="${esc(q.meta?.statements?.[0]||"")}">
-            <input class="qStmt" data-k="1" placeholder="Ý 2" value="${esc(q.meta?.statements?.[1]||"")}">
-            <input class="qStmt" data-k="2" placeholder="Ý 3" value="${esc(q.meta?.statements?.[2]||"")}">
-            <input class="qStmt" data-k="3" placeholder="Ý 4" value="${esc(q.meta?.statements?.[3]||"")}">
-          </div>
-          <label>Đúng(1) / Sai(0)</label>
-          <div class="grid2">
-            <select class="qKey" data-k="0"><option value="1">Ý1: Đúng</option><option value="0">Ý1: Sai</option></select>
-            <select class="qKey" data-k="1"><option value="1">Ý2: Đúng</option><option value="0">Ý2: Sai</option></select>
-            <select class="qKey" data-k="2"><option value="1">Ý3: Đúng</option><option value="0">Ý3: Sai</option></select>
-            <select class="qKey" data-k="3"><option value="1">Ý4: Đúng</option><option value="0">Ý4: Sai</option></select>
-          </div>
-          <div class="hint" style="margin-top:6px">
-            Rule mặc định: đúng 1 ý = 0.25, 2 ý = 0.5, 3 ý = 0.5, 4 ý = 1 điểm (nhân theo points nếu custom).
-          </div>
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  // set tf4 selects values after render
-  qList.querySelectorAll(".card.qCard").forEach(card=>{
-    const i = Number(card.getAttribute("data-i"));
-    const q = QUESTIONS[i];
-    if(q?.type==="tf4"){
-      const keys = q.meta?.keys || [true,false,false,false];
-      card.querySelectorAll(".qKey").forEach(sel=>{
-        const k = Number(sel.getAttribute("data-k"));
-        sel.value = keys[k] ? "1" : "0";
-      });
-    }
-  });
-}
-
-function syncQuestionFromCard(card){
-  const i = Number(card.getAttribute("data-i"));
-  const q = QUESTIONS[i];
-  if(!q) return;
-
-  const type = card.querySelector(".qType")?.value || "essay";
-  q.type = type;
-
-  const prompt = card.querySelector(".qPrompt")?.value || "";
-  q.prompt = prompt;
-
-  if(scoringModeEl.value === "custom"){
-    const p = Number(card.querySelector(".qPoints")?.value || "0") || 0;
-    q.points = p;
-  }else{
-    q.points = null;
-  }
-
-  // reset meta per type
-  if(type==="essay"){
-    const raw = card.querySelector(".qAnswers")?.value || "";
-    q.answers = raw.split("|").map(s=>s.trim()).filter(Boolean);
-    q.meta = { fuzzy:true };
-  }else if(type==="short4"){
-    const raw = card.querySelector(".qAnswers")?.value || "";
-    q.answers = raw.split("|").map(s=>s.trim()).filter(Boolean);
-    q.meta = { format:"4boxes" };
-  }else if(type==="mcq1"){
-    const opts = Array.from(card.querySelectorAll(".qOpt")).map(x=>x.value.trim());
-    const correct = Number(card.querySelector(".qCorrect")?.value || "1") || 1;
-    q.answers = [];
-    q.meta = { options: opts, correct };
-  }else if(type==="tf4"){
-    const stmts = Array.from(card.querySelectorAll(".qStmt")).map(x=>x.value.trim());
-    const keys = Array.from(card.querySelectorAll(".qKey")).map(x=>x.value==="1");
-    q.answers = [];
-    q.meta = {
-      statements: stmts,
-      keys,
-      rule: { byCorrectCount: { "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 } }
-    };
-  }
-}
-
-function reshowQuestionParts(card){
-  const type = card.querySelector(".qType")?.value || "essay";
-  card.querySelector(".qEssay")?.classList.toggle("hidden", type!=="essay");
-  card.querySelector(".qShort4")?.classList.toggle("hidden", type!=="short4");
-  card.querySelector(".qMcq")?.classList.toggle("hidden", type!=="mcq1");
-  card.querySelector(".qTf4")?.classList.toggle("hidden", type!=="tf4");
-
-  // points field show/hide is handled by full render; keep simple: save draft on scoring change triggers render.
-}
-
-qList.addEventListener("input", (e)=>{
-  const card = e.target.closest(".qCard");
-  if(!card) return;
-  syncQuestionFromCard(card);
-  saveDraftSoon();
-},{passive:true});
-
-qList.addEventListener("change", (e)=>{
-  const card = e.target.closest(".qCard");
-  if(!card) return;
-
-  if(e.target.classList.contains("qType")){
-    // change type => adapt model quickly
-    syncQuestionFromCard(card);
-    // render again to show correct fields
-    renderQuestions();
-  }else{
-    syncQuestionFromCard(card);
-  }
-  saveDraftSoon();
-},{passive:true});
-
-qList.addEventListener("click", (e)=>{
-  const btn = e.target.closest("button");
+function onSeatClick(e){
+  if(inflight.confirm||confirmQueued){ toast("Đang xác nhận… chờ xíu nha"); return; }
+  const btn=e.target.closest(".seat");
   if(!btn) return;
-  const card = btn.closest(".qCard");
-  if(!card) return;
-  const i = Number(card.getAttribute("data-i"));
-  const act = btn.getAttribute("data-act");
-  if(!act) return;
+  const id=btn.getAttribute("data-seat");
+  if(!id) return;
+  if(seatIsBlocked(id)) return;
+  holdSeatUltraFast(id);
+}
 
-  if(act==="del"){
-    QUESTIONS.splice(i,1);
-    renderQuestions(); saveDraftSoon();
-    return;
-  }
-  if(act==="dup"){
-    const clone = JSON.parse(JSON.stringify(QUESTIONS[i]));
-    QUESTIONS.splice(i+1,0,clone);
-    renderQuestions(); saveDraftSoon();
-    return;
-  }
-  if(act==="up" && i>0){
-    [QUESTIONS[i-1], QUESTIONS[i]] = [QUESTIONS[i], QUESTIONS[i-1]];
-    renderQuestions(); saveDraftSoon();
-    return;
-  }
-  if(act==="down" && i<QUESTIONS.length-1){
-    [QUESTIONS[i+1], QUESTIONS[i]] = [QUESTIONS[i], QUESTIONS[i+1]];
-    renderQuestions(); saveDraftSoon();
-    return;
-  }
-});
+async function holdSeatUltraFast(seatId){
+  if(!me.name){ openNameModal(""); return; }
+  if(seatIsBlocked(seatId)) return;
 
-document.getElementById("btnAddQ").onclick = ()=>{
-  QUESTIONS.push(defaultQuestion());
-  renderQuestions();
-  saveDraftSoon();
-};
+  const seatObj=seatIndex.get(seatId)||{id:seatId};
+  const stNow=classifySeat(seatObj);
+  if(stNow.cls==="confirmed"||stNow.cls==="otherhold") return;
 
-scoringModeEl.addEventListener("change", ()=>{
-  renderQuestions();
-  saveDraftSoon();
-},{passive:true});
+  const prev=localHoldSeat;
+  localHoldSeat=seatId;
+  localHoldTs=Date.now();
 
-/* ================== ADVANCED HTML IMPORT (optional) ================== */
-const advancedBox = document.getElementById("advancedBox");
-document.getElementById("btnAdvancedToggle").onclick = ()=>{
-  advancedBox.classList.toggle("hidden");
-};
-const htmlBoxEl = document.getElementById("htmlBox");
+  if(prev&&prev!==seatId) patchSeat(prev);
+  patchSeat(seatId);
+  patchConfirmBar();
+  updateTopbar();
 
-function parseQuestionsFromHtml(html){
-  const doc = new DOMParser().parseFromString(`<div>${html||""}</div>`, "text/html");
-  const nodes = doc.querySelectorAll(".q, .v");
-  const out = [];
-  nodes.forEach((el)=>{
-    if(el.classList.contains("v")){
-      const word = (el.getAttribute("data-word")||"").trim();
-      const meaning = (el.textContent||"").trim();
-      const answers = (el.getAttribute("data-answers")||"").split("|").map(s=>s.trim()).filter(Boolean);
-      out.push({ type:"essay", prompt: word || meaning || "", answers, points:null, meta:{ fuzzy:true, legacy:true } });
+  const reqId=Date.now().toString(16)+Math.random().toString(16).slice(2);
+  holdSeatUltraFast._lastReq=reqId;
+
+  inflight.hold=true;
+  try{
+    const res=await api({action:"hold",seat:seatId,name:me.name,client:me.client});
+    if(holdSeatUltraFast._lastReq!==reqId) return;
+
+    if(!res||!res.ok){
+      inflight.hold=false;
+      toast(
+        res?.code==="TAKEN"?"Ghế đã có người xác nhận":
+        res?.code==="HELD"?"Ghế đang có người chọn":
+        ("Lỗi giữ chỗ: "+(res?.code||"UNKNOWN"))
+      );
+
+      try{
+        const snap=await api({action:"snapshot",client:me.client});
+        if(snap&&snap.ok) applySnapshot(snap.data);
+      }catch(e){}
+
+      localHoldSeat=""; localHoldTs=0;
+      patchAllSeats();
+
+      confirmQueued=false; confirmQueuedSeat="";
+      patchConfirmBar();
       return;
     }
-    const type = (el.getAttribute("data-type")||"essay").trim().toLowerCase();
-    const prompt = (el.getAttribute("data-prompt")||"").trim() || (el.textContent||"").trim();
-    const answers = (el.getAttribute("data-answers")||"").split("|").map(s=>s.trim()).filter(Boolean);
-    const points = el.getAttribute("data-points") ? Number(el.getAttribute("data-points")) : null;
-    const meta = { fuzzy:true };
-    if(type==="mcq1"){
-      meta.options = (el.getAttribute("data-options")||"").split("|").map(s=>s.trim());
-      meta.correct = Number(el.getAttribute("data-correct")||"1") || 1;
+
+    applySnapshot(res.data);
+    inflight.hold=false;
+    patchAllSeats();
+
+    if(confirmQueued){
+      const target=confirmQueuedSeat||(snapshot?.my?.hold||localHoldSeat||"");
+      confirmQueued=false; confirmQueuedSeat="";
+      if(target) confirmFlow(target);
+      else patchConfirmBar();
     }
-    if(type==="short4"){
-      meta.format = "4boxes";
-    }
-    if(type==="tf4"){
-      meta.statements = (el.getAttribute("data-statements")||"").split("||").map(s=>s.trim());
-      meta.keys = (el.getAttribute("data-keys")||"").split(",").map(x=>x.trim()==="1");
-      meta.rule = { byCorrectCount: { "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 } };
-    }
-    out.push({ type, prompt, answers, points, meta });
-  });
-  return out;
+  }catch(e){
+    if(holdSeatUltraFast._lastReq!==reqId) return;
+
+    inflight.hold=false;
+    toast("Lỗi mạng khi giữ chỗ");
+
+    localHoldSeat=""; localHoldTs=0;
+
+    try{
+      const snap=await api({action:"snapshot",client:me.client});
+      if(snap&&snap.ok) applySnapshot(snap.data);
+    }catch(e){}
+    patchAllSeats();
+
+    confirmQueued=false; confirmQueuedSeat="";
+    patchConfirmBar();
+  }
 }
 
-document.getElementById("btnImportHtml").onclick = ()=>{
-  const items = parseQuestionsFromHtml(htmlBoxEl.value);
-  if(!items.length) return toast("Không parse được gì");
-  QUESTIONS = QUESTIONS.concat(items.map(x=>({
-    type: x.type || "essay",
-    prompt: x.prompt || "",
-    answers: Array.isArray(x.answers)?x.answers:[],
-    points: x.points ?? null,
-    meta: x.meta || { fuzzy:true }
-  })));
-  renderQuestions();
-  saveDraftSoon();
-  toast("Đã import vào danh sách câu");
-};
+function seatHasMyHoldNow(seatId){
+  const s=seatIndex.get(seatId);
+  if(!s) return false;
+  const now=snapshot?Number(snapshot.ts||Date.now()):Date.now();
+  return String(s.holdBy||"")===me.client && s.holdAt && (now-Number(s.holdAt)<=60*1000+5000);
+}
 
-/* ================== APPLY SCORING ================== */
-function applyScoring(items){
-  const mode = scoringModeEl.value;
-  const total = Number(totalScoreEl.value || "10") || 10;
-  if(!items.length) return items;
+function finalizeConfirmSuccess(targetSeat){
+  inflight.confirm=false;
+  confirmQueued=false;
+  confirmQueuedSeat="";
+  localHoldSeat=""; localHoldTs=0;
+  setConfirmUiState("done");
+  toast("Đã xác nhận!");
+  patchAllSeats();
+}
 
-  if(mode === "equal"){
-    const per = total / items.length;
-    let sum = 0;
-    return items.map((q,i)=>{
-      const p = (i === items.length-1) ? (total - sum) : Math.round(per*100)/100;
-      if(i !== items.length-1) sum += p;
-      return { ...q, points: Math.round(p*100)/100 };
-    });
+async function confirmWatchLoop(reqId,targetSeat){
+  const start=Date.now();
+  while(inflight.confirm&&confirmFlow._lastReq===reqId&&(Date.now()-start)<12000){
+    await sleep(650);
+    if(!inflight.confirm||confirmFlow._lastReq!==reqId) return;
+
+    try{
+      const snap=await api({action:"snapshot",client:me.client});
+      if(!inflight.confirm||confirmFlow._lastReq!==reqId) return;
+
+      if(snap&&snap.ok){
+        applySnapshot(snap.data);
+
+        const my=snapshot&&snapshot.my?snapshot.my:{};
+        const conf=String(my.confirmed||"");
+        if(conf===targetSeat){ finalizeConfirmSuccess(targetSeat); return; }
+
+        const s=seatIndex.get(targetSeat);
+        if(s&&s.confirmedBy&&String(s.confirmedBy)!==me.client){
+          inflight.confirm=false;
+          toast("Ghế đã có người xác nhận");
+          patchAllSeats();
+          return;
+        }
+      }
+    }catch(e){}
   }
 
-  // custom: keep points
-  return items.map(q=>({ ...q, points: (q.points==null?0:Number(q.points)||0) }));
-}
-
-/* ================== SAVE / PUBLISH ================== */
-document.getElementById("btnNewQuiz").onclick = ()=>{
-  // reset to NEW, but keep draft separate
-  CURRENT_QID = "";
-  setMode("NEW");
-  quizIdEl.value = "";
-  titleEl.value = "";
-  subEl.value = "";
-  isPublicEl.value = "true";
-  showInStoreEl.value = "true";
-  requireLoginEl.value = "true";
-  pinnedEl.value = "false";
-  requireCodeEl.value = "false";
-  accessCodeEl.value = "";
-  scoringModeEl.value = "equal";
-  totalScoreEl.value = "10";
-  setCoverDataUrl("");
-  QUESTIONS = [];
-  renderQuestions();
-  setDraftPill("DRAFT: —");
-  toast("Tạo mới: OK");
-};
-
-document.getElementById("btnClearDraft").onclick = ()=>{
-  clearDraft();
-  toast("Đã xóa nháp");
-};
-
-function validateQuiz(){
-  const title = titleEl.value.trim();
-  if(!title) return "Thiếu title";
-  let qid = (CURRENT_MODE==="EDIT") ? CURRENT_QID : normalizeQuizId(quizIdEl.value);
-  if(CURRENT_MODE==="NEW" && !qid) return "Quiz ID trống (bấm Tạo mới hoặc nhập 5 chữ)";
-  if(qid && qid.length!==5) return "Quiz ID phải đúng 5 chữ a-z";
-  return null;
-}
-
-async function saveQuizOnly(){
-  const token = getToken();
-  if(!token) throw new Error("Chưa login");
-
-  let qid = (CURRENT_MODE==="EDIT") ? CURRENT_QID : normalizeQuizId(quizIdEl.value);
-  if(CURRENT_MODE==="NEW" && !qid){
-    qid = genQuizId5();
-    quizIdEl.value = qid;
+  if(inflight.confirm&&confirmFlow._lastReq===reqId){
+    inflight.confirm=false;
+    toast("Xác nhận đang chậm, hệ thống sẽ tự cập nhật…");
+    patchAllSeats();
   }
-  if(!qid || qid.length!==5) throw new Error("Quiz ID phải đúng 5 chữ a-z");
+}
 
-  const payload = {
-    p_token: token,
-    p_quiz_id: qid,
-    p_title: titleEl.value.trim(),
-    p_sub: subEl.value.trim(),
-    p_is_public: (isPublicEl.value === "true"),
-    p_show_in_store: (showInStoreEl.value === "true"),
-    p_require_login: (requireLoginEl.value === "true"),
-    p_pinned: (pinnedEl.value === "true"),
-    p_require_access_code: (requireCodeEl.value === "true"),
-    p_access_code: accessCodeEl.value.trim(),
-    p_cover_data_url: COVER_DATA_URL || "",
-    p_scoring_mode: scoringModeEl.value,
-    p_total_score: Number(totalScoreEl.value || "10") || 10
+async function confirmFlow(targetSeat){
+  if(!me.name) return;
+  if(!targetSeat){ toast("Bạn chưa chọn ghế"); return; }
+  if(inflight.confirm) return;
+  if(seatIsBlocked(targetSeat)) return;
+
+  const reqId=Date.now().toString(16)+Math.random().toString(16).slice(2);
+  confirmFlow._lastReq=reqId;
+
+  inflight.confirm=true;
+  patchConfirmBar();
+  confirmWatchLoop(reqId,targetSeat);
+
+  try{
+    if(!seatHasMyHoldNow(targetSeat)){
+      inflight.hold=true;
+      const hres=await api({action:"hold",seat:targetSeat,name:me.name,client:me.client});
+      inflight.hold=false;
+
+      if(confirmFlow._lastReq!==reqId) return;
+
+      if(!hres||!hres.ok){
+        inflight.confirm=false;
+        toast(
+          hres?.code==="TAKEN"?"Ghế đã có người xác nhận":
+          hres?.code==="HELD"?"Ghế đang có người chọn":
+          ("Không giữ được ghế: "+(hres?.code||"UNKNOWN"))
+        );
+
+        try{
+          const snap=await api({action:"snapshot",client:me.client});
+          if(snap&&snap.ok) applySnapshot(snap.data);
+        }catch(e){}
+        patchAllSeats();
+        return;
+      }
+
+      applySnapshot(hres.data);
+      patchAllSeats();
+    }
+
+    api({action:"confirm",seat:targetSeat,name:me.name,client:me.client})
+      .then(res=>{
+        if(confirmFlow._lastReq!==reqId) return;
+        if(!inflight.confirm) return;
+
+        if(res&&res.ok){
+          applySnapshot(res.data);
+          const my=snapshot&&snapshot.my?snapshot.my:{};
+          if(String(my.confirmed||"")===targetSeat) finalizeConfirmSuccess(targetSeat);
+          else patchAllSeats();
+        }else{
+          inflight.confirm=false;
+          toast("Lỗi xác nhận: "+(res?.code||"UNKNOWN"));
+          patchAllSeats();
+        }
+      })
+      .catch(()=>{
+        if(confirmFlow._lastReq!==reqId) return;
+        if(!inflight.confirm) return;
+        inflight.confirm=false;
+        toast("Lỗi mạng khi xác nhận");
+        patchAllSeats();
+      });
+
+  }catch(e){
+    if(confirmFlow._lastReq!==reqId) return;
+    inflight.confirm=false;
+    toast("Lỗi khi xác nhận");
+    patchAllSeats();
+  }
+}
+
+function onConfirmClick(){
+  if(!me.name){ openNameModal(""); return; }
+
+  const my=snapshot&&snapshot.my?snapshot.my:{confirmed:"",hold:""};
+  const confirmed=String(my.confirmed||"");
+  const hold=String(my.hold||localHoldSeat||"");
+
+  if(inflight.confirm) return;
+  if(confirmed&&(!hold||hold===confirmed)) return;
+
+  const target=hold||"";
+  if(!target){ toast("Bạn chưa chọn ghế"); return; }
+  if(seatIsBlocked(target)) return;
+
+  if(inflight.hold){
+    confirmQueued=true;
+    confirmQueuedSeat=target;
+    patchConfirmBar();
+    return;
+  }
+  confirmFlow(target);
+}
+
+function startPolling(){
+  if(pollTimer) clearInterval(pollTimer);
+  pollTimer=setInterval(async()=>{
+    if(inflight.hold||inflight.confirm||confirmQueued) return;
+    try{
+      const res=await api({action:"snapshot",client:me.client});
+      if(res&&res.ok){
+        applySnapshot(res.data);
+        if(!appRendered) renderMainViewOnce();
+        else patchAllSeats();
+      }
+    }catch(e){}
+  },900);
+}
+
+document.getElementById("btnScrollTop").addEventListener("click",()=>{
+  document.getElementById("shell").scrollTo({top:0,behavior:"smooth"});
+});
+document.getElementById("btnRename").addEventListener("click",()=>{
+  if(!snapshot) return;
+  if(inflight.confirm||confirmQueued){ toast("Đang xác nhận…"); return; }
+  openRenameModal();
+});
+btnConfirm.addEventListener("click",onConfirmClick);
+
+(async()=>{
+  preventZoom();
+  loadLocal();
+
+  const ok=await loadSnapshotFirst();
+  if(!ok) return;
+
+  if(!appRendered) renderMainViewOnce();
+
+  if(me.name){
+    api({action:"login",name:me.name,client:me.client,ua:navigator.userAgent||""})
+      .then(res=>{ if(res&&res.ok){ applySnapshot(res.data); patchAllSeats(); } })
+      .catch(()=>{});
+  }else{
+    openNameModal("");
+  }
+
+  startPolling();
+})();
+
+/* =========================
+   Question Builder Logic
+   - Mặc định mcq1
+   - Nhớ loại câu vừa chọn cho câu kế tiếp
+   - Import vs Manual loại trừ nhau
+   - Nút THÊM CÂU bám theo người tạo
+   ========================= */
+(()=>{
+  const $=(id)=>document.getElementById(id);
+
+  const LS_QB_MODE="qb::mode";
+  const LS_QB_LASTTYPE="qb::lastType";
+
+  const state={
+    mode:"manual",
+    lastType:"mcq1",
+    questions:[],
+    tfCorrect:null,
+    mcq:{opts:["Đáp án A","Đáp án B","Đáp án C","Đáp án D"], correct:0}
   };
 
-  const out = await rpc("admin_upsert_quiz", payload);
-
-  // After save: switch to EDIT mode stable id
-  CURRENT_QID = out.quiz_id || qid;
-  quizIdEl.value = CURRENT_QID;
-  setMode("EDIT");
-  saveDraftNow();
-  return CURRENT_QID;
-}
-
-document.getElementById("btnSaveQuiz").onclick = async ()=>{
-  try{
-    const err = validateQuiz();
-    if(err) return toast(err);
-    const qid = await saveQuizOnly();
-    toast("Saved: " + qid);
-    await reloadQuizzes();
-  }catch(e){
-    toast(e.message || "Save error");
-  }
-};
-
-document.getElementById("btnPublishAll").onclick = async ()=>{
-  try{
-    const err = validateQuiz();
-    if(err) return toast(err);
-    if(!QUESTIONS.length) return toast("Chưa có câu hỏi");
-
-    const qid = await saveQuizOnly();
-
-    const token = getToken();
-    const items = applyScoring(QUESTIONS).map((q, idx)=>({
-      no: idx+1,
-      type: q.type,
-      prompt: (q.prompt||"").trim(),
-      answers: Array.isArray(q.answers)?q.answers:[],
-      points: q.points,
-      meta: q.meta || {}
-    }));
-
-    // Prefer replace (edit-friendly). If your DB doesn't have it, we fallback and show error.
-    let out2 = null;
+  function loadPrefs(){
     try{
-      out2 = await rpc("admin_replace_questions", { p_token: token, p_quiz_id: qid, p_items: items });
-    }catch(e){
-      // fallback
-      out2 = await rpc("admin_import_questions", { p_token: token, p_quiz_id: qid, p_items: items });
-      toast("⚠️ DB chưa có replace, đã import (có thể bị trùng).");
-    }
-
-    toast(`Published: ${qid} | inserted: ${out2.inserted ?? "OK"}`);
-    await reloadQuizzes();
-
-    // clear draft for this quiz
-    localStorage.removeItem(draftKeyFor(qid));
-    setDraftPill("DRAFT: —");
-    location.href = `/q/${qid}`;
-  }catch(e){
-    toast(e.message || "Publish error");
+      const m=localStorage.getItem(LS_QB_MODE);
+      const t=localStorage.getItem(LS_QB_LASTTYPE);
+      if(m==="manual"||m==="import") state.mode=m;
+      if(t==="mcq1"||t==="essay"||t==="tf") state.lastType=t;
+    }catch(e){}
   }
-};
-
-/* ================== QUIZ LIST ================== */
-const quizList = document.getElementById("quizList");
-function renderQuizList(){
-  if(!QUIZZES.length){
-    quizList.innerHTML = `<div class="muted">Chưa có quiz.</div>`;
-    return;
+  function savePrefs(){
+    try{
+      localStorage.setItem(LS_QB_MODE,state.mode);
+      localStorage.setItem(LS_QB_LASTTYPE,state.lastType);
+    }catch(e){}
   }
-  quizList.innerHTML = QUIZZES.map(q=>{
-    const badges = [
-      q.pinned ? `<span class="idx ok">PIN</span>` : "",
-      q.is_public ? `<span class="idx ok">PUBLIC</span>` : `<span class="idx warn">PRIVATE</span>`,
-      q.show_in_store ? `<span class="idx ok">STORE</span>` : `<span class="idx warn">HIDDEN</span>`,
-      q.require_login ? `<span class="idx">LOGIN</span>` : `<span class="idx ok">OPEN</span>`,
-      q.require_access_code ? `<span class="idx warn">CODE</span>` : ""
-    ].filter(Boolean).join(" ");
 
-    return `
-      <div class="card" style="box-shadow:none;border-width:1px;margin:10px 0;cursor:pointer" data-qid="${esc(q.quiz_id)}">
-        <div class="row1">
-          <div style="min-width:0">
-            <div class="vi" style="font-size:1rem"><b>${esc(q.title||q.quiz_id)}</b></div>
-            <div class="muted" style="margin-top:4px">${esc(q.sub||"")}</div>
-            <div class="muted" style="margin-top:6px"><span class="idx mono">/q/${esc(q.quiz_id)}</span></div>
-            <div style="margin-top:6px">${badges}</div>
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-            <button class="btn" data-act="load">Sửa</button>
-            <button class="btn btn-danger" data-act="del">Delete</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  quizList.querySelectorAll('[data-qid]').forEach(el=>{
-    el.addEventListener("click", (ev)=>{
-      const act = ev.target?.getAttribute?.("data-act");
-      const qid = el.getAttribute("data-qid");
-      if(act==="del"){ ev.stopPropagation(); delQuiz(qid); return; }
-      loadQuizToForm(qid);
+  function setMode(mode){
+    state.mode=mode;
+    savePrefs();
+    document.querySelectorAll("[data-qb-mode]").forEach(btn=>{
+      btn.classList.toggle("is-active", btn.getAttribute("data-qb-mode")===mode);
     });
-  });
-}
+    $("qbPanelManual").hidden=(mode!=="manual");
+    $("qbPanelImport").hidden=(mode!=="import");
+    $("qbFab").classList.toggle("is-hidden", mode!=="manual");
+  }
 
-async function reloadQuizzes(){
-  const token = getToken();
-  const out = await rpc("admin_list_quizzes",{p_token: token});
-  QUIZZES = out.items || [];
-  renderQuizList();
-}
-document.getElementById("btnReloadQuizzes").onclick = ()=>reloadQuizzes().catch(e=>toast(e.message));
+  function setType(type){
+    state.lastType=type;   // nhớ loại câu cho câu tiếp theo
+    savePrefs();
 
-async function delQuiz(qid){
-  const ok = confirm("Xóa quiz " + qid + " ?");
-  if(!ok) return;
-  const token = getToken();
-  await rpc("admin_delete_quiz",{p_token:token, p_quiz_id:qid});
-  toast("Deleted " + qid);
-  await reloadQuizzes();
-}
+    $("qbType").value=type;
+    $("qbMcqBox").style.display=(type==="mcq1")?"":"none";
+    $("qbEssayBox").style.display=(type==="essay")?"":"none";
+    $("qbTfBox").style.display=(type==="tf")?"":"none";
+    updateFabHint();
+  }
 
-// optional: load questions from DB if you have RPC admin_get_questions
-async function loadQuizToForm(qid){
-  const q = QUIZZES.find(x=>x.quiz_id===qid);
-  if(!q) return;
+  function updateFabHint(){
+    const type=state.lastType;
+    $("qbFabHint").textContent =
+      type==="mcq1" ? "Nhập câu hỏi → chọn đáp án đúng → bấm “THÊM CÂU”"
+    : type==="essay" ? "Nhập câu hỏi → (tuỳ chọn) gợi ý chấm → bấm “THÊM CÂU”"
+    : "Nhập câu hỏi → chọn Đúng/Sai → bấm “THÊM CÂU”";
+  }
 
-  CURRENT_QID = qid;
-  setMode("EDIT");
+  function renderMcq(){
+    const wrap=$("qbOptList");
+    wrap.innerHTML="";
+    state.mcq.opts.forEach((txt,idx)=>{
+      const row=document.createElement("div");
+      row.className="qb-opt";
+      row.innerHTML=`
+        <input class="qb-radio" type="radio" name="qb_mcq_correct" ${state.mcq.correct===idx?"checked":""} aria-label="Chọn đáp án đúng">
+        <input class="input" style="padding:10px 12px; border-radius:12px;" value="${escapeHtml(txt)}" maxlength="120">
+        <button class="qb-mini" type="button" title="Xóa đáp án">🗑️</button>
+      `;
+      const radio=row.children[0];
+      const input=row.children[1];
+      const del=row.children[2];
 
-  quizIdEl.value = q.quiz_id;
-  titleEl.value = q.title || "";
-  subEl.value = q.sub || "";
-  isPublicEl.value = String(!!q.is_public);
-  showInStoreEl.value = String(!!q.show_in_store);
-  requireLoginEl.value = String(!!q.require_login);
-  pinnedEl.value = String(!!q.pinned);
-  requireCodeEl.value = String(!!q.require_access_code);
-  accessCodeEl.value = ""; // không show hash
-  scoringModeEl.value = q.scoring_mode || "equal";
-  totalScoreEl.value = String(q.total_score ?? 10);
-  setCoverDataUrl(q.cover_data_url || "");
+      radio.addEventListener("change",()=>{ state.mcq.correct=idx; });
+      input.addEventListener("input",()=>{ state.mcq.opts[idx]=input.value; });
+      del.addEventListener("click",()=>{
+        if(state.mcq.opts.length<=2) return;
+        state.mcq.opts.splice(idx,1);
+        if(state.mcq.correct>=state.mcq.opts.length) state.mcq.correct=0;
+        renderMcq();
+      });
 
-  // load draft first (if exists)
-  const d = tryLoadDraft(qid);
-  if(d && d.questions){
-    const ok = confirm("Quiz này có NHÁP lưu trên máy. Bạn muốn khôi phục nháp không?");
-    if(ok){
-      titleEl.value = d.form?.title ?? titleEl.value;
-      subEl.value = d.form?.sub ?? subEl.value;
-      isPublicEl.value = d.form?.is_public ?? isPublicEl.value;
-      showInStoreEl.value = d.form?.show_in_store ?? showInStoreEl.value;
-      requireLoginEl.value = d.form?.require_login ?? requireLoginEl.value;
-      pinnedEl.value = d.form?.pinned ?? pinnedEl.value;
-      requireCodeEl.value = d.form?.require_access_code ?? requireCodeEl.value;
-      accessCodeEl.value = d.form?.access_code ?? accessCodeEl.value;
-      scoringModeEl.value = d.form?.scoring_mode ?? scoringModeEl.value;
-      totalScoreEl.value = d.form?.total_score ?? totalScoreEl.value;
-      setCoverDataUrl(d.form?.cover ?? COVER_DATA_URL);
-      QUESTIONS = Array.isArray(d.questions) ? d.questions : [];
-      renderQuestions();
-      saveDraftSoon();
-      toast("Đã khôi phục nháp");
+      wrap.appendChild(row);
+    });
+  }
+
+  function resetMcq(){
+    state.mcq.opts=["Đáp án A","Đáp án B","Đáp án C","Đáp án D"];
+    state.mcq.correct=0;
+    renderMcq();
+  }
+
+  function pickTf(val){
+    state.tfCorrect=!!val;
+    $("qbTfPicked").textContent="Đáp án đúng: "+(state.tfCorrect?"ĐÚNG ✅":"SAI ❌");
+  }
+
+  function badgeLabel(q){
+    if(q.type==="mcq1") return "TRẮC NGHIỆM 1 ĐÁP ÁN";
+    if(q.type==="essay") return "TỰ LUẬN";
+    return "ĐÚNG / SAI";
+  }
+
+  function renderList(){
+    const list=$("qbList");
+    list.innerHTML="";
+    if(!state.questions.length){
+      list.innerHTML=`<div class="muted" style="font-weight:750;">Chưa có câu nào. Hãy thêm câu đầu tiên 👇</div>`;
       return;
     }
-  }
+    state.questions.forEach((q,i)=>{
+      const item=document.createElement("div");
+      item.className="qb-item";
 
-  // if no draft restore: try load from DB (optional)
-  QUESTIONS = [];
-  try{
-    const token = getToken();
-    const out = await rpc("admin_get_questions",{p_token: token, p_quiz_id: qid});
-    const items = out.items || [];
-    QUESTIONS = items.map(x=>({
-      type: x.type || "essay",
-      prompt: x.prompt || "",
-      answers: x.answers || [],
-      points: x.points ?? null,
-      meta: x.meta || { fuzzy:true }
-    }));
-  }catch{
-    // ignore if function missing
-  }
-  renderQuestions();
-  saveDraftSoon();
-  toast("Loaded " + qid);
-}
+      let meta="";
+      if(q.type==="mcq1"){
+        const correct=q.options[q.correctIndex]??"";
+        meta=`• ${q.options.length} đáp án • Đúng: <b>${escapeHtml(correct)}</b>`;
+      }else if(q.type==="essay"){
+        meta=q.hint?`• Có gợi ý chấm`:`• Không có gợi ý`;
+      }else{
+        meta=`• Đúng: <b>${q.correct?"ĐÚNG":"SAI"}</b>`;
+      }
 
-/* ================== USERS (unchanged) ================== */
-const userList = document.getElementById("userList");
-const userSearch = document.getElementById("userSearch");
-
-function renderUsers(){
-  const q = (userSearch.value||"").trim().toLowerCase();
-  const arr = q ? USERS.filter(u=>String(u.username||"").includes(q)) : USERS;
-
-  if(!arr.length){
-    userList.innerHTML = `<div class="muted">No users.</div>`;
-    return;
-  }
-
-  userList.innerHTML = arr.map(u=>{
-    const role = (u.role==="admin") ? `<span class="idx ok">ADMIN</span>` : `<span class="idx">USER</span>`;
-    return `
-      <div class="card" style="box-shadow:none;border-width:1px;margin:10px 0">
-        <div class="row1">
-          <div style="min-width:0">
-            <div class="vi" style="font-size:1rem"><b>${esc(u.username)}</b> ${role}</div>
-            <div class="muted" style="margin-top:6px">id: <code>${esc(u.id)}</code></div>
+      item.innerHTML=`
+        <div class="qb-itemTop">
+          <div>
+            <div class="qb-badge">#${i+1} • ${badgeLabel(q)}</div>
+            <p class="qb-itemTitle" style="margin-top:8px;">${escapeHtml(q.text)}</p>
+            <div class="qb-itemMeta">${meta}</div>
           </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-            <button class="btn" data-act="rename" data-id="${esc(u.id)}">Rename</button>
-            <button class="btn" data-act="reset" data-id="${esc(u.id)}">Reset PIN</button>
-            <button class="btn btn-danger" data-act="del" data-id="${esc(u.id)}">Delete</button>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button class="qb-mini" type="button" title="Xóa câu">🗑️ Xóa</button>
           </div>
         </div>
-      </div>
-    `;
-  }).join("");
+      `;
 
-  userList.querySelectorAll("button[data-act]").forEach(b=>{
-    b.onclick = async ()=>{
-      const act = b.getAttribute("data-act");
-      const id = b.getAttribute("data-id");
-      if(act==="del") return delUser(id);
-      if(act==="rename") return renameUser(id);
-      if(act==="reset") return resetPin(id);
-    };
-  });
-}
+      item.querySelector("button").addEventListener("click",()=>{
+        state.questions.splice(i,1);
+        renderList();
+      });
 
-async function reloadUsers(){
-  const token = getToken();
-  const out = await rpc("admin_list_users",{p_token: token});
-  USERS = out.items || [];
-  renderUsers();
-}
-document.getElementById("btnReloadUsers").onclick = ()=>reloadUsers().catch(e=>toast(e.message));
-userSearch.addEventListener("input", ()=>renderUsers(), {passive:true});
-
-async function delUser(id){
-  const ok = confirm("Xóa user này? (mất progress/attempts/comments)");
-  if(!ok) return;
-  const token = getToken();
-  await rpc("admin_delete_user",{p_token:token, p_user_id:id});
-  toast("Deleted user");
-  await reloadUsers();
-}
-async function renameUser(id){
-  const newU = prompt("New username (lowercase, a-z0-9_):");
-  if(!newU) return;
-  const token = getToken();
-  await rpc("admin_force_rename",{p_token:token, p_user_id:id, p_new_username:newU});
-  toast("Renamed");
-  await reloadUsers();
-}
-async function resetPin(id){
-  const pin = prompt("Set new PIN (4-6 digits). Không thể xem pin cũ.");
-  if(!pin) return;
-  const token = getToken();
-  await rpc("admin_force_set_pin",{p_token:token, p_user_id:id, p_new_pin:pin});
-  toast("PIN reset");
-}
-
-/* ================== BOOT ================== */
-(async ()=>{
-  const ok = await gateCheck();
-  if(!ok) return;
-
-  // restore NEW draft if exists
-  const d = tryLoadDraft("NEW");
-  if(d){
-    // restore into NEW form
-    setMode("NEW");
-    quizIdEl.value = d.form?.quiz_id ?? "";
-    titleEl.value = d.form?.title ?? "";
-    subEl.value = d.form?.sub ?? "";
-    isPublicEl.value = d.form?.is_public ?? "true";
-    showInStoreEl.value = d.form?.show_in_store ?? "true";
-    requireLoginEl.value = d.form?.require_login ?? "true";
-    pinnedEl.value = d.form?.pinned ?? "false";
-    requireCodeEl.value = d.form?.require_access_code ?? "false";
-    accessCodeEl.value = d.form?.access_code ?? "";
-    scoringModeEl.value = d.form?.scoring_mode ?? "equal";
-    totalScoreEl.value = d.form?.total_score ?? "10";
-    setCoverDataUrl(d.form?.cover ?? "");
-    QUESTIONS = Array.isArray(d.questions) ? d.questions : [];
-    renderQuestions();
-    setDraftPill("DRAFT: restored", "ok");
-  }else{
-    setMode("NEW");
-    setCoverDataUrl("");
-    QUESTIONS = [];
-    renderQuestions();
-    setDraftPill("DRAFT: —");
+      list.appendChild(item);
+    });
   }
 
-  await reloadQuizzes();
-  await reloadUsers();
-  setTab("q");
+  function addQuestion(){
+    const qText=($("qbQuestionText").value||"").trim();
+    if(!qText){ toast("Bạn chưa nhập câu hỏi"); return; }
+
+    const type=state.lastType;
+
+    if(type==="mcq1"){
+      const opts=state.mcq.opts.map(s=>String(s||"").trim()).filter(Boolean);
+      if(opts.length<2){ toast("Cần ít nhất 2 đáp án"); return; }
+      const correct=Math.min(state.mcq.correct, opts.length-1);
+
+      state.questions.push({type,text:qText,options:opts,correctIndex:correct});
+      $("qbQuestionText").value="";
+      resetMcq();
+    }
+    else if(type==="essay"){
+      const hint=($("qbEssayHint").value||"").trim();
+      state.questions.push({type,text:qText,hint});
+      $("qbQuestionText").value="";
+      $("qbEssayHint").value="";
+    }
+    else if(type==="tf"){
+      if(state.tfCorrect===null){ toast("Bạn chưa chọn Đúng/Sai"); return; }
+      state.questions.push({type,text:qText,correct:state.tfCorrect});
+      $("qbQuestionText").value="";
+      state.tfCorrect=null;
+      $("qbTfPicked").textContent="Chưa chọn";
+    }
+
+    renderList();
+    setType(type); // giữ nguyên loại câu cho câu sau
+    toast("Đã thêm câu!");
+  }
+
+  function doImport(){
+    const html=($("qbImportHtml").value||"").trim();
+    if(!html){ toast("Bạn chưa dán HTML"); return; }
+    toast("Đã nhận HTML (cần parser theo định dạng của bạn)");
+  }
+
+  function initQB(){
+    if(!$("qbRoot")) return;
+
+    loadPrefs();
+    setMode(state.mode);
+    setType(state.lastType);
+
+    document.querySelectorAll("[data-qb-mode]").forEach(btn=>{
+      btn.addEventListener("click",()=>setMode(btn.getAttribute("data-qb-mode")));
+    });
+
+    $("qbType").addEventListener("change",()=>setType($("qbType").value));
+    $("qbAddOpt").addEventListener("click",()=>{ state.mcq.opts.push("Đáp án mới"); renderMcq(); });
+    $("qbResetOpt").addEventListener("click",resetMcq);
+
+    $("qbTfTrue").addEventListener("click",()=>pickTf(true));
+    $("qbTfFalse").addEventListener("click",()=>pickTf(false));
+
+    $("qbAddQuestionBtn").addEventListener("click",addQuestion);
+    $("qbDoImport").addEventListener("click",doImport);
+
+    renderMcq();
+    renderList();
+  }
+
+  initQB();
 })();
 </script>
 </body>
