@@ -4,5 +4,6 @@
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/q/:slug/result", "destination": "/result.html" },
     { "source": "/q/:slug", "destination": "/q.html" }
+    { "source": "/q/:id", "destination": "/q/index.html" }
   ]
 }
