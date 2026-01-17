@@ -5,5 +5,7 @@
     { "source": "/q/:slug/result", "destination": "/result.html" },
     { "source": "/q/:slug", "destination": "/q.html" }
     { "source": "/q/:id", "destination": "/q/index.html" }
+    { "source": "/spin1", "destination": "/spin1/index.html" },
+    { "source": "/spin1/", "destination": "/spin1/index.html" }
   ]
 }
