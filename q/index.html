@@ -32,71 +32,64 @@
       overflow: hidden;
       touch-action: pan-x pan-y;
     }
-    .btn, .btn-x { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    .btn, .btn-x, .pinKey { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
     #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 110px; touch-action: pan-y; }
     .wrap { max-width: 980px; margin: 0 auto; padding: 0 14px; }
 
-    .userCorner {
-      position: fixed;
-      top: 10px;
-      left: 12px;
-      z-index: 10010;
-      display: none;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.55);
-      border: 1px solid rgba(229,231,235,.65);
-      backdrop-filter: blur(6px);
-      box-shadow: 0 10px 22px rgba(0,0,0,.06);
-      user-select: none;
-      max-width: calc(100vw - 24px);
-      cursor: pointer;
+    /* ====== userCorner (giống trang chủ) ====== */
+    .userCorner{
+      position:fixed;top:10px;left:12px;z-index:10010;
+      display:none;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;
+      background:rgba(255,255,255,.55);
+      border:1px solid rgba(229,231,235,.65);
+      backdrop-filter:blur(6px);
+      box-shadow:0 10px 22px rgba(0,0,0,.06);
+      user-select:none;
+      max-width:calc(100vw - 24px);
+      cursor:pointer;
     }
-    .userCorner .name {
-      font-weight: 950;
-      font-size: .88rem;
-      color: rgba(31,41,55,.55);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 58vw;
+    .userCorner .name{
+      font-weight:950;font-size:.88rem;color:rgba(31,41,55,.55);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      max-width:58vw;
     }
-    .userCorner .adminBadge {
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-weight: 950;
-      font-size: .78rem;
-      background: rgba(37,99,235,.12);
-      border: 1px solid rgba(37,99,235,.35);
-      color: var(--admin);
-      white-space: nowrap;
+    .userCorner .adminBadge{
+      padding:4px 8px;border-radius:999px;
+      font-weight:950;font-size:.78rem;
+      background:rgba(37,99,235,.12);
+      border:1px solid rgba(37,99,235,.35);
+      color:var(--admin);
+      white-space:nowrap;
     }
 
+    /* ====== actionbar (giữ lại) ====== */
     .actionbar {
       position: sticky; top: 10px; z-index: 9999;
       display: flex; justify-content: flex-end; gap: 10px; padding: 0 14px;
       flex-wrap: wrap;
     }
-    .btn {
-      border: 0; cursor: pointer;
-      border-radius: 999px; padding: 10px 14px;
-      font-weight: 900; font-size: .9rem;
-      transition: transform .16s ease, filter .16s ease;
-      display: inline-flex; align-items: center; gap: 8px;
-      user-select: none; white-space: nowrap;
-      box-shadow: 0 12px 24px rgba(0,0,0,.12);
-      background: #fff; color: #111827; border: 1px solid #e5e7eb;
+
+    .btn{
+      border:0;cursor:pointer;border-radius:999px;padding:10px 14px;
+      font-weight:900;font-size:.9rem;
+      transition:transform .16s ease, filter .16s ease;
+      display:inline-flex;align-items:center;gap:8px;
+      user-select:none;white-space:nowrap;
+      box-shadow:0 12px 24px rgba(0,0,0,.12);
+      background:#fff;color:#111827;border:1px solid #e5e7eb;
     }
-    .btn:hover { transform: translateY(-1px); filter: brightness(.98); }
-    .btn:active { transform: translateY(0px); }
+    .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
+    .btn:active{transform:translateY(0)}
     .btn-reset { background: #111827; color: #fff; border: 0; }
-    .btn-primary {
-      background: linear-gradient(135deg, #7c3aed, #fb7185);
-      color: #fff; border: 0;
-      box-shadow: 0 12px 24px rgba(124,58,237,.18);
+    .btn-primary{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff;border:0;
+      box-shadow:0 12px 24px rgba(124,58,237,.18);
     }
+    .btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
+    .btn-danger{background:var(--bad);color:#fff;border:0}
     .btn-check {
       border-radius: 12px;
       padding: 9px 10px;
@@ -107,28 +100,28 @@
       min-width: 86px;
       justify-content: center;
     }
-    .btn-check[disabled] { opacity: .65; cursor: not-allowed; }
+    .btn[disabled], .btn-check[disabled]{opacity:.65;cursor:not-allowed;transform:none !important;filter:none !important}
 
-    .topbar {
-      margin-top: 10px;
-      background: rgba(255,255,255,.86);
-      border: 1px solid rgba(229,231,235,.9);
-      border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.06);
-      padding: 14px;
-      display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+    .topbar{
+      margin-top:10px;
+      background:rgba(255,255,255,.86);
+      border:1px solid rgba(229,231,235,.9);
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,.06);
+      padding:14px;
+      display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
     }
-    .titlebox { display: flex; gap: 10px; align-items: center; flex: 1 1 360px; min-width: 240px; }
-    .logo {
-      width: 42px; height: 42px; border-radius: 16px;
-      background: linear-gradient(135deg, #a78bfa, #fb7185);
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-weight: 900;
-      box-shadow: 0 10px 22px rgba(124,58,237,.18);
-      user-select: none;
+    .titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
+    .logo{
+      width:42px;height:42px;border-radius:16px;
+      background:linear-gradient(135deg,#a78bfa,#fb7185);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:900;
+      box-shadow:0 10px 22px rgba(124,58,237,.18);
+      user-select:none;
     }
-    .titles h1 { font-size: 1.02rem; margin: 0; font-weight: 800; }
-    .titles .tiny { margin-top: 3px; font-size: .86rem; color: var(--muted); font-weight: 650; }
+    .titles h1{font-size:1.02rem;margin:0;font-weight:800}
+    .titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
 
     .stats { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .pill {
@@ -148,35 +141,35 @@
     }
 
     .content { padding: 12px 0 0; }
-    .card {
-      background: var(--card);
-      border: 2px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 14px; margin: 12px 0;
+    .card{
+      background:var(--card);
+      border:2px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;margin:12px 0;
     }
-    .row1 { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-    .vi { margin: 0; font-weight: 900; font-size: 1.04rem; line-height: 1.25; }
-    .meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .idx {
-      font-size: .78rem; font-weight: 900;
-      padding: 6px 10px; border-radius: 999px;
-      background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe;
-      white-space: nowrap;
+    .row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25}
+    .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .idx{
+      font-size:.78rem;font-weight:900;
+      padding:6px 10px;border-radius:999px;
+      background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;
+      white-space:nowrap;
     }
-    .muted { color: var(--muted); font-weight: 650; }
+    .muted{color:var(--muted);font-weight:650}
 
-    .input {
-      width: 100%;
-      border-radius: 14px; border: 2px solid #e5e7eb;
-      padding: 11px 12px; font-size: .95rem; font-weight: 700;
-      outline: none; background: var(--soft);
-      transition: border-color .15s ease, box-shadow .15s ease;
+    .input{
+      width:100%;
+      border-radius:14px;border:2px solid #e5e7eb;
+      padding:11px 12px;font-size:.95rem;font-weight:700;
+      outline:none;background:var(--soft);
+      transition:border-color .15s ease, box-shadow .15s ease;
     }
-    .input:focus {
-      border-color: rgba(124,58,237,.55);
-      box-shadow: 0 0 0 5px rgba(124,58,237,.10);
-      background: #fff;
+    .input:focus{
+      border-color:rgba(124,58,237,.55);
+      box-shadow:0 0 0 5px rgba(124,58,237,.10);
+      background:#fff;
     }
 
     .qaRow{ display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
@@ -198,42 +191,82 @@
     .oktxt { color: var(--ok); font-weight: 1000; }
     .badtxt { color: var(--bad); font-weight: 1000; }
 
-    .toast {
-      position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
-      background: rgba(17,24,39,.92); color: #fff;
-      padding: 10px 12px; border-radius: 14px;
-      font-weight: 800; font-size: .9rem;
-      opacity: 0; pointer-events: none;
-      transition: opacity .18s ease, transform .18s ease;
-      max-width: calc(100% - 28px);
-      z-index: 20050;
-      text-align: center;
+    .toast{
+      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+      background:rgba(17,24,39,.92);color:#fff;
+      padding:10px 12px;border-radius:14px;
+      font-weight:800;font-size:.9rem;
+      opacity:0;pointer-events:none;
+      transition:opacity .18s ease, transform .18s ease;
+      max-width:calc(100% - 28px);
+      z-index:20050;text-align:center;
     }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
-    .modal-backdrop {
-      position: fixed; inset: 0; background: rgba(0,0,0,.35);
-      display: none; align-items: center; justify-content: center;
-      padding: 16px;
-      z-index: 20000;
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.35);
+      display:none;align-items:center;justify-content:center;
+      padding:16px;z-index:20000;
     }
-    .modal-backdrop.show { display: flex; }
-    .modal {
-      width: 100%; max-width: 620px;
-      background: #fff;
-      border-radius: 18px;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 20px 60px rgba(0,0,0,.18);
-      padding: 14px;
-      max-height: 82vh;
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
+    .modal-backdrop.show{display:flex}
+    #registerBackdrop{z-index:20015}
+    #pinBackdrop{z-index:20040}
+    #resetBackdrop{z-index:20025}
+
+    .modal{
+      width:100%;max-width:620px;
+      background:#fff;border-radius:18px;border:1px solid #e5e7eb;
+      box-shadow:0 20px 60px rgba(0,0,0,.18);
+      padding:14px;max-height:82vh;overflow:auto;
+      -webkit-overflow-scrolling:touch;
     }
-    .modal h3 { margin: 4px 0 6px; font-size: 1.02rem; }
-    .modal p { margin: 0 0 12px; color: var(--muted); font-weight: 650; font-size: .92rem; line-height: 1.35; }
-    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
-    .btn-ghost { background: #fff; color: #111827; border: 1px solid #e5e7eb; box-shadow: none; }
-    .btn-danger { background: var(--bad); color: #fff; border: 0; }
+    .modal h3{margin:4px 0 6px;font-size:1.02rem}
+    .modal p{margin:0 0 12px;color:var(--muted);font-weight:650;font-size:.92rem;line-height:1.35}
+    .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+    .xclose{position:sticky;top:0;display:flex;justify-content:flex-end;z-index:2;margin-bottom:4px}
+    .btn-x{
+      width:56px;height:56px;border-radius:16px;
+      border:1px solid #e5e7eb;background:#fff;cursor:pointer;
+      font-weight:1000;font-size:1.8rem;line-height:1;
+      box-shadow:0 12px 24px rgba(0,0,0,.10);
+    }
+
+    /* ====== PIN keypad (giống trang chủ) ====== */
+    .pinWrap{display:grid;gap:12px}
+    .pinDots{
+      display:flex;justify-content:center;gap:10px;
+      padding:8px 0 2px;user-select:none;
+    }
+    .dot{
+      width:14px;height:14px;border-radius:999px;
+      border:2px solid #e5e7eb;background:#fff;
+      box-shadow:0 10px 22px rgba(0,0,0,.08);
+    }
+    .dot.filled{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      border-color:rgba(124,58,237,.25);
+    }
+    .pinKeypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .pinKey{
+      height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;
+      font-weight:1000;font-size:1.25rem;cursor:pointer;
+      box-shadow:0 10px 22px rgba(0,0,0,.08);
+      transition:transform .12s ease, filter .12s ease;
+      user-select:none;
+    }
+    .pinKey:hover{transform:translateY(-1px);filter:brightness(.99)}
+    .pinKey:active{transform:translateY(0)}
+    .pinKey.small{font-size:.95rem;font-weight:950;letter-spacing:.02em}
+    .pinNote{text-align:center;color:var(--muted);font-weight:750;font-size:.9rem;line-height:1.35}
+    @keyframes shakeX{0%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-4px)}90%{transform:translateX(4px)}100%{transform:translateX(0)}}
+    .pinWrap.shake{animation:shakeX .5s ease}
+    .pinDots.error .dot{border-color:rgba(220,38,38,.65)}
+    .pinDots.error .dot.filled{
+      background:linear-gradient(135deg,#fca5a5,#dc2626);
+      border-color:rgba(220,38,38,.55);
+    }
+    .pinNote.error{color:var(--bad)}
 
     @media (max-width: 820px) {
       .progressline { max-width: 100%; }
@@ -246,7 +279,7 @@
 </head>
 
 <body>
-  <div class="userCorner" id="userCorner" title="Bấm để xem tài khoản">
+  <div class="userCorner" id="userCorner" title="Bấm để đăng xuất">
     <span class="name" id="userCornerName">—</span>
     <span class="adminBadge" id="userCornerAdmin" style="display:none;">ADMIN</span>
   </div>
@@ -280,6 +313,36 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- Register prompt -->
+  <div class="modal-backdrop" id="registerBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
+      <h3 id="registerTitle">Đăng ký tài khoản?</h3>
+      <p id="registerDesc">Username chưa đăng ký. Bạn có muốn đăng ký không?</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btnRegisterNo">Nhập lại</button>
+        <button class="btn btn-primary" id="btnRegisterYes">Đăng ký</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIN keypad -->
+  <div class="modal-backdrop" id="pinBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+      <div class="xclose">
+        <button class="btn-x" id="btnClosePin" aria-label="Đóng">✕</button>
+      </div>
+      <h3 id="pinTitle">Mật khẩu</h3>
+      <p id="pinDesc">Nhập mật khẩu số.</p>
+
+      <div class="pinWrap" id="pinWrap">
+        <div class="pinDots" id="pinDots"></div>
+        <div class="pinKeypad" id="pinKeypad"></div>
+        <div class="pinNote" id="pinNote"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset confirm (giữ lại) -->
   <div class="modal-backdrop" id="resetBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <h3>Làm lại bài?</h3>
@@ -292,11 +355,11 @@
   </div>
 
 <script>
-/** ====== SUPABASE CONFIG ====== */
+/* ================== CONFIG ================== */
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
-/** ====== RPC NAMES (nếu bạn dùng tên khác thì sửa ở đây) ====== */
+/* RPC names */
 const RPC = {
   getQuiz: "api_get_quiz",
   checkUsername: "api_check_username",
@@ -305,86 +368,55 @@ const RPC = {
   me: "api_me"
 };
 
-/** ====== STORAGE ====== */
+/* STORAGE */
 const TOKEN_KEY = "tk_token_v2";
 const ME_KEY = "tk_me_v2";
 
-/** ====== HELPERS ====== */
+/* ================== HELPERS ================== */
 function toast(msg){
   const t = document.getElementById("toast");
   t.textContent = String(msg||"");
   t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"), 1400);
+  setTimeout(()=>t.classList.remove("show"), 1300);
 }
-function escapeHtml(s) {
-  return String(s ?? "")
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+function escapeHtml(s){
+  return String(s??"")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
-function normalizeForCompare(s) {
-  let t = String(s||"").trim().toLowerCase();
-  t = t.replace(/đ/g, "d");
-  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); } catch {}
-  t = t.replace(/[“”"']/g, " ");
-  t = t.replace(/[^a-z0-9\s]/g, " ");
-  t = t.replace(/\s+/g, " ").trim();
-  return t;
-}
-function looseEq(user, expected){
-  const u = normalizeForCompare(user);
-  const a = normalizeForCompare(expected);
-  if (!u || !a) return false;
-  if (u === a) return true;
-  // cho phép sai rất nhẹ: bỏ khoảng trắng
-  if (u.replace(/\s/g,"") === a.replace(/\s/g,"")) return true;
-  return false;
-}
-function parseQuizIdFromUrl(){
-  const p = location.pathname;          // /q/abcde or /q/abcde.html
-  const m = p.match(/^\/q\/([^\/]+)\/?$/);
-  let id = m ? m[1] : "";
-  id = id.replace(/\.html$/i,"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
-  return id;
-}
+function normUsername(u){ return String(u||"").trim().toLowerCase(); }
 function validateUsername(u){
-  u = String(u||"").trim().toLowerCase();
+  u = normUsername(u);
   if(!u) return "Chưa nhập username.";
   if(u.length>15) return "Username tối đa 15 ký tự.";
-  if(!/^[a-z0-9_]+$/.test(u)) return "Chỉ dùng a-z 0-9 và _ (không viết hoa).";
+  if(!/^[a-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z 0-9 và dấu _ (không viết hoa).";
   return null;
 }
-function getToken(){
-  try { return (localStorage.getItem(TOKEN_KEY)||"").trim(); } catch { return ""; }
+function isAdminUser(me){
+  if(!me) return false;
+  const u = String(me.username||"").toLowerCase();
+  return me.role==="admin" || u==="tuankhoi";
 }
-function setToken(t){
-  try { localStorage.setItem(TOKEN_KEY, String(t||"").trim()); } catch {}
-}
-function clearToken(){
-  try { localStorage.removeItem(TOKEN_KEY); } catch {}
-  try { localStorage.removeItem(ME_KEY); } catch {}
-}
-function getMeCache(){
-  try { return JSON.parse(localStorage.getItem(ME_KEY)||"null"); } catch { return null; }
-}
-function setMeCache(me){
-  try { localStorage.setItem(ME_KEY, JSON.stringify(me||null)); } catch {}
-}
-function sbHeaders(){
-  const key = String(SUPABASE_ANON_KEY||"").trim();
-  return {
-    "apikey": key,
-    "Authorization": "Bearer " + key,
-    "Content-Type": "application/json"
-  };
-}
+function getToken(){ try{ return (localStorage.getItem(TOKEN_KEY)||"").trim(); }catch{ return ""; } }
+function setToken(t){ try{ if(!t) localStorage.removeItem(TOKEN_KEY); else localStorage.setItem(TOKEN_KEY, String(t)); }catch{} }
+function getMeCache(){ try{ return JSON.parse(localStorage.getItem(ME_KEY)||"null"); }catch{ return null; } }
+function setMeCache(me){ try{ if(!me) localStorage.removeItem(ME_KEY); else localStorage.setItem(ME_KEY, JSON.stringify(me)); }catch{} }
+function clearAuthLocal(){ setToken(""); setMeCache(null); }
+
+/* ================== SUPABASE CALLS ================== */
 async function sbRpc(fn, args){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
     method:"POST",
-    headers: sbHeaders(),
+    headers:{
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+      "Content-Type":"application/json"
+    },
     body: JSON.stringify(args||{})
   });
   const txt = await res.text();
-  let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
+  let data=null;
+  try{ data = txt ? JSON.parse(txt) : null; }catch{}
   if(!res.ok){
     const msg = (data && (data.message||data.error||data.hint||data.details))
       ? (data.message||data.error||data.hint||data.details)
@@ -394,7 +426,12 @@ async function sbRpc(fn, args){
   return data;
 }
 async function sbGet(path){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{ headers: sbHeaders() });
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
+    headers:{
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY
+    }
+  });
   const txt = await res.text();
   let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
   if(!res.ok){
@@ -406,8 +443,13 @@ async function sbGet(path){
   return data;
 }
 async function sbPost(path, body, { preferReturn=false } = {}){
-  const headers = sbHeaders();
-  if (preferReturn) headers["Prefer"] = "return=representation";
+  const headers = {
+    "apikey": SUPABASE_ANON_KEY,
+    "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+    "Content-Type":"application/json"
+  };
+  if(preferReturn) headers["Prefer"] = "return=representation";
+
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
     method:"POST",
     headers,
@@ -424,7 +466,191 @@ async function sbPost(path, body, { preferReturn=false } = {}){
   return data;
 }
 
-/** ====== UI CORE ====== */
+/* ================== PIN + REGISTER MODALS (giống trang chủ) ================== */
+const registerBackdrop = document.getElementById("registerBackdrop");
+const registerDesc = document.getElementById("registerDesc");
+document.getElementById("btnRegisterNo").onclick = ()=>closeRegisterPrompt(false);
+document.getElementById("btnRegisterYes").onclick = ()=>closeRegisterPrompt(true);
+registerBackdrop.addEventListener("click",(e)=>{ if(e.target===registerBackdrop) closeRegisterPrompt(false); });
+
+let REG_PROMPT = { open:false, resolve:null, username:"" };
+function openRegisterPrompt(username){
+  return new Promise((resolve)=>{
+    REG_PROMPT.open=true;
+    REG_PROMPT.resolve=resolve;
+    REG_PROMPT.username=username;
+    registerDesc.textContent = `Username "${username}" chưa đăng ký, bạn có muốn đăng ký không?`;
+    registerBackdrop.classList.add("show");
+    registerBackdrop.setAttribute("aria-hidden","false");
+  });
+}
+function closeRegisterPrompt(ans){
+  if(!REG_PROMPT.open) return;
+  registerBackdrop.classList.remove("show");
+  registerBackdrop.setAttribute("aria-hidden","true");
+  const r = REG_PROMPT.resolve;
+  REG_PROMPT.open=false;
+  REG_PROMPT.resolve=null;
+  REG_PROMPT.username="";
+  if(r) r(!!ans);
+}
+
+/* PIN modal */
+const pinBackdrop = document.getElementById("pinBackdrop");
+const pinTitle = document.getElementById("pinTitle");
+const pinDesc = document.getElementById("pinDesc");
+const pinDots = document.getElementById("pinDots");
+const pinKeypad = document.getElementById("pinKeypad");
+const pinNote = document.getElementById("pinNote");
+const pinWrap = document.getElementById("pinWrap");
+document.getElementById("btnClosePin").onclick = ()=>closePin("cancel");
+pinBackdrop.addEventListener("click",(e)=>{ if(e.target===pinBackdrop) closePin("cancel"); });
+
+let PIN_KEYS_BUILT = false;
+let PIN = {
+  open:false, resolve:null, reject:null,
+  username:"", mode:"login", step:"one",
+  pinLen:4, value:"", first:"", old:"", submitting:false,
+  dotEls:[], payload:null
+};
+
+function buildPinKeypadOnce(){
+  if(PIN_KEYS_BUILT) return;
+  PIN_KEYS_BUILT=true;
+  pinKeypad.innerHTML="";
+  const keys=["1","2","3","4","5","6","7","8","9","CLEAR","0","⌫"];
+  keys.forEach(k=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="pinKey" + ((k==="CLEAR"||k==="⌫")?" small":"");
+    b.textContent=k;
+    b.onclick=()=>onPinKey(k);
+    pinKeypad.appendChild(b);
+  });
+}
+function buildDots(n){
+  pinDots.innerHTML="";
+  PIN.dotEls=[];
+  for(let i=0;i<n;i++){
+    const d=document.createElement("div");
+    d.className="dot";
+    pinDots.appendChild(d);
+    PIN.dotEls.push(d);
+  }
+}
+function updateDots(){
+  const len = PIN.value.length;
+  for(let i=0;i<PIN.dotEls.length;i++){
+    PIN.dotEls[i].classList.toggle("filled", i < len);
+  }
+}
+function setPinNote(msg,type=""){
+  if(type==="error") pinNote.classList.add("error");
+  else pinNote.classList.remove("error");
+  pinNote.textContent = String(msg||"");
+}
+function pinErrorPulse(msg){
+  PIN.value="";
+  updateDots();
+  pinDots.classList.add("error");
+  pinWrap.classList.remove("shake"); void pinWrap.offsetWidth; pinWrap.classList.add("shake");
+  setPinNote(msg||"Sai mật khẩu","error");
+  setTimeout(()=>{
+    pinDots.classList.remove("error");
+    pinWrap.classList.remove("shake");
+    updatePinHeader();
+  },520);
+}
+function updatePinHeader(){
+  const u = normUsername(PIN.username);
+  const note = (u==="tuankhoi") ? "Tài khoản tuankhoi dùng mật khẩu 6 số."
+                               : "Mật khẩu chỉ gồm số.";
+  if(PIN.mode==="login"){
+    pinTitle.textContent="Đăng nhập";
+    pinDesc.textContent=`Username: ${PIN.username}`;
+  }else if(PIN.mode==="set"){
+    if(PIN.step==="one"){ pinTitle.textContent="Đăng ký"; pinDesc.textContent=`Tạo mật khẩu ${PIN.pinLen} số`; }
+    else { pinTitle.textContent="Xác nhận mật khẩu"; pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`; }
+  }else if(PIN.mode==="change"){
+    if(PIN.step==="old"){ pinTitle.textContent="Đổi mật khẩu"; pinDesc.textContent="Nhập mật khẩu hiện tại"; }
+    else if(PIN.step==="new1"){ pinTitle.textContent="Mật khẩu mới"; pinDesc.textContent=`Nhập ${PIN.pinLen} số`; }
+    else { pinTitle.textContent="Xác nhận mật khẩu mới"; pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`; }
+  }
+  setPinNote(note);
+}
+function openPin({username, mode="login", pinLen=4}){
+  return new Promise((resolve,reject)=>{
+    PIN.open=true; PIN.resolve=resolve; PIN.reject=reject;
+    PIN.username=String(username||"");
+    PIN.mode=mode;
+    PIN.pinLen=Math.max(4, Number(pinLen)||4);
+    PIN.value=""; PIN.first=""; PIN.old=""; PIN.submitting=false; PIN.payload=null;
+    PIN.step = (mode==="set") ? "one" : (mode==="change" ? "old" : "one");
+    buildPinKeypadOnce();
+    buildDots(PIN.pinLen);
+    updatePinHeader();
+    updateDots();
+    pinBackdrop.classList.add("show");
+    pinBackdrop.setAttribute("aria-hidden","false");
+  });
+}
+function closePin(why){
+  if(!PIN.open) return;
+  pinBackdrop.classList.remove("show");
+  pinBackdrop.setAttribute("aria-hidden","true");
+  const rej = PIN.reject;
+  const res = PIN.resolve;
+  const payload = PIN.payload;
+  PIN.open=false; PIN.resolve=null; PIN.reject=null; PIN.payload=null;
+  if(why==="ok"){ if(res) res(payload); return; }
+  if(rej) rej(new Error("cancel"));
+}
+
+/* username check helpers */
+function pickPinLen(ck, username){
+  const u = normUsername(username);
+  if(u === "tuankhoi") return 6;
+  const raw =
+    (ck && (ck.pinLen ?? ck.pin_len ?? (ck.user && (ck.user.pinLen ?? ck.user.pin_len)) ?? ck.pin_length ?? 4));
+  let n = Number(raw) || 4;
+  if(!isFinite(n) || n < 4) n = 4;
+  if(n > 12) n = 12;
+  return n;
+}
+function pickExists(ck){
+  if(ck && typeof ck.exists === "boolean") return ck.exists;
+  if(ck && ck.ok === true && typeof ck.exists === "boolean") return ck.exists;
+  if(ck && ck.userId) return true;
+  return null;
+}
+
+/* ================== QUIZ LOGIC (giữ như cũ) ================== */
+function normalizeForCompare(s) {
+  let t = String(s||"").trim().toLowerCase();
+  t = t.replace(/đ/g, "d");
+  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); } catch {}
+  t = t.replace(/[“”"']/g, " ");
+  t = t.replace(/[^a-z0-9\s]/g, " ");
+  t = t.replace(/\s+/g, " ").trim();
+  return t;
+}
+function looseEq(user, expected){
+  const u = normalizeForCompare(user);
+  const a = normalizeForCompare(expected);
+  if (!u || !a) return false;
+  if (u === a) return true;
+  if (u.replace(/\s/g,"") === a.replace(/\s/g,"")) return true;
+  return false;
+}
+function parseQuizIdFromUrl(){
+  const p = location.pathname;
+  const m = p.match(/^\/q\/([^\/]+)\/?$/);
+  let id = m ? m[1] : "";
+  id = id.replace(/\.html$/i,"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
+  return id;
+}
+
+/* UI */
 const content = document.getElementById("content");
 const quizTitleEl = document.getElementById("quizTitle");
 const quizSubEl   = document.getElementById("quizSub");
@@ -435,36 +661,34 @@ const userCornerAdmin= document.getElementById("userCornerAdmin");
 function setUserCorner(me){
   if(!me || !me.username){ userCorner.style.display="none"; return; }
   userCornerName.textContent = me.username;
-  userCornerAdmin.style.display = (me.role === "admin") ? "inline-flex" : "none";
+  userCornerAdmin.style.display = isAdminUser(me) ? "inline-flex" : "none";
   userCorner.style.display = "inline-flex";
 }
 
-function updateStats(){
-  const total = QUIZ.items.length;
-  let answered = 0;
-  for(const it of QUIZ.items){
-    const v = String(state.answers[it.id]||"").trim();
-    if (v) answered++;
-  }
-  document.getElementById("answeredCount").textContent = String(answered);
-  document.getElementById("totalCount").textContent = String(total);
-  document.getElementById("progressFill").style.width = total ? Math.round(answered*100/total)+"%" : "0%";
-
-  const canSubmit = !!me && !!me.user_id && answered>0 && !state.finalized;
-  document.getElementById("btnSubmit").disabled = !canSubmit;
+function renderLoading(msg){
+  content.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">${escapeHtml(msg||"Đang tải...")}</p>
+        <div class="meta"><span class="idx">LOADING</span></div>
+      </div>
+      <div class="muted" style="margin-top:8px">Vui lòng chờ...</div>
+    </div>
+  `;
 }
 
-/** ====== APP STATE ====== */
+/* APP STATE */
 const quizId = parseQuizIdFromUrl();
 const PROGRESS_KEY = `tk_progress::${quizId}`;
 
 let me = null; // {user_id, username, role}
 let QUIZ = { quiz_id: quizId, title:"Quiz", sub:"", items:[] };
+let view = { started:false }; // thêm màn hình "Vào làm"
 
 let state = {
   quiz_id: quizId,
-  answers: {},      // { vocab_id: "..." }
-  checked: {},      // { vocab_id: {ok, expected, locked} }
+  answers: {},
+  checked: {},
   finalized: false,
   attempt_id: "",
   ts: 0
@@ -486,7 +710,6 @@ function saveLocalProgress(){
 }
 
 function acceptedAnswers(item){
-  // item.answers (text[]) ưu tiên; nếu rỗng thì tách meaning theo | ; / ,
   const out = [];
   if(Array.isArray(item.answers)) out.push(...item.answers);
   if(item.meaning){
@@ -499,7 +722,6 @@ function acceptedAnswers(item){
       }
     });
   }
-  // unique (normalize compare)
   const seen = new Set();
   const uniq = [];
   for(const x of out){
@@ -511,7 +733,6 @@ function acceptedAnswers(item){
   }
   return uniq;
 }
-
 function gradeOne(item, userAns){
   const u = String(userAns||"").trim();
   const acc = acceptedAnswers(item);
@@ -523,94 +744,226 @@ function gradeOne(item, userAns){
   return { ok:false, expected };
 }
 
-/** ====== RENDER ====== */
-function renderLoading(msg){
-  content.innerHTML = `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">${escapeHtml(msg||"Đang tải...")}</p>
-        <div class="meta"><span class="idx">LOADING</span></div>
-      </div>
-      <div class="muted" style="margin-top:8px">Vui lòng chờ...</div>
-    </div>
-  `;
+function updateStats(){
+  const total = QUIZ.items.length;
+  let answered = 0;
+  for(const it of QUIZ.items){
+    const v = String(state.answers[it.id]||"").trim();
+    if (v) answered++;
+  }
+  document.getElementById("answeredCount").textContent = String(answered);
+  document.getElementById("totalCount").textContent = String(total);
+  document.getElementById("progressFill").style.width = total ? Math.round(answered*100/total)+"%" : "0%";
+
+  const canSubmit = !!me && !!me.user_id && answered>0 && !state.finalized && view.started;
+  document.getElementById("btnSubmit").disabled = !canSubmit;
 }
 
-function renderLogin(){
+/* ================== RENDER: Gate i chang trang chủ ================== */
+function renderGate(){
   content.innerHTML = `
     <div class="card">
       <div class="row1">
-        <p class="vi">Đăng nhập</p>
-        <div class="meta"><span class="idx">BẮT BUỘC</span></div>
+        <p class="vi">Nhập USERNAME</p>
+        <div><span class="idx">BẮT BUỘC</span></div>
       </div>
-      <div class="muted" style="margin-top:8px; line-height:1.35">
-        Username <b>không viết hoa</b>, chỉ <code>a-z 0-9 _</code>, tối đa 15 ký tự.
+      <div class="muted" style="margin-top:6px; line-height:1.35">
+        Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b>.<br/>
+        - Username <b>đã có</b> → hiện keypad <b>đăng nhập</b> (4 số, riêng <b>tuankhoi</b> là <b>6 số</b>).<br/>
+        - Username <b>chưa có</b> → hỏi và cho <b>đăng ký</b>.
       </div>
 
-      <div style="margin-top:12px; display:grid; gap:10px;">
-        <input id="u" class="input" placeholder="vd: tuankhoi" maxlength="15" autocomplete="off"/>
-        <input id="p" class="input" placeholder="PIN (số)" inputmode="numeric" maxlength="12" autocomplete="off"/>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
-          <button class="btn btn-ghost" id="btnReg">Đăng ký</button>
-          <button class="btn btn-primary" id="btnLogin">Đăng nhập</button>
-        </div>
-        <div class="muted" id="authMsg"></div>
+      <div style="margin-top:10px; display:grid; gap:10px;">
+        <input id="nameInput" class="input" placeholder="vd: tuankhoi123" maxlength="15" autocomplete="off"/>
+        <button id="btnContinue" class="btn btn-primary" style="justify-content:center;">➡️ Tiếp tục</button>
+        <div class="muted" id="gateStatus">Sẵn sàng.</div>
       </div>
     </div>
   `;
 
-  const uEl = document.getElementById("u");
-  const pEl = document.getElementById("p");
-  const msg = document.getElementById("authMsg");
+  const nameInput = document.getElementById("nameInput");
+  const btnContinue = document.getElementById("btnContinue");
+  const gateStatus = document.getElementById("gateStatus");
 
-  const doLogin = async (mode) => {
-    const u = String(uEl.value||"").trim().toLowerCase();
-    uEl.value = u;
+  nameInput.addEventListener("input",()=>{
+    const v = normUsername(nameInput.value);
+    if(nameInput.value!==v) nameInput.value=v;
+  },{passive:true});
+  try{ nameInput.focus(); }catch{}
+
+  const doFlow = async ()=>{
+    const u = normUsername(nameInput.value);
     const err = validateUsername(u);
     if(err){ toast(err); return; }
-    const pin = String(pEl.value||"").trim();
-    if(!pin || !/^[0-9]+$/.test(pin)){ toast("PIN chỉ gồm số"); return; }
 
-    msg.textContent = "Đang xử lý...";
+    btnContinue.disabled=true; btnContinue.textContent="⏳";
+    gateStatus.textContent="Đang kiểm tra username…";
     try{
-      if(mode==="login"){
-        const out = await sbRpc(RPC.login, { p_username: u, p_pin: pin });
-        if(!out || out.ok!==true) throw new Error(out?.error || "Login fail");
-        setToken(out.token || "");
-        me = out.me || out.user || out.data || null;
-        if(me && me.id && !me.user_id) me.user_id = me.id;
-        setMeCache(me);
-      }else{
-        // check exists (nếu function có)
-        try{
-          const ck = await sbRpc(RPC.checkUsername, { p_username: u });
-          if(ck && ck.exists===true) throw new Error("Username đã tồn tại");
-        }catch(e){
-          // nếu rpc không có hoặc lỗi schema cache, bỏ qua check
-        }
-        const out = await sbRpc(RPC.register, { p_username: u, p_pin: pin });
-        if(!out || out.ok!==true) throw new Error(out?.error || "Register fail");
-        setToken(out.token || "");
-        me = out.me || out.user || out.data || null;
-        if(me && me.id && !me.user_id) me.user_id = me.id;
-        setMeCache(me);
+      const ck = await sbRpc(RPC.checkUsername, { p_username: u });
+      if(!ck || ck.ok === false) throw new Error((ck && ck.error) ? ck.error : "check fail");
+
+      const exists = pickExists(ck);
+      const pinLen = pickPinLen(ck, u);
+
+      const reserved = !!(ck && (ck.reserved === true || ck.is_reserved === true));
+      if(exists === true && reserved === true){
+        toast("Username này đã bị giữ lại (đổi tên rồi).");
+        gateStatus.textContent="Thử username khác.";
+        return;
       }
 
-      if(!me || !me.user_id) throw new Error("Không lấy được user");
-      setUserCorner(me);
-      toast("OK");
-      renderQuiz();
+      if(exists === true){
+        gateStatus.textContent="Đăng nhập: nhập mật khẩu…";
+        await openPin({ username:u, mode:"login", pinLen });
+        return;
+      }
+
+      if(exists === false){
+        gateStatus.textContent=`Username "${u}" chưa đăng ký.`;
+        const ok = await openRegisterPrompt(u);
+        if(!ok){ gateStatus.textContent="Bạn có thể nhập username khác."; return; }
+
+        const regPinLen = (u==="tuankhoi") ? 6 : 4;
+        gateStatus.textContent="Đăng ký: tạo mật khẩu…";
+        const pin = await openPin({ username:u, mode:"set", pinLen: regPinLen });
+
+        gateStatus.textContent="Đang tạo tài khoản…";
+        const out = await sbRpc(RPC.register, { p_username: u, p_pin: String(pin||"") });
+        if(!out || !out.ok || !out.token) throw new Error(out?.error || "register fail");
+
+        toast("Đã đăng ký & đăng nhập");
+        await enterAfterAuth(out);
+        return;
+      }
+
+      // unknown -> thử login luôn
+      gateStatus.textContent="Không rõ trạng thái. Thử đăng nhập…";
+      const forcedLen = (u==="tuankhoi") ? 6 : 4;
+      await openPin({ username:u, mode:"login", pinLen: forcedLen });
+
     }catch(e){
-      msg.textContent = "Lỗi: " + (e?.message || e);
-      toast("Sai hoặc lỗi server");
+      if(!(e && e.message==="cancel")) toast(e.message||"Lỗi");
+      gateStatus.textContent="Sẵn sàng.";
+    }finally{
+      btnContinue.disabled=false; btnContinue.textContent="➡️ Tiếp tục";
     }
   };
 
-  document.getElementById("btnLogin").onclick = ()=>doLogin("login");
-  document.getElementById("btnReg").onclick = ()=>doLogin("register");
+  btnContinue.onclick = doFlow;
+  nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); doFlow(); }});
 }
 
+/* PIN submit handler (login/register giống trang chủ) */
+async function onPinKey(k){
+  if(!PIN.open || PIN.submitting) return;
+
+  if(k==="CLEAR"){ PIN.value=""; updateDots(); return; }
+  if(k==="⌫"){ PIN.value=PIN.value.slice(0,-1); updateDots(); return; }
+
+  if(PIN.value.length>=PIN.pinLen) return;
+  PIN.value += String(k);
+  updateDots();
+  if(PIN.value.length!==PIN.pinLen) return;
+
+  const val = PIN.value;
+
+  if(!/^[0-9]+$/.test(val)){
+    pinErrorPulse("Mật khẩu chỉ gồm số");
+    return;
+  }
+
+  // LOGIN
+  if(PIN.mode==="login"){
+    PIN.submitting=true;
+    try{
+      setPinNote("Đang kiểm tra…");
+      const out = await sbRpc(RPC.login, { p_username: normUsername(PIN.username), p_pin: val });
+      if(out && out.ok && out.token){
+        PIN.payload = val;
+        closePin("ok");
+        toast("Đăng nhập thành công");
+        await enterAfterAuth(out);
+        return;
+      }
+      pinErrorPulse(out?.error || "Sai mật khẩu");
+    }catch(e){
+      pinErrorPulse("Sai mật khẩu");
+    }finally{
+      PIN.submitting=false;
+    }
+    return;
+  }
+
+  // REGISTER (set pin twice)
+  if(PIN.mode==="set"){
+    if(PIN.step==="one"){
+      PIN.first = val;
+      PIN.value = "";
+      PIN.step="confirm";
+      updatePinHeader();
+      updateDots();
+      return;
+    }else{
+      if(PIN.first !== val){
+        pinErrorPulse("Mật khẩu không khớp");
+        PIN.first=""; PIN.step="one";
+        updatePinHeader(); updateDots();
+        return;
+      }
+      PIN.payload = val;
+      closePin("ok");
+      return;
+    }
+  }
+}
+
+/* ================== RENDER: Start screen khi đã login ================== */
+function renderStart(){
+  setUserCorner(me);
+  updateStats();
+
+  content.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Sẵn sàng làm bài</p>
+        <div class="meta">
+          <span class="idx">${escapeHtml(QUIZ.quiz_id||quizId)}</span>
+        </div>
+      </div>
+      <div class="muted" style="margin-top:8px; line-height:1.35">
+        Bạn đã đăng nhập: <b>${escapeHtml(me?.username||"")}</b><br/>
+        Bấm <b>Vào làm</b> để bắt đầu.
+      </div>
+
+      <div style="margin-top:12px; display:grid; gap:10px;">
+        <button class="btn btn-primary" id="btnStart" style="justify-content:center;">✅ Vào làm</button>
+        <button class="btn btn-ghost" id="btnBackGate" style="justify-content:center;">🔁 Đổi tài khoản</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("btnStart").onclick = ()=>{
+    view.started = true;
+    renderQuiz();
+  };
+  document.getElementById("btnBackGate").onclick = ()=>{
+    const ok = confirm("Đăng xuất để đổi tài khoản?");
+    if(!ok) return;
+    clearAuthLocal();
+    me = null;
+    view.started = false;
+    setUserCorner(null);
+    toast("Đã đăng xuất");
+    renderGate();
+    updateStats();
+  };
+}
+
+/* ================== RENDER QUIZ (giữ như cũ) ================== */
 function renderQuiz(){
+  view.started = true;
+  setUserCorner(me);
+
   if(!QUIZ.items.length){
     content.innerHTML = `
       <div class="card">
@@ -659,13 +1012,12 @@ function renderQuiz(){
   updateStats();
 }
 
-/** ====== EVENTS ====== */
+/* ================== EVENTS (giữ như cũ) ================== */
 content.addEventListener("input", (e)=>{
   const t = e.target;
   if(!t || !t.classList.contains("ans")) return;
   const id = Number(t.dataset.id);
   state.answers[id] = String(t.value||"");
-  // nếu đã lock thì không cho sửa
   const ck = state.checked[id];
   if(ck && ck.locked){
     t.value = String(state.answers[id]||"");
@@ -681,7 +1033,6 @@ content.addEventListener("keydown", (e)=>{
   if(e.key==="Enter"){
     e.preventDefault();
     const id = Number(t.dataset.id);
-    // auto check soft (không lock)
     const item = QUIZ.items.find(x=>Number(x.id)===id);
     if(!item) return;
     const g = gradeOne(item, state.answers[id]);
@@ -706,13 +1057,14 @@ content.addEventListener("click", (e)=>{
   state.checked[id] = { ok: !!g.ok, expected: String(g.expected||""), locked:true };
   saveLocalProgress();
   toast(g.ok ? "ĐÚNG" : "SAI");
-  renderQuiz(); // để hiện resultRow + disable input
+  renderQuiz();
 });
 
 document.getElementById("btnScrollTop").onclick = ()=>{
   document.getElementById("shell").scrollTo({ top:0, behavior:"smooth" });
 };
 
+/* reset modal */
 const resetBackdrop = document.getElementById("resetBackdrop");
 document.getElementById("btnReset").onclick = ()=>{
   resetBackdrop.classList.add("show");
@@ -737,23 +1089,26 @@ document.getElementById("btnConfirmReset").onclick = ()=>{
   state.attempt_id = "";
   saveLocalProgress();
   toast("Đã làm lại");
-  renderQuiz();
+  if(view.started) renderQuiz();
+  else updateStats();
 };
 
+/* userCorner click -> logout */
 userCorner.addEventListener("click", ()=>{
   if(!me) return;
   const ok = confirm(`Đang login: ${me.username}\nOK = đăng xuất`);
   if(ok){
-    clearToken();
+    clearAuthLocal();
     me = null;
+    view.started = false;
     setUserCorner(null);
     toast("Đã đăng xuất");
-    renderLogin();
+    renderGate();
     updateStats();
   }
 });
 
-/** ====== SUBMIT ====== */
+/* ================== SUBMIT (giữ như cũ) ================== */
 function computeFinal(){
   let correct = 0;
   const wrong = [];
@@ -762,7 +1117,6 @@ function computeFinal(){
     const g = gradeOne(it, ans);
     if(g.ok) correct++;
     else wrong.push({ id: it.id, word: it.word, user: ans, expected: g.expected });
-    // lock all
     state.checked[it.id] = { ok: !!g.ok, expected: String(g.expected||""), locked:true };
   }
   const total = QUIZ.items.length;
@@ -771,7 +1125,6 @@ function computeFinal(){
 }
 
 async function submitToSupabase(result){
-  // 1) insert attempts
   const attemptBody = {
     quiz_id: quizId,
     user_id: me.user_id,
@@ -785,7 +1138,6 @@ async function submitToSupabase(result){
   const attemptId = row?.attempt_id;
   if(!attemptId) throw new Error("Không lấy được attempt_id");
 
-  // 2) insert attempt_answers (batch)
   const ansRows = QUIZ.items.map(it=>{
     const userAnswer = String(state.answers[it.id]||"").trim();
     const g = gradeOne(it, userAnswer);
@@ -797,18 +1149,15 @@ async function submitToSupabase(result){
       expected: String(g.expected||"")
     };
   });
-  try{
-    await sbPost("attempt_answers", ansRows, { preferReturn:false });
-  }catch(e){
-    // nếu table này bật RLS hoặc chưa muốn lưu chi tiết thì bỏ qua
-  }
+  try{ await sbPost("attempt_answers", ansRows, { preferReturn:false }); }catch(e){}
 
   return attemptId;
 }
 
 document.getElementById("btnSubmit").onclick = async ()=>{
-  if(!me || !me.user_id){ toast("Chưa login"); renderLogin(); return; }
+  if(!me || !me.user_id){ toast("Chưa login"); renderGate(); return; }
   if(state.finalized) return;
+  if(!view.started){ toast("Bấm Vào làm trước"); return; }
 
   state.finalized = true;
 
@@ -816,21 +1165,17 @@ document.getElementById("btnSubmit").onclick = async ()=>{
   const result = computeFinal();
   saveLocalProgress();
 
-  // luôn render quiz lại để lock hết
   renderQuiz();
 
-  // gửi supabase
   let attemptId = "";
   try{
     attemptId = await submitToSupabase(result);
     state.attempt_id = attemptId;
     saveLocalProgress();
   }catch(e){
-    // vẫn cho xem kết quả offline, nhưng báo
     toast("Không gửi được Supabase (xem kết quả vẫn OK)");
   }
 
-  // lưu để result.html đọc nhanh
   try{
     sessionStorage.setItem(`tk_last_result::${quizId}`, JSON.stringify({
       quiz_id: quizId,
@@ -843,14 +1188,13 @@ document.getElementById("btnSubmit").onclick = async ()=>{
     }));
   }catch{}
 
-  // đi sang result page
   const qs = new URLSearchParams();
   qs.set("quiz", quizId);
   if(attemptId) qs.set("attempt", attemptId);
   location.href = `/result.html?${qs.toString()}`;
 };
 
-/** ====== LOAD BOOTSTRAP ====== */
+/* ================== AUTH RESTORE + LOAD QUIZ ================== */
 async function loadMeIfAny(){
   const token = getToken();
   if(!token) return null;
@@ -861,13 +1205,13 @@ async function loadMeIfAny(){
     if(m && m.id && !m.user_id) m.user_id = m.id;
     return m;
   }catch(e){
-    clearToken();
+    // giống trang chủ: không loop khó chịu -> clear token cho sạch ở trang quiz
+    clearAuthLocal();
     return null;
   }
 }
 
 async function loadQuiz(){
-  // ưu tiên RPC (đúng flow bạn đang dùng)
   try{
     const token = getToken();
     const out = await sbRpc(RPC.getQuiz, { p_quiz_id: quizId, p_token: token || "" });
@@ -888,11 +1232,8 @@ async function loadQuiz(){
         }))
       };
     }
-  }catch(e){
-    // fallback REST
-  }
+  }catch(e){}
 
-  // REST fallback
   const qArr = await sbGet(`quizzes?quiz_id=eq.${quizId}&select=quiz_id,title,sub&limit=1`);
   const q = (Array.isArray(qArr) && qArr[0]) ? qArr[0] : { quiz_id: quizId, title:"Quiz", sub:"" };
   const items = await sbGet(`vocabs?quiz_id=eq.${quizId}&select=id,no,word,pos,meaning,answers&order=no.asc,id.asc`);
@@ -911,6 +1252,37 @@ async function loadQuiz(){
   };
 }
 
+/* sau khi login/register thành công */
+async function enterAfterAuth(out){
+  const token = out?.token || "";
+  if(token) setToken(token);
+
+  let m = out?.me || out?.user || out?.data || null;
+  if(m && m.id && !m.user_id) m.user_id = m.id;
+
+  if(m && m.user_id){
+    me = m;
+    setMeCache(m);
+    setUserCorner(me);
+    view.started = false;
+    renderStart();
+  }else{
+    // fallback: thử gọi me
+    const m2 = await loadMeIfAny();
+    if(m2){
+      me = m2;
+      setMeCache(m2);
+      setUserCorner(me);
+      view.started = false;
+      renderStart();
+    }else{
+      toast("Không lấy được user");
+      renderGate();
+    }
+  }
+}
+
+/* ================== BOOT ================== */
 (async function boot(){
   if(!quizId || quizId.length!==5){
     renderLoading("Sai link quiz. Dạng đúng: /q/abcde");
@@ -921,11 +1293,15 @@ async function loadQuiz(){
 
   loadLocalProgress();
 
-  me = await loadMeIfAny();
-  if(me) setMeCache(me);
-  if(!me) me = getMeCache();
+  // restore me
+  me = getMeCache();
+  if(me && me.id && !me.user_id) me.user_id = me.id;
 
-  if(me && me.user_id) setUserCorner(me);
+  // nếu có token mà chưa có me -> gọi me
+  if(getToken() && (!me || !me.user_id)){
+    const m2 = await loadMeIfAny();
+    if(m2){ me = m2; setMeCache(me); }
+  }
 
   try{
     QUIZ = await loadQuiz();
@@ -938,11 +1314,14 @@ async function loadQuiz(){
 
   updateStats();
 
-  // quyết định view
-  if(!me || !me.user_id){
-    renderLogin();
+  if(me && me.user_id){
+    setUserCorner(me);
+    view.started = false;
+    renderStart();   // ✅ đã login -> hiện tên bài + nút vào làm
   }else{
-    renderQuiz();
+    setUserCorner(null);
+    view.started = false;
+    renderGate();    // ✅ chưa login -> hiện gate i chang trang chủ
   }
 })();
 </script>
