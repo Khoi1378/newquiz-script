@@ -205,7 +205,7 @@
           <div class="logo">🎡</div>
           <div class="titles">
             <h1>Spin1</h1>
-            <div class="tiny">Vòng quay chủ đề (1–12) • Mỗi người 1 lần • Không trùng</div>
+            <div class="tiny">Vòng quay chủ đề (1–12) • Mỗi người 1 lần thôi • Không ai trùng ai</div>
           </div>
         </div>
         <div class="pill" id="statusPill">Đang tải…</div>
@@ -223,10 +223,10 @@
             </div>
 
             <div class="row" style="margin-top:10px">
-              <input id="nameInput" class="input" placeholder="Nhập tên (max 24)" maxlength="24" autocomplete="off"/>
+              <input id="nameInput" class="input" placeholder="Nhập tên thật nha (tối đa 24 ký tự)" maxlength="24" autocomplete="off"/>
               <button id="btnSave" class="btn btn-ghost">💾 Lưu tên</button>
             </div>
-            <div class="muted" style="margin-top:8px" id="nameHint">Bắt buộc nhập tên rồi mới cho quay.</div>
+            <div class="muted" style="margin-top:8px" id="nameHint">Phải nhập tên rồi mới được quay nha.</div>
 
             <div style="height:12px"></div>
 
@@ -521,7 +521,7 @@ function updateGateState(){
     btnSpin.disabled = true;
   }else if(mine){
     statusTag.textContent = "Bạn đã quay";
-    spinHint.textContent = `Bạn đã ra Chủ đề ${mine.topic}. (Admin xoá thì bạn quay lại được)`;
+    spinHint.textContent = `Bạn đã quay ra Chủ đề ${mine.topic}. (Không quay lại được đâu)`;
     btnSpin.disabled = true;
   }else{
     statusTag.innerHTML = `<span class="ok">Sẵn sàng</span>`;
