@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spin1</title>
+  <style>
+    :root{--bg:#0b1220;--card:#0f172a;--text:#e5e7eb;--muted:#94a3b8;--line:#1f2937;--pri:#7c3aed;--bad:#ef4444;--ok:#22c55e;}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:radial-gradient(900px 400px at 10% 10%,rgba(124,58,237,.25),transparent 60%),linear-gradient(180deg,#050816,var(--bg));color:var(--text)}
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    .top{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .title{font-weight:950;font-size:1.15rem}
+    .muted{color:var(--muted)}
+    .card{background:rgba(15,23,42,.75);border:1px solid rgba(148,163,184,.18);border-radius:18px;padding:14px;backdrop-filter:blur(6px);box-shadow:0 18px 50px rgba(0,0,0,.25);margin:12px 0}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    input{width:260px;max-width:100%;padding:12px 12px;border-radius:14px;border:1px solid rgba(148,163,184,.25);background:#0b1220;color:var(--text);font-weight:800;outline:none}
+    input:focus{border-color:rgba(124,58,237,.55);box-shadow:0 0 0 5px rgba(124,58,237,.15)}
+    button{padding:12px 14px;border-radius:14px;border:1px solid rgba(148,163,184,.25);background:#0b1220;color:var(--text);font-weight:900;cursor:pointer}
+    button.primary{background:linear-gradient(135deg,#7c3aed,#fb7185);border:0}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .grid{display:grid;grid-template-columns:420px 1fr;gap:12px;align-items:start}
+    @media(max-width:900px){.grid{grid-template-columns:1fr}}
+    canvas{width:100%;height:auto;aspect-ratio:1/1;background:rgba(2,6,23,.5);border-radius:18px;border:1px solid rgba(148,163,184,.18)}
+    .pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:22px solid #f59e0b;filter:drop-shadow(0 12px 18px rgba(0,0,0,.35))}
+    .wheelBox{position:relative}
+    table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid rgba(148,163,184,.18);border-radius:16px;overflow:hidden}
+    th,td{padding:10px;border-bottom:1px solid rgba(148,163,184,.12);text-align:left;font-weight:750}
+    th{background:rgba(2,6,23,.55);font-weight:950}
+    tr:last-child td{border-bottom:0}
+    .tag{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.18);background:rgba(2,6,23,.45);font-weight:900}
+    .ok{color:var(--ok)} .bad{color:var(--bad)}
+    /* popup */
+    .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+    .backdrop.show{display:flex}
+    .modal{max-width:520px;width:100%;background:#0b1220;border:1px solid rgba(148,163,184,.22);border-radius:18px;padding:14px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+    .modal h3{margin:0 0 6px;font-size:1.05rem}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <div class="title">🎡 Vòng quay chủ đề (Spin1)</div>
+        <div class="muted">Tối đa 12 người • Chủ đề 1–12 • Không trùng • Mỗi tên 1 lần (admin có thể xoá để quay lại)</div>
+      </div>
+      <div class="tag" id="adminTag" style="display:none;">ADMIN MODE</div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="row">
+          <input id="nameInput" placeholder="Nhập tên (max 24)" maxlength="24" />
+          <button id="btnSave">Lưu tên</button>
+        </div>
+        <div class="muted" style="margin-top:8px" id="nameHint">Tên được lưu 30 ngày.</div>
+
+        <div style="height:10px"></div>
+
+        <div class="wheelBox">
+          <div class="pointer"></div>
+          <canvas id="wheel" width="900" height="900"></canvas>
+        </div>
+
+        <div style="height:10px"></div>
+
+        <div class="row">
+          <button class="primary" id="btnSpin">🎯 QUAY 1 LẦN</button>
+          <div class="tag" id="statusTag">Đang tải…</div>
+        </div>
+        <div class="muted" style="margin-top:8px" id="spinHint"></div>
+      </div>
+
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <div style="font-weight:950">Bảng kết quả (công khai)</div>
+          <div class="muted" id="countText">0/12</div>
+        </div>
+        <div class="muted" style="margin-top:6px">Format thời gian: <b>hh/mm/ss, đ/mm/yy</b></div>
+        <div style="overflow:auto;margin-top:10px">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Tên</th>
+                <th>Chủ đề</th>
+                <th>Thời gian</th>
+                <th id="adminCol" style="display:none;">Admin</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <div class="muted" style="margin-top:10px">Tự refresh mỗi 8 giây.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="backdrop" id="popup">
+    <div class="modal">
+      <h3>🎉 Chúc mừng!</h3>
+      <div id="popupMsg" class="muted" style="font-weight:800;line-height:1.4"></div>
+      <div class="row" style="justify-content:flex-end;margin-top:12px">
+        <button id="btnClosePop" class="primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ====== CONFIG: dán giống site chính ====== */
+const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
+const SUPABASE_ANON_KEY = "PASTE_ANON_KEY_HERE"; // <-- dán anon key của bạn vào đây
+
+const TOKEN_KEY = "tk_token_v2";       // token admin lấy từ trang chủ
+const NAME_KEY  = "spin1_name";
+const NAME_EXP  = "spin1_name_exp";    // ms epoch
+
+const TOTAL = 12;
+const REFRESH_MS = 8000;
+
+/* ====== helpers ====== */
+function esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function normName(s){return String(s||"").trim().replace(/\s+/g," ").toLowerCase();}
+function nowMs(){return Date.now();}
+
+function setNameCache(name){
+  const exp = nowMs() + 30*24*60*60*1000;
+  localStorage.setItem(NAME_KEY, name);
+  localStorage.setItem(NAME_EXP, String(exp));
+}
+function getNameCache(){
+  const exp = Number(localStorage.getItem(NAME_EXP)||0);
+  if(!exp || exp < nowMs()){
+    localStorage.removeItem(NAME_KEY); localStorage.removeItem(NAME_EXP);
+    return "";
+  }
+  return localStorage.getItem(NAME_KEY)||"";
+}
+
+function fmtTime(ts){
+  const d = new Date(ts);
+  const hh = String(d.getHours()).padStart(2,"0");
+  const mm = String(d.getMinutes()).padStart(2,"0");
+  const ss = String(d.getSeconds()).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  const MM = String(d.getMonth()+1).padStart(2,"0");
+  const yy = String(d.getFullYear()).slice(-2);
+  return `${hh}/${mm}/${ss}, ${dd}/${MM}/${yy}`;
+}
+
+async function rpc(fn,args){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
+    method:"POST",
+    headers:{
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify(args||{})
+  });
+  const txt = await res.text();
+  let data=null; try{ data = txt?JSON.parse(txt):null; }catch{}
+  if(!res.ok) throw new Error(data?.message||data?.error||txt||"RPC error");
+  return data;
+}
+
+/* ====== state ====== */
+const nameInput = document.getElementById("nameInput");
+const btnSave = document.getElementById("btnSave");
+const btnSpin = document.getElementById("btnSpin");
+const rowsEl = document.getElementById("rows");
+const countText = document.getElementById("countText");
+const statusTag = document.getElementById("statusTag");
+const spinHint = document.getElementById("spinHint");
+const adminTag = document.getElementById("adminTag");
+const adminCol = document.getElementById("adminCol");
+
+const popup = document.getElementById("popup");
+const popupMsg = document.getElementById("popupMsg");
+document.getElementById("btnClosePop").onclick = ()=>popup.classList.remove("show");
+popup.addEventListener("click",(e)=>{ if(e.target===popup) popup.classList.remove("show"); });
+
+let ME = null;           // {username, role}
+let ROWS = [];           // active rows
+let taken = new Set();   // topics used
+let rotation = 0;        // radians
+let spinning = false;
+
+/* ====== admin detect ====== */
+async function loadMe(){
+  const tk = localStorage.getItem(TOKEN_KEY)||"";
+  if(!tk) return null;
+  const out = await rpc("api_me",{p_token:tk}).catch(()=>null);
+  if(out && out.ok) return out.me;
+  return null;
+}
+
+/* ====== wheel draw ====== */
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+function drawWheel(rot){
+  const w = canvas.width, h = canvas.height;
+  const cx = w/2, cy = h/2;
+  const R = Math.min(w,h)*0.44;
+  const step = Math.PI*2/TOTAL;
+
+  ctx.clearRect(0,0,w,h);
+
+  // base
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.rotate(rot);
+
+  for(let i=0;i<TOTAL;i++){
+    const topic = i+1;
+    const a0 = -Math.PI/2 + i*step;
+    const a1 = a0 + step;
+    const isTaken = taken.has(topic);
+
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.arc(0,0,R,a0,a1);
+    ctx.closePath();
+
+    ctx.fillStyle = isTaken ? "rgba(148,163,184,.12)" : (i%2===0 ? "rgba(124,58,237,.25)" : "rgba(251,113,133,.22)");
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255,255,255,.18)";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // label
+    const mid = (a0+a1)/2;
+    ctx.save();
+    ctx.rotate(mid);
+    ctx.translate(R*0.68,0);
+    ctx.rotate(Math.PI/2);
+    ctx.fillStyle = isTaken ? "rgba(148,163,184,.65)" : "rgba(255,255,255,.92)";
+    ctx.font = "900 36px system-ui,Segoe UI,Arial";
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    ctx.fillText(`Chủ đề ${topic}`, 0, 0);
+    if(isTaken){
+      ctx.font = "900 26px system-ui,Segoe UI,Arial";
+      ctx.fillText(`(đã có)`, 0, 38);
+    }
+    ctx.restore();
+  }
+
+  // hub
+  ctx.beginPath();
+  ctx.arc(0,0,R*0.12,0,Math.PI*2);
+  ctx.fillStyle = "rgba(2,6,23,.85)";
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,.22)";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function targetRotationForTopic(topic){
+  const step = Math.PI*2/TOTAL;
+  // muốn kim (ở top -pi/2) trỏ vào tâm segment topic
+  const center = (topic-1)*step + step/2;
+  // rot sao cho: -pi/2 + rot + center = -pi/2  (mod 2pi)
+  let base = -center;
+  // thêm nhiều vòng cho đã
+  const spins = 6 + Math.floor(Math.random()*3);
+  return base + spins*(Math.PI*2);
+}
+
+function animateTo(target, ms=2200){
+  return new Promise((resolve)=>{
+    const start = performance.now();
+    const from = rotation;
+    const diff = target - from;
+    function easeOutCubic(t){ return 1 - Math.pow(1-t,3); }
+    function step(now){
+      const p = Math.min(1,(now-start)/ms);
+      rotation = from + diff*easeOutCubic(p);
+      drawWheel(rotation);
+      if(p<1) requestAnimationFrame(step);
+      else resolve();
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+/* ====== table render ====== */
+function renderTable(){
+  countText.textContent = `${ROWS.length}/12`;
+  rowsEl.innerHTML = ROWS.map((r,idx)=>{
+    const t = fmtTime(r.created_at);
+    const delBtn = (ME && ME.role==="admin")
+      ? `<button data-del="${r.id}" style="padding:8px 10px;border-radius:12px;border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.10);color:#fecaca;font-weight:900;cursor:pointer">Xoá</button>`
+      : "";
+    return `<tr>
+      <td>${idx+1}</td>
+      <td>${esc(r.name)}</td>
+      <td><b>Chủ đề ${r.topic}</b></td>
+      <td>${esc(t)}</td>
+      <td style="display:${ME&&ME.role==="admin"?"table-cell":"none"}">${delBtn}</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="5" class="muted">Chưa có ai quay.</td></tr>`;
+}
+
+/* ====== load list ====== */
+async function loadList(){
+  const out = await rpc("api_spin1_list",{});
+  if(!out.ok) throw new Error(out.error||"list fail");
+  ROWS = (out.rows||[]).map(x=>({
+    id: x.id,
+    name: x.name,
+    topic: Number(x.topic),
+    created_at: x.created_at
+  })).slice(0,12);
+
+  taken = new Set(ROWS.map(r=>r.topic));
+  drawWheel(rotation);
+
+  // trạng thái theo tên hiện tại
+  const name = getNameCache();
+  if(name) nameInput.value = name;
+
+  const nn = normName(nameInput.value);
+  const mine = nn ? ROWS.find(r=>normName(r.name)===nn) : null;
+
+  if(ROWS.length>=12){
+    statusTag.textContent = "Đã đủ 12/12";
+    spinHint.textContent = "Hết chủ đề. Chờ admin xoá để quay tiếp.";
+    btnSpin.disabled = true;
+  }else if(!nameInput.value.trim()){
+    statusTag.textContent = "Chưa nhập tên";
+    spinHint.textContent = "Nhập tên rồi mới quay.";
+    btnSpin.disabled = true;
+  }else if(mine){
+    statusTag.textContent = "Bạn đã quay";
+    spinHint.textContent = `Bạn đã ra Chủ đề ${mine.topic}. (Admin xoá thì bạn quay lại được)`;
+    btnSpin.disabled = true;
+  }else{
+    statusTag.textContent = "Sẵn sàng";
+    spinHint.textContent = `Còn ${TOTAL - taken.size} chủ đề trống.`;
+    btnSpin.disabled = false;
+  }
+
+  renderTable();
+}
+
+/* ====== actions ====== */
+btnSave.onclick = ()=>{
+  const nm = nameInput.value.trim().replace(/\s+/g," ");
+  if(!nm){ alert("Bạn chưa nhập tên"); return; }
+  setNameCache(nm);
+  loadList();
+};
+
+btnSpin.onclick = async ()=>{
+  if(spinning) return;
+  const nm = nameInput.value.trim().replace(/\s+/g," ");
+  if(!nm){ alert("Nhập tên trước"); return; }
+
+  setNameCache(nm);
+
+  spinning = true;
+  btnSpin.disabled = true;
+  statusTag.textContent = "Đang quay…";
+  try{
+    const out = await rpc("api_spin1_spin",{ p_name: nm });
+    if(!out.ok){
+      // nếu đã quay -> đồng bộ lại
+      await loadList();
+      alert(out.error || "Không quay được");
+      return;
+    }
+    const row = out.row;
+    const topic = Number(row.topic);
+
+    const target = targetRotationForTopic(topic);
+    await animateTo(target, 2300);
+
+    popupMsg.innerHTML = `Chúc mừng <b>${esc(nm)}</b> đã chọn <b>Chủ đề ${topic}</b> 🎉`;
+    popup.classList.add("show");
+
+    await loadList();
+  }catch(e){
+    alert(e.message||"Lỗi");
+    await loadList();
+  }finally{
+    spinning = false;
+  }
+};
+
+// admin delete click
+rowsEl.addEventListener("click", async (e)=>{
+  const btn = e.target.closest("button[data-del]");
+  if(!btn) return;
+  if(!(ME && ME.role==="admin")) return;
+
+  const id = btn.getAttribute("data-del");
+  if(!confirm("Xoá lượt quay này? (trả chủ đề về vòng quay)")) return;
+
+  const tk = localStorage.getItem(TOKEN_KEY)||"";
+  const out = await rpc("api_spin1_admin_delete",{ p_token: tk, p_id: id });
+  if(!out.ok){ alert(out.error||"xoá fail"); return; }
+  await loadList();
+});
+
+/* ====== boot ====== */
+(async ()=>{
+  if(SUPABASE_ANON_KEY.includes("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o")){
+    alert("Bạn chưa dán SUPABASE_ANON_KEY trong /spin1/index.html");
+    return;
+  }
+  ME = await loadMe();
+  if(ME && ME.role==="admin"){
+    adminTag.style.display="";
+    adminCol.style.display="";
+  }
+
+  // load cached name
+  nameInput.value = getNameCache();
+
+  // initial draw
+  drawWheel(rotation);
+
+  // initial load + auto refresh
+  await loadList();
+  setInterval(()=>loadList().catch(()=>{}), REFRESH_MS);
+})();
+</script>
+</body>
+</html>
