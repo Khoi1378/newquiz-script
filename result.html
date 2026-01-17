@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
   <title>Kết quả</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,46 +10,53 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
 
   <style>
-    :root {
+    :root{
       --bg1:#ffecd2; --bg2:#fcb69f;
       --card:#fff; --text:#1f2937; --muted:#6b7280;
       --primary:#7c3aed; --ok:#16a34a; --bad:#dc2626;
-      --border:#e5e7eb;
+      --border:#e5e7eb; --soft:#f8fafc;
       --shadow:0 14px 40px rgba(0,0,0,.10);
       --radius:18px;
       --admin:#2563eb;
+      --pin:#f59e0b;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    html{-webkit-text-size-adjust:100%}
     body{
       margin:0;
       font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       color:var(--text);
       background: radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
-                  linear-gradient(120deg, var(--bg1) 0%, var(--bg2) 100%);
+                  linear-gradient(120deg,var(--bg1) 0%,var(--bg2) 100%);
       overflow:hidden;
-      touch-action:pan-x pan-y;
     }
     #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px}
     .wrap{max-width:980px;margin:0 auto;padding:0 14px}
 
-    .topbar{
-      margin-top:10px;background:rgba(255,255,255,.86);
-      border:1px solid rgba(229,231,235,.9);border-radius:18px;
-      box-shadow:0 10px 30px rgba(0,0,0,.06);
-      padding:14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+    .actionbar{
+      position:sticky;top:10px;z-index:9999;
+      display:flex;justify-content:flex-end;gap:10px;padding:0 14px;flex-wrap:wrap;
     }
-    .titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
-    .logo{
-      width:42px;height:42px;border-radius:16px;
-      background:linear-gradient(135deg,#a78bfa,#fb7185);
-      display:flex;align-items:center;justify-content:center;
-      color:#fff;font-weight:900;box-shadow:0 10px 22px rgba(124,58,237,.18);
-      user-select:none;
+    .btn{
+      border:0;cursor:pointer;border-radius:999px;padding:10px 14px;
+      font-weight:900;font-size:.9rem;
+      transition:transform .16s ease,filter .16s ease;
+      display:inline-flex;align-items:center;gap:8px;
+      user-select:none;white-space:nowrap;
+      box-shadow:0 12px 24px rgba(0,0,0,.12);
+      background:#fff;color:#111827;border:1px solid #e5e7eb;
     }
-    .titles h1{font-size:1.02rem;margin:0;font-weight:800}
-    .titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
+    .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
+    .btn:active{transform:translateY(0)}
+    .btn-primary{background:linear-gradient(135deg,#7c3aed,#fb7185);color:#fff;border:0}
+    .btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
+    .btn-mini{
+      padding:8px 10px;border-radius:999px;
+      font-weight:950;font-size:.82rem;
+      border:1px solid #e5e7eb;background:#fff;cursor:pointer;
+    }
+    .btn-mini.danger{background:rgba(220,38,38,.95);color:#fff;border:0}
+    .btn-mini.primary{background:linear-gradient(135deg,#7c3aed,#fb7185);color:#fff;border:0}
 
     .card{
       background:var(--card);
@@ -60,152 +67,226 @@
     }
     .row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
     .vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25}
-    .idx{
-      font-size:.78rem;font-weight:900;padding:6px 10px;border-radius:999px;
-      background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;white-space:nowrap;
-    }
     .muted{color:var(--muted);font-weight:650}
+    .idx{
+      font-size:.78rem;font-weight:900;
+      padding:6px 10px;border-radius:999px;
+      background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;
+      white-space:nowrap;
+    }
+
+    .topbar{
+      margin-top:10px;
+      background:rgba(255,255,255,.86);
+      border:1px solid rgba(229,231,235,.9);
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,.06);
+      padding:14px;
+      display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+    }
+    .titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
+    .logo{
+      width:42px;height:42px;border-radius:16px;
+      background:linear-gradient(135deg,#a78bfa,#fb7185);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:900;
+      box-shadow:0 10px 22px rgba(124,58,237,.18);
+      user-select:none;
+    }
+    .titles h1{font-size:1.02rem;margin:0;font-weight:800}
+    .titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
+
     .pill{
-      background:#f3f4f6;border:1px solid #e5e7eb;border-radius:999px;padding:8px 12px;
-      font-weight:800;font-size:.9rem;color:#374151;white-space:nowrap;
-      display:inline-flex;gap:6px;align-items:center;
+      background:#f3f4f6;border:1px solid #e5e7eb;border-radius:999px;
+      padding:8px 12px;font-weight:900;font-size:.9rem;color:#374151;white-space:nowrap;
     }
     .pill strong{color:var(--primary)}
     .oktxt{color:var(--ok);font-weight:1000}
     .badtxt{color:var(--bad);font-weight:1000}
 
-    .btn{
-      border:0;cursor:pointer;border-radius:999px;padding:10px 14px;
-      font-weight:900;font-size:.9rem;
-      display:inline-flex;align-items:center;gap:8px;
-      box-shadow:0 12px 24px rgba(0,0,0,.12);
-      background:#fff;color:#111827;border:1px solid #e5e7eb;
-      text-decoration:none;
-      touch-action:manipulation;
-      -webkit-tap-highlight-color:transparent;
+    .lbRow{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:10px 12px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;
+      margin-top:10px;
     }
-    .btn-primary{
-      background:linear-gradient(135deg,#7c3aed,#fb7185);
-      color:#fff;border:0;box-shadow:0 12px 24px rgba(124,58,237,.18);
+    .lbLeft{display:flex;align-items:center;gap:10px;min-width:0}
+    .lbRank{
+      width:34px;height:34px;border-radius:14px;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:1000;border:1px solid #e5e7eb;background:#f8fafc;
+      flex:0 0 auto;
     }
-    .btn[disabled]{opacity:.65;cursor:not-allowed}
+    .lbName{font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
+    .lbScore{font-weight:1000}
+    .badgeAdmin{
+      padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
+      background:rgba(37,99,235,.12);
+      border:1px solid rgba(37,99,235,.35);
+      color:var(--admin);
+      flex:0 0 auto;
+    }
+    .badgePin{
+      padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
+      background:rgba(245,158,11,.14);
+      border:1px solid rgba(245,158,11,.35);
+      color:#b45309;
+      flex:0 0 auto;
+    }
 
-    .table{
-      width:100%;border-collapse:separate;border-spacing:0;
-      overflow:hidden;border-radius:16px;border:1px solid #e5e7eb;background:#fff;
-      table-layout:fixed;
-    }
-    .table th,.table td{
-      padding:10px 10px;border-bottom:1px solid #e5e7eb;text-align:left;
-      font-weight:750;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;
-    }
-    .table th{background:#f8fafc;font-weight:900}
-    .table tr:last-child td{border-bottom:0}
-
-    .toast{
-      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
-      background:rgba(17,24,39,.92);color:#fff;padding:10px 12px;border-radius:14px;
-      font-weight:800;font-size:.9rem;opacity:0;pointer-events:none;
-      transition:opacity .18s ease, transform .18s ease;
-      max-width:calc(100% - 28px);z-index:20050;text-align:center;
-    }
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
-
-    /* comments UI (từ code cũ, rút gọn) */
     .input{
       width:100%;
       border-radius:14px;border:2px solid #e5e7eb;
       padding:11px 12px;font-size:.95rem;font-weight:700;
-      outline:none;background:#f8fafc;
-      transition:border-color .15s ease, box-shadow .15s ease;
+      outline:none;background:var(--soft);
     }
-    .input:focus{
-      border-color:rgba(124,58,237,.55);
-      box-shadow:0 0 0 5px rgba(124,58,237,.10);
+    textarea.input{min-height:110px;resize:vertical}
+
+    .cmtItem{
+      margin-top:10px;border:1px solid #e5e7eb;background:#fff;
+      border-radius:16px;padding:10px 12px;
+    }
+    .cmtItem.reply{margin-left:22px;border-left:4px solid rgba(124,58,237,.25)}
+    .cmtHead{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+    }
+    .cmtWho{display:flex;align-items:center;gap:8px;min-width:0}
+    .cmtName{font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:58vw}
+    .cmtTime{color:var(--muted);font-weight:750;font-size:.84rem;white-space:nowrap}
+    .cmtText{margin-top:8px;font-weight:750;line-height:1.35;white-space:pre-wrap}
+    .cmtActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .replyBox{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:16px;
+      border:1px dashed #e5e7eb;
       background:#fff;
     }
-    .cmtBox{display:grid;gap:12px}
-    .cmtItem{border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:#fff}
-    .cmtHead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
-    .cmtAuthor{font-weight:950;color:#6b7280;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .adminBadgeInline{
-      padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
-      background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin);white-space:nowrap;
+
+    .toast{
+      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+      background:rgba(17,24,39,.92);color:#fff;
+      padding:10px 12px;border-radius:14px;
+      font-weight:800;font-size:.9rem;
+      opacity:0;pointer-events:none;
+      transition:opacity .18s ease,transform .18s ease;
+      max-width:calc(100% - 28px);
+      z-index:20050;text-align:center;
     }
-    .cmtText{color:#111827;font-weight:750;line-height:1.35;white-space:pre-wrap;word-break:break-word}
-    .cmtActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;justify-content:flex-end}
-    .cmtBtn{
-      border-radius:999px;padding:7px 10px;font-weight:900;
-      border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:.82rem;
-    }
-    .cmtBtnDanger{background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.25);color:#991b1b}
-    .cmtTime{margin-top:6px;text-align:right;color:#6b7280;font-weight:800;font-size:.82rem}
-    .replyWrap{margin-top:10px;margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;display:grid;gap:10px}
-    .replyForm{margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;margin-top:10px;display:grid;gap:10px}
-    .charRow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6b7280;font-weight:800;font-size:.85rem}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
   </style>
 </head>
 
 <body>
   <div id="shell">
+    <div class="actionbar">
+      <button class="btn btn-ghost" id="btnHome">🏠 Trang chủ</button>
+      <button class="btn" id="btnBackQuiz">📝 Về quiz</button>
+      <button class="btn" id="btnScrollTop">⬆️ Lên đầu</button>
+    </div>
+
     <div class="wrap">
       <div class="topbar">
         <div class="titlebox">
-          <div class="logo">✅</div>
+          <div class="logo">OK</div>
           <div class="titles">
-            <h1 id="title">Kết quả</h1>
-            <div class="tiny" id="sub"></div>
+            <h1 id="quizTitle">Kết quả</h1>
+            <div class="tiny" id="quizSub"></div>
           </div>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-          <a class="btn" id="btnBackStore" href="/">← Store</a>
-          <a class="btn btn-primary" id="btnBackQuiz" href="/q/abcde">↩️ Làm lại</a>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="pill">Điểm: <strong id="score10">0.0</strong>/10</div>
+          <div class="pill">Đúng: <strong id="correct">0</strong>/<span id="total">0</span></div>
         </div>
       </div>
 
-      <div id="summary" class="card"></div>
-      <div id="wrong" class="card"></div>
+      <div id="main"></div>
 
-      <!-- BXH + Comment nằm cuối -->
-      <div id="lb" class="card"></div>
-      <div id="discussion" class="card"></div>
+      <div id="leaderboard"></div>
+
+      <div id="comments"></div>
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
 <script>
+/* ================== CONFIG ================== */
+const HOME_URL = "/";
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmRzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o".replace("c3VwYWJzZS","c3VwYWJzZS"); // giữ nguyên
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
 const TOKEN_KEY = "tk_token_v2";
-const NAME_KEY  = "tk_display_name_v1";
+const ME_KEY = "tk_me_v2";
 
+const RPC = {
+  me: "api_me",
+  listLeaderboard: "api_list_leaderboard",
+  listComments: "api_list_comments",
+  addComment: "api_add_comment",
+  deleteComment: "api_delete_comment",
+  pinComment: "api_pin_comment"
+};
+
+/* ================== HELPERS ================== */
 function toast(msg){
   const t = document.getElementById("toast");
   t.textContent = String(msg||"");
   t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"), 1400);
+  setTimeout(()=>t.classList.remove("show"), 1300);
 }
-function escapeHtml(s) {
-  return String(s ?? "")
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+function escapeHtml(s){
+  return String(s??"")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
-function getToken(){ try { return (localStorage.getItem(TOKEN_KEY)||"").trim(); } catch { return ""; } }
-function loadName(){ try { return (localStorage.getItem(NAME_KEY)||"").trim(); } catch { return ""; } }
+function pad2(n){ return String(n).padStart(2,"0"); }
+function fmtTime(ts){
+  const d = new Date(ts);
+  if(!isFinite(d.getTime())) return "—";
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}/${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
+}
+function getToken(){ try{ return (localStorage.getItem(TOKEN_KEY)||"").trim(); }catch{ return ""; } }
+function getMeCache(){ try{ return JSON.parse(localStorage.getItem(ME_KEY)||"null"); }catch{ return null; } }
+function isAdminUser(me){
+  if(!me) return false;
+  const u = String(me.username||"").toLowerCase();
+  return me.role==="admin" || u==="tuankhoi";
+}
+function medal(rank){
+  if(rank===1) return "🥇";
+  if(rank===2) return "🥈";
+  if(rank===3) return "🥉";
+  return "";
+}
 
-function sbHeaders({ useUserToken=true } = {}){
-  const anon = String(SUPABASE_ANON_KEY||"").trim();
-  const tk = useUserToken ? getToken() : "";
-  return {
-    "apikey": anon,
-    "Authorization": "Bearer " + (tk || anon),
-    "Content-Type": "application/json"
-  };
+/* ================== SUPABASE ================== */
+async function sbRpc(fn, args){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
+    method:"POST",
+    headers:{
+      "apikey": String(SUPABASE_ANON_KEY).trim(),
+      "Authorization": "Bearer " + String(SUPABASE_ANON_KEY).trim(),
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify(args||{})
+  });
+  const txt = await res.text();
+  let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
+  if(!res.ok){
+    const msg = (data && (data.message||data.error||data.hint||data.details))
+      ? (data.message||data.error||data.hint||data.details)
+      : txt;
+    throw new Error(msg || "RPC error");
+  }
+  return data;
 }
-async function sbGet(path, { useUserToken=true } = {}){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{ headers: sbHeaders({useUserToken}) });
+async function sbGet(path){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
+    headers:{
+      "apikey": String(SUPABASE_ANON_KEY).trim(),
+      "Authorization": "Bearer " + String(SUPABASE_ANON_KEY).trim()
+    }
+  });
   const txt = await res.text();
   let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
   if(!res.ok){
@@ -216,532 +297,518 @@ async function sbGet(path, { useUserToken=true } = {}){
   }
   return data;
 }
-async function sbPost(path, body, { useUserToken=true, preferReturn=true } = {}){
-  const h = sbHeaders({useUserToken});
-  if(preferReturn) h["Prefer"]="return=representation";
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
-    method:"POST",
-    headers: h,
-    body: JSON.stringify(body||{})
-  });
-  const txt = await res.text();
-  let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
-  if(!res.ok){
-    const msg = (data && (data.message||data.error||data.hint||data.details))
-      ? (data.message||data.error||data.hint||data.details)
-      : txt;
-    throw new Error(msg || "REST POST error");
-  }
-  return data;
-}
-async function sbDelete(path, { useUserToken=true } = {}){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
-    method:"DELETE",
-    headers: sbHeaders({useUserToken})
-  });
-  const txt = await res.text();
-  let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
-  if(!res.ok){
-    const msg = (data && (data.message||data.error||data.hint||data.details))
-      ? (data.message||data.error||data.hint||data.details)
-      : txt;
-    throw new Error(msg || "REST DELETE error");
-  }
-  return data;
-}
 
-function fmtTs(ts){
-  try{
-    const d = ts ? new Date(ts) : new Date();
-    const pad = (n)=>String(n).padStart(2,"0");
-    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
-  }catch{ return ""; }
-}
+/* ================== STATE ================== */
+const mainEl = document.getElementById("main");
+const lbEl = document.getElementById("leaderboard");
+const cmtEl = document.getElementById("comments");
 
 const qs = new URLSearchParams(location.search);
 const quizId = String(qs.get("quiz")||"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
 const attemptId = String(qs.get("attempt")||"").trim();
 
-document.getElementById("btnBackQuiz").href = quizId ? `/q/${quizId}` : "/";
+let me = null;
+let quizMeta = { title:"Kết quả", sub:"" };
+let attempt = null;       // from DB if possible
+let answers = [];         // attempt_answers joined vocabs
+let LB = [];
+let CMTS = [];
+let replyingTo = null;    // root comment id
 
-function renderSummary({ title, sub, username, score10, correctCount, totalCount, when }){
-  document.getElementById("title").textContent = title || "Kết quả";
-  document.getElementById("sub").textContent = sub || "";
+function goHome(){ location.href = HOME_URL; }
+function goQuiz(){ location.href = `/q/${quizId}`; }
 
-  document.getElementById("summary").innerHTML = `
-    <div class="row1">
-      <p class="vi">Tổng kết</p>
-      <div class="idx">DONE</div>
-    </div>
-    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
-      <span class="pill">Tên: <strong>${escapeHtml(username||"—")}</strong></span>
-      <span class="pill">Điểm: <strong>${Number(score10||0).toFixed(1)}/10</strong></span>
-      <span class="pill">Đúng: <strong>${Number(correctCount||0)}</strong>/${Number(totalCount||0)}</span>
-      <span class="pill">Thời gian: <strong>${escapeHtml(when||"")}</strong></span>
-    </div>
-  `;
-}
-function renderWrong(list){
-  if(!Array.isArray(list) || !list.length){
-    document.getElementById("wrong").innerHTML = `
-      <div class="row1">
-        <p class="vi">Câu sai</p>
-        <div class="idx">0</div>
-      </div>
-      <div class="muted" style="margin-top:10px"><span class="oktxt">Không sai ✅</span></div>
-    `;
-    return;
-  }
-
-  const rows = list.map((w,i)=>`
-    <tr>
-      <td style="width:70px">${i+1}</td>
-      <td>${escapeHtml(w.word||"")}</td>
-      <td>${escapeHtml(w.user_answer||w.user||"")}</td>
-      <td>${escapeHtml(w.expected||"")}</td>
-    </tr>
-  `).join("");
-
-  document.getElementById("wrong").innerHTML = `
-    <div class="row1">
-      <p class="vi">Câu sai</p>
-      <div class="idx">${list.length}</div>
-    </div>
-    <div style="margin-top:10px; overflow:auto">
-      <table class="table">
-        <thead><tr><th>#</th><th>Từ</th><th>Bạn viết</th><th>Đáp án</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-  `;
-}
-function renderLeaderboard(rows, myName){
-  if(!Array.isArray(rows) || !rows.length){
-    document.getElementById("lb").innerHTML = `
-      <div class="row1"><p class="vi">Bảng xếp hạng</p><div class="idx">TOP</div></div>
-      <div class="muted" style="margin-top:10px">Chưa có dữ liệu.</div>
-    `;
-    return;
-  }
-  const key = (s)=>String(s||"").trim().toLowerCase();
-  const myK = key(myName);
-
-  const body = rows.slice(0,30).map((r,i)=>{
-    const isMe = myK && key(r.name)===myK;
-    return `
-      <tr ${isMe ? `style="background: rgba(124,58,237,.10)"` : ``}>
-        <td style="width:70px"><b>${i+1}</b></td>
-        <td>
-          ${escapeHtml(r.name||"")}
-          ${r.is_admin ? ` <span style="color:${'#2563eb'}; font-weight:900">(ADMIN)</span>`:''}
-          ${isMe?` <span style="color:${'#4c1d95'}; font-weight:900">(Bạn)</span>`:''}
-        </td>
-        <td style="width:110px"><b>${Number(r.score10||0).toFixed(1)}</b>/10</td>
-      </tr>
-    `;
-  }).join("");
-
-  document.getElementById("lb").innerHTML = `
-    <div class="row1"><p class="vi">Bảng xếp hạng</p><div class="idx">TOP</div></div>
-    <div style="margin-top:10px; overflow:auto">
-      <table class="table">
-        <thead><tr><th>#</th><th>Tên</th><th>Điểm</th></tr></thead>
-        <tbody>${body}</tbody>
-      </table>
-    </div>
-  `;
-}
-
-/** ===== COMMENTS (table: comments OR quiz_comments) ===== */
-const DISCUSS_MAX = 120;
-let DISC = { table:"comments", loaded:false, tree:[], openReply:"" };
-
-function discussionHtml(username){
-  return `
-    <div class="row1"><p class="vi">Thảo luận</p><div class="idx">💬</div></div>
-
-    <div style="margin-top:10px; display:grid; gap:10px;">
-      <div class="charRow">
-        <div><b>Viết bình luận</b> <span class="muted">(Tên: <b>${escapeHtml(username||"—")}</b>)</span></div>
-        <div><span id="rootCount">0</span>/${DISCUSS_MAX}</div>
-      </div>
-      <textarea id="rootInput" class="input" rows="3" maxlength="${DISCUSS_MAX}" placeholder="Nhập bình luận..."></textarea>
-      <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
-        <button class="btn btn-primary" id="btnPostRoot" style="justify-content:center;">➕ Gửi</button>
-      </div>
-      <div id="discussList" class="cmtBox"></div>
-    </div>
-  `;
-}
-
-function formatTsMs(ms){
+/* ================== LOADERS ================== */
+async function loadMeIfAny(){
+  const token = getToken();
+  if(!token) return null;
   try{
-    const d = new Date(Number(ms||0));
-    const pad = (n)=>String(n).padStart(2,"0");
-    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
-  }catch{ return ""; }
-}
-
-function toMs(ts){
-  const d = new Date(ts);
-  const t = d.getTime();
-  return isFinite(t) ? t : Date.now();
-}
-
-function buildTree(rows){
-  const byId = new Map();
-  rows.forEach(r=>{
-    byId.set(String(r.id), {
-      id: String(r.id),
-      parent_id: r.parent_id ? String(r.parent_id) : "",
-      author: String(r.author||""),
-      created_at: r.created_at,
-      createdAtMs: toMs(r.created_at),
-      text: String(r.text||""),
-      replies: []
-    });
-  });
-
-  const roots = [];
-  for(const node of byId.values()){
-    if(node.parent_id && byId.has(node.parent_id)){
-      byId.get(node.parent_id).replies.push(node);
-    }else{
-      roots.push(node);
-    }
+    const out = await sbRpc(RPC.me, { p_token: token });
+    if(!out || out.ok!==true) return null;
+    const m = out.me || out.user || out.data || null;
+    if(m && m.id && !m.user_id) m.user_id = m.id;
+    return m;
+  }catch{
+    return null;
   }
-
-  roots.sort((a,b)=>a.createdAtMs-b.createdAtMs);
-  roots.forEach(r=>r.replies.sort((a,b)=>a.createdAtMs-b.createdAtMs));
-  return roots;
 }
 
-function canDeleteComment(c, myName, isAdmin){
-  if(isAdmin) return true;
-  const a = String(c.author||"").trim().toLowerCase();
-  const m = String(myName||"").trim().toLowerCase();
-  return !!m && a === m;
+async function loadQuizMeta(){
+  const qArr = await sbGet(`quizzes?quiz_id=eq.${quizId}&select=quiz_id,title,sub&limit=1`);
+  const q = (Array.isArray(qArr) && qArr[0]) ? qArr[0] : null;
+  return {
+    title: q?.title || `Quiz ${quizId}`,
+    sub: q?.sub || ""
+  };
 }
 
-function renderDiscussion(myName, isAdmin){
-  const list = document.getElementById("discussList");
-  if(!list) return;
-
-  const tree = DISC.tree || [];
-  if(!tree.length){
-    list.innerHTML = `<div class="muted">Chưa có bình luận nào.</div>`;
-    return;
-  }
-
-  list.innerHTML = "";
-  tree.forEach(root=>{
-    const wrap = document.createElement("div");
-    wrap.className = "cmtItem";
-
-    const adminTag = (String(root.author||"").trim().toLowerCase() === "tuankhoi") ? `<span class="adminBadgeInline">ADMIN</span>` : ``;
-    const delBtn = canDeleteComment(root, myName, isAdmin) ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(root.id)}">Xóa</button>` : ``;
-
-    wrap.innerHTML = `
-      <div class="cmtHead">
-        <div class="cmtAuthor">
-          <span>${escapeHtml(root.author||"—")}</span>
-          ${adminTag}
-        </div>
-      </div>
-      <div class="cmtText">${escapeHtml(root.text||"")}</div>
-
-      <div class="cmtActions">
-        <button class="cmtBtn" data-reply="${escapeHtml(root.id)}">Trả lời</button>
-        ${delBtn}
-      </div>
-      <div class="cmtTime">${escapeHtml(formatTsMs(root.createdAtMs))}</div>
-
-      <div class="replySlot" data-slot="${escapeHtml(root.id)}"></div>
-      <div class="replyWrap" data-replies="${escapeHtml(root.id)}"></div>
-    `;
-
-    list.appendChild(wrap);
-
-    const slot = wrap.querySelector(`[data-slot="${CSS.escape(String(root.id))}"]`);
-    if(slot && DISC.openReply === String(root.id)){
-      slot.innerHTML = `
-        <div class="replyForm">
-          <div class="charRow">
-            <div><b>Trả lời</b></div>
-            <div><span data-ct>0</span>/${DISCUSS_MAX}</div>
-          </div>
-          <textarea class="input" rows="2" maxlength="${DISCUSS_MAX}" placeholder="Nhập trả lời..."></textarea>
-          <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
-            <button class="btn btn-primary" data-sendreply="${escapeHtml(root.id)}" style="justify-content:center;">Gửi</button>
-            <button class="btn" data-cancelreply style="justify-content:center;">Hủy</button>
-          </div>
-        </div>
-      `;
-    }
-
-    const rWrap = wrap.querySelector(`[data-replies="${CSS.escape(String(root.id))}"]`);
-    if(rWrap){
-      rWrap.innerHTML = "";
-      (root.replies||[]).forEach(r=>{
-        const item = document.createElement("div");
-        item.className = "cmtItem";
-        item.style.margin = "0";
-
-        const rAdminTag = (String(r.author||"").trim().toLowerCase() === "tuankhoi") ? `<span class="adminBadgeInline">ADMIN</span>` : ``;
-        const rDelBtn = canDeleteComment(r, myName, isAdmin) ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(r.id)}">Xóa</button>` : ``;
-
-        item.innerHTML = `
-          <div class="cmtHead">
-            <div class="cmtAuthor">
-              <span>${escapeHtml(r.author||"—")}</span>
-              ${rAdminTag}
-            </div>
-          </div>
-          <div class="cmtText">${escapeHtml(r.text||"")}</div>
-          <div class="cmtActions">${rDelBtn}</div>
-          <div class="cmtTime">${escapeHtml(formatTsMs(r.createdAtMs))}</div>
-        `;
-        rWrap.appendChild(item);
-      });
-    }
-  });
-}
-
-async function tryGetCommentsTable(){
-  // ưu tiên comments, nếu lỗi thì thử quiz_comments
+async function loadAttemptFromSession(){
   try{
-    await sbGet(`comments?quiz_id=eq.${quizId}&select=id&limit=1`);
-    return "comments";
-  }catch(e){
-    await sbGet(`quiz_comments?quiz_id=eq.${quizId}&select=id&limit=1`);
-    return "quiz_comments";
+    const raw = sessionStorage.getItem(`tk_last_result::${quizId}`);
+    if(!raw) return null;
+    const x = JSON.parse(raw);
+    if(!x || x.quiz_id !== quizId) return null;
+    return x; // {attempt_id,result,me,ts,...}
+  }catch{
+    return null;
+  }
+}
+
+async function loadAttemptFromDb(){
+  if(!attemptId) return null;
+
+  // attempts row
+  const a = await sbGet(`attempts?attempt_id=eq.${encodeURIComponent(attemptId)}&select=attempt_id,quiz_id,user_id,created_at,score10,correct_count,total_count&limit=1`);
+  const row = (Array.isArray(a) && a[0]) ? a[0] : null;
+  if(!row) return null;
+
+  // attempt_answers embed vocabs
+  let ans = [];
+  try{
+    ans = await sbGet(`attempt_answers?attempt_id=eq.${encodeURIComponent(attemptId)}&select=vocab_id,user_answer,expected,ok,vocabs(word,pos,no)&order=vocab_id.asc`);
+  }catch{
+    ans = [];
+  }
+
+  return { row, ans };
+}
+
+async function loadLeaderboard(){
+  // ưu tiên RPC
+  try{
+    const out = await sbRpc(RPC.listLeaderboard, { p_quiz_id: quizId, p_limit: 20 });
+    if(out && out.ok) return out.rows || [];
+  }catch{}
+
+  // fallback view
+  try{
+    const rows = await sbGet(`v_leaderboard?quiz_id=eq.${quizId}&select=name,is_admin,score10&order=score10.desc&limit=20`);
+    return rows || [];
+  }catch{
+    return [];
   }
 }
 
 async function loadComments(){
-  if(!quizId) return;
-  if(!DISC.table){
-    try{ DISC.table = await tryGetCommentsTable(); }
-    catch(e){
-      // không có bảng comment
-      DISC.table = "";
-      return;
-    }
+  try{
+    const out = await sbRpc(RPC.listComments, { p_quiz_id: quizId, p_limit: 200 });
+    if(out && out.ok) return out.rows || [];
+    return [];
+  }catch{
+    return [];
   }
-  if(!DISC.table) return;
-
-  const rows = await sbGet(`${DISC.table}?quiz_id=eq.${quizId}&select=id,parent_id,author,text,created_at&order=created_at.asc&limit=300`);
-  DISC.tree = buildTree(Array.isArray(rows)?rows:[]);
-  DISC.loaded = true;
 }
 
-async function addComment({ text, parent_id, author }){
-  if(!DISC.table) return;
-  const payload = {
-    quiz_id: quizId,
-    parent_id: parent_id || null,
-    author: author || "",
-    text: text || ""
-  };
-  const res = await sbPost(DISC.table, payload, {preferReturn:true});
-  const row = Array.isArray(res) ? res[0] : res;
-  return row;
-}
+/* ================== RENDERS ================== */
+function renderSummary(){
+  const titleEl = document.getElementById("quizTitle");
+  const subEl = document.getElementById("quizSub");
+  titleEl.textContent = quizMeta.title;
+  subEl.textContent = quizMeta.sub || "";
 
-async function deleteComment(id){
-  if(!DISC.table) return;
-  // DELETE /rest/v1/comments?id=eq.xxx
-  await sbDelete(`${DISC.table}?id=eq.${encodeURIComponent(id)}`);
-}
+  const scoreEl = document.getElementById("score10");
+  const correctEl = document.getElementById("correct");
+  const totalEl = document.getElementById("total");
 
-/** ===== Boot ===== */
-(async function boot(){
-  if(!quizId){
-    renderSummary({ title:"Kết quả", sub:"Sai link (thiếu quiz)", username:"—", score10:0, correctCount:0, totalCount:0, when:"" });
-    renderWrong([]);
-    renderLeaderboard([], "");
-    document.getElementById("discussion").innerHTML = `<div class="muted">Sai link (thiếu ?quiz=abcde).</div>`;
+  if(attempt?.row){
+    scoreEl.textContent = Number(attempt.row.score10||0).toFixed(1);
+    correctEl.textContent = String(attempt.row.correct_count||0);
+    totalEl.textContent = String(attempt.row.total_count||0);
+  }else if(attempt?.result){
+    scoreEl.textContent = Number(attempt.result.score10||0).toFixed(1);
+    correctEl.textContent = String(attempt.result.correctCount||0);
+    totalEl.textContent = String(attempt.result.totalCount||0);
+  }else{
+    scoreEl.textContent = "0.0";
+    correctEl.textContent = "0";
+    totalEl.textContent = "0";
+  }
+
+  if(!attempt){
+    mainEl.innerHTML = `
+      <div class="card">
+        <div class="row1">
+          <p class="vi">Không có dữ liệu kết quả</p>
+          <div class="meta"><span class="idx">NO RESULT</span></div>
+        </div>
+        <div class="muted" style="margin-top:8px;line-height:1.35">
+          Link đúng: <b>/result.html?quiz=abcde&amp;attempt=...</b><br/>
+          Hoặc bạn vừa nộp bài xong thì mở lại từ quiz.
+        </div>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn btn-primary" onclick="location.href='/q/${quizId}'">📝 Về quiz</button>
+        </div>
+      </div>`;
     return;
   }
 
-  // render nhanh từ sessionStorage nếu có
-  let cached = null;
-  try{ cached = JSON.parse(sessionStorage.getItem(`tk_last_result::${quizId}`)||"null"); }catch{}
-  const fallbackName = loadName();
+  const who = (attempt.me?.username || me?.username || "—");
+  const when = attempt.row?.created_at ? fmtTime(attempt.row.created_at) : fmtTime(attempt.ts || Date.now());
 
-  let username = (cached && cached.me && cached.me.username) ? cached.me.username : (fallbackName || "");
-  let score10 = cached?.result?.score10 || 0;
-  let correctCount = cached?.result?.correctCount || 0;
-  let totalCount = cached?.result?.totalCount || 0;
-  let wrongList = cached?.result?.wrong || [];
-  let when = cached?.ts ? fmtTs(cached.ts) : "";
+  // wrong list
+  let wrongHtml = "";
+  if(attempt.row && Array.isArray(answers) && answers.length){
+    const wrong = answers.filter(x=>x && x.ok===false);
+    wrongHtml = wrong.length ? wrong.map(x=>{
+      const w = x.vocabs?.word || "";
+      const pos = x.vocabs?.pos || "";
+      const ua = x.user_answer || "";
+      const ex = x.expected || "";
+      return `
+        <div class="card" style="box-shadow:none;border-width:1px">
+          <div class="row1">
+            <p class="vi" style="margin:0">${escapeHtml(w)} <span class="muted">(${escapeHtml(pos)})</span></p>
+            <div class="meta"><span class="idx">SAI</span></div>
+          </div>
+          <div class="muted" style="margin-top:8px"><b>Bạn:</b> ${escapeHtml(ua || "(trống)")}</div>
+          <div class="muted" style="margin-top:6px"><b>Đáp án:</b> ${escapeHtml(ex)}</div>
+        </div>
+      `;
+    }).join("") : `<div class="muted" style="margin-top:8px">Không có câu sai 🎉</div>`;
+  } else if(attempt.result && Array.isArray(attempt.result.wrong)){
+    wrongHtml = attempt.result.wrong.length ? attempt.result.wrong.map(x=>`
+      <div class="card" style="box-shadow:none;border-width:1px">
+        <div class="row1">
+          <p class="vi" style="margin:0">${escapeHtml(x.word||"")}</p>
+          <div class="meta"><span class="idx">SAI</span></div>
+        </div>
+        <div class="muted" style="margin-top:8px"><b>Bạn:</b> ${escapeHtml(x.user || "(trống)")}</div>
+        <div class="muted" style="margin-top:6px"><b>Đáp án:</b> ${escapeHtml(x.expected||"")}</div>
+      </div>
+    `).join("") : `<div class="muted" style="margin-top:8px">Không có câu sai 🎉</div>`;
+  } else {
+    wrongHtml = `<div class="muted" style="margin-top:8px">(Không tải được chi tiết đáp án)</div>`;
+  }
 
-  // quick render
-  renderSummary({
-    title: cached?.title || "Kết quả",
-    sub: cached?.sub || "",
-    username: username || "—",
-    score10, correctCount, totalCount,
-    when
+  mainEl.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Tóm tắt</p>
+        <div class="meta"><span class="idx">${escapeHtml(quizId)}</span></div>
+      </div>
+      <div class="muted" style="margin-top:8px;line-height:1.35">
+        <b>Tên:</b> ${escapeHtml(who)}<br/>
+        <b>Thời gian:</b> ${escapeHtml(when)}<br/>
+        <b>Attempt:</b> ${escapeHtml(attempt.row?.attempt_id || attempt.attempt_id || "")}
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+        <button class="btn btn-ghost" id="btnRefresh">🔄 Tải lại</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Chi tiết (câu sai)</p>
+        <div class="meta"><span class="idx">DETAIL</span></div>
+      </div>
+      ${wrongHtml}
+    </div>
+  `;
+
+  document.getElementById("btnRefresh").onclick = ()=>boot(true);
+}
+
+function renderLeaderboard(){
+  const rows = Array.isArray(LB) ? LB : [];
+  const body = rows.length ? rows.map((r,i)=>{
+    const rank=i+1;
+    const tag = r.is_admin ? `<span class="badgeAdmin">ADMIN</span>` : ``;
+    return `
+      <div class="lbRow">
+        <div class="lbLeft">
+          <div class="lbRank">${medal(rank) || rank}</div>
+          <div style="min-width:0">
+            <div class="lbName">${escapeHtml(r.name||"—")} ${tag}</div>
+            <div class="muted" style="font-weight:750;font-size:.86rem">Điểm cao nhất</div>
+          </div>
+        </div>
+        <div class="lbScore">${Number(r.score10||0).toFixed(1)}/10</div>
+      </div>
+    `;
+  }).join("") : `<div class="muted" style="margin-top:8px">Chưa có dữ liệu.</div>`;
+
+  lbEl.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Bảng xếp hạng</p>
+        <div class="meta"><span class="idx">TOP 20</span></div>
+      </div>
+      <div class="muted" style="margin-top:6px">Điểm = điểm cao nhất của mỗi người trong quiz này.</div>
+      ${body}
+    </div>
+  `;
+}
+
+async function apiAddComment(text, parentId){
+  const token = getToken();
+  if(!token) throw new Error("Bạn cần login để bình luận");
+  // ưu tiên param chuẩn p_quiz_id, p_text, p_token, p_parent_id
+  return await sbRpc(RPC.addComment, {
+    p_quiz_id: quizId,
+    p_text: String(text||""),
+    p_token: token,
+    p_parent_id: parentId ? String(parentId) : null
   });
-  renderWrong(wrongList);
+}
+async function apiDeleteComment(commentId){
+  const token = getToken();
+  if(!token) throw new Error("Bạn cần login");
+  return await sbRpc(RPC.deleteComment, { p_token: token, p_comment_id: String(commentId).trim() });
+}
+async function apiPinComment(commentId, pin){
+  const token = getToken();
+  if(!token) throw new Error("Bạn cần login");
+  return await sbRpc(RPC.pinComment, { p_token: token, p_comment_id: String(commentId).trim(), p_pin: !!pin });
+}
 
-  // fetch quiz meta
-  let qTitle="", qSub="";
-  try{
-    const q = await sbGet(`quizzes?quiz_id=eq.${quizId}&select=title,sub&limit=1`);
-    if(Array.isArray(q) && q[0]){ qTitle=q[0].title||""; qSub=q[0].sub||""; }
-  }catch{}
+function renderComments(){
+  const rows = Array.isArray(CMTS) ? CMTS : [];
+  const canWrite = !!(me && me.user_id && getToken());
+  const isAdmin = isAdminUser(me);
 
-  // fetch attempt nếu có attemptId
-  if(attemptId){
-    try{
-      const at = await sbGet(`attempts?attempt_id=eq.${encodeURIComponent(attemptId)}&select=attempt_id,created_at,score10,correct_count,total_count,name&limit=1`);
-      const a = Array.isArray(at) ? at[0] : null;
-      if(a){
-        when = fmtTs(a.created_at);
-        score10 = Number(a.score10||0);
-        correctCount = Number(a.correct_count||0);
-        totalCount = Number(a.total_count||0);
-        if(a.name && !username) username = String(a.name);
-
-        // load wrong from attempt_answers join vocabs
-        try{
-          const ans = await sbGet(`attempt_answers?attempt_id=eq.${encodeURIComponent(attemptId)}&select=user_answer,ok,expected,vocab:vocabs(word)&limit=2000`);
-          const list = (ans||[]).filter(x=>x && x.ok===false).map(x=>({
-            word: x.vocab?.word || "",
-            user_answer: x.user_answer || "",
-            expected: x.expected || ""
-          }));
-          wrongList = list;
-        }catch(e){
-          // nếu RLS chặn join -> vẫn dùng cached.wrong
-        }
-      }
-    }catch(e){
-      // giữ cache
+  // build 1-level tree
+  const byParent = new Map();
+  const roots = [];
+  rows.forEach(c=>{
+    const pid = c.parent_id || null;
+    if(pid){
+      if(!byParent.has(pid)) byParent.set(pid, []);
+      byParent.get(pid).push(c);
+    }else{
+      roots.push(c);
     }
-  }
-
-  renderSummary({
-    title: qTitle || cached?.title || "Kết quả",
-    sub: qSub || cached?.sub || "",
-    username: username || "—",
-    score10, correctCount, totalCount,
-    when
   });
-  renderWrong(wrongList);
 
-  // leaderboard (view v_leaderboard)
-  try{
-    const rows = await sbGet(`v_leaderboard?quiz_id=eq.${quizId}&select=name,is_admin,score10&order=score10.desc&limit=30`);
-    renderLeaderboard(rows||[], username||"");
-  }catch(e){
-    renderLeaderboard([], "");
+  // pinned first if field exists
+  roots.sort((a,b)=> (b.pinned===true)-(a.pinned===true) || (new Date(b.created_at)-new Date(a.created_at)));
+
+  function replyBoxHtml(rootId){
+    if(replyingTo !== rootId) return "";
+    return `
+      <div class="replyBox">
+        <div class="muted" style="margin-bottom:8px">Trả lời bình luận</div>
+        <textarea class="input" data-replybox="${escapeHtml(rootId)}" placeholder="${canWrite?'Nhập trả lời…':'(Cần login)'}" ${canWrite?'':'disabled'}></textarea>
+        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn-mini" data-cancelreply="${escapeHtml(rootId)}">✖️ Hủy</button>
+          <button class="btn-mini primary" data-sendreply="${escapeHtml(rootId)}" ${canWrite?'':'disabled'}>📨 Gửi</button>
+        </div>
+      </div>
+    `;
   }
 
-  // discussion
-  const discussionEl = document.getElementById("discussion");
-  discussionEl.innerHTML = discussionHtml(username || fallbackName || "—");
+  function itemHtml(c,isReply=false){
+    const tagAdmin = c.is_admin ? `<span class="badgeAdmin">ADMIN</span>` : ``;
+    const tagPin = c.pinned ? `<span class="badgePin">📌 PIN</span>` : ``;
 
-  const rootInput = document.getElementById("rootInput");
-  const rootCount = document.getElementById("rootCount");
-  const btnPostRoot = document.getElementById("btnPostRoot");
+    const canDel = canWrite && (isAdmin || String(c.user_id||"")===String(me.user_id||""));
+    const showPinBtn = isAdmin; // nếu RPC pin chưa có thì click sẽ báo lỗi
 
-  rootInput.addEventListener("input", ()=>{ rootCount.textContent = String((rootInput.value||"").length); }, {passive:true});
+    const actions = `
+      <div class="cmtActions">
+        ${(!isReply && canWrite) ? `<button class="btn-mini" data-reply="${escapeHtml(c.id)}">💬 Trả lời</button>` : ``}
+        ${canDel ? `<button class="btn-mini danger" data-del="${escapeHtml(c.id)}">🗑️ Xoá</button>` : ``}
+        ${showPinBtn && !isReply ? `<button class="btn-mini ${c.pinned?'':'primary'}" data-pin="${escapeHtml(c.id)}" data-pinval="${c.pinned?0:1}">${c.pinned?'Bỏ ghim':'📌 Ghim'}</button>` : ``}
+      </div>
+    `;
 
-  // load comments
-  let isAdmin = false; // nếu bạn muốn lấy admin từ token/me thì có thể bổ sung sau
-  try{
-    await loadComments();
-    renderDiscussion(username || fallbackName || "", isAdmin);
-  }catch(e){
-    discussionEl.innerHTML += `<div class="muted" style="margin-top:10px">Không có hệ thống comment trên Supabase (chưa có bảng comments).</div>`;
+    const replies = (byParent.get(c.id)||[]).map(rc=>itemHtml(rc,true)).join("");
+
+    return `
+      <div class="cmtItem ${isReply?'reply':''}">
+        <div class="cmtHead">
+          <div class="cmtWho">
+            <div class="cmtName">${escapeHtml(c.username||"—")}</div>
+            ${tagAdmin}
+            ${tagPin}
+          </div>
+          <div class="cmtTime">${fmtTime(c.created_at)}</div>
+        </div>
+        <div class="cmtText">${escapeHtml(c.text||"")}</div>
+        ${actions}
+        ${!isReply ? replyBoxHtml(c.id) : ""}
+        ${replies}
+      </div>
+    `;
   }
 
-  btnPostRoot.addEventListener("click", async ()=>{
-    const text = String(rootInput.value||"").trim();
-    if(!text || text.length > DISCUSS_MAX){ toast("Tối đa 120 ký tự"); return; }
-    if(!(username || fallbackName)){ toast("Thiếu tên (vào quiz nhập tên trước)"); return; }
+  const listHtml = roots.length ? roots.map(c=>itemHtml(c,false)).join("") : `<div class="muted" style="margin-top:8px">Chưa có bình luận.</div>`;
 
-    rootInput.value = ""; rootCount.textContent = "0";
+  cmtEl.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Bình luận</p>
+        <div class="meta"><span class="idx">COMMENTS</span></div>
+      </div>
+      <div class="muted" style="margin-top:6px;line-height:1.35">
+        ${canWrite ? `Bạn đang login: <b>${escapeHtml(me.username)}</b>` : `Bạn chưa login (vẫn xem được bình luận, nhưng không gửi/xóa/ghim).`}
+      </div>
+
+      <div class="card" style="box-shadow:none;border-width:1px;margin-top:12px">
+        <div class="row1">
+          <p class="vi" style="margin:0">Viết bình luận mới</p>
+          <div class="meta"><span class="idx">ROOT</span></div>
+        </div>
+        <div style="margin-top:10px;display:grid;gap:10px">
+          <textarea class="input" id="rootBox" placeholder="${canWrite?'Nhập bình luận…':'(Cần login)'}" ${canWrite?'':'disabled'}></textarea>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn btn-ghost" id="btnReloadCmt">🔄 Tải lại</button>
+            <button class="btn btn-primary" id="btnSendRoot" ${canWrite?'':'disabled'}>📨 Gửi</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        ${listHtml}
+      </div>
+    </div>
+  `;
+
+  // handlers
+  document.getElementById("btnReloadCmt").onclick = ()=>refreshComments(true);
+  document.getElementById("btnSendRoot").onclick = async ()=>{
+    const box = document.getElementById("rootBox");
+    const text = String(box.value||"").trim();
+    if(!text) return toast("Chưa nhập nội dung");
     try{
-      await addComment({ text, parent_id:null, author:(username||fallbackName) });
-      await loadComments();
-      renderDiscussion(username||fallbackName, isAdmin);
+      await apiAddComment(text, null);
+      box.value="";
       toast("Đã gửi");
+      await refreshComments(false);
     }catch(e){
-      toast("Gửi lỗi");
+      toast(e?.message || "Lỗi");
     }
+  };
+
+  cmtEl.querySelectorAll("[data-reply]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const id = btn.getAttribute("data-reply");
+      replyingTo = (replyingTo===id) ? null : id;
+      renderComments(); // re-render to show inline reply box
+      const ta = cmtEl.querySelector(`[data-replybox="${CSS.escape(id)}"]`);
+      try{ ta && ta.focus(); }catch{}
+    });
   });
 
-  discussionEl.addEventListener("click", async (e)=>{
-    const delBtn = e.target.closest("[data-del]");
-    if(delBtn){
-      const id = String(delBtn.getAttribute("data-del")||"");
-      if(!id) return;
-      if(!confirm("Xóa bình luận này?")) return;
+  cmtEl.querySelectorAll("[data-cancelreply]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      replyingTo = null;
+      renderComments();
+    });
+  });
+
+  cmtEl.querySelectorAll("[data-sendreply]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const rootId = btn.getAttribute("data-sendreply");
+      const ta = cmtEl.querySelector(`[data-replybox="${CSS.escape(rootId)}"]`);
+      const text = String(ta?.value||"").trim();
+      if(!text) return toast("Chưa nhập nội dung");
       try{
-        await deleteComment(id);
-        await loadComments();
-        renderDiscussion(username||fallbackName, isAdmin);
-        toast("Đã xóa");
-      }catch(err){
-        toast("Xóa lỗi (có thể do RLS)");
-      }
-      return;
-    }
-
-    const replyBtn = e.target.closest("[data-reply]");
-    if(replyBtn){
-      const rootId = String(replyBtn.getAttribute("data-reply")||"");
-      DISC.openReply = (DISC.openReply === rootId) ? "" : rootId;
-      renderDiscussion(username||fallbackName, isAdmin);
-      const slot = discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
-      const ta = slot ? slot.querySelector("textarea") : null;
-      if(ta) ta.focus();
-      return;
-    }
-
-    const cancelBtn = e.target.closest("[data-cancelreply]");
-    if(cancelBtn){
-      DISC.openReply = "";
-      renderDiscussion(username||fallbackName, isAdmin);
-      return;
-    }
-
-    const sendBtn = e.target.closest("[data-sendreply]");
-    if(sendBtn){
-      const rootId = String(sendBtn.getAttribute("data-sendreply")||"");
-      const slot = discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
-      const ta = slot ? slot.querySelector("textarea") : null;
-      const text = ta ? String(ta.value||"").trim() : "";
-      if(!text || text.length > DISCUSS_MAX){ toast("Tối đa 120 ký tự"); return; }
-
-      DISC.openReply = "";
-      renderDiscussion(username||fallbackName, isAdmin);
-
-      try{
-        await addComment({ text, parent_id: rootId, author:(username||fallbackName) });
-        await loadComments();
-        renderDiscussion(username||fallbackName, isAdmin);
+        await apiAddComment(text, rootId);
+        replyingTo = null;
         toast("Đã gửi");
-      }catch(err){
-        toast("Gửi lỗi");
+        await refreshComments(false);
+      }catch(e){
+        toast(e?.message || "Lỗi");
       }
-      return;
-    }
+    });
   });
 
-  discussionEl.addEventListener("input", (e)=>{
-    const ta = e.target;
-    if(!(ta && ta.tagName === "TEXTAREA")) return;
-    const form = ta.closest(".replyForm");
-    if(!form) return;
-    const ct = form.querySelector("[data-ct]");
-    if(ct) ct.textContent = String((ta.value||"").length);
-  }, {passive:true});
-})();
+  cmtEl.querySelectorAll("[data-del]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const id = btn.getAttribute("data-del"); // UUID string
+      if(!confirm("Xoá bình luận này?")) return;
+      try{
+        const out = await apiDeleteComment(id);
+        if(out && out.ok===false) throw new Error(out.error || "Không xoá được");
+        toast("Đã xoá");
+        await refreshComments(false);
+      }catch(e){
+        toast(e?.message || "Không xoá được");
+      }
+    });
+  });
+
+  cmtEl.querySelectorAll("[data-pin]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const id = btn.getAttribute("data-pin");
+      const val = Number(btn.getAttribute("data-pinval")||"0")===1;
+      try{
+        const out = await apiPinComment(id, val);
+        if(out && out.ok===false) throw new Error(out.error || "Không ghim được");
+        toast(val ? "Đã ghim" : "Đã bỏ ghim");
+        await refreshComments(false);
+      }catch(e){
+        toast(e?.message || "Chưa bật tính năng ghim");
+      }
+    });
+  });
+}
+
+async function refreshComments(showToast){
+  if(showToast) toast("Đang tải...");
+  CMTS = await loadComments();
+  renderComments();
+}
+
+/* ================== BOOT ================== */
+async function boot(forceReload){
+  if(!quizId || quizId.length!==5){
+    mainEl.innerHTML = `
+      <div class="card">
+        <div class="row1"><p class="vi">Sai quiz id</p><div class="meta"><span class="idx">ERROR</span></div></div>
+        <div class="muted" style="margin-top:8px">URL đúng: /result.html?quiz=abcde&attempt=...</div>
+      </div>`;
+    return;
+  }
+
+  quizMeta = await loadQuizMeta();
+
+  // me
+  me = getMeCache();
+  if(me && me.id && !me.user_id) me.user_id = me.id;
+  if(getToken() && (!me || !me.user_id)){
+    const m2 = await loadMeIfAny();
+    if(m2) me = m2;
+  }
+
+  // attempt
+  attempt = null;
+  answers = [];
+
+  const fromDb = await loadAttemptFromDb();
+  if(fromDb && fromDb.row){
+    attempt = { row: fromDb.row };
+    answers = Array.isArray(fromDb.ans) ? fromDb.ans : [];
+  }else{
+    const fromSess = await loadAttemptFromSession();
+    if(fromSess){
+      attempt = fromSess;
+    }
+  }
+
+  renderSummary();
+
+  // leaderboard + comments chỉ khi có attempt (đúng yêu cầu)
+  if(attempt){
+    LB = await loadLeaderboard();
+    renderLeaderboard();
+
+    CMTS = await loadComments();
+    renderComments();
+  }else{
+    lbEl.innerHTML = "";
+    cmtEl.innerHTML = "";
+  }
+}
+
+/* ================== BUTTONS ================== */
+document.getElementById("btnHome").onclick = ()=>goHome();
+document.getElementById("btnBackQuiz").onclick = ()=>goQuiz();
+document.getElementById("btnScrollTop").onclick = ()=>{
+  document.getElementById("shell").scrollTo({ top:0, behavior:"smooth" });
+};
+
+boot(false);
 </script>
 </body>
 </html>
