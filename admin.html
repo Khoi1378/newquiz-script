@@ -1,3 +1,4 @@
+```html
 <!doctype html>
 <html lang="vi">
 <head>
@@ -173,6 +174,177 @@
     .mini.primary{border:0;background:linear-gradient(135deg,#7c3aed,#fb7185);color:#fff}
     .hint{font-weight:650;color:var(--muted);line-height:1.35}
     .hidden{display:none !important;}
+
+    /* =========================
+       UPGRADE UI: Question Builder (friendly + đẹp + dễ nhìn)
+       - Không đổi ID/thuộc tính cũ, chỉ thêm layout/style
+       - Manual vs Import loại trừ nhau
+       - Nút thêm câu dạng FAB bám theo người tạo
+       ========================= */
+    .qbWrap{
+      position:relative;
+      overflow:hidden;
+    }
+    .qbWrap::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:linear-gradient(135deg, rgba(124,58,237,.25), rgba(251,113,133,.20), rgba(37,99,235,.16));
+      filter:blur(18px);
+      opacity:.55;
+      pointer-events:none;
+    }
+    .qbWrap > *{ position:relative; }
+
+    .qbTop{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      padding-bottom:10px;
+      border-bottom:1px dashed rgba(229,231,235,.95);
+      margin-bottom:10px;
+    }
+    .qbTitle{
+      margin:0;
+      font-weight:950;
+      font-size:1.06rem;
+      line-height:1.2;
+    }
+    .qbSub{
+      margin-top:6px;
+      color:var(--muted);
+      font-weight:750;
+      font-size:.86rem;
+      line-height:1.35;
+    }
+
+    .qbTabs{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      background:rgba(243,244,246,.88);
+      border:1px solid rgba(229,231,235,.95);
+      padding:6px;
+      border-radius:999px;
+    }
+    .qbTab{
+      border:0;
+      background:transparent;
+      cursor:pointer;
+      border-radius:999px;
+      padding:9px 12px;
+      font-weight:950;
+      font-size:.86rem;
+      color:#111827;
+      transition:transform .12s ease, filter .12s ease, background-color .12s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .qbTab:hover{ transform:translateY(-1px); filter:brightness(.98); }
+    .qbTab:active{ transform:translateY(0); }
+    .qbTab.active{
+      background:#fff;
+      border:1px solid rgba(229,231,235,.95);
+      box-shadow:0 10px 24px rgba(0,0,0,.08);
+    }
+
+    /* “Thêm câu” nút cũ: làm nổi hơn mà không đổi attribute */
+    #btnAddQ{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff;
+      border:0;
+      box-shadow:0 12px 26px rgba(124,58,237,.20);
+      font-weight:1000;
+      letter-spacing:.01em;
+    }
+
+    /* bọc các khu vực */
+    .qbManualArea{ display:block; }
+    .qbImportArea{ display:none; }
+
+    /* Import box làm gọn + đẹp */
+    .qbImportCard{
+      background:rgba(255,255,255,.92);
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:16px;
+      padding:12px;
+      box-shadow:0 10px 26px rgba(0,0,0,.06);
+    }
+    .qbImportHint{
+      margin-top:6px;
+      color:var(--muted);
+      font-weight:750;
+      font-size:.86rem;
+      line-height:1.35;
+    }
+
+    /* Card câu hỏi nhìn “mượt” hơn */
+    .qCard{
+      background:#fff;
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:16px;
+      padding:12px;
+    }
+    .qHead .idx{ font-weight:1000; }
+    .qType{
+      border-radius:999px;
+      padding:9px 12px;
+      font-weight:950;
+      background:rgba(248,250,252,.95);
+    }
+    .qPrompt{ min-height:92px; }
+
+    /* FAB bám theo người tạo */
+    .qFab{
+      position:fixed;
+      left:0; right:0;
+      bottom:calc(env(safe-area-inset-bottom) + 68px);
+      z-index:20010;
+      pointer-events:none;
+      padding:0 14px;
+    }
+    .qFabInner{
+      max-width:1180px;
+      margin:0 auto;
+      pointer-events:auto;
+      display:flex;
+      justify-content:flex-end;
+    }
+    .qFabBtn{
+      width:min(520px, 100%);
+      border-radius:18px;
+      padding:14px 16px;
+      font-size:1.04rem;
+      font-weight:1000;
+      letter-spacing:.02em;
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff;
+      border:0;
+      box-shadow:0 16px 42px rgba(124,58,237,.22);
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      transition:transform .12s ease, filter .12s ease;
+    }
+    .qFabBtn:hover{ transform:translateY(-1px); filter:brightness(.98); }
+    .qFabBtn:active{ transform:translateY(0); }
+    .qFabHint{
+      margin-top:8px;
+      text-align:right;
+      color:var(--muted);
+      font-weight:750;
+      font-size:.84rem;
+      line-height:1.35;
+    }
+    .qFab.hidden{ display:none !important; }
+
+    @media(max-width:980px){
+      .qFabInner{ justify-content:center; }
+      .qFabHint{ text-align:center; }
+    }
   </style>
 </head>
 
@@ -313,53 +485,92 @@
             </div>
 
             <!-- question builder -->
-            <div class="card">
-              <div class="row1">
-                <p class="vi">Câu hỏi</p>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+            <div class="card qbWrap">
+              <div class="qbTop">
+                <div style="min-width:260px; flex:1 1 340px;">
+                  <p class="qbTitle">Câu hỏi</p>
+                  <div class="qbSub">
+                    Mặc định: <b>Trắc nghiệm 1 đáp án</b>. Bạn chọn loại nào ở dropdown thì <b>câu tiếp theo</b> sẽ tự mặc định loại đó.
+                  </div>
+                </div>
+
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
                   <span class="idx" id="qCountPill">0</span>
                   <button class="btn" id="btnAddQ" type="button">➕ Thêm câu</button>
                 </div>
-              </div>
 
-              <div class="hint" style="margin-top:8px">
-                • Mặc định là <b>tự luận</b>. Với tự luận, nhập nhiều đáp án cách nhau bằng <b>|</b> (vd: <code>thích nghi|thich nghi</code>).<br>
-                • “Chấp nhận sai chính tả” là logic chấm ở trang làm quiz. Admin panel sẽ lưu đáp án + cờ <code>fuzzy=true</code> để bạn dùng sau.
-              </div>
-
-              <label>Chia điểm</label>
-              <div class="grid2">
-                <select id="scoringMode">
-                  <option value="equal">Chia đều theo số câu</option>
-                  <option value="custom">Tự chia điểm (mỗi câu có points)</option>
-                </select>
-                <input class="input mono" id="totalScore" value="10" placeholder="Tổng điểm (vd 10)" />
-              </div>
-
-              <div id="qList" style="margin-top:12px"></div>
-
-              <div class="hr"></div>
-
-              <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-                <button class="btn btn-ghost" id="btnAdvancedToggle" type="button">🧩 Nâng cao: Import HTML</button>
-                <button class="btn btn-primary" id="btnPublishAll" type="button">🚀 Publish (quiz + câu hỏi)</button>
-              </div>
-
-              <div id="advancedBox" class="card hidden" style="box-shadow:none;border-width:1px;margin-top:12px">
-                <div class="row1">
-                  <p class="vi" style="font-size:1rem">Import HTML (tùy chọn)</p>
-                  <span class="idx">ADV</span>
+                <div style="width:100%; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-top:10px;">
+                  <div class="qbTabs" aria-label="Chế độ thêm câu">
+                    <button class="qbTab active" id="qbTabManual" type="button">📝 Thêm thủ công</button>
+                    <button class="qbTab" id="qbTabImport" type="button">📥 Import HTML</button>
+                  </div>
+                  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <span class="idx ok" id="qbModePill">MODE: MANUAL</span>
+                    <!-- giữ nút nâng cao (ID cũ) nhưng UI điều khiển bằng tab -->
+                    <button class="btn btn-ghost hidden" id="btnAdvancedToggle" type="button">🧩 Nâng cao: Import HTML</button>
+                  </div>
                 </div>
+              </div>
+
+              <!-- MANUAL AREA (ẩn/hiện theo tab) -->
+              <div id="qbManualArea" class="qbManualArea">
                 <div class="hint" style="margin-top:8px">
-                  Nếu bạn có sẵn định dạng <code>&lt;div class="q"&gt;</code> thì dán vào đây → bấm Import.
+                  • Với <b>tự luận</b>, nhập nhiều đáp án cách nhau bằng <b>|</b> (vd: <code>thích nghi|thich nghi</code>).<br>
+                  • “Chấp nhận sai chính tả” là logic chấm ở trang làm quiz. Panel sẽ lưu đáp án + cờ <code>fuzzy=true</code>.
                 </div>
-                <label>Paste HTML</label>
-                <textarea id="htmlBox" placeholder='Ví dụ:
+
+                <label>Chia điểm</label>
+                <div class="grid2">
+                  <select id="scoringMode">
+                    <option value="equal">Chia đều theo số câu</option>
+                    <option value="custom">Tự chia điểm (mỗi câu có points)</option>
+                  </select>
+                  <input class="input mono" id="totalScore" value="10" placeholder="Tổng điểm (vd 10)" />
+                </div>
+
+                <div id="qList" style="margin-top:12px"></div>
+
+                <div class="hr"></div>
+
+                <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+                  <button class="btn btn-primary" id="btnPublishAll" type="button">🚀 Publish (quiz + câu hỏi)</button>
+                </div>
+              </div>
+
+              <!-- IMPORT AREA (ẩn/hiện theo tab) -->
+              <div id="qbImportArea" class="qbImportArea">
+                <div class="qbImportCard">
+                  <div class="row1">
+                    <p class="vi" style="font-size:1rem">Import HTML</p>
+                    <span class="idx">IMPORT</span>
+                  </div>
+                  <div class="qbImportHint">
+                    Dán HTML vào ô dưới → bấm Import. Khi đang ở chế độ Import, panel sẽ <b>ẩn</b> phần thêm câu thủ công để tránh nhầm.
+                  </div>
+
+                  <div id="advancedBox" class="card" style="box-shadow:none;border-width:1px;margin-top:12px">
+                    <div class="hint" style="margin-top:0">
+                      Nếu bạn có sẵn định dạng <code>&lt;div class="q"&gt;</code> thì dán vào đây → bấm Import.
+                    </div>
+                    <label>Paste HTML</label>
+                    <textarea id="htmlBox" placeholder='Ví dụ:
 <div class="q" data-type="mcq1" data-options="2|3|4|5" data-correct="3">1+3=?</div>
 <div class="q" data-type="essay" data-answers="thích nghi|thich nghi">Giải thích adaptable</div>
 '></textarea>
-                <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-                  <button class="btn" id="btnImportHtml" type="button">⬇️ Import vào danh sách câu</button>
+                    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+                      <button class="btn btn-primary" id="btnImportHtml" type="button">⬇️ Import vào danh sách câu</button>
+                    </div>
+                  </div>
+
+                  <div class="hint" style="margin-top:10px">
+                    Tip: Import xong có thể chuyển về tab “Thêm thủ công” để chỉnh sửa từng câu.
+                  </div>
+                </div>
+
+                <div class="hr"></div>
+
+                <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+                  <button class="btn btn-primary" id="btnPublishAll2" type="button">🚀 Publish (quiz + câu hỏi)</button>
                 </div>
               </div>
             </div>
@@ -394,6 +605,16 @@
           </div>
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- FAB: Add Question (manual only) -->
+  <div class="qFab" id="qFab">
+    <div class="qFabInner">
+      <div style="width:min(520px, 100%);">
+        <button class="qFabBtn" id="btnAddQFab" type="button">➕ THÊM CÂU HỎI</button>
+        <div class="qFabHint" id="qFabHint">Gợi ý: chọn loại câu ở dropdown → bấm “THÊM CÂU HỎI”</div>
       </div>
     </div>
   </div>
@@ -466,7 +687,6 @@ let USERS = [];
 let COVER_DATA_URL = ""; // base64
 
 // 🔥 Fix bug “Save ra quiz khác / link trống”:
-// luôn dùng CURRENT_QID làm nguồn sự thật khi đang edit.
 let CURRENT_QID = "";     // quiz_id đang edit (đã chọn từ list hoặc tạo mới)
 let CURRENT_MODE = "NEW"; // NEW | EDIT
 
@@ -607,7 +827,6 @@ function normalizeQuizId(x){
 quizIdEl.addEventListener("input", ()=>{
   const v = normalizeQuizId(quizIdEl.value);
   if(quizIdEl.value !== v) quizIdEl.value = v;
-  // NEW mode: CURRENT_QID chưa set, draft theo input
   if(CURRENT_MODE==="NEW") saveDraftSoon();
 },{passive:true});
 
@@ -710,21 +929,121 @@ filePick.addEventListener("change", async ()=>{
   toast("Đã chọn ảnh cover");
 });
 
-/* ================== QUESTION BUILDER ================== */
+/* ================== QUESTION BUILDER (UPGRADED) ================== */
 const qList = document.getElementById("qList");
 const qCountPill = document.getElementById("qCountPill");
+
+/* mode tabs (manual/import) */
+const qbTabManual = document.getElementById("qbTabManual");
+const qbTabImport = document.getElementById("qbTabImport");
+const qbManualArea = document.getElementById("qbManualArea");
+const qbImportArea = document.getElementById("qbImportArea");
+const qbModePill = document.getElementById("qbModePill");
+
+const qFab = document.getElementById("qFab");
+const btnAddQFab = document.getElementById("btnAddQFab");
+const qFabHint = document.getElementById("qFabHint");
+
+const LS_QB_MODE = "admin_qb_mode_v1";
+const LS_QB_LASTTYPE = "admin_qb_lasttype_v1";
+
+function isAllowedQType(t){
+  return (t==="mcq1" || t==="essay" || t==="short4" || t==="tf4");
+}
+let QB_MODE = (localStorage.getItem(LS_QB_MODE)||"manual").toLowerCase();
+if(QB_MODE!=="manual" && QB_MODE!=="import") QB_MODE="manual";
+
+let LAST_QTYPE = (localStorage.getItem(LS_QB_LASTTYPE)||"mcq1").toLowerCase();
+if(!isAllowedQType(LAST_QTYPE)) LAST_QTYPE="mcq1";
+
+function setLastType(t){
+  t = String(t||"").toLowerCase();
+  if(!isAllowedQType(t)) return;
+  LAST_QTYPE = t;
+  try{ localStorage.setItem(LS_QB_LASTTYPE, LAST_QTYPE); }catch{}
+  qFabHint.textContent =
+    (LAST_QTYPE==="mcq1") ? "Loại mặc định: Trắc nghiệm 1 đáp án • Bấm “THÊM CÂU HỎI” để tạo câu mới"
+    : (LAST_QTYPE==="essay") ? "Loại mặc định: Tự luận • Bấm “THÊM CÂU HỎI” để tạo câu mới"
+    : (LAST_QTYPE==="short4") ? "Loại mặc định: Trả lời ngắn (4 ô) • Bấm “THÊM CÂU HỎI” để tạo câu mới"
+    : "Loại mặc định: Đúng/Sai 4 ý • Bấm “THÊM CÂU HỎI” để tạo câu mới";
+}
+
+function setQBMode(mode){
+  mode = String(mode||"manual").toLowerCase();
+  if(mode!=="manual" && mode!=="import") mode="manual";
+  QB_MODE = mode;
+  try{ localStorage.setItem(LS_QB_MODE, QB_MODE); }catch{}
+
+  qbTabManual.classList.toggle("active", QB_MODE==="manual");
+  qbTabImport.classList.toggle("active", QB_MODE==="import");
+
+  qbManualArea.style.display = (QB_MODE==="manual") ? "" : "none";
+  qbImportArea.style.display = (QB_MODE==="import") ? "" : "none";
+
+  qbModePill.textContent = "MODE: " + (QB_MODE==="manual" ? "MANUAL" : "IMPORT");
+  qbModePill.className = "idx " + (QB_MODE==="manual" ? "ok" : "warn");
+
+  // Khi import: ẩn “thêm thủ công” (bao gồm nút add + FAB)
+  const btnAddQ = document.getElementById("btnAddQ");
+  if(btnAddQ) btnAddQ.style.display = (QB_MODE==="manual") ? "" : "none";
+  qFab.classList.toggle("hidden", QB_MODE!=="manual");
+}
+
+qbTabManual.addEventListener("click", ()=>setQBMode("manual"));
+qbTabImport.addEventListener("click", ()=>setQBMode("import"));
+
+/* mirror publish button in import area */
+const btnPublishAll = document.getElementById("btnPublishAll");
+const btnPublishAll2 = document.getElementById("btnPublishAll2");
+if(btnPublishAll2){
+  btnPublishAll2.addEventListener("click", ()=>btnPublishAll?.click?.());
+}
 
 function updateQCount(){
   qCountPill.textContent = String(QUESTIONS.length || 0);
 }
 
 function defaultQuestion(){
+  // ✅ mặc định ban đầu: mcq1, và luôn theo LAST_QTYPE
+  const t = LAST_QTYPE || "mcq1";
+  if(t==="mcq1"){
+    return {
+      type:"mcq1",
+      prompt:"",
+      answers:[],
+      points:null,
+      meta:{ options:["Đáp án A","Đáp án B","Đáp án C","Đáp án D"], correct:1 }
+    };
+  }
+  if(t==="short4"){
+    return {
+      type:"short4",
+      prompt:"",
+      answers:[""],
+      points:null,
+      meta:{ format:"4boxes" }
+    };
+  }
+  if(t==="tf4"){
+    return {
+      type:"tf4",
+      prompt:"",
+      answers:[],
+      points:null,
+      meta:{
+        statements:["","","",""],
+        keys:[true,false,false,false],
+        rule:{ byCorrectCount:{ "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 } }
+      }
+    };
+  }
+  // essay
   return {
-    type: "essay",
-    prompt: "",
-    answers: [""] , // pipe separated in UI
-    points: null,
-    meta: { fuzzy:true }
+    type:"essay",
+    prompt:"",
+    answers:[""],
+    points:null,
+    meta:{ fuzzy:true }
   };
 }
 
@@ -744,8 +1063,8 @@ function renderQuestions(){
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <span class="idx">#${no}</span>
             <select class="qType">
-              <option value="essay" ${q.type==="essay"?"selected":""}>Tự luận</option>
               <option value="mcq1" ${q.type==="mcq1"?"selected":""}>Trắc nghiệm 1 đáp án</option>
+              <option value="essay" ${q.type==="essay"?"selected":""}>Tự luận</option>
               <option value="short4" ${q.type==="short4"?"selected":""}>Trả lời ngắn (4 ô)</option>
               <option value="tf4" ${q.type==="tf4"?"selected":""}>Đúng/Sai 4 ý</option>
             </select>
@@ -837,7 +1156,7 @@ function syncQuestionFromCard(card){
   const q = QUESTIONS[i];
   if(!q) return;
 
-  const type = card.querySelector(".qType")?.value || "essay";
+  const type = card.querySelector(".qType")?.value || "mcq1";
   q.type = type;
 
   const prompt = card.querySelector(".qPrompt")?.value || "";
@@ -850,7 +1169,6 @@ function syncQuestionFromCard(card){
     q.points = null;
   }
 
-  // reset meta per type
   if(type==="essay"){
     const raw = card.querySelector(".qAnswers")?.value || "";
     q.answers = raw.split("|").map(s=>s.trim()).filter(Boolean);
@@ -876,16 +1194,6 @@ function syncQuestionFromCard(card){
   }
 }
 
-function reshowQuestionParts(card){
-  const type = card.querySelector(".qType")?.value || "essay";
-  card.querySelector(".qEssay")?.classList.toggle("hidden", type!=="essay");
-  card.querySelector(".qShort4")?.classList.toggle("hidden", type!=="short4");
-  card.querySelector(".qMcq")?.classList.toggle("hidden", type!=="mcq1");
-  card.querySelector(".qTf4")?.classList.toggle("hidden", type!=="tf4");
-
-  // points field show/hide is handled by full render; keep simple: save draft on scoring change triggers render.
-}
-
 qList.addEventListener("input", (e)=>{
   const card = e.target.closest(".qCard");
   if(!card) return;
@@ -898,9 +1206,10 @@ qList.addEventListener("change", (e)=>{
   if(!card) return;
 
   if(e.target.classList.contains("qType")){
-    // change type => adapt model quickly
+    // ✅ nhớ loại cho câu kế tiếp
+    setLastType(e.target.value);
+
     syncQuestionFromCard(card);
-    // render again to show correct fields
     renderQuestions();
   }else{
     syncQuestionFromCard(card);
@@ -940,11 +1249,25 @@ qList.addEventListener("click", (e)=>{
   }
 });
 
+function scrollToLastQuestionAndFocus(){
+  const cards = qList.querySelectorAll(".qCard");
+  const last = cards[cards.length-1];
+  if(!last) return;
+  last.scrollIntoView({behavior:"smooth", block:"center"});
+  setTimeout(()=>{
+    const ta = last.querySelector(".qPrompt");
+    if(ta) ta.focus();
+  }, 250);
+}
+
 document.getElementById("btnAddQ").onclick = ()=>{
+  // ✅ luôn tạo theo loại cuối cùng
   QUESTIONS.push(defaultQuestion());
   renderQuestions();
   saveDraftSoon();
+  scrollToLastQuestionAndFocus();
 };
+btnAddQFab.addEventListener("click", ()=>document.getElementById("btnAddQ")?.click?.());
 
 scoringModeEl.addEventListener("change", ()=>{
   renderQuestions();
@@ -953,9 +1276,6 @@ scoringModeEl.addEventListener("change", ()=>{
 
 /* ================== ADVANCED HTML IMPORT (optional) ================== */
 const advancedBox = document.getElementById("advancedBox");
-document.getElementById("btnAdvancedToggle").onclick = ()=>{
-  advancedBox.classList.toggle("hidden");
-};
 const htmlBoxEl = document.getElementById("htmlBox");
 
 function parseQuestionsFromHtml(html){
@@ -1004,6 +1324,9 @@ document.getElementById("btnImportHtml").onclick = ()=>{
   })));
   renderQuestions();
   saveDraftSoon();
+  // ✅ sau import, mặc định theo type của câu cuối
+  const last = QUESTIONS[QUESTIONS.length-1];
+  if(last && isAllowedQType(last.type)) setLastType(last.type);
   toast("Đã import vào danh sách câu");
 };
 
@@ -1023,13 +1346,11 @@ function applyScoring(items){
     });
   }
 
-  // custom: keep points
   return items.map(q=>({ ...q, points: (q.points==null?0:Number(q.points)||0) }));
 }
 
 /* ================== SAVE / PUBLISH ================== */
 document.getElementById("btnNewQuiz").onclick = ()=>{
-  // reset to NEW, but keep draft separate
   CURRENT_QID = "";
   setMode("NEW");
   quizIdEl.value = "";
@@ -1047,6 +1368,9 @@ document.getElementById("btnNewQuiz").onclick = ()=>{
   QUESTIONS = [];
   renderQuestions();
   setDraftPill("DRAFT: —");
+  // ✅ quiz mới: reset loại mặc định về mcq1
+  setLastType("mcq1");
+  setQBMode("manual");
   toast("Tạo mới: OK");
 };
 
@@ -1093,7 +1417,6 @@ async function saveQuizOnly(){
 
   const out = await rpc("admin_upsert_quiz", payload);
 
-  // After save: switch to EDIT mode stable id
   CURRENT_QID = out.quiz_id || qid;
   quizIdEl.value = CURRENT_QID;
   setMode("EDIT");
@@ -1131,12 +1454,10 @@ document.getElementById("btnPublishAll").onclick = async ()=>{
       meta: q.meta || {}
     }));
 
-    // Prefer replace (edit-friendly). If your DB doesn't have it, we fallback and show error.
     let out2 = null;
     try{
       out2 = await rpc("admin_replace_questions", { p_token: token, p_quiz_id: qid, p_items: items });
     }catch(e){
-      // fallback
       out2 = await rpc("admin_import_questions", { p_token: token, p_quiz_id: qid, p_items: items });
       toast("⚠️ DB chưa có replace, đã import (có thể bị trùng).");
     }
@@ -1144,7 +1465,6 @@ document.getElementById("btnPublishAll").onclick = async ()=>{
     toast(`Published: ${qid} | inserted: ${out2.inserted ?? "OK"}`);
     await reloadQuizzes();
 
-    // clear draft for this quiz
     localStorage.removeItem(draftKeyFor(qid));
     setDraftPill("DRAFT: —");
     location.href = `/q/${qid}`;
@@ -1214,7 +1534,6 @@ async function delQuiz(qid){
   await reloadQuizzes();
 }
 
-// optional: load questions from DB if you have RPC admin_get_questions
 async function loadQuizToForm(qid){
   const q = QUIZZES.find(x=>x.quiz_id===qid);
   if(!q) return;
@@ -1230,12 +1549,11 @@ async function loadQuizToForm(qid){
   requireLoginEl.value = String(!!q.require_login);
   pinnedEl.value = String(!!q.pinned);
   requireCodeEl.value = String(!!q.require_access_code);
-  accessCodeEl.value = ""; // không show hash
+  accessCodeEl.value = "";
   scoringModeEl.value = q.scoring_mode || "equal";
   totalScoreEl.value = String(q.total_score ?? 10);
   setCoverDataUrl(q.cover_data_url || "");
 
-  // load draft first (if exists)
   const d = tryLoadDraft(qid);
   if(d && d.questions){
     const ok = confirm("Quiz này có NHÁP lưu trên máy. Bạn muốn khôi phục nháp không?");
@@ -1254,29 +1572,35 @@ async function loadQuizToForm(qid){
       QUESTIONS = Array.isArray(d.questions) ? d.questions : [];
       renderQuestions();
       saveDraftSoon();
+      // ✅ sau khi load, default theo câu cuối (nếu có), nếu không -> mcq1
+      const last = QUESTIONS[QUESTIONS.length-1];
+      setLastType(last?.type || "mcq1");
+      setQBMode(QB_MODE);
       toast("Đã khôi phục nháp");
       return;
     }
   }
 
-  // if no draft restore: try load from DB (optional)
   QUESTIONS = [];
   try{
     const token = getToken();
     const out = await rpc("admin_get_questions",{p_token: token, p_quiz_id: qid});
     const items = out.items || [];
     QUESTIONS = items.map(x=>({
-      type: x.type || "essay",
+      type: x.type || "mcq1",
       prompt: x.prompt || "",
       answers: x.answers || [],
       points: x.points ?? null,
-      meta: x.meta || { fuzzy:true }
+      meta: x.meta || (x.type==="mcq1" ? { options:["","","",""], correct:1 } : { fuzzy:true })
     }));
   }catch{
     // ignore if function missing
   }
   renderQuestions();
   saveDraftSoon();
+  const last = QUESTIONS[QUESTIONS.length-1];
+  setLastType(last?.type || "mcq1");
+  setQBMode(QB_MODE);
   toast("Loaded " + qid);
 }
 
@@ -1361,10 +1685,13 @@ async function resetPin(id){
   const ok = await gateCheck();
   if(!ok) return;
 
+  // init QB mode + last type (default mcq1)
+  setLastType(LAST_QTYPE || "mcq1");
+  setQBMode(QB_MODE || "manual");
+
   // restore NEW draft if exists
   const d = tryLoadDraft("NEW");
   if(d){
-    // restore into NEW form
     setMode("NEW");
     quizIdEl.value = d.form?.quiz_id ?? "";
     titleEl.value = d.form?.title ?? "";
@@ -1381,12 +1708,16 @@ async function resetPin(id){
     QUESTIONS = Array.isArray(d.questions) ? d.questions : [];
     renderQuestions();
     setDraftPill("DRAFT: restored", "ok");
+
+    const last = QUESTIONS[QUESTIONS.length-1];
+    setLastType(last?.type || "mcq1");
   }else{
     setMode("NEW");
     setCoverDataUrl("");
     QUESTIONS = [];
     renderQuestions();
     setDraftPill("DRAFT: —");
+    setLastType("mcq1");
   }
 
   await reloadQuizzes();
@@ -1396,3 +1727,4 @@ async function resetPin(id){
 </script>
 </body>
 </html>
+```
