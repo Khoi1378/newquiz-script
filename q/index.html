@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quiz</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:24px;max-width:900px}
+    .card{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0}
+    .muted{color:#666}
+    code{background:#f6f6f6;padding:2px 6px;border-radius:8px}
+    button{padding:10px 12px;border-radius:10px;border:1px solid #ccc;background:#fff;cursor:pointer}
+    input{padding:10px 12px;border-radius:10px;border:1px solid #ccc;width:100%}
+  </style>
+</head>
+<body>
+  <h1>Quiz runner</h1>
+  <p class="muted"><a href="/">← về store</a></p>
+
+  <div class="card">
+    <div>URL hiện tại:</div>
+    <div><code id="u"></code></div>
+    <div style="margin-top:10px">quiz_id parse được:</div>
+    <div><code id="id"></code></div>
+    <div class="muted" style="margin-top:10px">
+      Nếu vào <code>/q/abcde</code> mà ở đây hiện <code>abcde</code> là routing OK.
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:800">Test fetch DB (tạm)</div>
+    <div class="muted" style="margin-top:6px">Chưa render quiz, chỉ test gọi RPC.</div>
+    <button id="btn">Gọi api_get_quiz</button>
+    <pre id="out" class="muted" style="white-space:pre-wrap"></pre>
+  </div>
+
+<script>
+const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
+const SUPABASE_ANON_KEY = "PASTE_ANON_KEY_HERE";
+
+function getQuizIdFromUrl(){
+  // /q/abcde  OR /q/abcde.html  OR /q/abcde/
+  const p = location.pathname;
+  const m = p.match(/^\/q\/([^\/]+)\/?$/);
+  let id = m ? m[1] : "";
+  id = id.replace(/\.html$/i,"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
+  return id;
+}
+
+async function rpc(fn, args){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
+    method:"POST",
+    headers:{
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify(args||{})
+  });
+  const txt = await res.text();
+  let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
+  if(!res.ok){
+    const msg = (data && (data.message||data.error||data.hint)) ? (data.message||data.error||data.hint) : txt;
+    throw new Error(msg || "RPC error");
+  }
+  return data;
+}
+
+document.getElementById("u").textContent = location.href;
+const id = getQuizIdFromUrl();
+document.getElementById("id").textContent = id || "(không có)";
+
+document.getElementById("btn").onclick = async ()=>{
+  const out = document.getElementById("out");
+  out.textContent = "Loading...";
+  try{
+    if(!id) throw new Error("Thiếu quiz_id trên URL. Vào /q/abcde để test.");
+    // Nếu bạn đã có RPC get quiz thì gọi nó.
+    // Ví dụ: api_get_quiz(p_quiz_id text, p_token text default null)
+    const data = await rpc("api_get_quiz", { p_quiz_id: id, p_token: "" });
+    out.textContent = JSON.stringify(data, null, 2);
+  }catch(e){
+    out.textContent = "Error: " + (e.message || e);
+  }
+};
+</script>
+</body>
+</html>
