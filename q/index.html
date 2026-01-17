@@ -5,38 +5,49 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Quiz</title>
   <style>
-    body{font-family:system-ui,Arial;margin:24px;max-width:980px}
-    .card{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0}
+    body{font-family:system-ui,Arial;margin:20px;max-width:980px}
+    .top{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+    .cover{width:260px;max-width:100%;border-radius:14px;border:1px solid #ddd;object-fit:cover}
+    .card{border:1px solid #ddd;border-radius:14px;padding:14px;margin:12px 0}
     .muted{color:#666}
+    .q{padding:12px;border:1px solid #eee;border-radius:12px;margin:10px 0}
+    .qhead{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+    .pill{font-size:12px;padding:4px 8px;border-radius:999px;background:#f3f4f6;border:1px solid #e5e7eb}
+    input[type="text"]{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #ccc}
+    button{padding:10px 12px;border-radius:12px;border:1px solid #ccc;background:#fff;cursor:pointer}
+    button.primary{background:#111827;color:#fff;border:0}
+    .ok{color:#16a34a;font-weight:700}
+    .bad{color:#dc2626;font-weight:700}
     code{background:#f6f6f6;padding:2px 6px;border-radius:8px}
-    pre{white-space:pre-wrap}
   </style>
 </head>
 <body>
-  <h1>Quiz runner</h1>
-  <p class="muted"><a href="/">← về store</a></p>
+  <h1 id="title">Quiz</h1>
+  <p class="muted"><a href="/">← về store</a> • <span class="muted">ID:</span> <code id="qid"></code></p>
 
-  <div class="card">
-    <div>URL:</div>
-    <div><code id="u"></code></div>
-    <div style="margin-top:10px">quiz_id parse:</div>
-    <div><code id="id"></code></div>
-  </div>
+  <div id="meta" class="card" style="display:none"></div>
+  <div id="gate" class="card">Loading...</div>
 
-  <div class="card">
-    <div style="font-weight:800">Load quiz</div>
-    <div class="muted" style="margin-top:6px">Nếu lỗi sẽ hiện ở dưới (không trắng trang).</div>
-    <pre id="out" class="muted"></pre>
+  <div id="app" style="display:none">
+    <div class="card" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between">
+      <div class="muted" id="stat">0 câu</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button id="btnClear">Xóa đáp án đã lưu</button>
+        <button class="primary" id="btnSubmit">Nộp bài</button>
+      </div>
+    </div>
+
+    <div id="list"></div>
+
+    <div id="result" class="card" style="display:none"></div>
   </div>
 
 <script>
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
+const SUPABASE_ANON_KEY = "PASTE_ANON_KEY";
 const TOKEN_KEY = "tk_token_v2";
 
-function getToken(){
-  try{ return localStorage.getItem(TOKEN_KEY) || ""; }catch{ return ""; }
-}
+function getToken(){ try{return localStorage.getItem(TOKEN_KEY)||""}catch{return ""} }
 
 function getQuizIdFromUrl(){
   const p = location.pathname; // /q/abcde or /q/abcde.html
@@ -47,11 +58,12 @@ function getQuizIdFromUrl(){
 }
 
 async function rpc(fn, args){
+  const API_KEY = String(SUPABASE_ANON_KEY||"").trim();
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
     method:"POST",
     headers:{
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+      "apikey": API_KEY,
+      "Authorization": "Bearer " + API_KEY,
       "Content-Type":"application/json"
     },
     body: JSON.stringify(args||{})
@@ -59,28 +71,238 @@ async function rpc(fn, args){
   const txt = await res.text();
   let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
   if(!res.ok){
-    const msg = (data && (data.message||data.error||data.hint||data.details))
-      ? (data.message||data.error||data.hint||data.details)
-      : txt;
-    throw new Error(msg || "RPC error");
+    const msg = (data && (data.message||data.error||data.hint||data.details)) ? (data.message||data.error||data.hint||data.details) : txt;
+    throw new Error(msg || ("RPC error: " + fn));
   }
   return data;
 }
 
-document.getElementById("u").textContent = location.href;
-const id = getQuizIdFromUrl();
-document.getElementById("id").textContent = id || "(không có)";
+// ===== normalize & typo-tolerant compare =====
+function stripAccents(s){
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+}
+function norm(s){
+  s = String(s||"").trim().toLowerCase();
+  s = stripAccents(s);
+  s = s.replace(/\s+/g," ");
+  s = s.replace(/[“”"']/g,"");
+  return s;
+}
+function levenshtein(a,b){
+  a = norm(a); b = norm(b);
+  const m=a.length,n=b.length;
+  if(!m) return n; if(!n) return m;
+  const dp = Array.from({length:m+1},()=>Array(n+1).fill(0));
+  for(let i=0;i<=m;i++) dp[i][0]=i;
+  for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++){
+    for(let j=1;j<=n;j++){
+      const cost = a[i-1]===b[j-1] ? 0 : 1;
+      dp[i][j]=Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost);
+    }
+  }
+  return dp[m][n];
+}
+function okAnswer(user, acceptedList){
+  const u = norm(user);
+  if(!u) return false;
+  const list = (acceptedList||[]).map(norm).filter(Boolean);
+  if(!list.length) return false;
+
+  // exact
+  if(list.includes(u)) return true;
+
+  // typo tolerant (nhẹ thôi để tránh “lệch nghĩa”)
+  for(const a of list){
+    const d = levenshtein(u,a);
+    const L = Math.max(u.length,a.length);
+    const ratio = L ? d/L : 1;
+    const allow = (L<=4 ? 0 : (L<=6 ? 1 : 2)); // dài hơn cho phép sai 2 ký tự
+    if(d <= allow && ratio <= 0.25) return true;
+  }
+  return false;
+}
+
+// ===== autosave =====
+function storageKey(qid){ return `tk_q_${qid}_draft_v1`; }
+function loadDraft(qid){
+  try{
+    const raw = localStorage.getItem(storageKey(qid));
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch{ return null; }
+}
+function saveDraft(qid, draft){
+  try{
+    localStorage.setItem(storageKey(qid), JSON.stringify(draft));
+  }catch{}
+}
+function clearDraft(qid){
+  try{ localStorage.removeItem(storageKey(qid)); }catch{}
+}
+
+let QUIZ=null;
+let ITEMS=[];
+let QID="";
+
+function el(id){ return document.getElementById(id); }
+
+function renderMeta(q){
+  el("title").textContent = q.title || "Quiz";
+  const cover = q.cover_data_url ? `<img class="cover" src="${q.cover_data_url}">` : "";
+  el("meta").style.display = "";
+  el("meta").innerHTML = `
+    <div class="top">
+      ${cover}
+      <div style="flex:1;min-width:240px">
+        <div style="font-size:22px;font-weight:800">${q.title||""}</div>
+        <div class="muted" style="margin-top:6px">${q.sub||""}</div>
+        <div class="muted" style="margin-top:10px">
+          ${q.require_login ? `<span class="pill">Cần login</span>` : `<span class="pill">Không cần login</span>`}
+          ${q.scoring_mode ? `<span class="pill">Scoring: ${q.scoring_mode}</span>` : ``}
+          ${q.total_score!=null ? `<span class="pill">Tổng điểm: ${q.total_score}</span>` : ``}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function computePointsPerQuestion(){
+  const total = Number(QUIZ.total_score ?? 10) || 10;
+  if(!ITEMS.length) return 0;
+  if(String(QUIZ.scoring_mode||"equal")==="equal"){
+    return Math.round((total/ITEMS.length)*100)/100;
+  }
+  return null; // custom (nếu bạn dùng points từng câu)
+}
+
+function renderQuestions(){
+  const list = el("list");
+  const draft = loadDraft(QID) || { answers:{} };
+  const per = computePointsPerQuestion();
+  el("stat").textContent = `${ITEMS.length} câu`;
+
+  list.innerHTML = ITEMS.map((it, idx)=>{
+    const qno = it.no ?? (idx+1);
+    const prompt = it.meaning || it.word || `Câu ${qno}`;
+    const saved = (draft.answers && draft.answers[it.id]) ? draft.answers[it.id] : "";
+    const pts = (it.points!=null ? it.points : per);
+
+    return `
+      <div class="q" data-id="${it.id}">
+        <div class="qhead">
+          <div style="font-weight:800">Câu ${qno}</div>
+          <div class="muted" style="display:flex;gap:8px;align-items:center">
+            <span class="pill">${it.qtype || "essay"}</span>
+            ${pts!=null ? `<span class="pill">${pts} điểm</span>` : ``}
+          </div>
+        </div>
+        <div class="muted" style="margin-top:6px">${prompt}${it.pos ? ` <span class="pill">${it.pos}</span>` : ""}</div>
+        <div style="margin-top:10px">
+          <input type="text" placeholder="Nhập đáp án..." value="${String(saved).replace(/"/g,'&quot;')}" />
+          <div class="muted" style="margin-top:6px">* Nếu muốn chấp nhận nhiều đáp án: nhập nhiều đáp án ngăn cách <code>|</code> lúc import.</div>
+        </div>
+        <div class="muted" data-msg style="margin-top:8px"></div>
+      </div>
+    `;
+  }).join("");
+
+  // bind autosave
+  list.querySelectorAll(".q").forEach(row=>{
+    const id = row.getAttribute("data-id");
+    const input = row.querySelector("input");
+    input.addEventListener("input", ()=>{
+      const d = loadDraft(QID) || { answers:{} };
+      d.answers = d.answers || {};
+      d.answers[id] = input.value;
+      d.updated_at = Date.now();
+      saveDraft(QID, d);
+    }, {passive:true});
+  });
+}
+
+function grade(){
+  const draft = loadDraft(QID) || { answers:{} };
+  const per = computePointsPerQuestion();
+  const total = Number(QUIZ.total_score ?? 10) || 10;
+
+  let earned = 0;
+  let correctCount = 0;
+
+  const rows = document.querySelectorAll(".q");
+  rows.forEach(row=>{
+    const id = row.getAttribute("data-id");
+    const it = ITEMS.find(x=>String(x.id)===String(id));
+    const user = (draft.answers && draft.answers[id]) ? draft.answers[id] : "";
+    const msg = row.querySelector("[data-msg]");
+
+    const pts = (it.points!=null ? Number(it.points) : per) || 0;
+    const ok = okAnswer(user, it.answers);
+
+    if(ok){
+      correctCount++;
+      earned += pts;
+      msg.innerHTML = `<span class="ok">Đúng</span>`;
+    }else{
+      msg.innerHTML = `<span class="bad">Sai</span> • Đáp án đúng: <code>${(it.answers||[]).join(" | ")}</code>`;
+    }
+  });
+
+  // normalize earned nếu equal mà bị lẻ do làm tròn
+  if(String(QUIZ.scoring_mode||"equal")==="equal"){
+    earned = Math.round(earned*100)/100;
+  }
+
+  const percent = ITEMS.length ? Math.round((correctCount/ITEMS.length)*100) : 0;
+
+  el("result").style.display = "";
+  el("result").innerHTML = `
+    <div style="font-weight:900;font-size:18px">Kết quả</div>
+    <div style="margin-top:8px">
+      ✅ Đúng: <b>${correctCount}/${ITEMS.length}</b> •
+      Điểm: <b>${earned}/${total}</b> •
+      ${percent}%
+    </div>
+  `;
+}
+
+document.getElementById("btnSubmit").onclick = grade;
+document.getElementById("btnClear").onclick = ()=>{
+  if(!confirm("Xóa đáp án đã lưu (local) cho quiz này?")) return;
+  clearDraft(QID);
+  renderQuestions();
+};
 
 (async ()=>{
-  const out = document.getElementById("out");
   try{
-    if(!id) throw new Error("Thiếu quiz_id. Vào dạng /q/abcde");
-    out.textContent = "Loading...";
+    QID = getQuizIdFromUrl();
+    el("qid").textContent = QID || "(không có)";
+
+    if(!QID) throw new Error("Thiếu quiz_id. Vào dạng /q/abcde");
+
+    el("gate").textContent = "Đang tải quiz...";
     const token = getToken();
-    const data = await rpc("api_get_quiz", { p_quiz_id: id, p_token: token });
-    out.textContent = JSON.stringify(data, null, 2);
+
+    const data = await rpc("api_get_quiz", { p_quiz_id: QID, p_token: token });
+    if(!data || !data.ok) throw new Error(data?.error || "Load fail");
+
+    QUIZ = data.quiz;
+    ITEMS = (data.items || []).slice().sort((a,b)=> (a.no??999999)-(b.no??999999) || (a.id-b.id));
+
+    renderMeta(QUIZ);
+
+    // nếu quiz yêu cầu login mà bạn muốn chặn thật sự ở FE:
+    if(QUIZ.require_login && !token){
+      el("gate").innerHTML = `Quiz này cần login. Về <a href="/">trang chủ</a> để login rồi mở lại.`;
+      return;
+    }
+
+    el("gate").style.display = "none";
+    el("app").style.display = "";
+    renderQuestions();
+
   }catch(e){
-    out.textContent = "Error: " + (e.message || e);
+    el("gate").innerHTML = `Lỗi: <b>${String(e.message||e)}</b>`;
   }
 })();
 </script>
