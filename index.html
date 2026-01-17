@@ -82,6 +82,7 @@
     }
     .btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
     .btn-danger{background:var(--bad);color:#fff;border:0}
+    .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none !important;filter:none !important}
 
     .topbar{
       margin-top:10px;
@@ -120,6 +121,12 @@
       padding:6px 10px;border-radius:999px;
       background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;
       white-space:nowrap;
+    }
+    .badge-open{
+      background:#ecfdf5;color:#065f46;border-color:#a7f3d0;
+    }
+    .badge-code{
+      background:#fff7ed;color:#9a3412;border-color:#fed7aa;
     }
 
     .input{
@@ -176,7 +183,7 @@
     }
     .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
-    /* PIN keypad (y chang vibe cũ) */
+    /* PIN keypad */
     .pinWrap{display:grid;gap:12px}
     .pinDots{
       display:flex;justify-content:center;gap:10px;
@@ -318,8 +325,9 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 /* ================== STORAGE ================== */
 const TOKEN_KEY = "tk_token_v2";
+const ME_KEY = "tk_me_v2"; // cache để khỏi bị vòng lặp “login xong lại bắt login”
 
-/* ================== UI HELPERS ================== */
+/* ================== HELPERS ================== */
 function toast(msg){
   const t=document.getElementById("toast");
   t.textContent=String(msg||"");
@@ -342,6 +350,23 @@ function validateUsername(u){
 }
 function getToken(){ return localStorage.getItem(TOKEN_KEY) || ""; }
 function setToken(t){ if(!t) localStorage.removeItem(TOKEN_KEY); else localStorage.setItem(TOKEN_KEY, t); }
+
+function getMeCache(){
+  try{
+    const raw = localStorage.getItem(ME_KEY);
+    if(!raw) return null;
+    const obj = JSON.parse(raw);
+    if(obj && obj.username) return obj;
+  }catch{}
+  return null;
+}
+function setMeCache(me){
+  try{
+    if(!me) localStorage.removeItem(ME_KEY);
+    else localStorage.setItem(ME_KEY, JSON.stringify(me));
+  }catch{}
+}
+
 function safeNextPath(){
   try{
     const u = new URL(location.href);
@@ -349,6 +374,12 @@ function safeNextPath(){
     if(n.startsWith("/")) return n;
   }catch{}
   return "";
+}
+
+function isAdminUser(me){
+  if(!me) return false;
+  const u = String(me.username||"").toLowerCase();
+  return me.role==="admin" || u==="tuankhoi";
 }
 
 /* ================== SUPABASE RPC ================== */
@@ -373,6 +404,7 @@ async function rpc(fn, args){
 }
 
 const API = {
+  // api_me có thể chưa tạo; index này có fallback cache ME nên không bị loop
   me: (token)=>rpc("api_me",{p_token:token}),
   logout:(token)=>rpc("api_logout",{p_token:token}),
   checkUsername:(username)=>rpc("api_check_username",{p_username:username}),
@@ -384,8 +416,41 @@ const API = {
 };
 
 /* ================== STATE ================== */
-let ME = null; // {username, role}
-let STORE = [];
+let ME = null;     // { username, role }
+let STORE = [];    // list quiz
+
+function requiresLogin(q){
+  // mặc định: cần login
+  const v = (q && (q.require_login ?? q.requireLogin ?? q.login_required ?? q.loginRequired ?? q.require_auth ?? q.requireAuth ?? q.requires_login ?? q.requiresLogin));
+  if(typeof v === "boolean") return v;
+
+  // nếu có flag mở (không cần login) -> false
+  const open = (q && (q.allow_anonymous ?? q.allowAnonymous ?? q.public_open ?? q.publicOpen ?? q.open_access ?? q.openAccess ?? q.is_open ?? q.isOpen));
+  if(open === true) return false;
+
+  return true;
+}
+
+function pickPinLen(ck, username){
+  const u = normUsername(username);
+  if(u === "tuankhoi") return 6;
+
+  // support nhiều key do RPC có thể trả camelCase/snake_case
+  const raw =
+    (ck && (ck.pinLen ?? ck.pin_len ?? (ck.user && (ck.user.pinLen ?? ck.user.pin_len)) ?? ck.pin_length ?? 4));
+
+  let n = Number(raw) || 4;
+  if(!isFinite(n) || n < 4) n = 4;
+  if(n > 12) n = 12;
+  return n;
+}
+
+function pickExists(ck){
+  if(ck && typeof ck.exists === "boolean") return ck.exists;
+  if(ck && ck.ok === true && typeof ck.exists === "boolean") return ck.exists;
+  if(ck && ck.userId) return true;
+  return null; // unknown
+}
 
 /* ================== USER CORNER + PROFILE ================== */
 const userCorner = document.getElementById("userCorner");
@@ -405,17 +470,28 @@ function updateUserCorner(){
   }
   userCorner.style.display="inline-flex";
   userCornerName.textContent = ME.username;
-  userCornerAdmin.style.display = (ME.role==="admin") ? "inline-flex" : "none";
-  statusPill.innerHTML = `Xin chào <b>${escapeHtml(ME.username)}</b> ${ME.role==="admin" ? `<span class="adminBadgeInline">ADMIN</span>`:""}`;
+  userCornerAdmin.style.display = isAdminUser(ME) ? "inline-flex" : "none";
+
+  statusPill.innerHTML = `Xin chào <b>${escapeHtml(ME.username)}</b> ${isAdminUser(ME) ? `<span class="adminBadgeInline">ADMIN</span>`:""}`;
 }
 userCorner.addEventListener("click", ()=>{ if(ME) openProfileModal(); });
 
 function openProfileModal(){
   document.getElementById("profileUsername").textContent = ME.username;
-  document.getElementById("profileRole").textContent = (ME.role==="admin") ? "ADMIN" : "USER";
+  document.getElementById("profileRole").textContent = isAdminUser(ME) ? "ADMIN" : "USER";
+
+  const isAdmin = isAdminUser(ME);
   document.getElementById("profileHint").textContent =
-    (ME.role==="admin") ? "Admin không đổi username/pin trong panel này." : "Bạn có thể đổi username (30 ngày/lần) và đổi pin 4 số.";
+    isAdmin ? "Tài khoản admin (tuankhoi) dùng mật khẩu 6 số. Không đổi username/pin ở đây."
+            : "Bạn có thể đổi username (theo rule server) và đổi pin 4 số.";
+
   document.getElementById("newUsername").value = "";
+
+  // disable actions for admin
+  document.getElementById("btnChangePin").disabled = isAdmin;
+  document.getElementById("btnSaveNewUsername").disabled = isAdmin;
+  document.getElementById("newUsername").disabled = isAdmin;
+
   profileBackdrop.classList.add("show");
   profileBackdrop.setAttribute("aria-hidden","false");
 }
@@ -469,7 +545,7 @@ let PIN = {
   open:false, resolve:null, reject:null,
   username:"", mode:"login", step:"one",
   pinLen:4, value:"", first:"", old:"", submitting:false,
-  dotEls:[]
+  dotEls:[], payload:null
 };
 
 function buildPinKeypadOnce(){
@@ -516,15 +592,17 @@ function pinErrorPulse(msg){
   setTimeout(()=>{
     pinDots.classList.remove("error");
     pinWrap.classList.remove("shake");
-    setPinNote("Mật khẩu chỉ gồm số.");
+    updatePinHeader();
   },520);
 }
 
 function updatePinHeader(){
-  const u = PIN.username;
+  const u = normUsername(PIN.username);
+  const note = (u==="tuankhoi") ? "Tài khoản tuankhoi dùng mật khẩu 6 số."
+                               : "Mật khẩu chỉ gồm số.";
   if(PIN.mode==="login"){
     pinTitle.textContent="Đăng nhập";
-    pinDesc.textContent=`Username: ${u}`;
+    pinDesc.textContent=`Username: ${PIN.username}`;
   }else if(PIN.mode==="set"){
     if(PIN.step==="one"){ pinTitle.textContent="Đăng ký"; pinDesc.textContent=`Tạo mật khẩu ${PIN.pinLen} số`; }
     else { pinTitle.textContent="Xác nhận mật khẩu"; pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`; }
@@ -533,7 +611,7 @@ function updatePinHeader(){
     else if(PIN.step==="new1"){ pinTitle.textContent="Mật khẩu mới"; pinDesc.textContent=`Nhập ${PIN.pinLen} số`; }
     else { pinTitle.textContent="Xác nhận mật khẩu mới"; pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`; }
   }
-  setPinNote("Mật khẩu chỉ gồm số.");
+  setPinNote(note);
 }
 
 function openPin({username, mode="login", pinLen=4}){
@@ -542,7 +620,7 @@ function openPin({username, mode="login", pinLen=4}){
     PIN.username=String(username||"");
     PIN.mode=mode;
     PIN.pinLen=Math.max(4, Number(pinLen)||4);
-    PIN.value=""; PIN.first=""; PIN.old=""; PIN.submitting=false;
+    PIN.value=""; PIN.first=""; PIN.old=""; PIN.submitting=false; PIN.payload=null;
     PIN.step = (mode==="set") ? "one" : (mode==="change" ? "old" : "one");
     buildPinKeypadOnce();
     buildDots(PIN.pinLen);
@@ -559,10 +637,40 @@ function closePin(why){
   pinBackdrop.setAttribute("aria-hidden","true");
   const rej = PIN.reject;
   const res = PIN.resolve;
-  const payload = PIN._payload;
-  PIN.open=false; PIN.resolve=null; PIN.reject=null; PIN._payload=null;
+  const payload = PIN.payload;
+  PIN.open=false; PIN.resolve=null; PIN.reject=null; PIN.payload=null;
   if(why==="ok"){ if(res) res(payload); return; }
   if(rej) rej(new Error("cancel"));
+}
+
+/* ================== AUTH FLOW (FIX LOOP) ================== */
+async function enterAfterAuth({ token, me, redirectNext=true }){
+  if(token) setToken(token);
+  if(me && me.username){
+    ME = me;
+    setMeCache(me);
+  }
+  updateUserCorner();
+
+  // redirect nếu có next
+  if(redirectNext){
+    const next = safeNextPath();
+    if(next){
+      location.href = next;
+      return;
+    }
+  }
+
+  // load store + render store ngay (không gọi boot() để khỏi đá về login)
+  await loadStore();
+  renderStore();
+}
+
+function clearAuthLocal(){
+  setToken("");
+  setMeCache(null);
+  ME = null;
+  updateUserCorner();
 }
 
 async function onPinKey(k){
@@ -583,21 +691,21 @@ async function onPinKey(k){
     return;
   }
 
-  // LOGIN
+  // LOGIN (submit ngay)
   if(PIN.mode==="login"){
     PIN.submitting=true;
     try{
       setPinNote("Đang kiểm tra…");
       const out = await API.login(PIN.username, val);
-      if(out && out.ok){
-        setToken(out.token);
-        ME = out.me || (await API.me(out.token)).me;
-        PIN._payload = val;
+      if(out && out.ok && out.token){
+        const me = out.me || out.user || out.profile || null;
+
+        PIN.payload = val;
         closePin("ok");
+
         toast("Đăng nhập thành công");
-        const next = safeNextPath();
-        if(next){ location.href = next; return; }
-        await boot(); // render store
+
+        await enterAfterAuth({ token: out.token, me, redirectNext:true });
         return;
       }
       pinErrorPulse(out?.error || "Sai mật khẩu");
@@ -625,7 +733,7 @@ async function onPinKey(k){
         updatePinHeader(); updateDots();
         return;
       }
-      PIN._payload = val;
+      PIN.payload = val;
       closePin("ok");
       return;
     }
@@ -654,7 +762,7 @@ async function onPinKey(k){
       updatePinHeader(); updateDots();
       return;
     }
-    PIN._payload = { oldPin: PIN.old, newPin: val };
+    PIN.payload = { oldPin: PIN.old, newPin: val };
     closePin("ok");
     return;
   }
@@ -664,6 +772,35 @@ async function onPinKey(k){
 const content = document.getElementById("content");
 
 function renderGate(){
+  const openQuizzes = (STORE||[]).filter(q => !requiresLogin(q));
+  const openSection = openQuizzes.length ? `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Quiz mở (không cần đăng nhập)</p>
+        <div><span class="idx badge-open">OPEN</span></div>
+      </div>
+      <div style="margin-top:10px; display:grid; gap:10px;">
+        ${openQuizzes.map(q => `
+          <div class="card" style="box-shadow:none;border-width:1px;margin:0">
+            <div class="row1">
+              <div style="min-width:0">
+                <div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div>
+                <div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div>
+                <div class="muted" style="margin-top:6px">
+                  <span class="idx badge-open">KHÔNG CẦN LOGIN</span>
+                  ${q.require_access_code ? `<span class="idx badge-code">CÓ MÃ</span>` : ``}
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+                <a href="/q/${encodeURIComponent(q.quiz_id)}"><button class="btn btn-primary">Vào quiz</button></a>
+              </div>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  ` : "";
+
   content.innerHTML = `
     <div class="card">
       <div class="row1">
@@ -671,8 +808,8 @@ function renderGate(){
         <div><span class="idx">BẮT BUỘC</span></div>
       </div>
       <div class="muted" style="margin-top:6px; line-height:1.35">
-        Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b> (không viết hoa).<br/>
-        - Username <b>đã có</b> → hiện keypad <b>đăng nhập</b>.<br/>
+        Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b>.<br/>
+        - Username <b>đã có</b> → hiện keypad <b>đăng nhập</b> (4 số, riêng <b>tuankhoi</b> là <b>6 số</b>).<br/>
         - Username <b>chưa có</b> → hỏi và cho <b>đăng ký</b>.
       </div>
 
@@ -682,13 +819,15 @@ function renderGate(){
         <div class="muted" id="gateStatus">Sẵn sàng.</div>
       </div>
     </div>
+
+    ${openSection}
   `;
 
   const nameInput = document.getElementById("nameInput");
   const btnContinue = document.getElementById("btnContinue");
   const gateStatus = document.getElementById("gateStatus");
 
-  nameInput.addEventListener("input",()=>{ // auto lowercase giống yêu cầu
+  nameInput.addEventListener("input",()=>{
     const v = normUsername(nameInput.value);
     if(nameInput.value!==v) nameInput.value=v;
   },{passive:true});
@@ -703,40 +842,49 @@ function renderGate(){
     gateStatus.textContent="Đang kiểm tra username…";
     try{
       const ck = await API.checkUsername(u);
-      if(!ck.ok) throw new Error(ck.error||"check fail");
+      if(!ck || ck.ok === false) throw new Error((ck && ck.error) ? ck.error : "check fail");
 
-      const pinLen = Number(ck.pin_len||4)||4;
+      const exists = pickExists(ck);
+      const pinLen = pickPinLen(ck, u);
 
-      if(ck.exists === true && ck.reserved === true){
-        // username từng tồn tại -> không cho đăng ký lại
+      // nếu server có reserved, vẫn support (không bắt buộc)
+      const reserved = !!(ck && (ck.reserved === true || ck.is_reserved === true));
+
+      if(exists === true && reserved === true){
         toast("Username này đã bị giữ lại (đổi tên rồi).");
         gateStatus.textContent="Thử username khác.";
         return;
       }
 
-      if(ck.exists === true){
+      if(exists === true){
         gateStatus.textContent="Đăng nhập: nhập mật khẩu…";
         await openPin({username:u, mode:"login", pinLen});
         return;
       }
 
-      // exists = false
-      gateStatus.textContent=`Username "${u}" chưa đăng ký.`;
-      const ok = await openRegisterPrompt(u);
-      if(!ok){ gateStatus.textContent="Bạn có thể nhập username khác."; return; }
+      if(exists === false){
+        gateStatus.textContent=`Username "${u}" chưa đăng ký.`;
+        const ok = await openRegisterPrompt(u);
+        if(!ok){ gateStatus.textContent="Bạn có thể nhập username khác."; return; }
 
-      gateStatus.textContent="Đăng ký: tạo mật khẩu…";
-      const pin = await openPin({username:u, mode:"set", pinLen: (u==="tuankhoi"?6:4)});
-      // gọi register
-      gateStatus.textContent="Đang tạo tài khoản…";
-      const out = await API.register(u, pin);
-      if(!out || !out.ok) throw new Error(out?.error || "register fail");
-      setToken(out.token);
-      ME = out.me || (await API.me(out.token)).me;
-      toast("Đã đăng ký & đăng nhập");
-      const next = safeNextPath();
-      if(next){ location.href = next; return; }
-      await boot();
+        const regPinLen = (u==="tuankhoi") ? 6 : 4;
+        gateStatus.textContent="Đăng ký: tạo mật khẩu…";
+        const pin = await openPin({username:u, mode:"set", pinLen: regPinLen});
+
+        gateStatus.textContent="Đang tạo tài khoản…";
+        const out = await API.register(u, pin);
+        if(!out || !out.ok || !out.token) throw new Error(out?.error || "register fail");
+
+        toast("Đã đăng ký & đăng nhập");
+        await enterAfterAuth({ token: out.token, me: (out.me || out.user || null), redirectNext:true });
+        return;
+      }
+
+      // exists unknown -> thử login luôn
+      gateStatus.textContent="Không rõ trạng thái. Thử đăng nhập…";
+      const forcedLen = (u==="tuankhoi") ? 6 : 4;
+      await openPin({username:u, mode:"login", pinLen: forcedLen});
+
     }catch(e){
       if(!(e && e.message==="cancel")) toast(e.message||"Lỗi");
       gateStatus.textContent="Sẵn sàng.";
@@ -750,48 +898,80 @@ function renderGate(){
 }
 
 function renderStore(){
-  const adminLink = (ME && ME.role==="admin") ? `<a href="/admin" class="muted" style="font-weight:900">Admin panel</a>` : `<span class="muted"> </span>`;
+  updateUserCorner();
+
+  const adminLink = (ME && isAdminUser(ME)) ? `<a href="/admin" class="muted" style="font-weight:900">Admin panel</a>` : `<span class="muted"></span>`;
+
   content.innerHTML = `
     <div class="card">
       <div class="row1">
         <p class="vi">Danh sách quiz</p>
         <div>${adminLink}</div>
       </div>
+      <div class="muted" style="margin-top:6px; line-height:1.35">
+        Mặc định: quiz <b>cần đăng nhập</b>. Quiz nào “mở” sẽ có badge <span class="idx badge-open">OPEN</span>.
+      </div>
       <div id="storeList" style="margin-top:10px"></div>
     </div>
   `;
+
   const list = document.getElementById("storeList");
   if(!STORE.length){
     list.innerHTML = `<div class="muted">Chưa có quiz public.</div>`;
     return;
   }
-  list.innerHTML = STORE.map(q=>`
-    <div class="card" style="box-shadow:none;border-width:1px;margin:10px 0">
-      <div class="row1">
-        <div style="min-width:0">
-          <div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div>
-          <div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div>
-          <div class="muted" style="margin-top:6px">Link: <span class="idx">/q/${escapeHtml(q.quiz_id)}</span>
-            ${q.require_access_code ? `<span class="idx" style="background:#fff7ed;color:#9a3412;border-color:#fed7aa">CÓ MÃ</span>` : ``}
+
+  list.innerHTML = STORE.map(q=>{
+    const needLogin = requiresLogin(q);
+    const openBadge = !needLogin ? `<span class="idx badge-open">OPEN</span>` : ``;
+    const codeBadge = q.require_access_code ? `<span class="idx badge-code">CÓ MÃ</span>` : ``;
+
+    const href = `/q/${encodeURIComponent(q.quiz_id)}`;
+    const btnHtml = needLogin
+      ? `<a href="${href}"><button class="btn btn-primary">Làm quiz</button></a>`
+      : `<a href="${href}"><button class="btn btn-primary">Vào quiz</button></a>`;
+
+    return `
+      <div class="card" style="box-shadow:none;border-width:1px;margin:10px 0">
+        <div class="row1">
+          <div style="min-width:0">
+            <div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div>
+            <div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div>
+            <div class="muted" style="margin-top:6px">
+              <span class="idx">/q/${escapeHtml(q.quiz_id)}</span>
+              ${openBadge} ${codeBadge}
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+            ${btnHtml}
           </div>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-          <a href="/q/${encodeURIComponent(q.quiz_id)}"><button class="btn btn-primary">Làm quiz</button></a>
-          <a href="/q/${encodeURIComponent(q.quiz_id)}?next=/" style="display:none"></a>
-        </div>
       </div>
-    </div>
-  `).join("");
+    `;
+  }).join("");
+}
+
+/* ================== STORE LOAD ================== */
+async function loadStore(){
+  try{
+    const st = await API.listStore();
+    if(st && st.ok){
+      STORE = st.items || st.rows || st.data || [];
+      return;
+    }
+  }catch{}
+  STORE = [];
 }
 
 /* ================== PROFILE ACTIONS ================== */
 document.getElementById("btnLogout").onclick = async ()=>{
   const ok = confirm("Đăng xuất?");
   if(!ok) return;
+
   const t = getToken();
   try{ if(t) await API.logout(t); }catch{}
-  setToken("");
-  ME=null;
+  clearAuthLocal();
+
   closeProfileModal();
   toast("Đã đăng xuất");
   await boot();
@@ -799,17 +979,24 @@ document.getElementById("btnLogout").onclick = async ()=>{
 
 document.getElementById("btnSaveNewUsername").onclick = async ()=>{
   if(!ME) return;
-  if(ME.role==="admin"){ toast("Admin không đổi username."); return; }
+  if(isAdminUser(ME)){ toast("Admin không đổi username."); return; }
+
   const newU = normUsername(document.getElementById("newUsername").value);
   const err = validateUsername(newU);
   if(err){ toast(err); return; }
+
   try{
     const out = await API.changeUsername(getToken(), newU);
-    if(!out.ok) throw new Error(out.error||"rename fail");
-    ME.username = out.me.username;
+    if(!out || !out.ok) throw new Error(out?.error || "rename fail");
+
+    const me2 = out.me || out.user || { username: newU, role: ME.role || "user" };
+    ME = me2;
+    setMeCache(me2);
+
     toast("Đã đổi username");
     closeProfileModal();
     updateUserCorner();
+    renderStore();
   }catch(e){
     toast(e.message||"Không đổi được");
   }
@@ -817,11 +1004,13 @@ document.getElementById("btnSaveNewUsername").onclick = async ()=>{
 
 document.getElementById("btnChangePin").onclick = async ()=>{
   if(!ME) return;
-  if(ME.role==="admin"){ toast("Admin không đổi pin."); return; }
+  if(isAdminUser(ME)){ toast("Admin không đổi pin."); return; }
+
   try{
     const payload = await openPin({username: ME.username, mode:"change", pinLen:4});
     const out = await API.changePin(getToken(), payload.oldPin, payload.newPin);
-    if(!out.ok) throw new Error(out.error||"change pin fail");
+    if(!out || !out.ok) throw new Error(out?.error || "change pin fail");
+
     toast("Đã đổi mật khẩu");
     closeProfileModal();
   }catch(e){
@@ -831,39 +1020,39 @@ document.getElementById("btnChangePin").onclick = async ()=>{
 
 /* ================== BOOT ================== */
 async function boot(){
-  ME=null;
-  STORE=[];
+  // load store (public) trước để gate có thể show quiz mở
+  await loadStore();
+
+  // auth restore
+  ME = getMeCache();
   updateUserCorner();
 
-  // me
   const t = getToken();
-  if(t){
+
+  // nếu có token mà chưa có ME cache -> thử gọi api_me (nếu có)
+  if(t && (!ME || !ME.username)){
     try{
       const meOut = await API.me(t);
-      if(meOut && meOut.ok){
+      if(meOut && meOut.ok && meOut.me){
         ME = meOut.me;
-      }else{
-        setToken("");
+        setMeCache(ME);
       }
     }catch{
-      setToken("");
+      // không clear token ở đây để tránh vòng lặp khó chịu
+      // (nếu api_me chưa tạo / lỗi, vẫn cho user login lại khi cần)
     }
   }
+
   updateUserCorner();
 
-  // store list (không cần login)
-  try{
-    const st = await API.listStore();
-    if(st && st.ok) STORE = st.items || [];
-  }catch{}
-
-  if(ME) renderStore();
+  if(ME && ME.username) renderStore();
   else renderGate();
 }
 
 if(SUPABASE_URL.includes("PASTE_") || SUPABASE_ANON_KEY.includes("PASTE_")){
   toast("Chưa dán SUPABASE_URL / ANON_KEY trong index.html");
 }
+
 boot();
 </script>
 </body>
