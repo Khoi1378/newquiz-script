@@ -357,7 +357,7 @@ function fmtTime(ts){
   const dd = String(d.getDate()).padStart(2,"0");
   const MM = String(d.getMonth()+1).padStart(2,"0");
   const yy = String(d.getFullYear()).slice(-2);
-  return `${hh}/${mm}/${ss}, ${dd}/${MM}/${yy}`;
+  return `${hh}:${mm}:${ss}, ${dd}/${MM}/${yy}`;
 }
 
 async function rpc(fn,args){
