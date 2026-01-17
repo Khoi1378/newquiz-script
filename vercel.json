@@ -8,8 +8,8 @@
     { "source": "/spin1", "destination": "/spin1/index.html" },
     { "source": "/spin1/", "destination": "/spin1/index.html" },
 
-    { "source": "/dalat", "destination": "/q/dalat.html" },
-    { "source": "/dalat/", "destination": "/q/dalat.html" },
+    { "source": "/q/dalat", "destination": "/dalat.html" },
+    { "source": "/q/dalat/", "destination": "/dalat.html" },
 
     { "source": "/q", "destination": "/q/index.html" },
     { "source": "/q/", "destination": "/q/index.html" },
