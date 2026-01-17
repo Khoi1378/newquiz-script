@@ -1,20 +1,143 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Quiz Result</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Result</title>
+  <style>
+    body{font-family:system-ui,Arial;margin:24px;max-width:900px}
+    .muted{color:#666}
+    .card{border:1px solid #ddd;border-radius:12px;padding:14px;margin:12px 0}
+    button{padding:8px 10px;border-radius:10px;border:1px solid #ccc;background:#fff;cursor:pointer}
+    input{padding:10px 12px;border-radius:10px;border:1px solid #ccc;width:100%}
+    textarea{padding:10px 12px;border-radius:10px;border:1px solid #ccc;width:100%;min-height:90px}
+    hr{border:none;border-top:1px solid #eee;margin:16px 0}
+  </style>
 </head>
 <body>
-  <h1>Kết quả</h1>
-  <p id="info"></p>
-  <p><a id="back">Quay lại quiz</a></p>
+  <div id="app">Loading...</div>
 
-  <script>
-    // lấy slug từ URL dạng /q/<slug>/result
-    const parts = location.pathname.split("/").filter(Boolean);
-    const slug = parts[1] || "";
-    document.getElementById("info").textContent = "Quiz: " + slug;
-    document.getElementById("back").href = "/q/" + slug;
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module">
+    import { getQuiz, getLeaderboard, getComments, addComment, me } from "./lib/api.js";
+
+    function getQuizIdFromPath(){
+      const parts = location.pathname.split("/").filter(Boolean);
+      // /q/<id>/result
+      return parts[1] || "";
+    }
+    const quizId = getQuizIdFromPath();
+    const app = document.getElementById("app");
+
+    const quizOut = await getQuiz(quizId, null);
+    if(!quizOut.ok){ app.textContent = quizOut.error; throw new Error(quizOut.error); }
+
+    const last = JSON.parse(localStorage.getItem("tk_last_result_"+quizId) || "null");
+
+    const meOut = await me().catch(()=>({ok:false}));
+
+    const lb = await getLeaderboard(quizId, 30).catch(()=>({ok:false, items:[]}));
+    const cm = await getComments(quizId).catch(()=>({ok:false, items:[]}));
+
+    function esc(s){return (s??"").toString().replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");}
+
+    function render(){
+      app.innerHTML = `
+        <h2 style="margin:0">${esc(quizOut.quiz.title)} - Kết quả</h2>
+        <div class="muted">Quiz: <code>${quizId}</code></div>
+        <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
+          <a href="/q/${quizId}"><button>Làm lại</button></a>
+          <a href="/"><button>Về kệ hàng</button></a>
+        </div>
+
+        <hr/>
+
+        <div class="card">
+          <h3 style="margin-top:0">Kết quả gần nhất</h3>
+          ${last ? `
+            <div>Điểm: <b>${last.score10}</b> | Đúng: <b>${last.correct}</b>/${last.total}</div>
+            <details style="margin-top:10px">
+              <summary>Xem chi tiết</summary>
+              <div style="margin-top:10px">
+                ${(last.details||[]).map(d=>`
+                  <div class="card">
+                    <div><b>vocab_id:</b> ${d.vocab_id}</div>
+                    <div><b>Trả lời:</b> ${esc(d.user_answer||"")}</div>
+                    <div><b>KQ:</b> ${d.ok ? "✅" : "❌"} | <span class="muted">Expected:</span> ${esc(d.expected||"")}</div>
+                  </div>
+                `).join("")}
+              </div>
+            </details>
+          ` : `<div class="muted">Chưa có kết quả local. Hãy submit bài từ trang quiz.</div>`}
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">Leaderboard</h3>
+          ${renderLB(lb.items||[])}
+        </div>
+
+        <div class="card">
+          <h3 style="margin-top:0">Thảo luận</h3>
+          ${meOut.ok ? `
+            <textarea id="cText" placeholder="Viết bình luận..."></textarea>
+            <button id="btnSend" style="margin-top:8px">Gửi</button>
+          ` : `<div class="muted">Bạn cần login ở trang chủ để bình luận.</div>`}
+          <hr/>
+          <div id="comments"></div>
+        </div>
+      `;
+
+      const cWrap = app.querySelector("#comments");
+      cWrap.innerHTML = renderComments(cm.items||[]);
+
+      if(meOut.ok){
+        app.querySelector("#btnSend").onclick = async ()=>{
+          const t = app.querySelector("#cText").value.trim();
+          if(!t) return;
+          const out = await addComment(quizId, null, t);
+          if(!out.ok) return alert(out.error || "add comment fail");
+          location.reload();
+        };
+      }
+    }
+
+    function renderLB(items){
+      if(!items.length) return `<div class="muted">Chưa có ai.</div>`;
+      return `<ol>` + items.map(i=>`
+        <li><b>${esc(i.name)}</b> — ${i.score10}${i.is_admin ? ' <span class="muted">(admin)</span>' : ''}</li>
+      `).join("") + `</ol>`;
+    }
+
+    function renderComments(items){
+      if(!items.length) return `<div class="muted">Chưa có bình luận.</div>`;
+      // group by parent (1 level)
+      const byParent = new Map();
+      for(const c of items){
+        const key = c.parent_id || "root";
+        if(!byParent.has(key)) byParent.set(key, []);
+        byParent.get(key).push(c);
+      }
+      const roots = byParent.get("root") || [];
+      return roots.map(c => {
+        const replies = byParent.get(c.id) || [];
+        return `
+          <div class="card">
+            <div><b>${esc(c.user.username)}</b> <span class="muted">${new Date(c.created_at).toLocaleString()}</span></div>
+            <div style="margin-top:6px">${esc(c.text)}</div>
+            ${replies.length ? `<div style="margin-top:10px;padding-left:14px;border-left:3px solid #eee">
+              ${replies.map(r=>`
+                <div class="card">
+                  <div><b>${esc(r.user.username)}</b> <span class="muted">${new Date(r.created_at).toLocaleString()}</span></div>
+                  <div style="margin-top:6px">${esc(r.text)}</div>
+                </div>
+              `).join("")}
+            </div>` : ``}
+          </div>
+        `;
+      }).join("");
+    }
+
+    render();
   </script>
 </body>
 </html>
