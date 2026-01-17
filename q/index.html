@@ -269,7 +269,7 @@
     }
     .pinNote.error{color:var(--bad)}
 
-    /* ====== Profile UI (from old code) ====== */
+    /* ====== Profile UI ====== */
     .sectionTitle{ font-weight: 1000; margin: 8px 0 6px; font-size: .98rem; }
     .divider{ height:1px; background: #e5e7eb; margin: 12px 0; }
     .btn-red{
@@ -281,12 +281,65 @@
     .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     @media (max-width: 520px){ .grid2{ grid-template-columns: 1fr; } }
 
+    /* ====== NEW: leaderboard + comments ====== */
+    .lbRow{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:10px 12px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;
+      margin-top:10px;
+    }
+    .lbLeft{display:flex;align-items:center;gap:10px;min-width:0}
+    .lbRank{
+      width:34px;height:34px;border-radius:14px;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:1000;border:1px solid #e5e7eb;background:#f8fafc;
+      flex:0 0 auto;
+    }
+    .lbName{font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
+    .lbScore{font-weight:1000}
+    .badgeAdmin{
+      padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
+      background:rgba(37,99,235,.12);
+      border:1px solid rgba(37,99,235,.35);
+      color:var(--admin);
+      flex:0 0 auto;
+    }
+    .badgePin{
+      padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
+      background:rgba(245,158,11,.14);
+      border:1px solid rgba(245,158,11,.35);
+      color:#b45309;
+    }
+    .cmtItem{
+      margin-top:10px;
+      border:1px solid #e5e7eb;background:#fff;
+      border-radius:16px;padding:10px 12px;
+    }
+    .cmtItem.reply{ margin-left:22px; border-left:4px solid rgba(124,58,237,.25); }
+    .cmtHead{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+    }
+    .cmtWho{display:flex;align-items:center;gap:8px;min-width:0}
+    .cmtName{font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:58vw}
+    .cmtTime{color:var(--muted);font-weight:750;font-size:.84rem;white-space:nowrap}
+    .cmtText{margin-top:8px;font-weight:750;line-height:1.35;white-space:pre-wrap}
+    .cmtActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .btn-mini{
+      padding:8px 10px;border-radius:999px;
+      font-weight:950;font-size:.82rem;
+      border:1px solid #e5e7eb;background:#fff;cursor:pointer;
+    }
+    .btn-mini.danger{background:rgba(220,38,38,.95);color:#fff;border:0}
+    .btn-mini.primary{background:linear-gradient(135deg,#7c3aed,#fb7185);color:#fff;border:0}
+    textarea.input{min-height:110px;resize:vertical;font-family:inherit}
+    .hint{color:var(--muted);font-weight:750;font-size:.9rem;line-height:1.35}
+
     @media (max-width: 820px) {
       .progressline { max-width: 100%; }
       .btn { padding: 9px 12px; font-size: .85rem; }
       .resultRow{ grid-template-columns: 120px 1fr; }
       .userCorner .name { max-width: 66vw; }
       .btn-check{ min-width: 84px; }
+      .lbName{ max-width: 56vw; }
     }
   </style>
 </head>
@@ -322,6 +375,9 @@
       </div>
 
       <div class="content" id="content"></div>
+
+      <!-- NEW: extras below quiz -->
+      <div class="content" id="extras"></div>
     </div>
   </div>
 
@@ -360,7 +416,7 @@
   <div class="modal-backdrop" id="resetBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <h3>Làm lại bài?</h3>
-      <p>Xóa lần làm hiện tại (trên máy) và shuffle lại.</p>
+      <p>Xóa lần làm hiện tại (trên máy) và làm lại.</p>
       <div class="modal-actions">
         <button class="btn btn-ghost" id="btnCancelReset">Hủy</button>
         <button class="btn btn-danger" id="btnConfirmReset">Xóa & Làm lại</button>
@@ -368,7 +424,7 @@
     </div>
   </div>
 
-  <!-- Profile (USER) modal: UI từ code cũ -->
+  <!-- Profile modal -->
   <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
       <div class="xclose">
@@ -409,25 +465,28 @@
 
 <script>
 /* ================== CONFIG ================== */
-const HOME_URL = "/"; // nút Trang chủ
+const HOME_URL = "/";
 
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
-/* RPC names */
 const RPC = {
   getQuiz: "api_get_quiz",
   checkUsername: "api_check_username",
   login: "api_login",
   register: "api_register",
   me: "api_me",
-
-  // (thêm phần user như code cũ)
   changeUsername: "api_change_username",
-  changePin: "api_change_pin"
+  changePin: "api_change_pin",
+
+  // NEW: leaderboard + comments
+  listLeaderboard: "api_list_leaderboard",
+  listComments: "api_list_comments",
+  addComment: "api_add_comment",
+  deleteComment: "api_delete_comment",
+  pinComment: "api_pin_comment"
 };
 
-/* STORAGE */
 const TOKEN_KEY = "tk_token_v2";
 const ME_KEY = "tk_me_v2";
 const RENAME_KEY_PREFIX = "tk_last_rename_at_v2::";
@@ -463,75 +522,20 @@ function getMeCache(){ try{ return JSON.parse(localStorage.getItem(ME_KEY)||"nul
 function setMeCache(me){ try{ if(!me) localStorage.removeItem(ME_KEY); else localStorage.setItem(ME_KEY, JSON.stringify(me)); }catch{} }
 function clearAuthLocal(){ setToken(""); setMeCache(null); }
 
-/* time fmt */
 function pad2(n){ return String(n).padStart(2,"0"); }
-function formatTs(ms){
-  const d = new Date(Number(ms||0));
+function fmtTime(ts){
+  const d = new Date(ts);
   if(!isFinite(d.getTime())) return "—";
-  const hh = pad2(d.getHours());
-  const mm = pad2(d.getMinutes());
-  const dd = pad2(d.getDate());
-  const MM = pad2(d.getMonth()+1);
-  const yy = String(d.getFullYear()).slice(-2);
-  return `${hh}:${mm}/${dd}/${MM}/${yy}`;
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}/${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
 }
-function parseAnyMs(v){
-  if(v == null) return 0;
-  if(typeof v === "number" && isFinite(v)) return v;
-  const s = String(v||"").trim();
-  if(!s) return 0;
-  const n = Number(s);
-  if(isFinite(n) && n > 0) return n;
-  const t = Date.parse(s);
-  return isFinite(t) ? t : 0;
+function parseQuizIdFromUrl(){
+  const p = location.pathname;
+  const m = p.match(/^\/q\/([^\/]+)\/?$/);
+  let id = m ? m[1] : "";
+  id = id.replace(/\.html$/i,"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
+  return id;
 }
-
-/* rename lock */
-function getLastRenameAtMs(){
-  const fromMe = parseAnyMs(me?.lastRenameAtMs ?? me?.last_rename_at_ms ?? me?.last_rename_at ?? me?.lastRenameAt ?? me?.last_rename_at_ts);
-  if(fromMe) return fromMe;
-  try{
-    const k = RENAME_KEY_PREFIX + String(me?.user_id || me?.username || "");
-    return Number(localStorage.getItem(k)||"0")||0;
-  }catch{ return 0; }
-}
-function setLastRenameAtMs(ms){
-  const v = Number(ms)||0;
-  try{
-    const k = RENAME_KEY_PREFIX + String(me?.user_id || me?.username || "");
-    localStorage.setItem(k, String(v));
-  }catch{}
-  if(me) me.lastRenameAtMs = v;
-  setMeCache(me);
-}
-function canRenameNow(){
-  if(!me || !me.username) return false;
-  if(isAdminUser(me)) return false;
-  const last = getLastRenameAtMs();
-  if(!last) return true;
-  const DAY = 24*60*60*1000;
-  return Date.now() >= (last + 30*DAY);
-}
-function nextRenameAt(){
-  const last = getLastRenameAtMs();
-  if(!last) return 0;
-  const DAY = 24*60*60*1000;
-  return last + 30*DAY;
-}
-function getMyPinLen(){
-  const u = normUsername(me?.username || "");
-  if(u === "tuankhoi") return 6;
-  const raw = (me && (me.pinLen ?? me.pin_len ?? me.pin_length));
-  let n = Number(raw) || 4;
-  if(!isFinite(n) || n < 4) n = 4;
-  if(n > 12) n = 12;
-  return n;
-}
-
-/* home */
-function goHome(){
-  location.href = HOME_URL;
-}
+function goHome(){ location.href = HOME_URL; }
 
 /* ================== SUPABASE CALLS ================== */
 async function sbRpc(fn, args){
@@ -555,19 +559,6 @@ async function sbRpc(fn, args){
   }
   return data;
 }
-async function sbRpcCompat(names, argsList){
-  const ns = Array.isArray(names) ? names : [names];
-  const al = Array.isArray(argsList) ? argsList : [argsList];
-  let lastErr = null;
-  for(const fn of ns){
-    for(const args of al){
-      try{ return await sbRpc(fn, args); }
-      catch(e){ lastErr = e; }
-    }
-  }
-  throw lastErr || new Error("RPC error");
-}
-
 async function sbGet(path){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
     headers:{
@@ -609,7 +600,8 @@ async function sbPost(path, body, { preferReturn=false } = {}){
   return data;
 }
 
-/* ================== PIN + REGISTER MODALS ================== */
+/* ================== MODALS (register + pin) ================== */
+/* --- register --- */
 const registerBackdrop = document.getElementById("registerBackdrop");
 const registerDesc = document.getElementById("registerDesc");
 document.getElementById("btnRegisterNo").onclick = ()=>closeRegisterPrompt(false);
@@ -638,7 +630,7 @@ function closeRegisterPrompt(ans){
   if(r) r(!!ans);
 }
 
-/* PIN modal */
+/* --- PIN --- */
 const pinBackdrop = document.getElementById("pinBackdrop");
 const pinTitle = document.getElementById("pinTitle");
 const pinDesc = document.getElementById("pinDesc");
@@ -656,7 +648,6 @@ let PIN = {
   pinLen:4, value:"", first:"", old:"", submitting:false,
   dotEls:[], payload:null
 };
-
 function buildPinKeypadOnce(){
   if(PIN_KEYS_BUILT) return;
   PIN_KEYS_BUILT=true;
@@ -706,8 +697,7 @@ function pinErrorPulse(msg){
 }
 function updatePinHeader(){
   const u = normUsername(PIN.username);
-  const note = (u==="tuankhoi") ? "Tài khoản tuankhoi dùng mật khẩu 6 số."
-                               : "Mật khẩu chỉ gồm số.";
+  const note = (u==="tuankhoi") ? "Tài khoản tuankhoi dùng mật khẩu 6 số." : "Mật khẩu chỉ gồm số.";
   if(PIN.mode==="login"){
     pinTitle.textContent="Đăng nhập";
     pinDesc.textContent=`Username: ${PIN.username}`;
@@ -749,12 +739,10 @@ function closePin(why){
   if(rej) rej(new Error("cancel"));
 }
 
-/* username check helpers */
 function pickPinLen(ck, username){
   const u = normUsername(username);
   if(u === "tuankhoi") return 6;
-  const raw =
-    (ck && (ck.pinLen ?? ck.pin_len ?? (ck.user && (ck.user.pinLen ?? ck.user.pin_len)) ?? ck.pin_length ?? 4));
+  const raw = (ck && (ck.pinLen ?? ck.pin_len ?? (ck.user && (ck.user.pinLen ?? ck.user.pin_len)) ?? ck.pin_length ?? 4));
   let n = Number(raw) || 4;
   if(!isFinite(n) || n < 4) n = 4;
   if(n > 12) n = 12;
@@ -785,16 +773,10 @@ function looseEq(user, expected){
   if (u.replace(/\s/g,"") === a.replace(/\s/g,"")) return true;
   return false;
 }
-function parseQuizIdFromUrl(){
-  const p = location.pathname;
-  const m = p.match(/^\/q\/([^\/]+)\/?$/);
-  let id = m ? m[1] : "";
-  id = id.replace(/\.html$/i,"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
-  return id;
-}
 
 /* UI */
 const content = document.getElementById("content");
+const extras = document.getElementById("extras");
 const quizTitleEl = document.getElementById("quizTitle");
 const quizSubEl   = document.getElementById("quizSub");
 const userCorner  = document.getElementById("userCorner");
@@ -807,7 +789,6 @@ function setUserCorner(me){
   userCornerAdmin.style.display = isAdminUser(me) ? "inline-flex" : "none";
   userCorner.style.display = "inline-flex";
 }
-
 function renderLoading(msg){
   content.innerHTML = `
     <div class="card">
@@ -816,15 +797,14 @@ function renderLoading(msg){
         <div class="meta"><span class="idx">LOADING</span></div>
       </div>
       <div class="muted" style="margin-top:8px">Vui lòng chờ...</div>
-    </div>
-  `;
+    </div>`;
 }
 
 /* APP STATE */
 const quizId = parseQuizIdFromUrl();
 const PROGRESS_KEY = `tk_progress::${quizId}`;
 
-let me = null; // {user_id, username, role, ...}
+let me = null;
 let QUIZ = { quiz_id: quizId, title:"Quiz", sub:"", items:[] };
 let view = { started:false };
 
@@ -902,7 +882,256 @@ function updateStats(){
   document.getElementById("btnSubmit").disabled = !canSubmit;
 }
 
-/* ================== RENDER: Gate ================== */
+/* ================== NEW: LEADERBOARD + COMMENTS ================== */
+let LB = [];
+let CMTS = [];
+let replyTo = null;
+
+function medal(rank){
+  if(rank===1) return "🥇";
+  if(rank===2) return "🥈";
+  if(rank===3) return "🥉";
+  return "";
+}
+
+async function loadLeaderboard(){
+  try{
+    const out = await sbRpc(RPC.listLeaderboard, { p_quiz_id: quizId, p_limit: 20 });
+    if(out && out.ok) return out.rows || [];
+  }catch(e){
+    // fallback direct view (nếu bạn public được view)
+    try{
+      const rows = await sbGet(`v_leaderboard?quiz_id=eq.${quizId}&select=name,is_admin,score10&order=score10.desc&limit=20`);
+      return rows || [];
+    }catch(_e2){
+      return [];
+    }
+  }
+  return [];
+}
+
+async function loadComments(){
+  try{
+    const out = await sbRpc(RPC.listComments, { p_quiz_id: quizId, p_limit: 120 });
+    if(out && out.ok) return out.rows || [];
+  }catch(e){
+    return [];
+  }
+}
+
+function renderExtras(){
+  const lbHtml = (LB && LB.length) ? LB.map((r, i)=>{
+    const rank = i+1;
+    const tag = r.is_admin ? `<span class="badgeAdmin">ADMIN</span>` : ``;
+    return `
+      <div class="lbRow">
+        <div class="lbLeft">
+          <div class="lbRank">${medal(rank) || rank}</div>
+          <div style="min-width:0">
+            <div class="lbName">${escapeHtml(r.name || "—")} ${tag}</div>
+            <div class="muted" style="font-weight:750;font-size:.86rem">Điểm cao nhất</div>
+          </div>
+        </div>
+        <div class="lbScore">${Number(r.score10||0).toFixed(1)}/10</div>
+      </div>
+    `;
+  }).join("") : `<div class="hint">Chưa có ai lên bảng xếp hạng.</div>`;
+
+  // build comment tree 1 cấp
+  const byParent = new Map();
+  const roots = [];
+  (CMTS||[]).forEach(c=>{
+    const pid = c.parent_id || null;
+    if(pid){
+      if(!byParent.has(pid)) byParent.set(pid, []);
+      byParent.get(pid).push(c);
+    }else{
+      roots.push(c);
+    }
+  });
+
+  // pinned first, then time desc already from SQL, but keep safe:
+  roots.sort((a,b)=> (b.pinned===true)-(a.pinned===true) || (new Date(b.created_at)-new Date(a.created_at)));
+
+  const canWrite = !!(me && me.user_id);
+  const admin = isAdminUser(me);
+
+  function cmtItem(c, isReply=false){
+    const tagAdmin = c.is_admin ? `<span class="badgeAdmin">ADMIN</span>` : ``;
+    const tagPin = c.pinned ? `<span class="badgePin">📌 PIN</span>` : ``;
+    const actions = `
+      <div class="cmtActions">
+        ${canWrite && !isReply ? `<button class="btn-mini" data-reply="${c.id}">💬 Trả lời</button>` : ``}
+        ${canWrite && (admin || (String(c.user_id||"")===String(me.user_id||""))) ? `<button class="btn-mini danger" data-del="${c.id}">🗑️ Xoá</button>` : ``}
+        ${admin ? `<button class="btn-mini ${c.pinned?'':'primary'}" data-pin="${c.id}" data-pinval="${c.pinned?0:1}">${c.pinned?'Bỏ ghim':'📌 Ghim'}</button>` : ``}
+      </div>
+    `;
+    const replies = (byParent.get(c.id)||[]).slice(0,30).map(rc=>cmtItem(rc,true)).join("");
+    return `
+      <div class="cmtItem ${isReply?'reply':''}">
+        <div class="cmtHead">
+          <div class="cmtWho">
+            <div class="cmtName">${escapeHtml(c.username||"—")}</div>
+            ${tagAdmin}
+            ${tagPin}
+          </div>
+          <div class="cmtTime">${fmtTime(c.created_at)}</div>
+        </div>
+        <div class="cmtText">${escapeHtml(c.text||"")}</div>
+        ${actions}
+        ${replies}
+      </div>
+    `;
+  }
+
+  const listHtml = roots.length ? roots.map(c=>cmtItem(c,false)).join("") : `<div class="hint">Chưa có bình luận. Bạn comment phát đầu tiên đi 😄</div>`;
+
+  const replyBar = replyTo ? `
+    <div class="card" style="margin-top:12px; box-shadow:none;">
+      <div class="row1">
+        <p class="vi" style="margin:0">Đang trả lời</p>
+        <div class="meta"><span class="idx">${escapeHtml(String(replyTo).slice(0,8))}</span></div>
+      </div>
+      <div class="hint" style="margin-top:6px">Bấm “Huỷ trả lời” để comment bình thường.</div>
+      <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
+        <button class="btn btn-ghost" id="btnCancelReply">✖️ Huỷ trả lời</button>
+      </div>
+    </div>
+  ` : ``;
+
+  const formHtml = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Bình luận</p>
+        <div class="meta"><span class="idx">COMMENTS</span></div>
+      </div>
+      <div class="hint" style="margin-top:6px">
+        ${canWrite ? `Bạn đang login: <b>${escapeHtml(me.username)}</b>` : `Bạn cần login để bình luận (phần làm bài vẫn xem được comments).`}
+      </div>
+
+      ${replyBar}
+
+      <div style="margin-top:10px; display:grid; gap:10px;">
+        <textarea class="input" id="cmtBox" placeholder="${canWrite?'Viết bình luận...':'(Hãy login để bình luận)'}" ${canWrite?'':'disabled'}></textarea>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn btn-ghost" id="btnReloadExtras">🔄 Tải lại</button>
+          <button class="btn btn-primary" id="btnSendCmt" ${canWrite?'':'disabled'}>📨 Gửi</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        ${listHtml}
+      </div>
+    </div>
+  `;
+
+  extras.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Bảng xếp hạng</p>
+        <div class="meta"><span class="idx">TOP 20</span></div>
+      </div>
+      <div class="hint" style="margin-top:6px">Điểm = điểm cao nhất của mỗi người cho quiz này.</div>
+      ${lbHtml}
+    </div>
+
+    ${formHtml}
+  `;
+
+  const btnReload = document.getElementById("btnReloadExtras");
+  if(btnReload) btnReload.onclick = ()=>refreshExtras(true);
+
+  const btnCancelReply = document.getElementById("btnCancelReply");
+  if(btnCancelReply) btnCancelReply.onclick = ()=>{ replyTo=null; renderExtras(); };
+
+  const btnSend = document.getElementById("btnSendCmt");
+  if(btnSend) btnSend.onclick = async ()=>{
+    try{
+      const box = document.getElementById("cmtBox");
+      const text = String(box.value||"").trim();
+      if(!text) return toast("Chưa nhập nội dung");
+      const token = getToken();
+      if(!token) return toast("Bạn chưa login");
+      btnSend.disabled = true;
+      btnSend.textContent = "⏳";
+      const out = await sbRpc(RPC.addComment, { p_quiz_id: quizId, p_text: text, p_token: token, p_parent_id: replyTo });
+      if(!out || out.ok===false) throw new Error(out?.error || "Không gửi được");
+      box.value = "";
+      replyTo = null;
+      toast("Đã gửi");
+      await refreshExtras(false);
+    }catch(e){
+      toast(e?.message || "Lỗi");
+    }finally{
+      const btn = document.getElementById("btnSendCmt");
+      if(btn){ btn.disabled = false; btn.textContent = "📨 Gửi"; }
+    }
+  };
+
+  extras.querySelectorAll("[data-reply]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      replyTo = btn.getAttribute("data-reply");
+      toast("Chế độ trả lời");
+      renderExtras();
+      const box = document.getElementById("cmtBox");
+      try{ box && box.focus(); }catch{}
+    });
+  });
+
+  extras.querySelectorAll("[data-del]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const id = btn.getAttribute("data-del");
+      if(!confirm("Xoá bình luận này?")) return;
+      try{
+        const token = getToken();
+        const out = await sbRpc(RPC.deleteComment, { p_comment_id: id, p_token: token });
+        if(!out || out.ok===false) throw new Error(out?.error || "Không xoá được");
+        toast("Đã xoá");
+        await refreshExtras(false);
+      }catch(e){
+        toast(e?.message || "Lỗi");
+      }
+    });
+  });
+
+  extras.querySelectorAll("[data-pin]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const id = btn.getAttribute("data-pin");
+      const val = Number(btn.getAttribute("data-pinval")||"0")===1;
+      try{
+        const token = getToken();
+        const out = await sbRpc(RPC.pinComment, { p_comment_id: id, p_token: token, p_pin: val });
+        if(!out || out.ok===false) throw new Error(out?.error || "Không ghim được");
+        toast(val ? "Đã ghim" : "Đã bỏ ghim");
+        await refreshExtras(false);
+      }catch(e){
+        toast(e?.message || "Lỗi");
+      }
+    });
+  });
+}
+
+async function refreshExtras(showToast=false){
+  try{
+    if(showToast) toast("Đang tải…");
+    const [lb, cm] = await Promise.all([loadLeaderboard(), loadComments()]);
+    LB = Array.isArray(lb) ? lb : [];
+    CMTS = Array.isArray(cm) ? cm : [];
+    renderExtras();
+  }catch(e){
+    extras.innerHTML = `
+      <div class="card">
+        <div class="row1">
+          <p class="vi">Extras</p>
+          <div class="meta"><span class="idx">ERROR</span></div>
+        </div>
+        <div class="hint" style="margin-top:8px">Lỗi tải leaderboard/comments: ${escapeHtml(e?.message||e)}</div>
+      </div>
+    `;
+  }
+}
+
+/* ================== Gate / Auth / Quiz render (giữ logic cũ) ================== */
 function renderGate(){
   content.innerHTML = `
     <div class="card">
@@ -912,8 +1141,8 @@ function renderGate(){
       </div>
       <div class="muted" style="margin-top:6px; line-height:1.35">
         Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b>.<br/>
-        - Username <b>đã có</b> → hiện keypad <b>đăng nhập</b> (4 số, riêng <b>tuankhoi</b> là <b>6 số</b>).<br/>
-        - Username <b>chưa có</b> → hỏi và cho <b>đăng ký</b>.
+        - Username <b>đã có</b> → nhập mật khẩu đăng nhập.<br/>
+        - Username <b>chưa có</b> → đăng ký.
       </div>
 
       <div style="margin-top:10px; display:grid; gap:10px;">
@@ -995,30 +1224,6 @@ function renderGate(){
   nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); doFlow(); }});
 }
 
-/* PIN submit handler (login/register/change) */
-async function changePinRpc_(oldPin, newPin){
-  const token = getToken();
-  const names = [RPC.changePin, "api_change_password", "api_change_pass"];
-  const argsList = [
-    { p_token: token, p_old_pin: oldPin, p_new_pin: newPin },
-    { p_token: token, p_oldPin: oldPin, p_newPin: newPin },
-    { p_token: token, p_username: normUsername(me?.username||PIN.username), p_old_pin: oldPin, p_new_pin: newPin },
-    { token, old_pin: oldPin, new_pin: newPin }
-  ];
-  const out = await sbRpcCompat(names, argsList);
-  if(out && out.ok === false) throw new Error(out.error || "Không đổi được");
-  if(out && out.token) setToken(out.token);
-  // refresh me (nếu server trả)
-  const m = out?.me || out?.user || out?.data || null;
-  if(m){
-    if(m && m.id && !m.user_id) m.user_id = m.id;
-    me = { ...me, ...m };
-    setMeCache(me);
-    setUserCorner(me);
-  }
-  return out;
-}
-
 async function onPinKey(k){
   if(!PIN.open || PIN.submitting) return;
 
@@ -1031,7 +1236,6 @@ async function onPinKey(k){
   if(PIN.value.length!==PIN.pinLen) return;
 
   const val = PIN.value;
-
   if(!/^[0-9]+$/.test(val)){
     pinErrorPulse("Mật khẩu chỉ gồm số");
     return;
@@ -1080,90 +1284,9 @@ async function onPinKey(k){
       return;
     }
   }
-
-  // CHANGE PASSWORD (old -> new -> confirm -> save)
-  if(PIN.mode==="change"){
-    // chặn admin
-    if(isAdminUser(me)){
-      pinErrorPulse("Tài khoản ADMIN không đổi mật khẩu");
-      return;
-    }
-
-    // Step old: verify by login
-    if(PIN.step === "old"){
-      PIN.submitting = true;
-      try{
-        setPinNote("Đang kiểm tra…");
-        const out = await sbRpc(RPC.login, { p_username: normUsername(me?.username||PIN.username), p_pin: val });
-        if(!(out && out.ok)){
-          pinErrorPulse(out?.error || "Sai mật khẩu");
-          return;
-        }
-        // giữ token/me nếu server trả
-        if(out && out.token) setToken(out.token);
-        const m = out?.me || out?.user || out?.data || null;
-        if(m){
-          if(m && m.id && !m.user_id) m.user_id = m.id;
-          me = { ...me, ...m };
-          setMeCache(me);
-          setUserCorner(me);
-        }
-        PIN.old = val;
-        PIN.value = "";
-        PIN.step = "new1";
-        updatePinHeader();
-        updateDots();
-        return;
-      }catch(e){
-        pinErrorPulse("Sai mật khẩu");
-      }finally{
-        PIN.submitting = false;
-      }
-      return;
-    }
-
-    // Step new1
-    if(PIN.step === "new1"){
-      PIN.first = val;
-      PIN.value = "";
-      PIN.step = "confirm";
-      updatePinHeader();
-      updateDots();
-      return;
-    }
-
-    // confirm
-    if(PIN.first !== val){
-      pinErrorPulse("Mật khẩu mới không khớp");
-      PIN.first = "";
-      PIN.value = "";
-      PIN.step = "new1";
-      updatePinHeader();
-      updateDots();
-      return;
-    }
-
-    PIN.submitting = true;
-    try{
-      setPinNote("Đang lưu…");
-      await changePinRpc_(PIN.old, val);
-      PIN.payload = { ok:true };
-      closePin("ok");
-      toast("Đã đổi mật khẩu");
-    }catch(e){
-      pinErrorPulse(e?.message || "Không đổi được");
-      // reset flow
-      PIN.value=""; PIN.first=""; PIN.old=""; PIN.step="old";
-      updatePinHeader();
-      updateDots();
-    }finally{
-      PIN.submitting = false;
-    }
-    return;
-  }
 }
 
-/* ================== RENDER: Start screen when logged in ================== */
+/* ================== RENDER Start / Quiz ================== */
 function renderStart(){
   setUserCorner(me);
   updateStats();
@@ -1172,9 +1295,7 @@ function renderStart(){
     <div class="card">
       <div class="row1">
         <p class="vi">Sẵn sàng làm bài</p>
-        <div class="meta">
-          <span class="idx">${escapeHtml(QUIZ.quiz_id||quizId)}</span>
-        </div>
+        <div class="meta"><span class="idx">${escapeHtml(QUIZ.quiz_id||quizId)}</span></div>
       </div>
       <div class="muted" style="margin-top:8px; line-height:1.35">
         Bạn đã đăng nhập: <b>${escapeHtml(me?.username||"")}</b><br/>
@@ -1202,10 +1323,10 @@ function renderStart(){
     toast("Đã đăng xuất");
     renderGate();
     updateStats();
+    refreshExtras(false);
   };
 }
 
-/* ================== RENDER QUIZ ================== */
 function renderQuiz(){
   view.started = true;
   setUserCorner(me);
@@ -1218,8 +1339,7 @@ function renderQuiz(){
           <div class="meta"><span class="idx">EMPTY</span></div>
         </div>
         <div class="muted" style="margin-top:8px">Chưa có câu hỏi.</div>
-      </div>
-    `;
+      </div>`;
     updateStats();
     return;
   }
@@ -1248,10 +1368,8 @@ function renderQuiz(){
           <div class="resultRow">
             <div>${ck.ok ? `<span class="oktxt">ĐÚNG ✅</span>` : `<span class="badtxt">SAI ❌</span>`}</div>
             <div>${ck.ok ? `` : `<span class="muted">Đáp án:</span> <b>${escapeHtml(ck.expected||"")}</b>`}</div>
-          </div>
-        `:""}
-      </div>
-    `;
+          </div>` : ``}
+      </div>`;
   });
 
   content.innerHTML = html;
@@ -1272,22 +1390,6 @@ content.addEventListener("input", (e)=>{
   saveLocalProgress();
   updateStats();
 }, {passive:true});
-
-content.addEventListener("keydown", (e)=>{
-  const t = e.target;
-  if(!t || !t.classList.contains("ans")) return;
-  if(e.key==="Enter"){
-    e.preventDefault();
-    const id = Number(t.dataset.id);
-    const item = QUIZ.items.find(x=>Number(x.id)===id);
-    if(!item) return;
-    const g = gradeOne(item, state.answers[id]);
-    state.checked[id] = { ok: !!g.ok, expected: String(g.expected||""), locked:false };
-    saveLocalProgress();
-    toast(g.ok ? "ĐÚNG" : "SAI");
-    updateStats();
-  }
-});
 
 content.addEventListener("click", (e)=>{
   const b = e.target.closest("[data-check]");
@@ -1340,163 +1442,7 @@ document.getElementById("btnConfirmReset").onclick = ()=>{
   else updateStats();
 };
 
-/* ================== PROFILE (from old UI) ================== */
-const profileBackdrop = document.getElementById("profileBackdrop");
-const profileUsernameEl = document.getElementById("profileUsername");
-const profileRoleEl = document.getElementById("profileRole");
-const profileRenameHintEl = document.getElementById("profileRenameHint");
-const newUsernameEl = document.getElementById("newUsername");
-const btnSaveNewUsernameEl = document.getElementById("btnSaveNewUsername");
-const btnChangePinEl = document.getElementById("btnChangePin");
-
-document.getElementById("btnCloseProfile").onclick = ()=>closeProfileModal();
-profileBackdrop.addEventListener("click",(e)=>{ if(e.target===profileBackdrop) closeProfileModal(); });
-document.getElementById("btnProfileHome").onclick = ()=>goHome();
-
-function openProfileModal(){
-  if(!me || !me.username) return;
-
-  profileUsernameEl.textContent = me.username;
-  profileRoleEl.textContent = isAdminUser(me) ? "ADMIN" : "USER";
-
-  // rename UI
-  if(isAdminUser(me)){
-    profileRenameHintEl.textContent = "";
-    newUsernameEl.value = "";
-    newUsernameEl.disabled = true;
-    newUsernameEl.placeholder = "Không áp dụng";
-    btnSaveNewUsernameEl.disabled = true;
-  }else{
-    const can = canRenameNow();
-    if(!can){
-      profileRenameHintEl.textContent = "Đổi lại vào " + formatTs(nextRenameAt());
-      newUsernameEl.disabled = true;
-      btnSaveNewUsernameEl.disabled = true;
-    }else{
-      profileRenameHintEl.textContent = "";
-      newUsernameEl.disabled = false;
-      btnSaveNewUsernameEl.disabled = false;
-    }
-    newUsernameEl.placeholder = "Username mới";
-    newUsernameEl.value = "";
-  }
-
-  profileBackdrop.classList.add("show");
-  profileBackdrop.setAttribute("aria-hidden","false");
-
-  try{ if(!newUsernameEl.disabled) newUsernameEl.focus(); }catch{}
-}
-function closeProfileModal(){
-  profileBackdrop.classList.remove("show");
-  profileBackdrop.setAttribute("aria-hidden","true");
-}
-
-/* userCorner click -> open profile */
-userCorner.addEventListener("click", ()=>{
-  if(!me) return;
-  openProfileModal();
-});
-
-/* normalize new username input */
-newUsernameEl.addEventListener("input", ()=>{
-  const v = normUsername(newUsernameEl.value);
-  if(newUsernameEl.value !== v) newUsernameEl.value = v;
-},{passive:true});
-
-async function doRenameUsername_(){
-  if(!me || !me.username) return;
-  if(isAdminUser(me)){ toast("Tài khoản ADMIN không đổi username"); return; }
-  if(!canRenameNow()){ toast("Chưa đủ 30 ngày"); return; }
-
-  const newU = normUsername(newUsernameEl.value);
-  const err = validateUsername(newU);
-  if(err){ toast(err); return; }
-  if(normUsername(newU) === normUsername(me.username)){ toast("Trùng username hiện tại"); return; }
-
-  // check exists
-  try{
-    const ck = await sbRpc(RPC.checkUsername, { p_username: newU });
-    const exists = pickExists(ck);
-    if(exists === true){ toast("Username đã tồn tại"); return; }
-  }catch(_e){}
-
-  const btn = btnSaveNewUsernameEl;
-  const oldText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = "⏳";
-
-  try{
-    const token = getToken();
-    const names = [RPC.changeUsername, "api_rename_username", "api_rename"];
-    const argsList = [
-      { p_token: token, p_new_username: newU },
-      { p_token: token, p_username: newU },
-      { p_token: token, p_old_username: me.username, p_new_username: newU }
-    ];
-    const out = await sbRpcCompat(names, argsList);
-    if(out && out.ok === false) throw new Error(out.error || "Không đổi được");
-
-    if(out && out.token) setToken(out.token);
-
-    // update me from server if returned
-    const m = out?.me || out?.user || out?.data || null;
-    if(m){
-      if(m && m.id && !m.user_id) m.user_id = m.id;
-      me = { ...me, ...m };
-    }else{
-      me = { ...me, username: newU };
-    }
-
-    setLastRenameAtMs(Date.now());
-    setMeCache(me);
-    setUserCorner(me);
-
-    closeProfileModal();
-    toast("Đã đổi username");
-
-    // refresh current view
-    if(me && me.user_id){
-      if(view.started) renderQuiz();
-      else renderStart();
-    }else{
-      renderGate();
-    }
-  }catch(e){
-    toast(e?.message || "Không đổi được");
-  }finally{
-    btn.disabled = false;
-    btn.textContent = oldText;
-  }
-}
-
-btnSaveNewUsernameEl.addEventListener("click", doRenameUsername_);
-
-/* change password: require old -> new -> confirm */
-btnChangePinEl.addEventListener("click", async ()=>{
-  if(!me || !me.username) return;
-  if(isAdminUser(me)){ toast("Tài khoản ADMIN không đổi mật khẩu"); return; }
-  closeProfileModal();
-  try{
-    await openPin({ username: me.username, mode:"change", pinLen: getMyPinLen() });
-  }catch(e){
-    // cancel
-  }
-});
-
-/* logout button inside profile */
-document.getElementById("btnLogout").addEventListener("click", ()=>{
-  if(!me) return;
-  clearAuthLocal();
-  me = null;
-  view.started = false;
-  setUserCorner(null);
-  closeProfileModal();
-  toast("Đã đăng xuất");
-  renderGate();
-  updateStats();
-});
-
-/* ================== SUBMIT ================== */
+/* ================== SUBMIT (giữ như bạn) ================== */
 function computeFinal(){
   let correct = 0;
   const wrong = [];
@@ -1511,7 +1457,6 @@ function computeFinal(){
   const score10 = total ? Math.round((correct/total*10)*10)/10 : 0;
   return { score10, correctCount: correct, totalCount: total, wrong };
 }
-
 async function submitToSupabase(result){
   const attemptBody = {
     quiz_id: quizId,
@@ -1538,7 +1483,6 @@ async function submitToSupabase(result){
     };
   });
   try{ await sbPost("attempt_answers", ansRows, { preferReturn:false }); }catch(e){}
-
   return attemptId;
 }
 
@@ -1597,8 +1541,8 @@ async function loadMeIfAny(){
     return null;
   }
 }
-
 async function loadQuiz(){
+  // ưu tiên RPC
   try{
     const token = getToken();
     const out = await sbRpc(RPC.getQuiz, { p_quiz_id: quizId, p_token: token || "" });
@@ -1621,6 +1565,7 @@ async function loadQuiz(){
     }
   }catch(e){}
 
+  // fallback REST
   const qArr = await sbGet(`quizzes?quiz_id=eq.${quizId}&select=quiz_id,title,sub&limit=1`);
   const q = (Array.isArray(qArr) && qArr[0]) ? qArr[0] : { quiz_id: quizId, title:"Quiz", sub:"" };
   const items = await sbGet(`vocabs?quiz_id=eq.${quizId}&select=id,no,word,pos,meaning,answers&order=no.asc,id.asc`);
@@ -1638,8 +1583,6 @@ async function loadQuiz(){
     }))
   };
 }
-
-/* after login/register ok */
 async function enterAfterAuth(out){
   const token = out?.token || "";
   if(token) setToken(token);
@@ -1653,6 +1596,7 @@ async function enterAfterAuth(out){
     setUserCorner(me);
     view.started = false;
     renderStart();
+    await refreshExtras(false);
   }else{
     const m2 = await loadMeIfAny();
     if(m2){
@@ -1661,12 +1605,44 @@ async function enterAfterAuth(out){
       setUserCorner(me);
       view.started = false;
       renderStart();
+      await refreshExtras(false);
     }else{
       toast("Không lấy được user");
       renderGate();
+      await refreshExtras(false);
     }
   }
 }
+
+/* ================== Profile modal: giữ minimal (open/close/logout) ================== */
+const profileBackdrop = document.getElementById("profileBackdrop");
+document.getElementById("btnCloseProfile").onclick = ()=>closeProfileModal();
+profileBackdrop.addEventListener("click",(e)=>{ if(e.target===profileBackdrop) closeProfileModal(); });
+document.getElementById("btnProfileHome").onclick = ()=>goHome();
+document.getElementById("btnLogout").addEventListener("click", ()=>{
+  if(!me) return;
+  clearAuthLocal();
+  me = null;
+  view.started = false;
+  setUserCorner(null);
+  closeProfileModal();
+  toast("Đã đăng xuất");
+  renderGate();
+  updateStats();
+  refreshExtras(false);
+});
+function openProfileModal(){
+  if(!me || !me.username) return;
+  document.getElementById("profileUsername").textContent = me.username;
+  document.getElementById("profileRole").textContent = isAdminUser(me) ? "ADMIN" : "USER";
+  profileBackdrop.classList.add("show");
+  profileBackdrop.setAttribute("aria-hidden","false");
+}
+function closeProfileModal(){
+  profileBackdrop.classList.remove("show");
+  profileBackdrop.setAttribute("aria-hidden","true");
+}
+userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
 
 /* ================== BOOT ================== */
 (async function boot(){
@@ -1676,14 +1652,11 @@ async function enterAfterAuth(out){
   }
 
   renderLoading("Đang tải quiz…");
-
   loadLocalProgress();
 
-  // restore me
   me = getMeCache();
   if(me && me.id && !me.user_id) me.user_id = me.id;
 
-  // if have token but no me -> call me
   if(getToken() && (!me || !me.user_id)){
     const m2 = await loadMeIfAny();
     if(m2){ me = m2; setMeCache(me); }
@@ -1699,6 +1672,7 @@ async function enterAfterAuth(out){
   }
 
   updateStats();
+  await refreshExtras(false);
 
   if(me && me.user_id){
     setUserCorner(me);
