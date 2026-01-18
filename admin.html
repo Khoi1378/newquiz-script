@@ -277,6 +277,40 @@
       z-index:20050; text-align:center;
     }
     .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px)}
+
+    /* ===== Login Modal ===== */
+    .modalBack{
+      position:fixed; inset:0; z-index:30000;
+      background:rgba(17,24,39,.45);
+      display:none;
+      padding:18px;
+    }
+    .modalBack.show{display:flex; align-items:center; justify-content:center;}
+    .modal{
+      width:min(520px,100%);
+      background:rgba(255,255,255,.92);
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:18px;
+      box-shadow:0 20px 60px rgba(0,0,0,.18);
+      padding:14px;
+      backdrop-filter: blur(10px);
+    }
+    .modalHead{display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap}
+    .modalTitle{margin:0; font-weight:1000; font-size:1.02rem}
+    .modalSub{margin:6px 0 0; color:var(--muted); font-weight:700; font-size:.9rem; line-height:1.35}
+    .rowBtns{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; margin-top:12px}
+    .warnBox{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      background:#fff7ed;
+      border:1px solid #fed7aa;
+      color:#9a3412;
+      font-weight:800;
+      display:none;
+    }
+    .warnBox.show{display:block}
+    .smallLink{font-size:.88rem; color:var(--muted); font-weight:800}
   </style>
 </head>
 
@@ -518,20 +552,50 @@ D
 
   <div class="toast" id="toast"></div>
 
+  <!-- LOGIN MODAL (auto show when token missing/bad) -->
+  <div class="modalBack" id="loginBack" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Admin login">
+      <div class="modalHead">
+        <div>
+          <p class="modalTitle">🔐 Admin Login</p>
+          <p class="modalSub">Nhập username + PIN để vào Admin Panel (tự lưu token).</p>
+        </div>
+        <button class="btn btn-ghost" id="btnLogout" type="button" title="Xóa token & đăng xuất">Logout</button>
+      </div>
+
+      <label>Username</label>
+      <input class="input" id="loginUser" placeholder="vd: tuankhoi" autocomplete="username"/>
+
+      <label>PIN</label>
+      <input class="input mono" id="loginPin" placeholder="4-6 digits" inputmode="numeric" autocomplete="current-password"/>
+
+      <div class="warnBox" id="loginWarn"></div>
+
+      <div class="rowBtns">
+        <button class="btn" id="btnLoginClose" type="button">Đóng</button>
+        <button class="btn btn-primary" id="btnLoginGo" type="button">Đăng nhập</button>
+      </div>
+
+      <div class="smallLink" style="margin-top:8px">
+        Nếu bị “schema cache”: vào Supabase → Settings → API → Reload schema.
+      </div>
+    </div>
+  </div>
+
 <script>
 /* ================== CONFIG ================== */
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 const TOKEN_KEY = "tk_token_v2";
 
-/* Storage bucket để upload ảnh câu hỏi.
-   -> TẠO bucket này trong Supabase Storage, set PUBLIC = true.
-   -> Nếu bucket private thì ảnh không hiện (vì link public). */
+/* Storage bucket để upload ảnh câu hỏi. */
 const STORAGE_BUCKET = "Quiz";
 
 /* RPC names */
 const RPC = {
+  login: "api_login",
   me: "api_me",
+
   adminUpsertQuiz: "admin_upsert_quiz",
   adminListQuizzes: "admin_list_quizzes",
   adminDeleteQuiz: "admin_delete_quiz",
@@ -544,7 +608,7 @@ const RPC = {
   adminForceRename: "admin_force_rename",
   adminForceSetPin: "admin_force_set_pin",
 
-  // optional (nếu có thì sẽ tự gọi sau publish)
+  // optional
   adminRegradeQuiz: "admin_regrade_quiz"
 };
 
@@ -560,6 +624,11 @@ function esc(s){
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
 function getToken(){ return (localStorage.getItem(TOKEN_KEY) || "").trim(); }
+function setToken(t){
+  t = String(t||"").trim();
+  if(t) localStorage.setItem(TOKEN_KEY, t);
+  else localStorage.removeItem(TOKEN_KEY);
+}
 function normalizeQuizId(x){
   x = String(x||"").trim().toLowerCase();
   x = x.replace(/[^a-z]/g,"").slice(0,5);
@@ -590,13 +659,8 @@ function katexRenderSafe(root){
   }catch{}
 }
 
-/* ================== SUPABASE RPC (FIXED) ================== */
-async function rpc(fn, args){
-  // token app (hex) của bạn để gửi trong body p_token
-  const appToken = getToken();
-  if(!appToken) throw new Error("No auth token");
-
-  // ✅ Authorization PHẢI là JWT hợp lệ => dùng anon key (anon key của Supabase là JWT)
+/* ================== BASIC FETCH HELPERS ================== */
+async function rpcRaw(fn, args){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
     method: "POST",
     headers: {
@@ -624,6 +688,35 @@ async function rpc(fn, args){
   return data;
 }
 
+/* rpc wrapper: auto-attach p_token if missing, and auto-popup login when bad token */
+function isAuthErrorMessage(m){
+  m = String(m||"").toLowerCase();
+  return (
+    m.includes("no auth token") ||
+    m.includes("bad token") ||
+    m.includes("not logged") ||
+    m.includes("jwt") ||
+    m.includes("permission") ||
+    m.includes("not admin")
+  );
+}
+async function rpc(fn, args){
+  const tok = getToken();
+  if(!tok) throw new Error("No auth token");
+  const a = (args && typeof args === "object") ? {...args} : {};
+  if(a.p_token === undefined) a.p_token = tok;
+  try{
+    return await rpcRaw(fn, a);
+  }catch(e){
+    const m = String(e?.message||"");
+    // token invalid => clear & show login
+    if(isAuthErrorMessage(m)){
+      setToken("");
+      showLogin("Token hết hạn / sai. Login lại nhé.");
+    }
+    throw e;
+  }
+}
 async function rpcOptional(fn, args){
   try{ return await rpc(fn,args); }
   catch(e){
@@ -673,7 +766,7 @@ async function storagePutObject(bucket, path, mime, bytes){
   });
   const txt = await res.text();
   if(res.ok) return txt;
-  // nếu PUT fail (một số cấu hình), thử POST tạo mới
+
   const url2 = `${SUPABASE_URL}/storage/v1/object/${bucket}/${encodePath(path)}`;
   const res2 = await fetch(url2, {
     method: "POST",
@@ -715,39 +808,120 @@ function setTab(which){
 tabQuizzes.onclick = ()=>setTab("q");
 tabUsers.onclick = ()=>setTab("u");
 
+/* ================== LOGIN MODAL ================== */
+const loginBack = document.getElementById("loginBack");
+const loginUser = document.getElementById("loginUser");
+const loginPin  = document.getElementById("loginPin");
+const loginWarn = document.getElementById("loginWarn");
+const btnLoginGo = document.getElementById("btnLoginGo");
+const btnLoginClose = document.getElementById("btnLoginClose");
+const btnLogout = document.getElementById("btnLogout");
+
+function showLogin(msg){
+  loginWarn.textContent = msg ? String(msg) : "";
+  loginWarn.classList.toggle("show", !!msg);
+  loginBack.classList.add("show");
+  loginBack.setAttribute("aria-hidden","false");
+  setTimeout(()=>{
+    if(!loginUser.value) loginUser.focus();
+    else loginPin.focus();
+  }, 50);
+}
+function hideLogin(){
+  loginBack.classList.remove("show");
+  loginBack.setAttribute("aria-hidden","true");
+  loginWarn.classList.remove("show");
+  loginWarn.textContent = "";
+}
+btnLoginClose.onclick = ()=>hideLogin();
+btnLogout.onclick = ()=>{
+  setToken("");
+  ME = null;
+  mePill.textContent = "Logged out";
+  gate.innerHTML = `Đã logout.`;
+  app.style.display = "none";
+  showLogin("Đã xóa token. Login lại.");
+};
+
+loginBack.addEventListener("click",(e)=>{
+  if(e.target === loginBack) hideLogin();
+});
+window.addEventListener("keydown",(e)=>{
+  if(e.key === "Escape" && loginBack.classList.contains("show")) hideLogin();
+});
+function normalizeUsername(x){
+  return String(x||"").trim().toLowerCase().replace(/[^a-z0-9_]/g,"");
+}
+async function doLogin(){
+  const u = normalizeUsername(loginUser.value);
+  const p = String(loginPin.value||"").trim();
+  if(!u) return showLogin("Thiếu username");
+  if(!p) return showLogin("Thiếu PIN");
+  btnLoginGo.disabled = true;
+  btnLoginGo.textContent = "Đang đăng nhập...";
+  try{
+    const out = await rpcRaw(RPC.login, { p_username: u, p_pin: p });
+    if(!out?.ok || !out?.token) throw new Error(out?.error || "login failed");
+    setToken(out.token);
+    hideLogin();
+    loginPin.value = "";
+    toast("Login OK");
+    await bootAfterAuth();
+  }catch(e){
+    showLogin("Login fail: " + (e.message||e));
+  }finally{
+    btnLoginGo.disabled = false;
+    btnLoginGo.textContent = "Đăng nhập";
+  }
+}
+btnLoginGo.onclick = doLogin;
+loginPin.addEventListener("keydown",(e)=>{
+  if(e.key === "Enter") doLogin();
+});
+loginUser.addEventListener("keydown",(e)=>{
+  if(e.key === "Enter") doLogin();
+});
+
 /* ================== STATE ================== */
 let ME = null;
 let QUIZZES = [];
 let USERS = [];
-
 let CURRENT_QID = "";
 let CURRENT_MODE = "NEW"; // NEW | EDIT
 let QUESTIONS = [];       // array of {type,prompt,answers,points,meta}
 
-/* ================== AUTH GATE ================== */
+/* ================== AUTH CHECK ================== */
 async function gateCheck(){
   const token = getToken();
   if(!token){
-    gate.innerHTML = `Bạn chưa login. Vào <a href="/">trang chủ</a> để login admin.`;
     mePill.textContent = "No token";
+    gate.innerHTML = `Chưa login.`;
+    showLogin("Login để vào Admin Panel.");
     return false;
   }
   try{
-    const meOut = await rpc(RPC.me,{p_token:token});
-    if(!meOut.ok) throw new Error(meOut.error||"not logged");
+    const meOut = await rpcRaw(RPC.me, { p_token: token });
+    if(!meOut?.ok) throw new Error(meOut?.error||"bad token");
     ME = meOut.me;
     const isAdmin = (ME.role==="admin") || (String(ME.username||"").toLowerCase()==="tuankhoi");
-    mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="badge-admin">ADMIN</span>`;
     if(!isAdmin){
+      mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b>`;
       gate.textContent = "Bạn không phải admin.";
+      app.style.display = "none";
+      showLogin("User này không phải admin.");
       return false;
     }
+    mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="badge-admin">ADMIN</span>`;
     gate.innerHTML = `<span class="idx ok">OK</span> Admin: <b>${esc(ME.username)}</b>`;
     app.style.display = "";
     return true;
   }catch(e){
-    gate.innerHTML = `Lỗi gate: ${esc(e.message)}. Về <a href="/">trang chủ</a> để login lại.`;
-    mePill.textContent = "Gate error";
+    setToken("");
+    ME = null;
+    mePill.textContent = "Bad token";
+    gate.innerHTML = `Token lỗi / hết hạn.`;
+    app.style.display = "none";
+    showLogin("Token lỗi / hết hạn. Login lại nhé.");
     return false;
   }
 }
@@ -765,7 +939,6 @@ const accessCodeEl = document.getElementById("accessCode");
 const scoringModeEl = document.getElementById("scoringMode");
 const totalScoreEl = document.getElementById("totalScore");
 const shuffleModeEl = document.getElementById("shuffleMode");
-
 const editModePill = document.getElementById("editModePill");
 const qidPill = document.getElementById("qidPill");
 
@@ -794,7 +967,6 @@ function validateQuiz(){
 /* ================== QUESTION BUILDER ================== */
 const qList = document.getElementById("qList");
 const qCountPill = document.getElementById("qCountPill");
-
 const qbTabManual = document.getElementById("qbTabManual");
 const qbTabImport = document.getElementById("qbTabImport");
 const qbManualArea = document.getElementById("qbManualArea");
@@ -818,13 +990,11 @@ function setLastType(t){
   LAST_QTYPE = t;
   try{ localStorage.setItem(LS_QB_LASTTYPE, LAST_QTYPE); }catch{}
 }
-
 function setQBMode(mode){
   mode = String(mode||"manual").toLowerCase();
   if(mode!=="manual" && mode!=="import") mode="manual";
   QB_MODE = mode;
   try{ localStorage.setItem(LS_QB_MODE, QB_MODE); }catch{}
-
   qbTabManual.classList.toggle("active", QB_MODE==="manual");
   qbTabImport.classList.toggle("active", QB_MODE==="import");
   qbManualArea.style.display = (QB_MODE==="manual") ? "" : "none";
@@ -875,8 +1045,6 @@ function insertAtCursor(el, text, afterSelOffset=0){
 function latexButtonHtml(){
   return `<button class="mini" data-act="latex" type="button">∑ Công thức</button>`;
 }
-
-/* Preview content builder */
 function nl2br(s){ return esc(String(s||"")).replace(/\n/g,"<br>"); }
 
 function buildPreviewHtml(q){
@@ -884,7 +1052,6 @@ function buildPreviewHtml(q){
   const img = q.meta.image_url || q.meta.image_data_url || "";
   let html = `<div class="previewTitle">Preview (render $...$)</div>`;
   html += `<div class="previewBody">`;
-
   html += `<div><span class="muted">Câu hỏi:</span> ${nl2br(q.prompt||"")}</div>`;
 
   if(q.type==="mcq1"){
@@ -1045,7 +1212,6 @@ function renderQuestions(){
     `;
   }).join("");
 
-  // Set tf4 selects values + render preview + render katex
   qList.querySelectorAll(".qCard").forEach(card=>{
     const i = Number(card.getAttribute("data-i"));
     const q = QUESTIONS[i];
@@ -1108,7 +1274,6 @@ function syncQuestionFromCard(card){
     };
   }
 
-  // update preview
   const pv = card.querySelector('[data-preview="1"]');
   if(pv){
     pv.innerHTML = buildPreviewHtml(q);
@@ -1484,9 +1649,6 @@ document.getElementById("btnNewQuiz").onclick = ()=>{
 };
 
 async function saveQuizOnly(){
-  const token = getToken();
-  if(!token) throw new Error("Chưa login");
-
   let qid = (CURRENT_MODE==="EDIT") ? CURRENT_QID : normalizeQuizId(quizIdEl.value);
   if(CURRENT_MODE==="NEW" && !qid){
     qid = genQuizId5();
@@ -1495,7 +1657,6 @@ async function saveQuizOnly(){
   if(!qid || qid.length!==5) throw new Error("Quiz ID phải đúng 5 chữ a-z");
 
   const payload = {
-    p_token: token,
     p_quiz_id: qid,
     p_title: titleEl.value.trim(),
     p_sub: subEl.value.trim(),
@@ -1622,25 +1783,24 @@ async function publishAll(){
     if(!QUESTIONS.length) return toast("Chưa có câu hỏi");
 
     const qid = await saveQuizOnly();
-    const token = getToken();
 
     let items = buildPublishItems();
     items = await uploadAllImagesIfNeeded(qid, items);
 
     let out2 = null;
     try{
-      out2 = await rpc(RPC.adminReplaceQuestions, { p_token: token, p_quiz_id: qid, p_items: items });
+      out2 = await rpc(RPC.adminReplaceQuestions, { p_quiz_id: qid, p_items: items });
     }catch(e){
       const m = String(e?.message||"");
       if(m.includes("Could not find the function") || m.includes("schema cache")){
-        out2 = await rpc(RPC.adminImportQuestions, { p_token: token, p_quiz_id: qid, p_items: items, p_replace: true });
+        out2 = await rpc(RPC.adminImportQuestions, { p_quiz_id: qid, p_items: items, p_replace: true });
         toast("⚠️ DB chưa có replace (đã import, nhớ kiểm tra trùng).");
       }else{
         throw e;
       }
     }
 
-    const rg = await rpcOptional(RPC.adminRegradeQuiz, { p_token: token, p_quiz_id: qid });
+    const rg = await rpcOptional(RPC.adminRegradeQuiz, { p_quiz_id: qid });
     if(rg && rg.ok) toast("Regrade: OK");
 
     toast(`Published: ${qid}`);
@@ -1701,8 +1861,7 @@ function renderQuizList(){
 }
 
 async function reloadQuizzes(){
-  const token = getToken();
-  const out = await rpc(RPC.adminListQuizzes,{p_token: token});
+  const out = await rpc(RPC.adminListQuizzes, {});
   QUIZZES = out.items || [];
   renderQuizList();
 }
@@ -1711,8 +1870,7 @@ document.getElementById("btnReloadQuizzes").onclick = ()=>reloadQuizzes().catch(
 async function delQuiz(qid){
   const ok = confirm("Xóa quiz " + qid + " ?");
   if(!ok) return;
-  const token = getToken();
-  await rpc(RPC.adminDeleteQuiz,{p_token:token, p_quiz_id:qid});
+  await rpc(RPC.adminDeleteQuiz,{ p_quiz_id:qid });
   toast("Deleted " + qid);
   await reloadQuizzes();
 }
@@ -1751,8 +1909,7 @@ async function loadQuizToForm(qid){
   toast("Đang tải câu hỏi...");
 
   try{
-    const token = getToken();
-    const out = await rpc(RPC.adminGetQuestions,{p_token: token, p_quiz_id: qid});
+    const out = await rpc(RPC.adminGetQuestions,{ p_quiz_id: qid });
     const items = out.items || [];
     QUESTIONS = items.map(fromDbQuestion);
 
@@ -1830,8 +1987,7 @@ function renderUsers(){
 }
 
 async function reloadUsers(){
-  const token = getToken();
-  const out = await rpc(RPC.adminListUsers,{p_token: token});
+  const out = await rpc(RPC.adminListUsers,{});
   USERS = out.items || [];
   renderUsers();
 }
@@ -1841,53 +1997,63 @@ userSearch.addEventListener("input", ()=>renderUsers(), {passive:true});
 async function delUser(id){
   const ok = confirm("Xóa user này? (mất progress/attempts/comments)");
   if(!ok) return;
-  const token = getToken();
-  await rpc(RPC.adminDeleteUser,{p_token:token, p_user_id:id});
+  await rpc(RPC.adminDeleteUser,{ p_user_id:id });
   toast("Deleted user");
   await reloadUsers();
 }
 async function renameUser(id){
   const newU = prompt("New username (lowercase, a-z0-9_):");
   if(!newU) return;
-  const token = getToken();
-  await rpc(RPC.adminForceRename,{p_token:token, p_user_id:id, p_new_username:newU});
+  await rpc(RPC.adminForceRename,{ p_user_id:id, p_new_username:newU });
   toast("Renamed");
   await reloadUsers();
 }
 async function resetPin(id){
   const pin = prompt("Set new PIN (4-6 digits).");
   if(!pin) return;
-  const token = getToken();
-  await rpc(RPC.adminForceSetPin,{p_token:token, p_user_id:id, p_new_pin:pin});
+  await rpc(RPC.adminForceSetPin,{ p_user_id:id, p_new_pin:pin });
   toast("PIN reset");
 }
 
 /* ================== BOOT ================== */
+async function bootAfterAuth(){
+  const ok = await gateCheck();
+  if(!ok) return;
+
+  setMode("NEW");
+  setQBMode(QB_MODE || "manual");
+  setLastType(LAST_QTYPE || "mcq1");
+
+  QUESTIONS = [];
+  renderQuestions();
+
+  try{
+    await reloadQuizzes();
+  }catch(e){
+    toast("Load quizzes lỗi: " + (e.message||e));
+  }
+  try{
+    await reloadUsers();
+  }catch(e){
+    // nếu chưa có users RPC thì thôi
+  }
+  setTab("q");
+
+  setTimeout(() => {
+    document
+      .querySelectorAll('[data-preview="1"]')
+      .forEach(pv => katexRenderSafe(pv));
+  }, 400);
+}
+
 (async () => {
   try {
-    const ok = await gateCheck();
-    if (!ok) return;
-
-    setMode("NEW");
-    setQBMode(QB_MODE || "manual");
-    setLastType(LAST_QTYPE || "mcq1");
-
-    QUESTIONS = [];
-    renderQuestions();
-
-    await reloadQuizzes();
-    await reloadUsers();
-    setTab("q");
-
-    setTimeout(() => {
-      document
-        .querySelectorAll('[data-preview="1"]')
-        .forEach(pv => katexRenderSafe(pv));
-    }, 400);
-
+    // nếu token OK thì auto vào, token lỗi thì popup login
+    await bootAfterAuth();
   } catch (e) {
     console.error("BOOT ERROR", e);
     toast("Boot error: " + (e.message || e));
+    showLogin("Boot lỗi. Login lại thử.");
   }
 })();
 </script>
