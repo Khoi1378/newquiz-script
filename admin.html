@@ -592,14 +592,16 @@ function katexRenderSafe(root){
 
 /* ================== SUPABASE RPC (FIXED) ================== */
 async function rpc(fn, args){
-  const token = getToken(); // JWT user đã login
-  if(!token) throw new Error("No auth token");
+  // token app (hex) của bạn để gửi trong body p_token
+  const appToken = getToken();
+  if(!appToken) throw new Error("No auth token");
 
+  // ✅ Authorization PHẢI là JWT hợp lệ => dùng anon key (anon key của Supabase là JWT)
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
     method: "POST",
     headers: {
       "apikey": SUPABASE_ANON_KEY,
-      "Authorization": "Bearer " + token,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
       "Content-Type": "application/json"
     },
     body: JSON.stringify(args || {})
@@ -620,6 +622,17 @@ async function rpc(fn, args){
     throw new Error(msg);
   }
   return data;
+}
+
+async function rpcOptional(fn, args){
+  try{ return await rpc(fn,args); }
+  catch(e){
+    const m = String(e?.message||"");
+    if(m.includes("Could not find the function") || m.includes("schema cache")){
+      return null;
+    }
+    return null;
+  }
 }
 
 async function rpcOptional(fn, args){
