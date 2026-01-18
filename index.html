@@ -792,7 +792,7 @@ function renderGate(){
                 </div>
               </div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-                <a href="/q/${encodeURIComponent(q.quiz_id)}"><button class="btn btn-primary">Vào quiz</button></a>
+                <a href="{encodeURIComponent(q.quiz_id)}"><button class="btn btn-primary">Vào quiz</button></a>
               </div>
             </div>
           </div>
@@ -928,8 +928,8 @@ function renderStore(){
 
     const href = `/q/${encodeURIComponent(q.quiz_id)}`;
     const btnHtml = needLogin
-      ? `<a href="${href}"><button class="btn btn-primary">Làm quiz</button></a>`
-      : `<a href="${href}"><button class="btn btn-primary">Vào quiz</button></a>`;
+      ? `<a href="${href}"><button class="btn btn-primary">Vào</button></a>`
+      : `<a href="${href}"><button class="btn btn-primary">Vào</button></a>`;
 
     return `
       <div class="card" style="box-shadow:none;border-width:1px;margin:10px 0">
