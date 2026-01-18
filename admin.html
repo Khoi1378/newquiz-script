@@ -592,15 +592,38 @@ function katexRenderSafe(root){
 
 /* ================== SUPABASE RPC ================== */
 async function rpc(fn, args){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
-    method:"POST",
-    headers:{
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization":"Bearer " + SUPABASE_ANON_KEY,
-      "Content-Type":"application/json"
+  const token = getToken(); // JWT user đã login
+
+  if (!token) {
+    throw new Error("No auth token");
+  }
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: "Bearer " + token, // ✅ ĐÚNG
+      "Content-Type": "application/json"
     },
-    body: JSON.stringify(args||{})
+    body: JSON.stringify(args || {})
   });
+
+  const txt = await res.text();
+  let data = null;
+  try { data = txt ? JSON.parse(txt) : null; } catch {}
+
+  if (!res.ok) {
+    throw new Error(
+      data?.message ||
+      data?.error ||
+      data?.hint ||
+      txt ||
+      `RPC failed: ${fn}`
+    );
+  }
+  return data;
+}
+
   const txt = await res.text();
   let data=null;
   try{ data = txt ? JSON.parse(txt) : null; }catch{}
