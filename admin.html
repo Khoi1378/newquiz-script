@@ -9,6 +9,21 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
 
+  <!-- ✅ MathJax: render LaTeX 100% (preview) -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\\[','\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script','noscript','style','textarea','pre','code']
+      }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
   <style>
     :root{
       --bg1:#ffecd2; --bg2:#fcb69f;
@@ -310,6 +325,76 @@
     }
     .latexChip:hover{filter:brightness(.98)}
     .latexTiny{font-size:.86rem; color:var(--muted); font-weight:750}
+
+    /* ✅ NEW: Prompt + image right-side + LaTeX preview */
+    .qPromptGrid{
+      display:grid;
+      grid-template-columns: 1fr 220px;
+      gap:10px;
+      align-items:start;
+      margin-top:8px;
+    }
+    @media(max-width:780px){
+      .qPromptGrid{ grid-template-columns: 1fr; }
+    }
+    .imgSide{
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:16px;
+      padding:10px;
+      background:rgba(248,250,252,.7);
+    }
+    .imgSideHead{
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      margin-bottom:8px;
+    }
+    .imgPreviewSmall{
+      width:100%;
+      height:140px;
+      border-radius:14px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      object-fit:cover;
+      display:block;
+    }
+    .imgSideBtns{
+      margin-top:10px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .mathPreviewBox{
+      margin-top:8px;
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:14px;
+      padding:10px;
+      background:#fff;
+    }
+    .mathPreview{
+      font-weight:700;
+      line-height:1.5;
+      min-height:28px;
+      overflow:auto;
+    }
+
+    /* ✅ NEW: LaTeX panel preview */
+    .latexPreviewWrap{
+      margin-top:10px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      align-items:start;
+    }
+    @media(max-width:860px){
+      .latexPreviewWrap{ grid-template-columns: 1fr; }
+    }
+    .latexPreviewBox{
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:14px;
+      padding:10px;
+      background:#fff;
+      min-height:64px;
+      overflow:auto;
+    }
   </style>
 </head>
 
@@ -417,7 +502,6 @@
                 </div>
               </div>
 
-              <!-- ✅ NEW: shuffle mode -->
               <label>Trộn câu hỏi / đáp án</label>
               <select id="shuffleMode">
                 <option value="none">Không đảo</option>
@@ -452,7 +536,11 @@
             <div class="card">
               <div class="row1">
                 <p class="vi">Danh sách quiz</p>
-                <button class="btn" id="btnReloadQuizzes" type="button">Reload</button>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+                  <!-- ✅ NEW: tạo quiz mới ngay trên list -->
+                  <button class="btn" id="btnNewQuizOnList" type="button">✨ Tạo mới</button>
+                  <button class="btn" id="btnReloadQuizzes" type="button">Reload</button>
+                </div>
               </div>
               <div id="quizList" style="margin-top:10px"></div>
             </div>
@@ -556,7 +644,7 @@ B
     <div class="latexHead">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <div style="font-weight:1000">🧮 LaTeX</div>
-        <div class="latexTiny">Chèn vào ô đang gõ (click vào textarea trước).</div>
+        <div class="latexTiny">Chèn vào ô đang gõ (click vào textarea trước). Có xem trước.</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
         <button class="latexChip" data-latex-act="wrapInline" type="button">Bọc $...$</button>
@@ -566,6 +654,18 @@ B
     </div>
 
     <div class="latexGrid" id="latexGrid"></div>
+
+    <!-- ✅ NEW: LaTeX preview -->
+    <div class="latexPreviewWrap">
+      <div>
+        <div class="latexTiny" style="margin-bottom:6px">Nội dung LaTeX (để xem trước)</div>
+        <textarea id="latexPreviewSrc" class="input mono" style="min-height:74px" placeholder="vd: $x^2 + \\frac{1}{2}$"></textarea>
+      </div>
+      <div>
+        <div class="latexTiny" style="margin-bottom:6px">Xem trước (render toán học)</div>
+        <div id="latexPreview" class="latexPreviewBox"></div>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -648,6 +748,23 @@ function genQuizId5(){
   let s="";
   for(let i=0;i<5;i++) s += letters[Math.floor(Math.random()*letters.length)];
   return s;
+}
+
+/* ================== MathJax helper ================== */
+function typesetElement(el){
+  try{
+    if(window.MathJax && MathJax.typesetPromise){
+      return MathJax.typesetPromise([el]).catch(()=>{});
+    }
+  }catch{}
+  // MathJax chưa load -> thử lại 1 lần
+  setTimeout(()=>{
+    try{
+      if(window.MathJax && MathJax.typesetPromise){
+        MathJax.typesetPromise([el]).catch(()=>{});
+      }
+    }catch{}
+  }, 600);
 }
 
 /* ================== SUPABASE RPC ================== */
@@ -791,7 +908,7 @@ const showInStoreEl = document.getElementById("showInStore");
 const requireLoginEl = document.getElementById("requireLogin");
 const pinnedEl = document.getElementById("pinned");
 const scoringModeEl = document.getElementById("scoringMode");
-const shuffleModeEl = document.getElementById("shuffleMode");  // ✅ NEW
+const shuffleModeEl = document.getElementById("shuffleMode");
 const requireCodeEl = document.getElementById("requireCode");
 const accessCodeEl = document.getElementById("accessCode");
 const totalScoreEl = document.getElementById("totalScore");
@@ -816,7 +933,6 @@ function validateQuiz(){
   let qid = (CURRENT_MODE==="EDIT") ? CURRENT_QID : normalizeQuizId(quizIdEl.value);
   if(CURRENT_MODE==="NEW" && !qid) return "Quiz ID trống (bấm Tạo mới hoặc nhập 5 chữ)";
   if(qid && qid.length!==5) return "Quiz ID phải đúng 5 chữ a-z";
-  // shuffleMode validation
   const sm = String(shuffleModeEl.value||"none");
   if(!["none","q","qa"].includes(sm)) return "Shuffle mode không hợp lệ";
   return null;
@@ -890,6 +1006,20 @@ function ensureMeta(q){
   if(typeof q.meta.image_path !== "string") q.meta.image_path = "";
 }
 
+function updateCardMathPreview(card){
+  const i = Number(card.getAttribute("data-i"));
+  const q = QUESTIONS[i];
+  if(!q) return;
+  const prev = card.querySelector("[data-math-prev]");
+  if(!prev) return;
+
+  prev.textContent = String(q.prompt || "").trim() || " ";
+  typesetElement(prev);
+}
+function refreshAllMathPreviews(){
+  qList.querySelectorAll(".qCard").forEach(card=> updateCardMathPreview(card));
+}
+
 function renderQuestions(){
   updateQCount();
   if(!QUESTIONS.length){
@@ -930,22 +1060,34 @@ function renderQuestions(){
           <button class="mathBtn" data-act="wrapBlock" type="button">$$...$$</button>
         </div>
 
-        <label>Câu hỏi</label>
-        <textarea class="qPrompt" placeholder="Click rồi dùng nút 🧮 để chèn mẫu...">${esc(q.prompt||"")}</textarea>
+        <!-- ✅ Prompt + image on the RIGHT -->
+        <div class="qPromptGrid">
+          <div>
+            <label>Câu hỏi</label>
+            <textarea class="qPrompt" placeholder="Click rồi dùng nút 🧮 để chèn mẫu...">${esc(q.prompt||"")}</textarea>
 
-        <div class="imgRow">
-          <div class="imgDrop" data-imgdrop="1">
-            <div style="min-width:220px">
-              <div style="font-weight:950">Ảnh câu hỏi</div>
-              <small>Paste / kéo thả / chọn file • upload bucket quiz</small>
-              <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
-                <button class="btn" data-act="pickimg" type="button">📷 Chọn ảnh</button>
-                <button class="btn btn-ghost" data-act="removeimg" type="button">🗑️ Xóa ảnh</button>
-              </div>
-              ${q.meta.image_path ? `<div class="hint" style="margin-top:8px">path: <code>${esc(q.meta.image_path)}</code></div>` : ``}
+            <!-- ✅ LaTeX preview (render toán học) -->
+            <div class="mathPreviewBox">
+              <div class="latexTiny" style="margin-bottom:6px">Xem trước (render toán học)</div>
+              <div class="mathPreview" data-math-prev="1"></div>
             </div>
           </div>
-          <img class="imgPreview" alt="preview" src="${img ? esc(img) : ""}" style="${img ? "display:block" : "display:none"}"/>
+
+          <div class="imgSide" data-imgdrop="1">
+            <div class="imgSideHead">
+              <div style="font-weight:950">Ảnh câu hỏi</div>
+              <small style="color:var(--muted);font-weight:750">paste/drag/file</small>
+            </div>
+
+            <img class="imgPreviewSmall" alt="preview" src="${img ? esc(img) : ""}"/>
+
+            <div class="imgSideBtns">
+              <button class="btn" data-act="pickimg" type="button" style="box-shadow:none">📷 Chọn</button>
+              <button class="btn btn-ghost" data-act="removeimg" type="button" style="box-shadow:none">🗑️ Xóa</button>
+            </div>
+
+            ${q.meta.image_path ? `<div class="hint" style="margin-top:8px">path: <code>${esc(q.meta.image_path)}</code></div>` : ``}
+          </div>
         </div>
 
         <div class="qEssay ${q.type==="essay"?"":"hidden"}">
@@ -1011,6 +1153,9 @@ function renderQuestions(){
       });
     }
   });
+
+  // ✅ render math previews
+  refreshAllMathPreviews();
 }
 
 function syncQuestionFromCard(card){
@@ -1052,6 +1197,9 @@ function syncQuestionFromCard(card){
       rule: { byCorrectCount: { "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 } }
     };
   }
+
+  // ✅ live math preview per-card
+  updateCardMathPreview(card);
 }
 
 qList.addEventListener("focusin",(e)=>{
@@ -1269,6 +1417,14 @@ function stripStars(s){
   let t = String(s||"").trim();
   for(let k=0;k<3;k++){
     t = t.trim();
+    if((t.startsWith("**") && t.includes("**", 2))){ // ✅ robust: có thể có trailing text
+      const m = t.match(/^\*\*(.+?)\*\*/);
+      if(m){ t = m[1].trim(); continue; }
+    }
+    if((t.startsWith("*") && t.includes("*", 1))){
+      const m = t.match(/^\*(.+?)\*/);
+      if(m){ t = m[1].trim(); continue; }
+    }
     if((t.startsWith("**") && t.endsWith("**") && t.length>=4)){ t = t.slice(2,-2).trim(); continue; }
     if((t.startsWith("*") && t.endsWith("*") && t.length>=2)){ t = t.slice(1,-1).trim(); continue; }
     break;
@@ -1276,6 +1432,15 @@ function stripStars(s){
   return t;
 }
 function cleanLine(s){ return stripStars(String(s||"").trim()); }
+
+function extractStarWrapped(line){
+  const s = String(line||"");
+  let m = s.match(/\*\*(.+?)\*\*/);
+  if(m) return String(m[1]||"").trim();
+  m = s.match(/\*(.+?)\*/);
+  if(m) return String(m[1]||"").trim();
+  return "";
+}
 
 function parseImportText(text){
   const lines = String(text||"").replace(/\r/g,"").split("\n");
@@ -1308,14 +1473,30 @@ function parseImportText(text){
     if(tag==="tn"){
       const opts = [];
       let correctIdx = 1;
+
       for(const ln0 of body){
+        let raw = ln0.trim();
         let isCorrect = false;
-        let t = ln0.trim();
-        if((t.startsWith("**") && t.endsWith("**") && t.length>=4) || (t.startsWith("*") && t.endsWith("*") && t.length>=2)) isCorrect = true;
-        t = cleanLine(t);
-        opts.push(t);
+
+        // ✅ robust: **...** hoặc *...* kể cả có trailing "(đáp án đúng)"
+        let m = raw.match(/^\s*\*\*(.+?)\*\*/);
+        if(m){
+          isCorrect = true;
+          raw = String(m[1]||"").trim();
+        }else{
+          m = raw.match(/^\s*\*(.+?)\*/);
+          if(m){
+            isCorrect = true;
+            raw = String(m[1]||"").trim();
+          }else{
+            raw = cleanLine(raw);
+          }
+        }
+
+        opts.push(raw);
         if(isCorrect) correctIdx = opts.length;
       }
+
       while(opts.length<4) opts.push("");
       const options4 = opts.slice(0,4);
       if(correctIdx<1 || correctIdx>4) correctIdx = 1;
@@ -1325,10 +1506,7 @@ function parseImportText(text){
     }
 
     if(tag==="tl"){
-      let answers = body.filter(x=>{
-        const s = x.trim();
-        return (s.startsWith("*") && s.endsWith("*")) || (s.startsWith("**") && s.endsWith("**"));
-      }).map(x=>cleanLine(x));
+      let answers = body.map(extractStarWrapped).filter(Boolean).map(x=>cleanLine(x));
       if(!answers.length && body.length) answers = [ cleanLine(body.join(" ")) ];
       answers = answers.map(x=>x.trim()).filter(Boolean);
       out.push({ type:"essay", prompt: head, answers, points: null, meta: { fuzzy:true, image_url:"", image_path:"" }});
@@ -1336,10 +1514,7 @@ function parseImportText(text){
     }
 
     if(tag==="tln"){
-      let answers = body.filter(x=>{
-        const s = x.trim();
-        return (s.startsWith("*") && s.endsWith("*")) || (s.startsWith("**") && s.endsWith("**"));
-      }).map(x=>cleanLine(x));
+      let answers = body.map(extractStarWrapped).filter(Boolean).map(x=>cleanLine(x));
       if(!answers.length && body.length) answers = [ cleanLine(body.join(" ")) ];
       answers = answers.map(x=>x.trim()).filter(Boolean);
       out.push({ type:"short4", prompt: head, answers, points: null, meta: { format:"4boxes", image_url:"", image_path:"" }});
@@ -1380,18 +1555,28 @@ function parseImportText(text){
 /* ================== LaTeX ================== */
 const latexPanel = document.getElementById("latexPanel");
 const latexGrid = document.getElementById("latexGrid");
+const latexPreviewSrc = document.getElementById("latexPreviewSrc");
+const latexPreview = document.getElementById("latexPreview");
+
 document.getElementById("btnLatex").onclick = ()=>showLatexPanel();
 
-function showLatexPanel(){ latexPanel.classList.add("show"); latexPanel.setAttribute("aria-hidden","false"); }
-function hideLatexPanel(){ latexPanel.classList.remove("show"); latexPanel.setAttribute("aria-hidden","true"); }
+function showLatexPanel(){
+  latexPanel.classList.add("show");
+  latexPanel.setAttribute("aria-hidden","false");
+  updateLatexPreviewFromActive();
+}
+function hideLatexPanel(){
+  latexPanel.classList.remove("show");
+  latexPanel.setAttribute("aria-hidden","true");
+}
 
 latexPanel.addEventListener("click",(e)=>{
   const b = e.target.closest("[data-latex-act]");
   if(!b) return;
   const act = b.getAttribute("data-latex-act");
   if(act==="close") hideLatexPanel();
-  if(act==="wrapInline") wrapSelection("$","$");
-  if(act==="wrapBlock") wrapSelection("$$","$$");
+  if(act==="wrapInline"){ wrapSelection("$","$"); updateLatexPreviewFromActive(); }
+  if(act==="wrapBlock"){ wrapSelection("$$","$$"); updateLatexPreviewFromActive(); }
 });
 
 function getActiveTextTarget(){
@@ -1399,6 +1584,26 @@ function getActiveTextTarget(){
   if(!el) toast("Click vào ô nhập trước");
   return el;
 }
+
+function updateLatexPreviewFromActive(){
+  const el = getActiveTextTarget();
+  let s = "";
+  if(el){
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const sel = (end>start) ? el.value.slice(start,end) : "";
+    s = sel.trim() || el.value.trim();
+  }
+  if(!s) s = "$x^2 + \\frac{1}{2}$";
+  latexPreviewSrc.value = s;
+  updateLatexPreview();
+}
+function updateLatexPreview(){
+  latexPreview.textContent = latexPreviewSrc.value || " ";
+  typesetElement(latexPreview);
+}
+latexPreviewSrc.addEventListener("input", updateLatexPreview, {passive:true});
+
 function insertTemplate(tpl){
   const el = getActiveTextTarget();
   if(!el) return;
@@ -1424,6 +1629,9 @@ function insertTemplate(tpl){
 
   const card = el.closest(".qCard");
   if(card) syncQuestionFromCard(card);
+
+  // ✅ update preview
+  updateLatexPreviewFromActive();
 }
 function wrapSelection(left,right){
   const el = getActiveTextTarget();
@@ -1511,7 +1719,7 @@ document.getElementById("btnNewQuiz").onclick = ()=>{
   requireLoginEl.value = "true";
   pinnedEl.value = "false";
   scoringModeEl.value = "equal";
-  shuffleModeEl.value = "none"; // ✅ reset
+  shuffleModeEl.value = "none";
   requireCodeEl.value = "false";
   accessCodeEl.value = "";
   totalScoreEl.value = "10";
@@ -1522,6 +1730,9 @@ document.getElementById("btnNewQuiz").onclick = ()=>{
   setQBMode("manual");
   toast("Tạo mới: OK");
 };
+
+// ✅ NEW: nút tạo mới ở quiz list (chỉ gọi lại y hệt)
+document.getElementById("btnNewQuizOnList").onclick = ()=> document.getElementById("btnNewQuiz").click();
 
 async function saveQuizOnly(){
   const token = getToken();
@@ -1546,7 +1757,7 @@ async function saveQuizOnly(){
     p_pinned: (pinnedEl.value === "true"),
     p_scoring_mode: scoringModeEl.value,
     p_total_score: Number(totalScoreEl.value || "10") || 10,
-    p_shuffle_mode: String(shuffleModeEl.value || "none"), // ✅ NEW
+    p_shuffle_mode: String(shuffleModeEl.value || "none"),
     p_require_access_code: (requireCodeEl.value === "true"),
     p_access_code: accessCodeEl.value.trim()
   };
@@ -1594,7 +1805,6 @@ async function publishAll(){
       };
     });
 
-    // replace luôn (SQL của mình có sẵn)
     await rpc(RPC.adminReplaceQuestions, { p_token: token, p_quiz_id: qid, p_items: items });
 
     toast(`Published: ${qid}`);
@@ -1695,7 +1905,6 @@ async function loadQuizToForm(qid){
   scoringModeEl.value = q.scoring_mode || "equal";
   totalScoreEl.value = String(q.total_score ?? 10);
 
-  // ✅ load shuffle mode
   shuffleModeEl.value = (q.shuffle_mode || "none");
 
   requireCodeEl.value = String(!!q.require_access_code);
@@ -1824,6 +2033,9 @@ async function boot(){
   await reloadQuizzes();
   await reloadUsers();
   setTab("q");
+
+  // ✅ ensure panel preview not empty
+  updateLatexPreview();
 }
 (async ()=>{ await boot(); })();
 </script>
