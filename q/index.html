@@ -305,7 +305,7 @@
     <div class="actionbar" id="actionbar">
       <button class="btn btn-ghost" id="btnHome">Trang chủ</button>
       <button class="btn" id="btnScrollTop">⬆️ Lên đầu</button>
-      <button class="btn btn-primary" id="btnSubmit" disabled>🏁 Nộp bài</button>
+      <button class="btn btn-primary" id="btnSubmit" disabled>Nộp bài</button>
       <button class="btn btn-reset" id="btnReset">🔁 Làm lại</button>
     </div>
 
@@ -379,7 +379,7 @@
       <div id="submitBody"></div>
       <div class="modal-actions">
         <button class="btn btn-ghost" id="btnCancelSubmit">Hủy</button>
-        <button class="btn btn-primary" id="btnConfirmSubmit">✅ Nộp</button>
+        <button class="btn btn-primary" id="btnConfirmSubmit">Nộp</button>
       </div>
     </div>
   </div>
@@ -1086,7 +1086,7 @@ function renderQuiz(){
 
         <div style="margin-top:10px;">
           <div class="qaRow">
-            <input class="input ans" data-id="${it.id}" placeholder="Nhập nghĩa… (Enter: qua câu tiếp)" value="${escapeHtml(typed)}" ${locked ? "disabled":""}/>
+            <input class="input ans" data-id="${it.id}" placeholder="Nhập đáp án" value="${escapeHtml(typed)}" ${locked ? "disabled":""}/>
             <button class="btn btn-primary btn-check" data-check="${it.id}" ${locked ? "disabled":""}>${locked?"Đã check":"Check"}</button>
           </div>
         </div>
