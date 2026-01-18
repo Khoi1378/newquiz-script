@@ -5,18 +5,26 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <title>Kết quả</title>
 
+  <!-- Montserrat Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
 
   <style>
-    :root {
+    :root{
       --bg1:#ffecd2; --bg2:#fcb69f;
       --card:#fff; --text:#1f2937; --muted:#6b7280;
-      --primary:#7c3aed; --ok:#16a34a; --bad:#dc2626;
-      --border:#e5e7eb;
+      --primary:#7c3aed; --ok:#16a34a; --bad:#dc2626; --warn:#f59e0b;
+      --border:#e5e7eb; --soft:#f8fafc;
       --shadow:0 14px 40px rgba(0,0,0,.10);
       --radius:18px;
+
+      /* leaderboard medals */
+      --gold:#f59e0b;
+      --silver:#94a3b8;
+      --bronze:#d97706;
+
+      /* admin/pin */
       --admin:#2563eb;
       --pin:#f59e0b;
     }
@@ -32,26 +40,81 @@
       overflow:hidden;
       touch-action:pan-x pan-y;
     }
-    #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px}
+
+    #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 140px}
     .wrap{max-width:980px;margin:0 auto;padding:0 14px}
 
+    /* === ACTION BAR (giống (2)) === */
+    .actionbar{
+      position: sticky; top: 10px; z-index: 9999;
+      display:flex; justify-content:flex-end; gap:10px; padding:0 14px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      border:0; cursor:pointer;
+      border-radius:999px; padding:10px 14px;
+      font-weight:900; font-size:.9rem;
+      transition:transform .16s ease, filter .16s ease;
+      display:inline-flex; align-items:center; gap:8px;
+      user-select:none; white-space:nowrap;
+      box-shadow:0 12px 24px rgba(0,0,0,.12);
+      background:#fff; color:#111827; border:1px solid #e5e7eb;
+      text-decoration:none;
+      -webkit-tap-highlight-color:transparent;
+      touch-action:manipulation;
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
+    .btn:active{transform:translateY(0)}
+    .btn-reset{background:#111827;color:#fff;border:0}
+    .btn-primary{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff;border:0;
+      box-shadow:0 12px 24px rgba(124,58,237,.18);
+    }
+
+    /* === TOPBAR (giống (2)) === */
     .topbar{
-      margin-top:10px;background:rgba(255,255,255,.86);
-      border:1px solid rgba(229,231,235,.9);border-radius:18px;
+      margin-top:10px;
+      background:rgba(255,255,255,.86);
+      border:1px solid rgba(229,231,235,.9);
+      border-radius:18px;
       box-shadow:0 10px 30px rgba(0,0,0,.06);
-      padding:14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+      padding:14px;
+      display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
     }
     .titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
     .logo{
       width:42px;height:42px;border-radius:16px;
       background:linear-gradient(135deg,#a78bfa,#fb7185);
       display:flex;align-items:center;justify-content:center;
-      color:#fff;font-weight:900;box-shadow:0 10px 22px rgba(124,58,237,.18);
+      color:#fff;font-weight:900;
+      box-shadow:0 10px 22px rgba(124,58,237,.18);
       user-select:none;
     }
     .titles h1{font-size:1.02rem;margin:0;font-weight:800}
     .titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
 
+    .stats{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .pill{
+      background:#f3f4f6;border:1px solid #e5e7eb;
+      border-radius:999px;padding:8px 12px;
+      font-weight:800;font-size:.9rem;color:#374151;white-space:nowrap;
+      display:inline-flex;gap:6px;align-items:center;
+    }
+    .pill strong{color:var(--primary)}
+    .progressline{
+      height:10px;border-radius:999px;background:#f3f4f6;overflow:hidden;
+      border:1px solid #e5e7eb;width:100%;max-width:360px;
+    }
+    .progressfill{
+      height:100%;width:0%;
+      background:linear-gradient(90deg,#22c55e,#a78bfa);
+      transition:width .25s ease;
+    }
+
+    .content{padding:12px 0 0}
+
+    /* === CARDS === */
     .card{
       background:var(--card);
       border:2px solid var(--border);
@@ -61,96 +124,177 @@
     }
     .row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
     .vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25}
+    .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .idx{
-      font-size:.78rem;font-weight:900;padding:6px 10px;border-radius:999px;
+      font-size:.78rem;font-weight:900;
+      padding:6px 10px;border-radius:999px;
       background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;white-space:nowrap;
     }
     .muted{color:var(--muted);font-weight:650}
-    .pill{
-      background:#f3f4f6;border:1px solid #e5e7eb;border-radius:999px;padding:8px 12px;
-      font-weight:800;font-size:.9rem;color:#374151;white-space:nowrap;
-      display:inline-flex;gap:6px;align-items:center;
-    }
-    .pill strong{color:var(--primary)}
-    .oktxt{color:var(--ok);font-weight:1000}
-    .badtxt{color:var(--bad);font-weight:1000}
+    .oktxt{color:var(--ok);font-weight:900}
+    .badtxt{color:var(--bad);font-weight:900}
 
-    .btn{
-      border:0;cursor:pointer;border-radius:999px;padding:10px 14px;
-      font-weight:900;font-size:.9rem;
-      display:inline-flex;align-items:center;gap:8px;
-      box-shadow:0 12px 24px rgba(0,0,0,.12);
-      background:#fff;color:#111827;border:1px solid #e5e7eb;
-      text-decoration:none;
-      touch-action:manipulation;
-      -webkit-tap-highlight-color:transparent;
-      user-select:none;
-      white-space:nowrap;
+    /* Big score display (giống (2)) */
+    .scoreHero{
+      display:grid; gap:10px;
+      align-items:center; justify-items:center;
+      padding:10px 8px 6px; text-align:center;
     }
-    .btn-primary{
+    .scoreBig{
+      font-weight:1000;
+      font-size:3.1rem;
+      line-height:1;
+      letter-spacing:-0.02em;
       background:linear-gradient(135deg,#7c3aed,#fb7185);
-      color:#fff;border:0;box-shadow:0 12px 24px rgba(124,58,237,.18);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+      text-shadow:0 14px 40px rgba(124,58,237,.14);
     }
-    .btn[disabled]{opacity:.65;cursor:not-allowed}
+    .scoreSub{
+      font-weight:900;
+      font-size:1.05rem;
+      color:#111827;
+    }
+    .scoreMeta{
+      display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
+    }
 
+    /* result line style (giống (2)) */
+    .resultline{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:16px;
+      border:1px dashed #e5e7eb;
+      background:#fff;
+      font-weight:750;
+      line-height:1.35;
+    }
+
+    /* Table (giống (2)) */
     .table{
-      width:100%;border-collapse:separate;border-spacing:0;
-      overflow:hidden;border-radius:16px;border:1px solid #e5e7eb;background:#fff;
-      table-layout:fixed;
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border-radius:16px;
+      border:1px solid #e5e7eb;
+      background:#fff;
     }
     .table th,.table td{
-      padding:10px 10px;border-bottom:1px solid #e5e7eb;text-align:left;
-      font-weight:750;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;
+      padding:10px 10px;
+      border-bottom:1px solid #e5e7eb;
+      text-align:left;
+      font-weight:750;
+      font-size:.92rem;
     }
     .table th{background:#f8fafc;font-weight:900}
     .table tr:last-child td{border-bottom:0}
 
+    /* leaderboard highlight (giống (2)) */
+    .rankpill{
+      display:inline-flex; align-items:center; gap:8px;
+      border-radius:999px; padding:6px 10px;
+      font-weight:950; font-size:.86rem;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      white-space:nowrap;
+    }
+    .medal{
+      width:22px;height:22px;border-radius:999px;
+      display:inline-flex;align-items:center;justify-content:center;
+      font-size:.9rem;color:#111827;
+      border:1px solid rgba(0,0,0,.08);
+      box-shadow:0 10px 22px rgba(0,0,0,.10);
+    }
+    .m1{background:linear-gradient(135deg,#fde68a,#f59e0b)}
+    .m2{background:linear-gradient(135deg,#e2e8f0,#94a3b8)}
+    .m3{background:linear-gradient(135deg,#fdba74,#d97706)}
+    .toprow1 td{background:rgba(245,158,11,.10)}
+    .toprow2 td{background:rgba(148,163,184,.12)}
+    .toprow3 td{background:rgba(217,119,6,.10)}
+
+    .meRow td{
+      background:rgba(124,58,237,.12)!important;
+      border-top:1px solid rgba(124,58,237,.25);
+      border-bottom:1px solid rgba(124,58,237,.25);
+    }
+    .meRow td:first-child{border-left:6px solid rgba(124,58,237,.55)}
+    .meName{font-weight:1000;letter-spacing:.01em}
+    .meBadge{
+      margin-left:8px;
+      padding:4px 8px;border-radius:999px;
+      font-weight:900;font-size:.78rem;
+      background:rgba(124,58,237,.14);
+      border:1px solid rgba(124,58,237,.35);
+      color:#4c1d95;
+      white-space:nowrap;
+    }
+
+    /* Toast (giống (2)) */
     .toast{
-      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
-      background:rgba(17,24,39,.92);color:#fff;padding:10px 12px;border-radius:14px;
-      font-weight:800;font-size:.9rem;opacity:0;pointer-events:none;
+      position:fixed; left:50%; bottom:88px; transform:translateX(-50%);
+      background:rgba(17,24,39,.92); color:#fff;
+      padding:10px 12px; border-radius:14px;
+      font-weight:800; font-size:.9rem;
+      opacity:0; pointer-events:none;
       transition:opacity .18s ease, transform .18s ease;
-      max-width:calc(100% - 28px);z-index:20050;text-align:center;
+      max-width:calc(100% - 28px);
+      z-index:10003;
+      text-align:center;
     }
     .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
-    /* Wrong list (modal) */
-    .wList{display:grid;gap:10px;margin-top:10px}
-    .wItem{
-      border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:#fff;
-      cursor:pointer; user-select:none;
-      transition:transform .12s ease, filter .12s ease;
+    /* Modal (giống (2) wrong popup) */
+    .modal-backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.35);
+      display:none; align-items:center; justify-content:center;
+      padding:16px;
+      z-index:10001;
     }
-    .wItem:hover{transform:translateY(-1px);filter:brightness(.99)}
-    .wHead{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
-    .wLeft{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .wNo{
-      font-weight:1000;font-size:.82rem;
-      padding:6px 10px;border-radius:999px;
-      background:rgba(220,38,38,.10);
-      border:1px solid rgba(220,38,38,.25);
-      color:#991b1b;
-      white-space:nowrap;
+    .modal-backdrop.show{display:flex}
+    .modal{
+      width:100%; max-width:520px;
+      background:#fff;
+      border-radius:18px;
+      border:1px solid #e5e7eb;
+      box-shadow:0 20px 60px rgba(0,0,0,.18);
+      padding:14px;
+      max-height:82vh;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
     }
-    .wWord{font-weight:950}
-    .wDetail{display:none;margin-top:10px;line-height:1.35}
-    .wItem.open .wDetail{display:block}
-    .wDetailRow{margin-top:8px}
-    .wLinkRow{margin-top:10px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
-    .wSmallBtn{
-      border-radius:999px;padding:7px 10px;font-weight:900;
-      border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:.82rem;
-      text-decoration:none;color:#111827;
-    }
+    .modal h3{margin:4px 0 6px;font-size:1.02rem}
+    .modal p{margin:0 0 12px;color:var(--muted);font-weight:650;font-size:.92rem;line-height:1.35}
 
-    /* comments UI */
+    .xclose{
+      position:sticky; top:0;
+      display:flex; justify-content:flex-end;
+      z-index:2; margin-bottom:4px;
+    }
+    .btn-x{
+      width:56px;height:56px;
+      border-radius:16px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      cursor:pointer;
+      font-weight:1000;
+      font-size:1.8rem;
+      line-height:1;
+      box-shadow:0 12px 24px rgba(0,0,0,.10);
+    }
+    .btn-x:hover{filter:brightness(.98);transform:translateY(-1px)}
+    .btn-x:active{transform:translateY(0)}
+
+    /* ===== COMMENTS UI (giữ tính năng (1), chỉnh style cho hòa (2)) ===== */
     .input{
       width:100%;
       border-radius:14px;border:2px solid #e5e7eb;
       padding:11px 12px;font-size:.95rem;font-weight:700;
-      outline:none;background:#f8fafc;
+      outline:none;background:var(--soft);
       transition:border-color .15s ease, box-shadow .15s ease;
       font-family:inherit;
+      color:#111827;
     }
     .input:focus{
       border-color:rgba(124,58,237,.55);
@@ -182,82 +326,81 @@
     .replyForm{margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;margin-top:10px;display:grid;gap:10px}
     .charRow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6b7280;font-weight:800;font-size:.85rem}
 
-    /* Modal */
-    .modal{
-      position:fixed; inset:0;
-      display:none;
-      align-items:center; justify-content:center;
-      padding:18px;
-      z-index:30000;
-    }
-    .modal.show{display:flex}
-    .modalBack{
-      position:absolute; inset:0;
-      background:rgba(17,24,39,.58);
-      backdrop-filter: blur(4px);
-    }
-    .modalCard{
-      position:relative;
-      width:100%;
-      max-width:760px;
-      max-height:78vh;
-      overflow:auto;
-      background:#fff;
-      border-radius:18px;
-      border:1px solid #e5e7eb;
-      box-shadow:0 18px 60px rgba(0,0,0,.22);
-      padding:14px;
-    }
-    .modalHead{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      padding-bottom:10px; border-bottom:1px solid #e5e7eb; margin-bottom:10px;
-    }
-    .modalTitle{font-weight:950;font-size:1.02rem}
-    .modalClose{
+    /* small jump button in wrong modal */
+    .miniLink{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:8px 10px;
       border-radius:999px;
-      padding:8px 12px;
-      font-weight:950;
       border:1px solid #e5e7eb;
       background:#fff;
-      cursor:pointer;
+      font-weight:900;
+      font-size:.82rem;
+      color:#111827;
+      text-decoration:none;
+      box-shadow:0 10px 22px rgba(0,0,0,.08);
+    }
+    .miniLink:hover{filter:brightness(.98);transform:translateY(-1px)}
+    .miniLink:active{transform:translateY(0)}
+
+    @media (max-width:820px){
+      .progressline{max-width:100%}
+      .btn{padding:9px 12px;font-size:.85rem}
+      .scoreBig{font-size:2.8rem}
     }
   </style>
 </head>
 
 <body>
   <div id="shell">
+    <!-- Actionbar: Trang chủ / Lên đầu / Làm lại / Thảo luận -->
+    <div class="actionbar">
+      <a class="btn" id="btnHome" href="https://www.tuankhoi.site" rel="noopener">🏠 Trang chủ</a>
+      <button class="btn" id="btnScrollTop" type="button">⬆️ Lên đầu</button>
+      <button class="btn btn-reset" id="btnRestart" type="button">🔁 Làm lại</button>
+      <button class="btn btn-primary" id="btnDiscuss" type="button">💬 Thảo luận</button>
+    </div>
+
     <div class="wrap">
       <div class="topbar">
         <div class="titlebox">
           <div class="logo">✅</div>
           <div class="titles">
-            <h1 id="title">Kết quả</h1>
-            <div class="tiny" id="sub"></div>
+            <h1 id="quizTitle">Kết quả</h1>
+            <div class="tiny" id="quizSub"></div>
           </div>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-          <a class="btn" id="btnBackStore" href="/">← Store</a>
-          <a class="btn btn-primary" id="btnRestart" href="/q/index.html">↩️ Làm lại</a>
+
+        <div class="stats">
+          <div class="pill">Người làm: <strong id="whoName">—</strong></div>
+          <div class="pill">Đã chọn: <strong id="answeredCount">0</strong>/<span id="totalCount">0</span></div>
+          <div class="progressline"><div class="progressfill" id="progressFill"></div></div>
         </div>
       </div>
 
-      <div id="summary" class="card"></div>
-      <div id="lb" class="card"></div>
-      <div id="discussion" class="card"></div>
+      <div class="content" id="content">
+        <!-- JS render: summary / wrong card / leaderboard / discussion -->
+        <div id="summary" class="card"></div>
+        <div id="wrongCard" class="card" style="display:none; cursor:pointer;"></div>
+        <div id="lb" class="card"></div>
+
+        <!-- neo cuối trang -->
+        <div id="discussionAnchor" style="height:1px;"></div>
+        <div id="discussion" class="card"></div>
+      </div>
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
-  <!-- Wrong modal -->
-  <div id="wrongModal" class="modal" aria-hidden="true">
-    <div class="modalBack" id="wrongModalBack"></div>
-    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="wrongModalTitle">
-      <div class="modalHead">
-        <div class="modalTitle" id="wrongModalTitle">Câu sai</div>
-        <button class="modalClose" id="btnCloseWrong" type="button">✕</button>
+  <!-- Wrong Answers Popup (match style (2)) -->
+  <div class="modal-backdrop" id="wrongBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="wrongTitle">
+      <div class="xclose">
+        <button class="btn-x" id="btnCloseWrong" aria-label="Đóng">✕</button>
       </div>
-      <div id="wrongModalBody"></div>
+      <h3 id="wrongTitle">Những câu sai</h3>
+      <p>Chỉ liệt kê câu bạn làm sai hoặc chưa chọn.</p>
+      <div id="wrongBody" style="display:grid; gap:12px;"></div>
     </div>
   </div>
 
@@ -386,175 +529,199 @@ function clearForRestart(){
   try{ sessionStorage.removeItem(`tk_last_result::${quizId}`); }catch{}
 }
 
-/* restart */
-const btnRestart = document.getElementById("btnRestart");
-btnRestart.href = quizId ? `/q/index.html?quiz=${quizId}&restart=1&start=1` : "/";
-btnRestart.addEventListener("click",(e)=>{
-  if(!quizId) return;
-  e.preventDefault();
+/* ================== ACTION BUTTONS ================== */
+const shell = document.getElementById("shell");
+document.getElementById("btnScrollTop").addEventListener("click", ()=>{
+  shell.scrollTo({ top:0, behavior:"smooth" });
+});
+document.getElementById("btnDiscuss").addEventListener("click", ()=>{
+  const a = document.getElementById("discussionAnchor");
+  if(!a) return;
+  a.scrollIntoView({ behavior:"smooth", block:"start" });
+});
+
+document.getElementById("btnRestart").addEventListener("click", ()=>{
+  if(!quizId){ location.href = "/"; return; }
   clearForRestart();
   location.href = `/q/index.html?quiz=${quizId}&restart=1&start=1`;
 });
 
-/* ================== WRONG MODAL ================== */
+/* ================== WRONG MODAL (match (2)) ================== */
 let CURRENT_WRONG_LIST = [];
 
-function renderWrongModal(list){
-  const body = document.getElementById("wrongModalBody");
-  const title = document.getElementById("wrongModalTitle");
-  if(!body || !title) return;
+const wrongBackdrop = document.getElementById("wrongBackdrop");
+const wrongBody = document.getElementById("wrongBody");
+const btnCloseWrong = document.getElementById("btnCloseWrong");
 
+function openWrongPopup(){
+  renderWrongPopupContent(CURRENT_WRONG_LIST);
+  wrongBackdrop.classList.add("show");
+  wrongBackdrop.setAttribute("aria-hidden","false");
+}
+function closeWrongPopup(){
+  wrongBackdrop.classList.remove("show");
+  wrongBackdrop.setAttribute("aria-hidden","true");
+}
+btnCloseWrong.addEventListener("click", closeWrongPopup);
+wrongBackdrop.addEventListener("click", (e)=>{ if(e.target === wrongBackdrop) closeWrongPopup(); });
+document.addEventListener("keydown",(e)=>{ if(e.key === "Escape") closeWrongPopup(); });
+
+function renderWrongPopupContent(list){
   const arr = Array.isArray(list) ? list : [];
   CURRENT_WRONG_LIST = arr;
+  wrongBody.innerHTML = "";
 
   if(!arr.length){
-    title.textContent = "Câu sai";
-    body.innerHTML = `<div class="muted"><span class="oktxt">Không có câu sai ✅</span></div>`;
+    wrongBody.innerHTML = `<div class="resultline"><span class="oktxt">Bạn không sai câu nào ✅</span></div>`;
     return;
   }
 
-  title.textContent = `Câu sai (${arr.length})`;
-  const items = arr.map((w,i)=>{
+  arr.forEach((w,i)=>{
     const word = w.word || "(?)";
     const u = (w.user_answer ?? w.user ?? "").toString().trim();
     const ex = (w.expected ?? "").toString().trim();
-    const jump = quizId && w.id ? `/q/index.html?quiz=${quizId}&start=1#q${encodeURIComponent(String(w.id))}` : "";
-    return `
-      <div class="wItem" data-w="${escapeHtml(String(w.id ?? i))}">
-        <div class="wHead">
-          <div class="wLeft">
-            <span class="wNo">SAI • Câu ${i+1}</span>
-            <span class="wWord">${escapeHtml(word)}</span>
-          </div>
-          <div class="muted">Xem</div>
-        </div>
-        <div class="wDetail">
-          <div class="wDetailRow"><span class="muted">Bạn trả lời:</span> <b>${escapeHtml(u||"(trống)")}</b></div>
-          <div class="wDetailRow"><span class="muted">Đáp án/ghi chú:</span> <b>${escapeHtml(ex||"(?)")}</b></div>
-          ${jump ? `
-            <div class="wLinkRow">
-              <a class="wSmallBtn" href="${jump}">Mở đúng câu này</a>
-            </div>` : ``}
-        </div>
-      </div>
+    const jump = (quizId && w.id) ? `/q/index.html?quiz=${quizId}&start=1#q${encodeURIComponent(String(w.id))}` : "";
+
+    const box = document.createElement("div");
+    box.className = "resultline";
+    box.innerHTML = `
+      <div><b>Câu ${i+1}.</b> ${escapeHtml(word)}</div>
+      <div style="margin-top:6px"><span class="badtxt">SAI ❌</span></div>
+      <div style="margin-top:6px"><span class="muted">Bạn trả lời:</span> <b>${escapeHtml(u||"(trống)")}</b></div>
+      <div style="margin-top:4px"><span class="muted">Đáp án/ghi chú:</span> <b>${escapeHtml(ex||"(?)")}</b></div>
+      ${jump ? `<div style="margin-top:10px; display:flex; justify-content:flex-end;">
+        <a class="miniLink" href="${jump}">Mở đúng câu này</a>
+      </div>` : ``}
     `;
-  }).join("");
-
-  body.innerHTML = `
-    <div class="muted" style="margin-top:2px">Bấm vào từng câu để xem chi tiết.</div>
-    <div class="wList">${items}</div>
-  `;
+    wrongBody.appendChild(box);
+  });
 }
-function openWrongModal(){
-  if(!Array.isArray(CURRENT_WRONG_LIST) || !CURRENT_WRONG_LIST.length) return;
-  renderWrongModal(CURRENT_WRONG_LIST);
-  const m = document.getElementById("wrongModal");
-  if(!m) return;
-  m.classList.add("show");
-  m.setAttribute("aria-hidden","false");
-  document.body.style.overflow = "hidden";
+
+/* ================== UI RENDER (RESULT LIKE (2)) ================== */
+function setTopbar({title, sub, username, answeredCount, totalCount, progressPercent}){
+  document.getElementById("quizTitle").textContent = title || "Kết quả";
+  document.getElementById("quizSub").textContent = sub || "";
+  document.getElementById("whoName").textContent = username || "—";
+  document.getElementById("answeredCount").textContent = String(Number(answeredCount||0));
+  document.getElementById("totalCount").textContent = String(Number(totalCount||0));
+  document.getElementById("progressFill").style.width = `${Math.max(0, Math.min(100, Number(progressPercent||0)))}%`;
 }
-function closeWrongModal(){
-  const m = document.getElementById("wrongModal");
-  if(!m) return;
-  m.classList.remove("show");
-  m.setAttribute("aria-hidden","true");
-  document.body.style.overflow = "";
-}
-(function bindWrongModal(){
-  const back = document.getElementById("wrongModalBack");
-  const closeBtn = document.getElementById("btnCloseWrong");
-  const body = document.getElementById("wrongModalBody");
 
-  if(back) back.addEventListener("click", closeWrongModal, {passive:true});
-  if(closeBtn) closeBtn.addEventListener("click", closeWrongModal, {passive:true});
-  document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeWrongModal(); });
+function renderSummaryCard({ score10, correctCount, totalCount, wrongCount }){
+  const sum = document.getElementById("summary");
+  const pct = totalCount ? (Number(correctCount||0)/Number(totalCount||0))*100 : (Number(score10||0)*10);
+  const pctInt = isFinite(pct) ? Math.round(pct) : 0;
 
-  if(body){
-    body.addEventListener("click",(e)=>{
-      if(e.target.closest("a")) return;
-      const item = e.target.closest(".wItem");
-      if(!item) return;
-      item.classList.toggle("open");
-      const label = item.querySelector(".wHead .muted");
-      if(label) label.textContent = item.classList.contains("open") ? "Ẩn" : "Xem";
-    }, {passive:true});
-  }
-})();
-
-/* ================== RENDER SUMMARY/LB ================== */
-function renderSummary({ title, sub, score10, correctCount, totalCount, wrongCount }){
-  document.getElementById("title").textContent = title || "Kết quả";
-  document.getElementById("sub").textContent = sub || "";
-
-  const wc = Number(wrongCount||0);
-
-  document.getElementById("summary").innerHTML = `
+  sum.innerHTML = `
     <div class="row1">
-      <p class="vi">Tổng kết</p>
-      <div class="idx">DONE</div>
+      <p class="vi">Kết quả</p>
+      <div class="meta"><span class="idx">ĐÃ SUBMIT</span></div>
     </div>
 
-    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between">
-      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
-        <span class="pill">Điểm: <strong>${Number(score10||0).toFixed(1)}/10</strong></span>
-        <span class="pill">Đúng: <strong>${Number(correctCount||0)}</strong>/${Number(totalCount||0)}</span>
-      </div>
+    <div class="scoreHero">
+      <div class="scoreBig">${pctInt}%</div>
+      <div class="scoreSub">= ${Number(score10||0).toFixed(1)} điểm (thang 10)</div>
 
-      ${wc > 0 ? `<button class="btn" id="btnWrong" type="button">❌ Câu sai (${wc})</button>` : ``}
+      <div class="scoreMeta">
+        <div class="pill">Đúng: <strong>${Number(correctCount||0)}</strong>/${Number(totalCount||0)}</div>
+        <div class="pill">Sai: <strong>${Number(wrongCount||0)}</strong></div>
+      </div>
     </div>
   `;
+}
 
-  const btnWrong = document.getElementById("btnWrong");
-  if(btnWrong){
-    btnWrong.addEventListener("click", openWrongModal, {passive:true});
-  }
+function renderWrongCard(wrongCount){
+  const wc = Number(wrongCount||0);
+  const card = document.getElementById("wrongCard");
+  card.style.display = "";
+  card.innerHTML = `
+    <div class="row1">
+      <p class="vi">Những câu sai</p>
+      <div class="meta"><span class="idx">${wc} câu</span></div>
+    </div>
+    <div class="muted" style="margin-top:6px">Bấm vào đây để xem chi tiết câu sai.</div>
+  `;
+  card.onclick = ()=> openWrongPopup();
 }
 
 function renderLeaderboard(rows, myUserId){
   const lb = document.getElementById("lb");
-  if(!Array.isArray(rows) || !rows.length){
+  const arr = Array.isArray(rows) ? rows : [];
+  if(!arr.length){
     lb.innerHTML = `
-      <div class="row1"><p class="vi">Bảng xếp hạng</p><div class="idx">TOP</div></div>
-      <div class="muted" style="margin-top:10px">Chưa có dữ liệu (chưa ai nộp / hoặc DB chưa có attempt).</div>
+      <div class="row1">
+        <p class="vi">Bảng xếp hạng</p>
+        <div class="meta"><span class="idx">TOP</span></div>
+      </div>
+      <div class="muted" style="margin-top:6px">Chưa có dữ liệu.</div>
     `;
     return;
   }
 
-  const body = rows.slice(0,50).map((r,i)=>{
+  const maxRows = 30;
+  const top = arr.slice(0, maxRows);
+
+  const myIndex = myUserId ? top.findIndex(r => String(r.user_id) === String(myUserId)) : -1;
+  const myRankLine = (myIndex >= 0)
+    ? `<div class="resultline" style="margin-top:0"><b>Vị trí của bạn:</b> Bạn đang ở hạng <b>#${myIndex+1}</b> trong bảng đang hiển thị.</div>`
+    : `<div class="resultline" style="margin-top:0">Bạn chưa nằm trong top đang hiển thị.</div>`;
+
+  const body = top.map((r, index)=>{
+    const rk = index + 1;
+
+    const medal = rk === 1 ? `<span class="medal m1">🥇</span>` :
+                  rk === 2 ? `<span class="medal m2">🥈</span>` :
+                  rk === 3 ? `<span class="medal m3">🥉</span>` : "";
+
+    const trClass = rk === 1 ? "toprow1" : rk === 2 ? "toprow2" : rk === 3 ? "toprow3" : "";
     const isMe = myUserId && String(r.user_id) === String(myUserId);
+    const rowClass = `${trClass} ${isMe ? "meRow" : ""}`.trim();
+
+    const nameCell = isMe
+      ? `<span class="meName">${escapeHtml(r.username||"(user)")}</span><span class="meBadge">Bạn</span>`
+      : `${escapeHtml(r.username||"(user)")}`;
+
+    const score10 = Number(r.score10||0);
+    const pct = Math.round(score10 * 10);
+
     return `
-      <tr ${isMe ? `style="background: rgba(124,58,237,.10)"` : ``}>
-        <td style="width:70px"><b>${i+1}</b></td>
-        <td>
-          ${escapeHtml(r.username||"(user)")}
-          ${String(r.role||"").toLowerCase()==="admin" ? ` <span style="color:#2563eb; font-weight:900">(ADMIN)</span>`:''}
-          ${isMe?` <span style="color:#4c1d95; font-weight:900">(Bạn)</span>`:''}
-        </td>
-        <td style="width:110px"><b>${Number(r.score10||0).toFixed(1)}</b>/10</td>
+      <tr class="${rowClass}">
+        <td><span class="rankpill">${medal}<span>${rk}</span></span></td>
+        <td>${nameCell}${String(r.role||"").toLowerCase()==="admin" ? ` <span style="color:#2563eb;font-weight:900">(ADMIN)</span>` : ``}</td>
+        <td><b>${score10.toFixed(1)}</b>/10</td>
+        <td>${pct}%</td>
       </tr>
     `;
   }).join("");
 
   lb.innerHTML = `
-    <div class="row1"><p class="vi">Bảng xếp hạng</p><div class="idx">TOP</div></div>
-    <div class="muted" style="margin-top:8px">Top theo <b>điểm cao nhất của mỗi user</b> (tie-break: nộp gần nhất).</div>
-    <div style="margin-top:10px; overflow:auto">
+    <div class="row1">
+      <p class="vi">Bảng xếp hạng</p>
+      <div class="meta"><span class="idx">TOP</span></div>
+    </div>
+    <div class="muted" style="margin-top:6px">
+      Top 🥇🥈🥉 • Xếp theo <b>điểm cao nhất</b> của mỗi <b>người</b>. Dòng của <b>bạn</b> sẽ được tô nổi bật.
+    </div>
+    <div style="margin-top:10px">${myRankLine}</div>
+    <div style="overflow:auto; margin-top:10px;">
       <table class="table">
-        <thead><tr><th>#</th><th>Tên</th><th>Điểm</th></tr></thead>
+        <thead><tr><th>#</th><th>Tên</th><th>Điểm</th><th>%</th></tr></thead>
         <tbody>${body}</tbody>
       </table>
     </div>
   `;
 }
 
-/* ================== COMMENTS ================== */
+/* ================== COMMENTS (GIỮ TÍNH NĂNG) ================== */
 const DISCUSS_MAX = 120;
 let DISC = { tree:[], openReply:"" };
 
 function discussionHtml(username){
   return `
-    <div class="row1"><p class="vi">Thảo luận</p><div class="idx">💬</div></div>
+    <div class="row1">
+      <p class="vi">Thảo luận</p>
+      <div class="meta"><span class="idx">💬</span></div>
+    </div>
 
     <div style="margin-top:10px; display:grid; gap:10px;">
       <div class="charRow">
@@ -617,7 +784,6 @@ function canDeleteComment(c, me){
 }
 
 async function loadComments(){
-  // lấy pinned + pinned_at để sort & render
   const rows = await sbGet(
     `comments?quiz_id=eq.${quizId}` +
     `&select=id,parent_id,author,text,created_at,pinned,pinned_at` +
@@ -655,7 +821,6 @@ async function togglePinComment({ me, commentId, pin }){
 }
 
 function renderDiscussion(me){
-  const myName = me?.username || "";
   const list = document.getElementById("discussList");
   if(!list) return;
 
@@ -678,10 +843,7 @@ function renderDiscussion(me){
     const delBtn = canDeleteComment(root, me)
       ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(root.id)}">Xóa</button>` : ``;
 
-    // ✅ Admin pin button:
-    // - chỉ root comment
-    // - KHÔNG pin nếu đã có reply (root.replies.length>0)
-    // - nếu đang pinned => cho bỏ pin (unpin) (OK)
+    // Admin pin: only root comments; cannot pin if has replies
     const canPin = isAdmin(me) && (root.replies||[]).length===0;
     const pinBtn = isAdmin(me)
       ? (canPin
@@ -786,14 +948,15 @@ async function loadAttemptPublic(attemptId, token){
 
 async function loadLeaderboard(){
   const rows = await sbRpc(RPC.leaderboard, { p_quiz_id: quizId, p_limit: 50 });
-  // PostgREST RPC table-return => array
   return Array.isArray(rows) ? rows : [];
 }
 
 /* ================== BOOT ================== */
 (async function boot(){
   if(!quizId){
-    renderSummary({ title:"Kết quả", sub:"Sai link (thiếu ?quiz=abcde)", score10:0, correctCount:0, totalCount:0, wrongCount:0 });
+    setTopbar({ title:"Kết quả", sub:"Sai link (thiếu ?quiz=abcde)", username:"—", answeredCount:0, totalCount:0, progressPercent:0 });
+    document.getElementById("summary").innerHTML = `<div class="muted">Sai link.</div>`;
+    document.getElementById("wrongCard").style.display="none";
     document.getElementById("lb").innerHTML = `<div class="muted">Sai link.</div>`;
     document.getElementById("discussion").innerHTML = `<div class="muted">Sai link.</div>`;
     return;
@@ -815,17 +978,7 @@ async function loadLeaderboard(){
   let totalCount = cached?.result?.totalCount || 0;
   let wrongList = cached?.result?.wrong || [];
 
-  CURRENT_WRONG_LIST = Array.isArray(wrongList) ? wrongList : [];
-  renderWrongModal(CURRENT_WRONG_LIST);
-
-  renderSummary({
-    title: cached?.title || "Kết quả",
-    sub: cached?.sub || "",
-    score10, correctCount, totalCount,
-    wrongCount: CURRENT_WRONG_LIST.length
-  });
-
-  // quiz meta (RPC, không bị permission denied)
+  // quiz meta
   let qTitle="", qSub="";
   try{
     const qm = await loadQuizMeta();
@@ -847,7 +1000,6 @@ async function loadLeaderboard(){
       if(!username && u.username) username = u.username;
       if(!myUserId && me?.user_id) myUserId = me.user_id;
 
-      // wrong list ưu tiên details_json.wrong
       const dj = a.details_json || {};
       if(Array.isArray(dj.wrong)) wrongList = dj.wrong;
       else if(cached?.result?.wrong) wrongList = cached.result.wrong;
@@ -855,16 +1007,23 @@ async function loadLeaderboard(){
   }
 
   CURRENT_WRONG_LIST = Array.isArray(wrongList) ? wrongList : [];
-  renderWrongModal(CURRENT_WRONG_LIST);
 
-  renderSummary({
+  // topbar
+  const prog = totalCount ? (Number(correctCount||0)/Number(totalCount||0))*100 : (Number(score10||0)*10);
+  setTopbar({
     title: qTitle || cached?.title || "Kết quả",
     sub: qSub || cached?.sub || "",
-    score10, correctCount, totalCount,
-    wrongCount: CURRENT_WRONG_LIST.length
+    username: username || "—",
+    answeredCount: Number(correctCount||0),   // giữ layout (2)
+    totalCount: Number(totalCount||0),
+    progressPercent: prog
   });
 
-  // leaderboard (RPC)
+  // summary + wrong card
+  renderSummaryCard({ score10, correctCount, totalCount, wrongCount: CURRENT_WRONG_LIST.length });
+  renderWrongCard(CURRENT_WRONG_LIST.length);
+
+  // leaderboard
   try{
     const lb = await loadLeaderboard();
     renderLeaderboard(lb, myUserId);
@@ -879,7 +1038,10 @@ async function loadLeaderboard(){
   const rootInput = document.getElementById("rootInput");
   const rootCount = document.getElementById("rootCount");
   const btnPostRoot = document.getElementById("btnPostRoot");
-  rootInput.addEventListener("input", ()=>{ rootCount.textContent = String((rootInput.value||"").length); }, {passive:true});
+
+  rootInput.addEventListener("input", ()=>{
+    rootCount.textContent = String((rootInput.value||"").length);
+  }, {passive:true});
 
   const meForUI = me || { username: username || fallbackName || "", role:"user" };
 
