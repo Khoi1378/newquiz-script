@@ -2,8 +2,8 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>Kết quả</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
+  <title>Quiz</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,46 +11,135 @@
 
   <style>
     :root {
-      --bg1:#ffecd2; --bg2:#fcb69f;
-      --card:#fff; --text:#1f2937; --muted:#6b7280;
-      --primary:#7c3aed; --ok:#16a34a; --bad:#dc2626;
-      --border:#e5e7eb;
-      --shadow:0 14px 40px rgba(0,0,0,.10);
-      --radius:18px;
-      --admin:#2563eb;
+      --bg1: #ffecd2; --bg2: #fcb69f;
+      --card: #fff; --text: #1f2937; --muted: #6b7280;
+      --primary: #7c3aed; --ok: #16a34a; --bad: #dc2626;
+      --border: #e5e7eb; --soft: #f8fafc;
+      --shadow: 0 14px 40px rgba(0,0,0,.10);
+      --radius: 18px;
+      --admin: #2563eb;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    html{-webkit-text-size-adjust:100%}
-    body{
-      margin:0;
-      font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      color:var(--text);
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
       background: radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
                   linear-gradient(120deg, var(--bg1) 0%, var(--bg2) 100%);
-      overflow:hidden;
-      touch-action:pan-x pan-y;
+      overflow: hidden;
+      touch-action: pan-x pan-y;
     }
-    #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px}
-    .wrap{max-width:980px;margin:0 auto;padding:0 14px}
+    .btn, .btn-x, .pinKey { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+    #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 110px; touch-action: pan-y; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 0 14px; }
+
+    /* userCorner */
+    .userCorner{
+      position:fixed;top:10px;left:12px;z-index:10010;
+      display:none;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;
+      background:rgba(255,255,255,.55);
+      border:1px solid rgba(229,231,235,.65);
+      backdrop-filter:blur(6px);
+      box-shadow:0 10px 22px rgba(0,0,0,.06);
+      user-select:none;
+      max-width:calc(100vw - 24px);
+      cursor:pointer;
+    }
+    .userCorner .name{
+      font-weight:950;font-size:.88rem;color:rgba(31,41,55,.55);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      max-width:58vw;
+    }
+    .userCorner .adminBadge{
+      padding:4px 8px;border-radius:999px;
+      font-weight:950;font-size:.78rem;
+      background:rgba(37,99,235,.12);
+      border:1px solid rgba(37,99,235,.35);
+      color:var(--admin);
+      white-space:nowrap;
+    }
+
+    /* actionbar */
+    .actionbar {
+      position: sticky; top: 10px; z-index: 9999;
+      display: flex; justify-content: flex-end; gap: 10px; padding: 0 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn{
+      border:0;cursor:pointer;border-radius:999px;padding:10px 14px;
+      font-weight:900;font-size:.9rem;
+      transition:transform .16s ease, filter .16s ease;
+      display:inline-flex;align-items:center;gap:8px;
+      user-select:none;white-space:nowrap;
+      box-shadow:0 12px 24px rgba(0,0,0,.12);
+      background:#fff;color:#111827;border:1px solid #e5e7eb;
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
+    .btn:active{transform:translateY(0)}
+    .btn-reset { background: #111827; color: #fff; border: 0; }
+    .btn-primary{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff;border:0;
+      box-shadow:0 12px 24px rgba(124,58,237,.18);
+    }
+    .btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
+    .btn-danger{background:var(--bad);color:#fff;border:0}
+    .btn-check {
+      border-radius: 12px;
+      padding: 9px 10px;
+      font-size: .86rem;
+      font-weight: 950;
+      box-shadow: 0 10px 20px rgba(124,58,237,.14);
+      width: auto;
+      min-width: 86px;
+      justify-content: center;
+    }
+    .btn[disabled], .btn-check[disabled]{opacity:.65;cursor:not-allowed;transform:none !important;filter:none !important}
 
     .topbar{
-      margin-top:10px;background:rgba(255,255,255,.86);
-      border:1px solid rgba(229,231,235,.9);border-radius:18px;
+      margin-top:10px;
+      background:rgba(255,255,255,.86);
+      border:1px solid rgba(229,231,235,.9);
+      border-radius:18px;
       box-shadow:0 10px 30px rgba(0,0,0,.06);
-      padding:14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+      padding:14px;
+      display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
     }
     .titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
     .logo{
       width:42px;height:42px;border-radius:16px;
       background:linear-gradient(135deg,#a78bfa,#fb7185);
       display:flex;align-items:center;justify-content:center;
-      color:#fff;font-weight:900;box-shadow:0 10px 22px rgba(124,58,237,.18);
+      color:#fff;font-weight:900;
+      box-shadow:0 10px 22px rgba(124,58,237,.18);
       user-select:none;
     }
     .titles h1{font-size:1.02rem;margin:0;font-weight:800}
     .titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
 
+    .stats { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .pill {
+      background: #f3f4f6; border: 1px solid #e5e7eb;
+      border-radius: 999px; padding: 8px 12px;
+      font-weight: 800; font-size: .9rem; color: #374151; white-space: nowrap;
+    }
+    .pill strong { color: var(--primary); }
+    .progressline {
+      height: 10px; border-radius: 999px; background: #f3f4f6; overflow: hidden;
+      border: 1px solid #e5e7eb; width: 100%; max-width: 360px;
+    }
+    .progressfill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #22c55e, #a78bfa);
+      transition: width .25s ease;
+    }
+
+    .content { padding: 12px 0 0; }
     .card{
       background:var(--card);
       border:2px solid var(--border);
@@ -60,92 +149,20 @@
     }
     .row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
     .vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25}
+    .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .idx{
-      font-size:.78rem;font-weight:900;padding:6px 10px;border-radius:999px;
-      background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;white-space:nowrap;
-    }
-    .muted{color:var(--muted);font-weight:650}
-    .pill{
-      background:#f3f4f6;border:1px solid #e5e7eb;border-radius:999px;padding:8px 12px;
-      font-weight:800;font-size:.9rem;color:#374151;white-space:nowrap;
-      display:inline-flex;gap:6px;align-items:center;
-    }
-    .pill strong{color:var(--primary)}
-    .oktxt{color:var(--ok);font-weight:1000}
-    .badtxt{color:var(--bad);font-weight:1000}
-
-    .btn{
-      border:0;cursor:pointer;border-radius:999px;padding:10px 14px;
-      font-weight:900;font-size:.9rem;
-      display:inline-flex;align-items:center;gap:8px;
-      box-shadow:0 12px 24px rgba(0,0,0,.12);
-      background:#fff;color:#111827;border:1px solid #e5e7eb;
-      text-decoration:none;
-      touch-action:manipulation;
-      -webkit-tap-highlight-color:transparent;
-    }
-    .btn-primary{
-      background:linear-gradient(135deg,#7c3aed,#fb7185);
-      color:#fff;border:0;box-shadow:0 12px 24px rgba(124,58,237,.18);
-    }
-    .btn[disabled]{opacity:.65;cursor:not-allowed}
-
-    .table{
-      width:100%;border-collapse:separate;border-spacing:0;
-      overflow:hidden;border-radius:16px;border:1px solid #e5e7eb;background:#fff;
-      table-layout:fixed;
-    }
-    .table th,.table td{
-      padding:10px 10px;border-bottom:1px solid #e5e7eb;text-align:left;
-      font-weight:750;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;
-    }
-    .table th{background:#f8fafc;font-weight:900}
-    .table tr:last-child td{border-bottom:0}
-
-    .toast{
-      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
-      background:rgba(17,24,39,.92);color:#fff;padding:10px 12px;border-radius:14px;
-      font-weight:800;font-size:.9rem;opacity:0;pointer-events:none;
-      transition:opacity .18s ease, transform .18s ease;
-      max-width:calc(100% - 28px);z-index:20050;text-align:center;
-    }
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
-
-    /* Wrong list (click to open) */
-    .wList{display:grid;gap:10px;margin-top:10px}
-    .wItem{
-      border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:#fff;
-      cursor:pointer; user-select:none;
-      transition:transform .12s ease, filter .12s ease;
-    }
-    .wItem:hover{transform:translateY(-1px);filter:brightness(.99)}
-    .wHead{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
-    .wLeft{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .wNo{
-      font-weight:1000;font-size:.82rem;
+      font-size:.78rem;font-weight:900;
       padding:6px 10px;border-radius:999px;
-      background:rgba(220,38,38,.10);
-      border:1px solid rgba(220,38,38,.25);
-      color:#991b1b;
+      background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;
       white-space:nowrap;
     }
-    .wWord{font-weight:950}
-    .wDetail{display:none;margin-top:10px;line-height:1.35}
-    .wItem.open .wDetail{display:block}
-    .wDetailRow{margin-top:8px}
-    .wLinkRow{margin-top:10px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
-    .wSmallBtn{
-      border-radius:999px;padding:7px 10px;font-weight:900;
-      border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:.82rem;
-      text-decoration:none;color:#111827;
-    }
+    .muted{color:var(--muted);font-weight:650}
 
-    /* comments UI */
     .input{
       width:100%;
       border-radius:14px;border:2px solid #e5e7eb;
       padding:11px 12px;font-size:.95rem;font-weight:700;
-      outline:none;background:#f8fafc;
+      outline:none;background:var(--soft);
       transition:border-color .15s ease, box-shadow .15s ease;
     }
     .input:focus{
@@ -153,85 +170,326 @@
       box-shadow:0 0 0 5px rgba(124,58,237,.10);
       background:#fff;
     }
-    .cmtBox{display:grid;gap:12px;margin-top:10px}
-    .cmtItem{border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:#fff}
-    .cmtHead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
-    .cmtAuthor{font-weight:950;color:#6b7280;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .adminBadgeInline{
-      padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
-      background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin);white-space:nowrap;
+
+    .qaRow{ display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
+    .qaRow .input{ flex: 1 1 260px; }
+
+    .resultRow{
+      display:grid;
+      grid-template-columns: 140px 1fr;
+      gap:10px;
+      align-items:center;
+      margin-top:10px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px dashed #e5e7eb;
+      background: #fff;
+      font-weight: 800;
+      line-height: 1.35;
     }
-    .cmtText{color:#111827;font-weight:750;line-height:1.35;white-space:pre-wrap;word-break:break-word}
-    .cmtActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;justify-content:flex-end}
-    .cmtBtn{
-      border-radius:999px;padding:7px 10px;font-weight:900;
-      border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:.82rem;
+    .oktxt { color: var(--ok); font-weight: 1000; }
+    .badtxt { color: var(--bad); font-weight: 1000; }
+
+    .toast{
+      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+      background:rgba(17,24,39,.92);color:#fff;
+      padding:10px 12px;border-radius:14px;
+      font-weight:800;font-size:.9rem;
+      opacity:0;pointer-events:none;
+      transition:opacity .18s ease, transform .18s ease;
+      max-width:calc(100% - 28px);
+      z-index:20050;text-align:center;
     }
-    .cmtBtnDanger{background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.25);color:#991b1b}
-    .cmtTime{margin-top:6px;text-align:right;color:#6b7280;font-weight:800;font-size:.82rem}
-    .replyWrap{margin-top:10px;margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;display:grid;gap:10px}
-    .replyForm{margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;margin-top:10px;display:grid;gap:10px}
-    .charRow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6b7280;font-weight:800;font-size:.85rem}
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.35);
+      display:none;align-items:center;justify-content:center;
+      padding:16px;z-index:20000;
+    }
+    .modal-backdrop.show{display:flex}
+    #registerBackdrop{z-index:20015}
+    #pinBackdrop{z-index:20040}
+    #resetBackdrop{z-index:20025}
+    #profileBackdrop{z-index:20030}
+
+    .modal{
+      width:100%;max-width:620px;
+      background:#fff;border-radius:18px;border:1px solid #e5e7eb;
+      box-shadow:0 20px 60px rgba(0,0,0,.18);
+      padding:14px;max-height:82vh;overflow:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+    .modal h3{margin:4px 0 6px;font-size:1.02rem}
+    .modal p{margin:0 0 12px;color:var(--muted);font-weight:650;font-size:.92rem;line-height:1.35}
+    .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+    .xclose{position:sticky;top:0;display:flex;justify-content:flex-end;z-index:2;margin-bottom:4px}
+    .btn-x{
+      width:56px;height:56px;border-radius:16px;
+      border:1px solid #e5e7eb;background:#fff;cursor:pointer;
+      font-weight:1000;font-size:1.8rem;line-height:1;
+      box-shadow:0 12px 24px rgba(0,0,0,.10);
+    }
+
+    /* PIN keypad */
+    .pinWrap{display:grid;gap:12px}
+    .pinDots{
+      display:flex;justify-content:center;gap:10px;
+      padding:8px 0 2px;user-select:none;
+    }
+    .dot{
+      width:14px;height:14px;border-radius:999px;
+      border:2px solid #e5e7eb;background:#fff;
+      box-shadow:0 10px 22px rgba(0,0,0,.08);
+    }
+    .dot.filled{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      border-color:rgba(124,58,237,.25);
+    }
+    .pinKeypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .pinKey{
+      height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;
+      font-weight:1000;font-size:1.25rem;cursor:pointer;
+      box-shadow:0 10px 22px rgba(0,0,0,.08);
+      transition:transform .12s ease, filter .12s ease;
+      user-select:none;
+    }
+    .pinKey:hover{transform:translateY(-1px);filter:brightness(.99)}
+    .pinKey:active{transform:translateY(0)}
+    .pinKey.small{font-size:.95rem;font-weight:950;letter-spacing:.02em}
+    .pinNote{text-align:center;color:var(--muted);font-weight:750;font-size:.9rem;line-height:1.35}
+    @keyframes shakeX{0%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-4px)}90%{transform:translateX(4px)}100%{transform:translateX(0)}}
+    .pinWrap.shake{animation:shakeX .5s ease}
+    .pinDots.error .dot{border-color:rgba(220,38,38,.65)}
+    .pinDots.error .dot.filled{
+      background:linear-gradient(135deg,#fca5a5,#dc2626);
+      border-color:rgba(220,38,38,.55);
+    }
+    .pinNote.error{color:var(--bad)}
+
+    /* Profile UI */
+    .divider{ height:1px; background: #e5e7eb; margin: 12px 0; }
+    .btn-red{
+      background: var(--bad);
+      color:#fff;
+      border:0;
+      box-shadow: 0 12px 24px rgba(220,38,38,.18);
+    }
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 520px){ .grid2{ grid-template-columns: 1fr; } }
+
+    @media (max-width: 820px) {
+      .progressline { max-width: 100%; }
+      .btn { padding: 9px 12px; font-size: .85rem; }
+      .resultRow{ grid-template-columns: 120px 1fr; }
+      .userCorner .name { max-width: 66vw; }
+      .btn-check{ min-width: 84px; }
+    }
   </style>
 </head>
 
 <body>
+  <div class="userCorner" id="userCorner" title="Bấm để mở tài khoản">
+    <span class="name" id="userCornerName">—</span>
+    <span class="adminBadge" id="userCornerAdmin" style="display:none;">ADMIN</span>
+  </div>
+
   <div id="shell">
+    <div class="actionbar">
+      <button class="btn btn-ghost" id="btnHome">🏠 Trang chủ</button>
+      <button class="btn" id="btnScrollTop">⬆️ Lên đầu</button>
+      <button class="btn btn-primary" id="btnSubmit" disabled>🏁 Nộp bài</button>
+      <button class="btn btn-reset" id="btnReset">🔁 Làm lại</button>
+    </div>
+
     <div class="wrap">
       <div class="topbar">
         <div class="titlebox">
-          <div class="logo">✅</div>
+          <div class="logo">Hi!</div>
           <div class="titles">
-            <h1 id="title">Kết quả</h1>
-            <div class="tiny" id="sub"></div>
+            <h1 id="quizTitle">Quiz</h1>
+            <div class="tiny" id="quizSub"></div>
           </div>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-          <a class="btn" id="btnBackStore" href="/">← Store</a>
-          <a class="btn btn-primary" id="btnRestart" href="/q/abcde">↩️ Làm lại</a>
+
+        <div class="stats">
+          <div class="pill">Đã làm: <strong id="answeredCount">0</strong>/<span id="totalCount">0</span></div>
+          <div class="progressline"><div class="progressfill" id="progressFill"></div></div>
         </div>
       </div>
 
-      <div id="summary" class="card"></div>
-      <div id="wrong" class="card"></div>
-
-      <div id="lb" class="card"></div>
-      <div id="discussion" class="card"></div>
+      <div class="content" id="content"></div>
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
+  <!-- Register prompt -->
+  <div class="modal-backdrop" id="registerBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
+      <h3 id="registerTitle">Đăng ký tài khoản?</h3>
+      <p id="registerDesc">Username chưa đăng ký. Bạn có muốn đăng ký không?</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btnRegisterNo">Nhập lại</button>
+        <button class="btn btn-primary" id="btnRegisterYes">Đăng ký</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIN keypad -->
+  <div class="modal-backdrop" id="pinBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+      <div class="xclose">
+        <button class="btn-x" id="btnClosePin" aria-label="Đóng">✕</button>
+      </div>
+      <h3 id="pinTitle">Mật khẩu</h3>
+      <p id="pinDesc">Nhập mật khẩu số.</p>
+
+      <div class="pinWrap" id="pinWrap">
+        <div class="pinDots" id="pinDots"></div>
+        <div class="pinKeypad" id="pinKeypad"></div>
+        <div class="pinNote" id="pinNote"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset confirm -->
+  <div class="modal-backdrop" id="resetBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3>Làm lại bài?</h3>
+      <p>Xóa lần làm hiện tại (trên máy) và làm lại.</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btnCancelReset">Hủy</button>
+        <button class="btn btn-danger" id="btnConfirmReset">Xóa & Làm lại</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile modal -->
+  <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+      <div class="xclose">
+        <button class="btn-x" id="btnCloseProfile" aria-label="Đóng">✕</button>
+      </div>
+      <h3 id="profileTitle">Tài khoản</h3>
+      <p id="profileSub">Thông tin user.</p>
+
+      <div class="card" style="margin:10px 0 0; box-shadow:none;">
+        <div class="row1">
+          <p class="vi" style="margin:0">Username: <b id="profileUsername">—</b></p>
+          <div class="meta"><span class="idx" id="profileRole">USER</span></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="grid2">
+        <button class="btn btn-ghost" id="btnProfileHome" style="justify-content:center;">🏠 Trang chủ</button>
+        <button class="btn btn-red" id="btnLogout" style="justify-content:center;">🚪 Đăng xuất</button>
+      </div>
+    </div>
+  </div>
+
 <script>
+/* ================== CONFIG ================== */
+const HOME_URL = "/";
+
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
-const TOKEN_KEY = "tk_token_v2";
-const NAME_KEY  = "tk_display_name_v1";
+const RPC = {
+  getQuiz: "api_get_quiz",
+  checkUsername: "api_check_username",
+  login: "api_login",
+  register: "api_register",
+  me: "api_me"
+};
 
+const TOKEN_KEY = "tk_token_v2";
+const ME_KEY = "tk_me_v2";
+const NAME_KEY = "tk_display_name_v1"; // ✅ để result.html fallback đúng
+
+/* ================== HELPERS ================== */
 function toast(msg){
   const t = document.getElementById("toast");
   t.textContent = String(msg||"");
   t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"), 1400);
+  setTimeout(()=>t.classList.remove("show"), 1300);
 }
-function escapeHtml(s) {
-  return String(s ?? "")
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+function escapeHtml(s){
+  return String(s??"")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
-function loadName(){ try { return (localStorage.getItem(NAME_KEY)||"").trim(); } catch { return ""; } }
+function normUsername(u){ return String(u||"").trim().toLowerCase(); }
+function validateUsername(u){
+  u = normUsername(u);
+  if(!u) return "Chưa nhập username.";
+  if(u.length>15) return "Username tối đa 15 ký tự.";
+  if(!/^[a-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z 0-9 và dấu _ (không viết hoa).";
+  return null;
+}
+function isAdminUser(me){
+  if(!me) return false;
+  const u = String(me.username||"").toLowerCase();
+  return me.role==="admin" || u==="tuankhoi";
+}
+function getToken(){ try{ return (localStorage.getItem(TOKEN_KEY)||"").trim(); }catch{ return ""; } }
+function setToken(t){ try{ if(!t) localStorage.removeItem(TOKEN_KEY); else localStorage.setItem(TOKEN_KEY, String(t)); }catch{} }
+function getMeCache(){ try{ return JSON.parse(localStorage.getItem(ME_KEY)||"null"); }catch{ return null; } }
+function setMeCache(me){ try{ if(!me) localStorage.removeItem(ME_KEY); else localStorage.setItem(ME_KEY, JSON.stringify(me)); }catch{} }
+function setNameCache(name){ try{ if(!name) localStorage.removeItem(NAME_KEY); else localStorage.setItem(NAME_KEY, String(name)); }catch{} }
+function clearAuthLocal(){ setToken(""); setMeCache(null); }
+function parseQuizIdFromUrl(){
+  const p = location.pathname;
+  const m = p.match(/^\/q\/([^\/]+)\/?$/);
+  let id = m ? m[1] : "";
+  id = id.replace(/\.html$/i,"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
+  return id;
+}
+function goHome(){ location.href = HOME_URL; }
 
-function sbHeaders(){
-  const anon = String(SUPABASE_ANON_KEY||"").trim();
-  return {
-    "apikey": anon,
-    "Authorization": "Bearer " + anon,
-    "Content-Type": "application/json"
-  };
+/* ================== URL FLAGS (restart/start) ================== */
+const URLP = new URLSearchParams(location.search);
+const FLAG_START = (URLP.get("start")==="1");
+const FLAG_RESTART = (URLP.get("restart")==="1");
+function dropFlagsFromUrl(){
+  if(!FLAG_START && !FLAG_RESTART) return;
+  URLP.delete("start"); URLP.delete("restart");
+  const qs = URLP.toString();
+  const newUrl = location.pathname + (qs?("?"+qs):"") + (location.hash||"");
+  try{ history.replaceState(null,"",newUrl); }catch{}
+}
+
+/* ================== SUPABASE CALLS ================== */
+async function sbRpc(fn, args){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
+    method:"POST",
+    headers:{
+      "apikey": String(SUPABASE_ANON_KEY).trim(),
+      "Authorization": "Bearer " + String(SUPABASE_ANON_KEY).trim(),
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify(args||{})
+  });
+  const txt = await res.text();
+  let data=null;
+  try{ data = txt ? JSON.parse(txt) : null; }catch{}
+  if(!res.ok){
+    const msg = (data && (data.message||data.error||data.hint||data.details))
+      ? (data.message||data.error||data.hint||data.details)
+      : txt;
+    throw new Error(msg || "RPC error");
+  }
+  return data;
 }
 async function sbGet(path){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{ headers: sbHeaders() });
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
+    headers:{
+      "apikey": String(SUPABASE_ANON_KEY).trim(),
+      "Authorization": "Bearer " + String(SUPABASE_ANON_KEY).trim()
+    }
+  });
   const txt = await res.text();
   let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
   if(!res.ok){
@@ -242,13 +500,18 @@ async function sbGet(path){
   }
   return data;
 }
-async function sbPost(path, body, { preferReturn=true } = {}){
-  const h = sbHeaders();
-  if(preferReturn) h["Prefer"]="return=representation";
+async function sbPost(path, body, { preferReturn=false } = {}){
+  const headers = {
+    "apikey": String(SUPABASE_ANON_KEY).trim(),
+    "Authorization": "Bearer " + String(SUPABASE_ANON_KEY).trim(),
+    "Content-Type":"application/json"
+  };
+  if(preferReturn) headers["Prefer"] = "return=representation";
+
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
     method:"POST",
-    headers: h,
-    body: JSON.stringify(body||{})
+    headers,
+    body: JSON.stringify(body)
   });
   const txt = await res.text();
   let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
@@ -260,537 +523,877 @@ async function sbPost(path, body, { preferReturn=true } = {}){
   }
   return data;
 }
-async function sbDelete(path){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
-    method:"DELETE",
-    headers: sbHeaders()
+
+/* ================== MODALS (register + pin) ================== */
+/* register */
+const registerBackdrop = document.getElementById("registerBackdrop");
+const registerDesc = document.getElementById("registerDesc");
+document.getElementById("btnRegisterNo").onclick = ()=>closeRegisterPrompt(false);
+document.getElementById("btnRegisterYes").onclick = ()=>closeRegisterPrompt(true);
+registerBackdrop.addEventListener("click",(e)=>{ if(e.target===registerBackdrop) closeRegisterPrompt(false); });
+
+let REG_PROMPT = { open:false, resolve:null, username:"" };
+function openRegisterPrompt(username){
+  return new Promise((resolve)=>{
+    REG_PROMPT.open=true;
+    REG_PROMPT.resolve=resolve;
+    REG_PROMPT.username=username;
+    registerDesc.textContent = `Username "${username}" chưa đăng ký, bạn có muốn đăng ký không?`;
+    registerBackdrop.classList.add("show");
+    registerBackdrop.setAttribute("aria-hidden","false");
   });
-  const txt = await res.text();
-  let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
-  if(!res.ok){
-    const msg = (data && (data.message||data.error||data.hint||data.details))
-      ? (data.message||data.error||data.hint||data.details)
-      : txt;
-    throw new Error(msg || "REST DELETE error");
+}
+function closeRegisterPrompt(ans){
+  if(!REG_PROMPT.open) return;
+  registerBackdrop.classList.remove("show");
+  registerBackdrop.setAttribute("aria-hidden","true");
+  const r = REG_PROMPT.resolve;
+  REG_PROMPT.open=false;
+  REG_PROMPT.resolve=null;
+  REG_PROMPT.username="";
+  if(r) r(!!ans);
+}
+
+/* PIN */
+const pinBackdrop = document.getElementById("pinBackdrop");
+const pinTitle = document.getElementById("pinTitle");
+const pinDesc = document.getElementById("pinDesc");
+const pinDots = document.getElementById("pinDots");
+const pinKeypad = document.getElementById("pinKeypad");
+const pinNote = document.getElementById("pinNote");
+const pinWrap = document.getElementById("pinWrap");
+document.getElementById("btnClosePin").onclick = ()=>closePin("cancel");
+pinBackdrop.addEventListener("click",(e)=>{ if(e.target===pinBackdrop) closePin("cancel"); });
+
+let PIN_KEYS_BUILT = false;
+let PIN = {
+  open:false, resolve:null, reject:null,
+  username:"", mode:"login", step:"one",
+  pinLen:4, value:"", first:"", submitting:false,
+  dotEls:[], payload:null
+};
+function buildPinKeypadOnce(){
+  if(PIN_KEYS_BUILT) return;
+  PIN_KEYS_BUILT=true;
+  pinKeypad.innerHTML="";
+  const keys=["1","2","3","4","5","6","7","8","9","CLEAR","0","⌫"];
+  keys.forEach(k=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="pinKey" + ((k==="CLEAR"||k==="⌫")?" small":"");
+    b.textContent=k;
+    b.onclick=()=>onPinKey(k);
+    pinKeypad.appendChild(b);
+  });
+}
+function buildDots(n){
+  pinDots.innerHTML="";
+  PIN.dotEls=[];
+  for(let i=0;i<n;i++){
+    const d=document.createElement("div");
+    d.className="dot";
+    pinDots.appendChild(d);
+    PIN.dotEls.push(d);
   }
-  return data;
+}
+function updateDots(){
+  const len = PIN.value.length;
+  for(let i=0;i<PIN.dotEls.length;i++){
+    PIN.dotEls[i].classList.toggle("filled", i < len);
+  }
+}
+function setPinNote(msg,type=""){
+  if(type==="error") pinNote.classList.add("error");
+  else pinNote.classList.remove("error");
+  pinNote.textContent = String(msg||"");
+}
+function pinErrorPulse(msg){
+  PIN.value="";
+  updateDots();
+  pinDots.classList.add("error");
+  pinWrap.classList.remove("shake"); void pinWrap.offsetWidth; pinWrap.classList.add("shake");
+  setPinNote(msg||"Sai mật khẩu","error");
+  setTimeout(()=>{
+    pinDots.classList.remove("error");
+    pinWrap.classList.remove("shake");
+    updatePinHeader();
+  },520);
+}
+function updatePinHeader(){
+  const u = normUsername(PIN.username);
+  const note = (u==="tuankhoi") ? "Tài khoản tuankhoi dùng mật khẩu 6 số." : "Mật khẩu chỉ gồm số.";
+  if(PIN.mode==="login"){
+    pinTitle.textContent="Đăng nhập";
+    pinDesc.textContent=`Username: ${PIN.username}`;
+  }else{
+    if(PIN.step==="one"){ pinTitle.textContent="Đăng ký"; pinDesc.textContent=`Tạo mật khẩu ${PIN.pinLen} số`; }
+    else { pinTitle.textContent="Xác nhận mật khẩu"; pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`; }
+  }
+  setPinNote(note);
+}
+function openPin({username, mode="login", pinLen=4}){
+  return new Promise((resolve,reject)=>{
+    PIN.open=true; PIN.resolve=resolve; PIN.reject=reject;
+    PIN.username=String(username||"");
+    PIN.mode=mode;
+    PIN.pinLen=Math.max(4, Number(pinLen)||4);
+    PIN.value=""; PIN.first=""; PIN.submitting=false; PIN.payload=null;
+    PIN.step = (mode==="set") ? "one" : "one";
+    buildPinKeypadOnce();
+    buildDots(PIN.pinLen);
+    updatePinHeader();
+    updateDots();
+    pinBackdrop.classList.add("show");
+    pinBackdrop.setAttribute("aria-hidden","false");
+  });
+}
+function closePin(why){
+  if(!PIN.open) return;
+  pinBackdrop.classList.remove("show");
+  pinBackdrop.setAttribute("aria-hidden","true");
+  const rej = PIN.reject;
+  const res = PIN.resolve;
+  const payload = PIN.payload;
+  PIN.open=false; PIN.resolve=null; PIN.reject=null; PIN.payload=null;
+  if(why==="ok"){ if(res) res(payload); return; }
+  if(rej) rej(new Error("cancel"));
+}
+function pickPinLen(ck, username){
+  const u = normUsername(username);
+  if(u === "tuankhoi") return 6;
+  const raw = (ck && (ck.pinLen ?? ck.pin_len ?? ck.pin_length ?? 4));
+  let n = Number(raw) || 4;
+  if(!isFinite(n) || n < 4) n = 4;
+  if(n > 12) n = 12;
+  return n;
+}
+function pickExists(ck){
+  if(ck && typeof ck.exists === "boolean") return ck.exists;
+  if(ck && ck.ok === true && typeof ck.exists === "boolean") return ck.exists;
+  return null;
 }
 
-function fmtTs(ts){
-  try{
-    const d = ts ? new Date(ts) : new Date();
-    const pad = (n)=>String(n).padStart(2,"0");
-    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
-  }catch{ return ""; }
+/* ================== QUIZ LOGIC ================== */
+function normalizeForCompare(s) {
+  let t = String(s||"").trim().toLowerCase();
+  t = t.replace(/đ/g, "d");
+  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); } catch {}
+  t = t.replace(/[“”"']/g, " ");
+  t = t.replace(/[^a-z0-9\s]/g, " ");
+  t = t.replace(/\s+/g, " ").trim();
+  return t;
+}
+function looseEq(user, expected){
+  const u = normalizeForCompare(user);
+  const a = normalizeForCompare(expected);
+  if (!u || !a) return false;
+  if (u === a) return true;
+  if (u.replace(/\s/g,"") === a.replace(/\s/g,"")) return true;
+  return false;
 }
 
-const qs = new URLSearchParams(location.search);
-const quizId = String(qs.get("quiz")||"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
-const attemptId = String(qs.get("attempt")||"").trim();
+/* UI refs */
+const content = document.getElementById("content");
+const quizTitleEl = document.getElementById("quizTitle");
+const quizSubEl   = document.getElementById("quizSub");
+const userCorner  = document.getElementById("userCorner");
+const userCornerName = document.getElementById("userCornerName");
+const userCornerAdmin= document.getElementById("userCornerAdmin");
 
+function setUserCorner(me){
+  if(!me || !me.username){ userCorner.style.display="none"; return; }
+  userCornerName.textContent = me.username;
+  userCornerAdmin.style.display = isAdminUser(me) ? "inline-flex" : "none";
+  userCorner.style.display = "inline-flex";
+}
+function renderLoading(msg){
+  content.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">${escapeHtml(msg||"Đang tải...")}</p>
+        <div class="meta"><span class="idx">LOADING</span></div>
+      </div>
+      <div class="muted" style="margin-top:8px">Vui lòng chờ...</div>
+    </div>`;
+}
+
+/* APP STATE */
+const quizId = parseQuizIdFromUrl();
 const PROGRESS_KEY = `tk_progress::${quizId}`;
 
-function clearForRestart(){
+let me = null;
+let QUIZ = { quiz_id: quizId, title:"Quiz", sub:"", items:[] };
+let view = { started:false };
+
+let state = {
+  quiz_id: quizId,
+  answers: {},
+  checked: {},
+  finalized: false,
+  attempt_id: "",
+  ts: 0
+};
+
+function hardResetProgressLocal(){
+  state.answers = {};
+  state.checked = {};
+  state.finalized = false;
+  state.attempt_id = "";
   try{ localStorage.removeItem(PROGRESS_KEY); }catch{}
   try{ sessionStorage.removeItem(`tk_last_result::${quizId}`); }catch{}
+  saveLocalProgress();
+}
+function loadLocalProgress(){
+  try{
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if(!raw) return;
+    const s = JSON.parse(raw);
+    if(s && s.quiz_id === quizId){
+      state = { ...state, ...s };
+    }
+  }catch{}
+}
+function saveLocalProgress(){
+  state.ts = Date.now();
+  try{ localStorage.setItem(PROGRESS_KEY, JSON.stringify(state)); }catch{}
 }
 
-const btnRestart = document.getElementById("btnRestart");
-btnRestart.href = quizId ? `/q/${quizId}?restart=1&start=1` : "/";
-btnRestart.addEventListener("click",(e)=>{
-  // luôn clear trước rồi đi
-  if(!quizId) return;
-  e.preventDefault();
-  clearForRestart();
-  location.href = `/q/${quizId}?restart=1&start=1`;
+function acceptedAnswers(item){
+  const out = [];
+  if(Array.isArray(item.answers)) out.push(...item.answers);
+  if(item.meaning){
+    const t = String(item.meaning||"");
+    t.split(/[|;/]/g).forEach(x=>{
+      const p = x.trim();
+      if(p) out.push(p);
+      if(p.includes(",")){
+        p.split(",").forEach(y=>{ const q=y.trim(); if(q) out.push(q); });
+      }
+    });
+  }
+  const seen = new Set();
+  const uniq = [];
+  for(const x of out){
+    const k = normalizeForCompare(x);
+    if(!k) continue;
+    if(seen.has(k)) continue;
+    seen.add(k);
+    uniq.push(String(x).trim());
+  }
+  return uniq;
+}
+function gradeOne(item, userAns){
+  const u = String(userAns||"").trim();
+  const acc = acceptedAnswers(item);
+  const expected = acc[0] || String(item.meaning||"");
+  if(!u) return { ok:false, expected };
+  for(const a of acc){
+    if(looseEq(u,a)) return { ok:true, expected };
+  }
+  return { ok:false, expected };
+}
+
+function updateStats(){
+  const total = QUIZ.items.length;
+  let answered = 0;
+  for(const it of QUIZ.items){
+    const v = String(state.answers[it.id]||"").trim();
+    if (v) answered++;
+  }
+  document.getElementById("answeredCount").textContent = String(answered);
+  document.getElementById("totalCount").textContent = String(total);
+  document.getElementById("progressFill").style.width = total ? Math.round(answered*100/total)+"%" : "0%";
+
+  const canSubmit = !!me && !!me.user_id && answered>0 && !state.finalized && view.started;
+  document.getElementById("btnSubmit").disabled = !canSubmit;
+}
+
+/* ================== Gate ================== */
+function renderGate(){
+  content.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Nhập USERNAME</p>
+        <div><span class="idx">BẮT BUỘC</span></div>
+      </div>
+      <div class="muted" style="margin-top:6px; line-height:1.35">
+        Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b>.
+      </div>
+
+      <div style="margin-top:10px; display:grid; gap:10px;">
+        <input id="nameInput" class="input" placeholder="vd: tuankhoi123" maxlength="15" autocomplete="off"/>
+        <button id="btnContinue" class="btn btn-primary" style="justify-content:center;">➡️ Tiếp tục</button>
+        <div class="muted" id="gateStatus">Sẵn sàng.</div>
+      </div>
+    </div>
+  `;
+
+  const nameInput = document.getElementById("nameInput");
+  const btnContinue = document.getElementById("btnContinue");
+  const gateStatus = document.getElementById("gateStatus");
+
+  nameInput.addEventListener("input",()=>{
+    const v = normUsername(nameInput.value);
+    if(nameInput.value!==v) nameInput.value=v;
+  },{passive:true});
+  try{ nameInput.focus(); }catch{}
+
+  const doFlow = async ()=>{
+    const u = normUsername(nameInput.value);
+    const err = validateUsername(u);
+    if(err){ toast(err); return; }
+
+    btnContinue.disabled=true; btnContinue.textContent="⏳";
+    gateStatus.textContent="Đang kiểm tra username…";
+    try{
+      const ck = await sbRpc(RPC.checkUsername, { p_username: u });
+      if(!ck || ck.ok === false) throw new Error((ck && ck.error) ? ck.error : "check fail");
+
+      const exists = pickExists(ck);
+      const pinLen = pickPinLen(ck, u);
+
+      if(exists === true){
+        gateStatus.textContent="Đăng nhập…";
+        await openPin({ username:u, mode:"login", pinLen });
+        return;
+      }
+
+      if(exists === false){
+        gateStatus.textContent=`Username "${u}" chưa đăng ký.`;
+        const ok = await openRegisterPrompt(u);
+        if(!ok){ gateStatus.textContent="Bạn có thể nhập username khác."; return; }
+
+        const regPinLen = (u==="tuankhoi") ? 6 : 4;
+        gateStatus.textContent="Tạo mật khẩu…";
+        const pin = await openPin({ username:u, mode:"set", pinLen: regPinLen });
+
+        gateStatus.textContent="Đang tạo tài khoản…";
+        const out = await sbRpc(RPC.register, { p_username: u, p_pin: String(pin||"") });
+        if(!out || !out.ok || !out.token) throw new Error(out?.error || "register fail");
+
+        toast("Đã đăng ký & đăng nhập");
+        await enterAfterAuth(out);
+        return;
+      }
+
+      gateStatus.textContent="Thử đăng nhập…";
+      await openPin({ username:u, mode:"login", pinLen: (u==="tuankhoi")?6:4 });
+
+    }catch(e){
+      if(!(e && e.message==="cancel")) toast(e.message||"Lỗi");
+      gateStatus.textContent="Sẵn sàng.";
+    }finally{
+      btnContinue.disabled=false; btnContinue.textContent="➡️ Tiếp tục";
+    }
+  };
+
+  btnContinue.onclick = doFlow;
+  nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); doFlow(); }});
+}
+
+/* PIN submit handler */
+async function onPinKey(k){
+  if(!PIN.open || PIN.submitting) return;
+
+  if(k==="CLEAR"){ PIN.value=""; updateDots(); return; }
+  if(k==="⌫"){ PIN.value=PIN.value.slice(0,-1); updateDots(); return; }
+
+  if(PIN.value.length>=PIN.pinLen) return;
+  PIN.value += String(k);
+  updateDots();
+  if(PIN.value.length!==PIN.pinLen) return;
+
+  const val = PIN.value;
+  if(!/^[0-9]+$/.test(val)){ pinErrorPulse("Mật khẩu chỉ gồm số"); return; }
+
+  // LOGIN
+  if(PIN.mode==="login"){
+    PIN.submitting=true;
+    try{
+      setPinNote("Đang kiểm tra…");
+      const out = await sbRpc(RPC.login, { p_username: normUsername(PIN.username), p_pin: val });
+      if(out && out.ok && out.token){
+        PIN.payload = val;
+        closePin("ok");
+        toast("Đăng nhập thành công");
+        await enterAfterAuth(out);
+        return;
+      }
+      pinErrorPulse(out?.error || "Sai mật khẩu");
+    }catch(e){
+      pinErrorPulse("Sai mật khẩu");
+    }finally{
+      PIN.submitting=false;
+    }
+    return;
+  }
+
+  // REGISTER (set pin twice)
+  if(PIN.mode==="set"){
+    if(PIN.step==="one"){
+      PIN.first = val;
+      PIN.value = "";
+      PIN.step="confirm";
+      updatePinHeader();
+      updateDots();
+      return;
+    }else{
+      if(PIN.first !== val){
+        pinErrorPulse("Mật khẩu không khớp");
+        PIN.first=""; PIN.step="one";
+        updatePinHeader(); updateDots();
+        return;
+      }
+      PIN.payload = val;
+      closePin("ok");
+      return;
+    }
+  }
+}
+
+/* ================== Start / Quiz ================== */
+function bestAttemptIdForResult(){
+  const a1 = String(state.attempt_id||"").trim();
+  if(a1) return a1;
+  try{
+    const raw = sessionStorage.getItem(`tk_last_result::${quizId}`);
+    if(raw){
+      const x = JSON.parse(raw);
+      if(x && x.quiz_id===quizId && x.attempt_id) return String(x.attempt_id);
+    }
+  }catch{}
+  return "";
+}
+function goResult(){
+  const qs = new URLSearchParams();
+  qs.set("quiz", quizId);
+  const a = bestAttemptIdForResult();
+  if(a) qs.set("attempt", a);
+  location.href = `/result.html?${qs.toString()}`;
+}
+
+function renderStart(){
+  setUserCorner(me);
+  updateStats();
+
+  content.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Sẵn sàng làm bài</p>
+        <div class="meta"><span class="idx">${escapeHtml(QUIZ.quiz_id||quizId)}</span></div>
+      </div>
+      <div class="muted" style="margin-top:8px; line-height:1.35">
+        Bạn đang đăng nhập: <b>${escapeHtml(me?.username||"")}</b>
+      </div>
+
+      <div style="margin-top:12px; display:grid; gap:10px;">
+        <button class="btn btn-primary" id="btnStart" style="justify-content:center;">✅ Vào làm</button>
+        <button class="btn btn-ghost" id="btnViewResult" style="justify-content:center;">📊 Xem kết quả</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("btnStart").onclick = ()=>{
+    view.started = true;
+    renderQuiz();
+    // nếu có hash #q123 thì scroll
+    scrollToHashIfAny();
+  };
+  document.getElementById("btnViewResult").onclick = ()=>goResult();
+}
+
+function renderQuiz(){
+  view.started = true;
+  setUserCorner(me);
+
+  if(!QUIZ.items.length){
+    content.innerHTML = `
+      <div class="card">
+        <div class="row1">
+          <p class="vi">Quiz trống</p>
+          <div class="meta"><span class="idx">EMPTY</span></div>
+        </div>
+        <div class="muted" style="margin-top:8px">Chưa có câu hỏi.</div>
+      </div>`;
+    updateStats();
+    return;
+  }
+
+  let html = "";
+  QUIZ.items.forEach((it, idx)=>{
+    const typed = String(state.answers[it.id]||"");
+    const ck = state.checked[it.id];
+    const locked = ck && ck.locked;
+
+    html += `
+      <div class="card" data-card="${it.id}" id="q${it.id}">
+        <div class="row1">
+          <p class="vi">Câu ${idx+1}. <b>${escapeHtml(it.word||"")}</b> <span class="muted">(${escapeHtml(it.pos||"")})</span></p>
+          <div class="meta"><span class="idx">#${idx+1}</span></div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <div class="qaRow">
+            <input class="input ans" data-id="${it.id}" placeholder="Nhập nghĩa…" value="${escapeHtml(typed)}" ${locked ? "disabled":""}/>
+            <button class="btn btn-primary btn-check" data-check="${it.id}" ${locked ? "disabled":""}>${locked?"Đã check":"Check"}</button>
+          </div>
+        </div>
+
+        ${locked ? `
+          <div class="resultRow">
+            <div>${ck.ok ? `<span class="oktxt">ĐÚNG ✅</span>` : `<span class="badtxt">SAI ❌</span>`}</div>
+            <div>${ck.ok ? `` : `<span class="muted">Đáp án:</span> <b>${escapeHtml(ck.expected||"")}</b>`}</div>
+          </div>` : ``}
+      </div>`;
+  });
+
+  content.innerHTML = html;
+  updateStats();
+}
+
+function scrollToHashIfAny(){
+  const h = (location.hash||"").trim();
+  if(!h || h.length<2) return;
+  const el = document.querySelector(h);
+  if(!el) return;
+  setTimeout(()=>{
+    try{ el.scrollIntoView({ behavior:"smooth", block:"start" }); }catch{}
+  }, 80);
+}
+
+/* ================== EVENTS ================== */
+content.addEventListener("input", (e)=>{
+  const t = e.target;
+  if(!t || !t.classList.contains("ans")) return;
+  const id = Number(t.dataset.id);
+  state.answers[id] = String(t.value||"");
+  const ck = state.checked[id];
+  if(ck && ck.locked){
+    t.value = String(state.answers[id]||"");
+    return;
+  }
+  saveLocalProgress();
+  updateStats();
+}, {passive:true});
+
+content.addEventListener("click", (e)=>{
+  const b = e.target.closest("[data-check]");
+  if(!b) return;
+  const id = Number(b.dataset.check);
+  const item = QUIZ.items.find(x=>Number(x.id)===id);
+  if(!item) return;
+
+  const ans = String(state.answers[id]||"").trim();
+  if(!ans){ toast("Chưa nhập"); return; }
+
+  const g = gradeOne(item, ans);
+  state.checked[id] = { ok: !!g.ok, expected: String(g.expected||""), locked:true };
+  saveLocalProgress();
+  toast(g.ok ? "ĐÚNG" : "SAI");
+  renderQuiz();
+  scrollToHashIfAny();
 });
 
-function renderSummary({ title, sub, username, score10, correctCount, totalCount, when }){
-  document.getElementById("title").textContent = title || "Kết quả";
-  document.getElementById("sub").textContent = sub || "";
+document.getElementById("btnScrollTop").onclick = ()=>{
+  document.getElementById("shell").scrollTo({ top:0, behavior:"smooth" });
+};
+document.getElementById("btnHome").onclick = ()=>goHome();
 
-  document.getElementById("summary").innerHTML = `
-    <div class="row1">
-      <p class="vi">Tổng kết</p>
-      <div class="idx">DONE</div>
-    </div>
-    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
-      <span class="pill">Tên: <strong>${escapeHtml(username||"—")}</strong></span>
-      <span class="pill">Điểm: <strong>${Number(score10||0).toFixed(1)}/10</strong></span>
-      <span class="pill">Đúng: <strong>${Number(correctCount||0)}</strong>/${Number(totalCount||0)}</span>
-      <span class="pill">Thời gian: <strong>${escapeHtml(when||"")}</strong></span>
-    </div>
-  `;
-}
-
-let WRONG_OPEN = new Set();
-function renderWrong(list){
-  const wrap = document.getElementById("wrong");
-  if(!Array.isArray(list) || !list.length){
-    wrap.innerHTML = `
-      <div class="row1">
-        <p class="vi">Câu sai</p>
-        <div class="idx">0</div>
-      </div>
-      <div class="muted" style="margin-top:10px"><span class="oktxt">Không sai ✅</span></div>
-    `;
-    return;
+/* reset modal */
+const resetBackdrop = document.getElementById("resetBackdrop");
+document.getElementById("btnReset").onclick = ()=>{
+  resetBackdrop.classList.add("show");
+  resetBackdrop.setAttribute("aria-hidden","false");
+};
+document.getElementById("btnCancelReset").onclick = ()=>{
+  resetBackdrop.classList.remove("show");
+  resetBackdrop.setAttribute("aria-hidden","true");
+};
+resetBackdrop.addEventListener("click",(e)=>{
+  if(e.target===resetBackdrop){
+    resetBackdrop.classList.remove("show");
+    resetBackdrop.setAttribute("aria-hidden","true");
   }
+});
+document.getElementById("btnConfirmReset").onclick = ()=>{
+  resetBackdrop.classList.remove("show");
+  resetBackdrop.setAttribute("aria-hidden","true");
+  hardResetProgressLocal();
+  toast("Đã làm lại");
+  // nếu đang làm thì render lại; nếu chưa thì về start/auto-start theo flag
+  if(view.started) renderQuiz();
+  else updateStats();
+};
 
-  const items = list.map((w,i)=>{
-    const key = String(w.id ?? i);
-    const open = WRONG_OPEN.has(key);
-    const word = w.word || "(?)";
-    const u = (w.user_answer ?? w.user ?? "").trim();
-    const ex = (w.expected ?? "").trim();
-    const jump = quizId && w.id ? `/q/${quizId}?start=1#q${encodeURIComponent(String(w.id))}` : "";
-    return `
-      <div class="wItem ${open?"open":""}" data-w="${escapeHtml(key)}">
-        <div class="wHead">
-          <div class="wLeft">
-            <span class="wNo">SAI • Câu ${i+1}</span>
-            <span class="wWord">${escapeHtml(word)}</span>
-          </div>
-          <div class="muted">${open ? "Ẩn" : "Xem"}</div>
-        </div>
-        <div class="wDetail">
-          <div class="wDetailRow"><span class="muted">Bạn viết:</span> <b>${escapeHtml(u||"(trống)")}</b></div>
-          <div class="wDetailRow"><span class="muted">Đáp án:</span> <b>${escapeHtml(ex||"(?)")}</b></div>
-          ${jump ? `
-            <div class="wLinkRow">
-              <a class="wSmallBtn" href="${jump}">Mở đúng câu này</a>
-            </div>` : ``}
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  wrap.innerHTML = `
-    <div class="row1">
-      <p class="vi">Câu sai</p>
-      <div class="idx">${list.length}</div>
-    </div>
-    <div class="muted" style="margin-top:8px">Bấm vào từng câu để xem chi tiết.</div>
-    <div class="wList">${items}</div>
-  `;
-
-  wrap.querySelector(".wList").addEventListener("click",(e)=>{
-    const item = e.target.closest(".wItem");
-    if(!item) return;
-    const k = String(item.getAttribute("data-w")||"");
-    if(!k) return;
-    if(WRONG_OPEN.has(k)) WRONG_OPEN.delete(k); else WRONG_OPEN.add(k);
-    // re-render giữ trạng thái
-    renderWrong(list);
-  }, { passive:true });
-}
-
-function renderLeaderboard(rows, myName){
-  if(!Array.isArray(rows) || !rows.length){
-    document.getElementById("lb").innerHTML = `
-      <div class="row1"><p class="vi">Bảng xếp hạng</p><div class="idx">TOP</div></div>
-      <div class="muted" style="margin-top:10px">Chưa có dữ liệu.</div>
-    `;
-    return;
+/* ================== SUBMIT ================== */
+function computeFinal(){
+  let correct = 0;
+  const wrong = [];
+  for(const it of QUIZ.items){
+    const ans = String(state.answers[it.id]||"").trim();
+    const g = gradeOne(it, ans);
+    if(g.ok) correct++;
+    else wrong.push({ id: it.id, word: it.word, user: ans, expected: g.expected });
+    state.checked[it.id] = { ok: !!g.ok, expected: String(g.expected||""), locked:true };
   }
-  const key = (s)=>String(s||"").trim().toLowerCase();
-  const myK = key(myName);
-
-  const body = rows.slice(0,50).map((r,i)=>{
-    const isMe = myK && key(r.name)===myK;
-    return `
-      <tr ${isMe ? `style="background: rgba(124,58,237,.10)"` : ``}>
-        <td style="width:70px"><b>${i+1}</b></td>
-        <td>
-          ${escapeHtml(r.name||"")}
-          ${r.is_admin ? ` <span style="color:#2563eb; font-weight:900">(ADMIN)</span>`:''}
-          ${isMe?` <span style="color:#4c1d95; font-weight:900">(Bạn)</span>`:''}
-        </td>
-        <td style="width:110px"><b>${Number(r.score10||0).toFixed(1)}</b>/10</td>
-      </tr>
-    `;
-  }).join("");
-
-  document.getElementById("lb").innerHTML = `
-    <div class="row1"><p class="vi">Bảng xếp hạng</p><div class="idx">TOP</div></div>
-    <div class="muted" style="margin-top:8px">0 điểm vẫn có trong BXH (miễn là đã nộp bài).</div>
-    <div style="margin-top:10px; overflow:auto">
-      <table class="table">
-        <thead><tr><th>#</th><th>Tên</th><th>Điểm</th></tr></thead>
-        <tbody>${body}</tbody>
-      </table>
-    </div>
-  `;
+  const total = QUIZ.items.length;
+  const score10 = total ? Math.round((correct/total*10)*10)/10 : 0;
+  return { score10, correctCount: correct, totalCount: total, wrong };
 }
-
-/** ===== COMMENTS (table: public.comments) ===== */
-const DISCUSS_MAX = 120;
-let DISC = { tree:[], openReply:"" };
-
-function discussionHtml(username){
-  return `
-    <div class="row1"><p class="vi">Thảo luận</p><div class="idx">💬</div></div>
-
-    <div style="margin-top:10px; display:grid; gap:10px;">
-      <div class="charRow">
-        <div><b>Viết bình luận</b> <span class="muted">(Tên: <b>${escapeHtml(username||"—")}</b>)</span></div>
-        <div><span id="rootCount">0</span>/${DISCUSS_MAX}</div>
-      </div>
-      <textarea id="rootInput" class="input" rows="3" maxlength="${DISCUSS_MAX}" placeholder="Nhập bình luận..."></textarea>
-      <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
-        <button class="btn btn-primary" id="btnPostRoot" style="justify-content:center;">➕ Gửi</button>
-      </div>
-      <div id="discussList" class="cmtBox"></div>
-    </div>
-  `;
-}
-
-function toMs(ts){
-  const d = new Date(ts);
-  const t = d.getTime();
-  return isFinite(t) ? t : Date.now();
-}
-function formatTsMs(ms){
-  try{
-    const d = new Date(Number(ms||0));
-    const pad = (n)=>String(n).padStart(2,"0");
-    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
-  }catch{ return ""; }
-}
-function buildTree(rows){
-  const byId = new Map();
-  rows.forEach(r=>{
-    byId.set(String(r.id), {
-      id: String(r.id),
-      parent_id: r.parent_id ? String(r.parent_id) : "",
-      author: String(r.author||""),
-      created_at: r.created_at,
-      createdAtMs: toMs(r.created_at),
-      text: String(r.text||""),
-      replies: []
-    });
-  });
-
-  const roots = [];
-  for(const node of byId.values()){
-    if(node.parent_id && byId.has(node.parent_id)){
-      byId.get(node.parent_id).replies.push(node);
-    }else{
-      roots.push(node);
-    }
-  }
-
-  roots.sort((a,b)=>a.createdAtMs-b.createdAtMs);
-  roots.forEach(r=>r.replies.sort((a,b)=>a.createdAtMs-b.createdAtMs));
-  return roots;
-}
-function canDeleteComment(c, myName, isAdmin){
-  if(isAdmin) return true;
-  const a = String(c.author||"").trim().toLowerCase();
-  const m = String(myName||"").trim().toLowerCase();
-  return !!m && a === m;
-}
-async function loadComments(){
-  const rows = await sbGet(`comments?quiz_id=eq.${quizId}&select=id,parent_id,author,text,created_at&order=created_at.asc&limit=300`);
-  DISC.tree = buildTree(Array.isArray(rows)?rows:[]);
-}
-async function addComment({ text, parent_id, author }){
-  const payload = {
+async function submitToSupabase(result){
+  const attemptBody = {
     quiz_id: quizId,
-    parent_id: parent_id || null,
-    author: author || "",
-    text: text || ""
+    user_id: me.user_id,
+    name: me.username,                    // ✅ để result.html/attempts có tên
+    score10: Number(result.score10||0),
+    correct_count: Number(result.correctCount||0),
+    total_count: Number(result.totalCount||0)
   };
-  const res = await sbPost("comments", payload, {preferReturn:true});
-  return Array.isArray(res) ? res[0] : res;
-}
-async function deleteComment(id){
-  await sbDelete(`comments?id=eq.${encodeURIComponent(id)}`);
-}
-function renderDiscussion(myName, isAdmin){
-  const list = document.getElementById("discussList");
-  if(!list) return;
 
-  const tree = DISC.tree || [];
-  if(!tree.length){
-    list.innerHTML = `<div class="muted">Chưa có bình luận nào.</div>`;
-    return;
-  }
+  const inserted = await sbPost(`attempts?select=attempt_id,created_at`, attemptBody, { preferReturn:true });
+  const row = Array.isArray(inserted) ? inserted[0] : inserted;
+  const attemptId = row?.attempt_id;
+  if(!attemptId) throw new Error("Không lấy được attempt_id");
 
-  list.innerHTML = "";
-  tree.forEach(root=>{
-    const wrap = document.createElement("div");
-    wrap.className = "cmtItem";
-
-    const adminTag = (String(root.author||"").trim().toLowerCase() === "tuankhoi") ? `<span class="adminBadgeInline">ADMIN</span>` : ``;
-    const delBtn = canDeleteComment(root, myName, isAdmin) ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(root.id)}">Xóa</button>` : ``;
-
-    wrap.innerHTML = `
-      <div class="cmtHead">
-        <div class="cmtAuthor">
-          <span>${escapeHtml(root.author||"—")}</span>
-          ${adminTag}
-        </div>
-      </div>
-      <div class="cmtText">${escapeHtml(root.text||"")}</div>
-
-      <div class="cmtActions">
-        <button class="cmtBtn" data-reply="${escapeHtml(root.id)}">Trả lời</button>
-        ${delBtn}
-      </div>
-      <div class="cmtTime">${escapeHtml(formatTsMs(root.createdAtMs))}</div>
-
-      <div class="replySlot" data-slot="${escapeHtml(root.id)}"></div>
-      <div class="replyWrap" data-replies="${escapeHtml(root.id)}"></div>
-    `;
-
-    list.appendChild(wrap);
-
-    const slot = wrap.querySelector(`[data-slot="${CSS.escape(String(root.id))}"]`);
-    if(slot && DISC.openReply === String(root.id)){
-      slot.innerHTML = `
-        <div class="replyForm">
-          <div class="charRow">
-            <div><b>Trả lời</b></div>
-            <div><span data-ct>0</span>/${DISCUSS_MAX}</div>
-          </div>
-          <textarea class="input" rows="2" maxlength="${DISCUSS_MAX}" placeholder="Nhập trả lời..."></textarea>
-          <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
-            <button class="btn btn-primary" data-sendreply="${escapeHtml(root.id)}" style="justify-content:center;">Gửi</button>
-            <button class="btn" data-cancelreply style="justify-content:center;">Hủy</button>
-          </div>
-        </div>
-      `;
-    }
-
-    const rWrap = wrap.querySelector(`[data-replies="${CSS.escape(String(root.id))}"]`);
-    if(rWrap){
-      rWrap.innerHTML = "";
-      (root.replies||[]).forEach(r=>{
-        const item = document.createElement("div");
-        item.className = "cmtItem";
-        item.style.margin = "0";
-
-        const rAdminTag = (String(r.author||"").trim().toLowerCase() === "tuankhoi") ? `<span class="adminBadgeInline">ADMIN</span>` : ``;
-        const rDelBtn = canDeleteComment(r, myName, isAdmin) ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(r.id)}">Xóa</button>` : ``;
-
-        item.innerHTML = `
-          <div class="cmtHead">
-            <div class="cmtAuthor">
-              <span>${escapeHtml(r.author||"—")}</span>
-              ${rAdminTag}
-            </div>
-          </div>
-          <div class="cmtText">${escapeHtml(r.text||"")}</div>
-          <div class="cmtActions">${rDelBtn}</div>
-          <div class="cmtTime">${escapeHtml(formatTsMs(r.createdAtMs))}</div>
-        `;
-        rWrap.appendChild(item);
-      });
-    }
+  const ansRows = QUIZ.items.map(it=>{
+    const userAnswer = String(state.answers[it.id]||"").trim();
+    const g = gradeOne(it, userAnswer);
+    return {
+      attempt_id: attemptId,
+      vocab_id: it.id,
+      user_answer: userAnswer,
+      ok: !!g.ok,
+      expected: String(g.expected||"")
+    };
   });
+  try{ await sbPost("attempt_answers", ansRows, { preferReturn:false }); }catch(e){}
+
+  return attemptId;
 }
 
-/* ===== Load wrong from attempt (robust, no join) ===== */
-async function loadWrongFromAttempt(attemptId){
-  const ans = await sbGet(`attempt_answers?attempt_id=eq.${encodeURIComponent(attemptId)}&select=vocab_id,user_answer,ok,expected&limit=2000`);
-  const wrong = (ans||[]).filter(x=>x && x.ok===false);
+document.getElementById("btnSubmit").onclick = async ()=>{
+  if(!me || !me.user_id){ toast("Chưa login"); renderGate(); return; }
+  if(state.finalized) return;
+  if(!view.started){ toast("Bấm Vào làm trước"); return; }
 
-  const ids = Array.from(new Set(wrong.map(x=>Number(x.vocab_id)).filter(x=>Number.isFinite(x))));
-  const map = new Map();
-  if(ids.length){
-    // in.(1,2,3)
-    const rows = await sbGet(`vocabs?id=in.(${ids.join(",")})&select=id,word&limit=2000`);
-    (rows||[]).forEach(r=>map.set(Number(r.id), String(r.word||"")));
-  }
+  state.finalized = true;
 
-  return wrong.map(x=>({
-    id: Number(x.vocab_id),
-    word: map.get(Number(x.vocab_id)) || "",
-    user_answer: String(x.user_answer||""),
-    expected: String(x.expected||"")
-  }));
-}
+  renderLoading("Đang tính điểm…");
+  const result = computeFinal();
+  saveLocalProgress();
 
-/** ===== Boot ===== */
-(async function boot(){
-  if(!quizId){
-    renderSummary({ title:"Kết quả", sub:"Sai link (thiếu quiz)", username:"—", score10:0, correctCount:0, totalCount:0, when:"" });
-    renderWrong([]);
-    renderLeaderboard([], "");
-    document.getElementById("discussion").innerHTML = `<div class="muted">Sai link (thiếu ?quiz=abcde).</div>`;
-    return;
-  }
+  renderQuiz();
 
-  // render nhanh từ sessionStorage nếu có
-  let cached = null;
-  try{ cached = JSON.parse(sessionStorage.getItem(`tk_last_result::${quizId}`)||"null"); }catch{}
-  const fallbackName = loadName();
-
-  let username = (cached && cached.me && cached.me.username) ? cached.me.username : (fallbackName || "");
-  let score10 = cached?.result?.score10 || 0;
-  let correctCount = cached?.result?.correctCount || 0;
-  let totalCount = cached?.result?.totalCount || 0;
-  let wrongList = cached?.result?.wrong || [];
-  let when = cached?.ts ? fmtTs(cached.ts) : "";
-
-  // quick render
-  renderSummary({
-    title: cached?.title || "Kết quả",
-    sub: cached?.sub || "",
-    username: username || "—",
-    score10, correctCount, totalCount,
-    when
-  });
-  renderWrong(wrongList);
-
-  // fetch quiz meta
-  let qTitle="", qSub="";
+  let attemptId = "";
   try{
-    const q = await sbGet(`quizzes?quiz_id=eq.${quizId}&select=title,sub&limit=1`);
-    if(Array.isArray(q) && q[0]){ qTitle=q[0].title||""; qSub=q[0].sub||""; }
+    attemptId = await submitToSupabase(result);
+    state.attempt_id = attemptId;
+    saveLocalProgress();
+  }catch(e){
+    toast("Không gửi được Supabase (xem kết quả vẫn OK)");
+  }
+
+  try{
+    sessionStorage.setItem(`tk_last_result::${quizId}`, JSON.stringify({
+      quiz_id: quizId,
+      title: QUIZ.title,
+      sub: QUIZ.sub,
+      me: { username: me.username, role: me.role, user_id: me.user_id },
+      attempt_id: attemptId || "",
+      result,
+      ts: Date.now()
+    }));
   }catch{}
 
-  // fetch attempt nếu có attemptId
-  if(attemptId){
-    try{
-      const at = await sbGet(`attempts?attempt_id=eq.${encodeURIComponent(attemptId)}&select=attempt_id,created_at,score10,correct_count,total_count,name&limit=1`);
-      const a = Array.isArray(at) ? at[0] : null;
-      if(a){
-        when = fmtTs(a.created_at);
-        score10 = Number(a.score10||0);
-        correctCount = Number(a.correct_count||0);
-        totalCount = Number(a.total_count||0);
-        if(a.name && !username) username = String(a.name);
+  const qs = new URLSearchParams();
+  qs.set("quiz", quizId);
+  if(attemptId) qs.set("attempt", attemptId);
+  location.href = `/result.html?${qs.toString()}`;
+};
 
-        try{
-          wrongList = await loadWrongFromAttempt(attemptId);
-        }catch(e){
-          // nếu RLS chặn -> vẫn dùng cached.wrong
-        }
-      }
-    }catch(e){}
-  }
-
-  renderSummary({
-    title: qTitle || cached?.title || "Kết quả",
-    sub: qSub || cached?.sub || "",
-    username: username || "—",
-    score10, correctCount, totalCount,
-    when
-  });
-  renderWrong(wrongList);
-
-  // leaderboard (view v_leaderboard) - 0 điểm vẫn có nếu đã nộp
+/* ================== AUTH RESTORE + LOAD QUIZ ================== */
+async function loadMeIfAny(){
+  const token = getToken();
+  if(!token) return null;
   try{
-    const rows = await sbGet(`v_leaderboard?quiz_id=eq.${quizId}&select=name,is_admin,score10&order=score10.desc&limit=50`);
-    renderLeaderboard(rows||[], username||"");
+    const out = await sbRpc(RPC.me, { p_token: token });
+    if(!out || out.ok!==true) throw new Error(out?.error || "me fail");
+    const m = out.me || out.user || out.data || null;
+    if(m && m.id && !m.user_id) m.user_id = m.id;
+    return m;
   }catch(e){
-    renderLeaderboard([], "");
+    clearAuthLocal();
+    return null;
   }
-
-  // discussion
-  const discussionEl = document.getElementById("discussion");
-  discussionEl.innerHTML = discussionHtml(username || fallbackName || "—");
-
-  const rootInput = document.getElementById("rootInput");
-  const rootCount = document.getElementById("rootCount");
-  const btnPostRoot = document.getElementById("btnPostRoot");
-
-  rootInput.addEventListener("input", ()=>{ rootCount.textContent = String((rootInput.value||"").length); }, {passive:true});
-
-  const isAdmin = (String(username||"").toLowerCase()==="tuankhoi");
-
-  // load comments
+}
+async function loadQuiz(){
   try{
-    await loadComments();
-    renderDiscussion(username || fallbackName || "", isAdmin);
-  }catch(e){
-    discussionEl.innerHTML += `<div class="muted" style="margin-top:10px">Không load được comments. (Kiểm tra table public.comments + RLS).</div>`;
+    const token = getToken();
+    const out = await sbRpc(RPC.getQuiz, { p_quiz_id: quizId, p_token: token || "" });
+    if(out && out.ok===true){
+      const q = out.quiz || {};
+      const items = out.items || [];
+      return {
+        quiz_id: q.quiz_id || quizId,
+        title: q.title || "Quiz",
+        sub: q.sub || "",
+        items: items.map(x=>({
+          id: Number(x.id),
+          no: x.no,
+          word: x.word,
+          pos: x.pos,
+          meaning: x.meaning,
+          answers: x.answers || []
+        }))
+      };
+    }
+  }catch(e){}
+
+  const qArr = await sbGet(`quizzes?quiz_id=eq.${quizId}&select=quiz_id,title,sub&limit=1`);
+  const q = (Array.isArray(qArr) && qArr[0]) ? qArr[0] : { quiz_id: quizId, title:"Quiz", sub:"" };
+  const items = await sbGet(`vocabs?quiz_id=eq.${quizId}&select=id,no,word,pos,meaning,answers&order=no.asc,id.asc`);
+  return {
+    quiz_id: q.quiz_id || quizId,
+    title: q.title || "Quiz",
+    sub: q.sub || "",
+    items: (items||[]).map(x=>({
+      id: Number(x.id),
+      no: x.no,
+      word: x.word,
+      pos: x.pos,
+      meaning: x.meaning,
+      answers: x.answers || []
+    }))
+  };
+}
+async function enterAfterAuth(out){
+  const token = out?.token || "";
+  if(token) setToken(token);
+
+  let m = out?.me || out?.user || out?.data || null;
+  if(m && m.id && !m.user_id) m.user_id = m.id;
+
+  if(m && m.user_id){
+    me = m;
+    setMeCache(m);
+    setNameCache(me.username || ""); // ✅
+    setUserCorner(me);
+    view.started = false;
+
+    // ✅ nếu link có ?start=1 thì auto vào làm (không cần bấm)
+    if(FLAG_START && !state.finalized){
+      view.started = true;
+      renderQuiz();
+      scrollToHashIfAny();
+    }else{
+      renderStart();
+    }
+  }else{
+    const m2 = await loadMeIfAny();
+    if(m2){
+      me = m2;
+      setMeCache(m2);
+      setNameCache(me.username || "");
+      setUserCorner(me);
+      view.started = false;
+
+      if(FLAG_START && !state.finalized){
+        view.started = true;
+        renderQuiz();
+        scrollToHashIfAny();
+      }else{
+        renderStart();
+      }
+    }else{
+      toast("Không lấy được user");
+      renderGate();
+    }
+  }
+}
+
+/* ================== Profile modal (minimal) ================== */
+const profileBackdrop = document.getElementById("profileBackdrop");
+document.getElementById("btnCloseProfile").onclick = ()=>closeProfileModal();
+profileBackdrop.addEventListener("click",(e)=>{ if(e.target===profileBackdrop) closeProfileModal(); });
+document.getElementById("btnProfileHome").onclick = ()=>goHome();
+document.getElementById("btnLogout").addEventListener("click", ()=>{
+  if(!me) return;
+  clearAuthLocal();
+  me = null;
+  view.started = false;
+  setUserCorner(null);
+  closeProfileModal();
+  toast("Đã đăng xuất");
+  renderGate();
+  updateStats();
+});
+function openProfileModal(){
+  if(!me || !me.username) return;
+  document.getElementById("profileUsername").textContent = me.username;
+  document.getElementById("profileRole").textContent = isAdminUser(me) ? "ADMIN" : "USER";
+  profileBackdrop.classList.add("show");
+  profileBackdrop.setAttribute("aria-hidden","false");
+}
+function closeProfileModal(){
+  profileBackdrop.classList.remove("show");
+  profileBackdrop.setAttribute("aria-hidden","true");
+}
+userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
+
+/* ================== BOOT ================== */
+(async function boot(){
+  if(!quizId || quizId.length!==5){
+    renderLoading("Sai link quiz. Dạng đúng: /q/abcde");
+    return;
   }
 
-  btnPostRoot.addEventListener("click", async ()=>{
-    const text = String(rootInput.value||"").trim();
-    if(!text || text.length > DISCUSS_MAX){ toast("Tối đa 120 ký tự"); return; }
-    if(!(username || fallbackName)){ toast("Thiếu tên (vào quiz nhập tên trước)"); return; }
+  renderLoading("Đang tải quiz…");
 
-    rootInput.value = ""; rootCount.textContent = "0";
-    try{
-      await addComment({ text, parent_id:null, author:(username||fallbackName) });
-      await loadComments();
-      renderDiscussion(username||fallbackName, isAdmin);
-      toast("Đã gửi");
-    }catch(e){
-      toast("Gửi lỗi");
+  // ✅ nếu từ result bấm “Làm lại” thì clear local progress ngay
+  if(FLAG_RESTART){
+    hardResetProgressLocal();
+    dropFlagsFromUrl();
+  }else{
+    loadLocalProgress();
+  }
+
+  me = getMeCache();
+  if(me && me.id && !me.user_id) me.user_id = me.id;
+
+  if(getToken() && (!me || !me.user_id)){
+    const m2 = await loadMeIfAny();
+    if(m2){ me = m2; setMeCache(me); }
+  }
+  if(me && me.username) setNameCache(me.username || "");
+
+  try{
+    QUIZ = await loadQuiz();
+    quizTitleEl.textContent = QUIZ.title || "Quiz";
+    quizSubEl.textContent = QUIZ.sub || "";
+  }catch(e){
+    renderLoading("Lỗi tải đề: " + (e?.message || e));
+    return;
+  }
+
+  updateStats();
+
+  if(me && me.user_id){
+    setUserCorner(me);
+    view.started = false;
+
+    if(FLAG_START && !state.finalized){
+      dropFlagsFromUrl();
+      view.started = true;
+      renderQuiz();
+      scrollToHashIfAny();
+    }else{
+      renderStart();
     }
-  });
-
-  discussionEl.addEventListener("click", async (e)=>{
-    const delBtn = e.target.closest("[data-del]");
-    if(delBtn){
-      const id = String(delBtn.getAttribute("data-del")||"");
-      if(!id) return;
-      if(!confirm("Xóa bình luận này?")) return;
-      try{
-        await deleteComment(id);
-        await loadComments();
-        renderDiscussion(username||fallbackName, isAdmin);
-        toast("Đã xóa");
-      }catch(err){
-        toast("Xóa lỗi (có thể do RLS)");
-      }
-      return;
-    }
-
-    const replyBtn = e.target.closest("[data-reply]");
-    if(replyBtn){
-      const rootId = String(replyBtn.getAttribute("data-reply")||"");
-      DISC.openReply = (DISC.openReply === rootId) ? "" : rootId;
-      renderDiscussion(username||fallbackName, isAdmin);
-      const slot = discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
-      const ta = slot ? slot.querySelector("textarea") : null;
-      if(ta) ta.focus();
-      return;
-    }
-
-    const cancelBtn = e.target.closest("[data-cancelreply]");
-    if(cancelBtn){
-      DISC.openReply = "";
-      renderDiscussion(username||fallbackName, isAdmin);
-      return;
-    }
-
-    const sendBtn = e.target.closest("[data-sendreply]");
-    if(sendBtn){
-      const rootId = String(sendBtn.getAttribute("data-sendreply")||"");
-      const slot = discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
-      const ta = slot ? slot.querySelector("textarea") : null;
-      const text = ta ? String(ta.value||"").trim() : "";
-      if(!text || text.length > DISCUSS_MAX){ toast("Tối đa 120 ký tự"); return; }
-
-      DISC.openReply = "";
-      renderDiscussion(username||fallbackName, isAdmin);
-
-      try{
-        await addComment({ text, parent_id: rootId, author:(username||fallbackName) });
-        await loadComments();
-        renderDiscussion(username||fallbackName, isAdmin);
-        toast("Đã gửi");
-      }catch(err){
-        toast("Gửi lỗi");
-      }
-      return;
-    }
-  });
-
-  discussionEl.addEventListener("input", (e)=>{
-    const ta = e.target;
-    if(!(ta && ta.tagName === "TEXTAREA")) return;
-    const form = ta.closest(".replyForm");
-    if(!form) return;
-    const ct = form.querySelector("[data-ct]");
-    if(ct) ct.textContent = String((ta.value||"").length);
-  }, {passive:true});
+  }else{
+    setUserCorner(null);
+    view.started = false;
+    renderGate();
+  }
 })();
 </script>
 </body>
