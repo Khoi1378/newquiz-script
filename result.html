@@ -18,6 +18,7 @@
       --shadow:0 14px 40px rgba(0,0,0,.10);
       --radius:18px;
       --admin:#2563eb;
+      --pin:#f59e0b;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -83,6 +84,8 @@
       text-decoration:none;
       touch-action:manipulation;
       -webkit-tap-highlight-color:transparent;
+      user-select:none;
+      white-space:nowrap;
     }
     .btn-primary{
       background:linear-gradient(135deg,#7c3aed,#fb7185);
@@ -111,6 +114,7 @@
     }
     .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
+    /* Wrong list (modal) */
     .wList{display:grid;gap:10px;margin-top:10px}
     .wItem{
       border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:#fff;
@@ -139,12 +143,14 @@
       text-decoration:none;color:#111827;
     }
 
+    /* comments UI */
     .input{
       width:100%;
       border-radius:14px;border:2px solid #e5e7eb;
       padding:11px 12px;font-size:.95rem;font-weight:700;
       outline:none;background:#f8fafc;
       transition:border-color .15s ease, box-shadow .15s ease;
+      font-family:inherit;
     }
     .input:focus{
       border-color:rgba(124,58,237,.55);
@@ -159,6 +165,10 @@
       padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
       background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin);white-space:nowrap;
     }
+    .pinBadgeInline{
+      padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
+      background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.35);color:#92400e;white-space:nowrap;
+    }
     .cmtText{color:#111827;font-weight:750;line-height:1.35;white-space:pre-wrap;word-break:break-word}
     .cmtActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;justify-content:flex-end}
     .cmtBtn{
@@ -166,11 +176,13 @@
       border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:.82rem;
     }
     .cmtBtnDanger{background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.25);color:#991b1b}
+    .cmtBtnPin{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:#92400e}
     .cmtTime{margin-top:6px;text-align:right;color:#6b7280;font-weight:800;font-size:.82rem}
     .replyWrap{margin-top:10px;margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;display:grid;gap:10px}
     .replyForm{margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;margin-top:10px;display:grid;gap:10px}
     .charRow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6b7280;font-weight:800;font-size:.85rem}
 
+    /* Modal */
     .modal{
       position:fixed; inset:0;
       display:none;
@@ -237,6 +249,7 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- Wrong modal -->
   <div id="wrongModal" class="modal" aria-hidden="true">
     <div class="modalBack" id="wrongModalBack"></div>
     <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="wrongModalTitle">
@@ -251,13 +264,20 @@
 <script>
 /* ================== CONFIG ================== */
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
+const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE"; // <-- giữ key của bạn (đừng đổi nếu đang chạy OK)
 
-const RPC = { me: "api_me" };
+const RPC = {
+  me: "api_me",
+  quizMeta: "api_get_quiz_meta",
+  attemptPublic: "api_get_attempt_public",
+  leaderboard: "api_get_leaderboard",
+  pinComment: "api_toggle_comment_pin"
+};
 
 const TOKEN_KEY = "tk_token_v2";
 const NAME_KEY  = "tk_display_name_v1";
 
+/* ===== helpers ===== */
 function toast(msg){
   const t = document.getElementById("toast");
   t.textContent = String(msg||"");
@@ -308,11 +328,9 @@ async function sbGet(path){
   }
   return data;
 }
-async function sbPost(path, body, { preferReturn=true, upsert=false } = {}){
+async function sbPost(path, body, { preferReturn=true } = {}){
   const h = sbHeaders();
   if(preferReturn) h["Prefer"]="return=representation";
-  if(upsert) h["Prefer"] = (h["Prefer"] ? h["Prefer"] + "," : "") + "resolution=merge-duplicates";
-
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
     method:"POST",
     headers: h,
@@ -344,6 +362,11 @@ async function sbDelete(path){
   return data;
 }
 
+function toMs(ts){
+  const d = new Date(ts);
+  const t = d.getTime();
+  return isFinite(t) ? t : 0;
+}
 function fmtTs(ts){
   try{
     const d = ts ? new Date(ts) : new Date();
@@ -363,7 +386,7 @@ function clearForRestart(){
   try{ sessionStorage.removeItem(`tk_last_result::${quizId}`); }catch{}
 }
 
-/* restart -> về /q/index.html?quiz=abcde&restart=1&start=1 (khớp fix index.html) */
+/* restart */
 const btnRestart = document.getElementById("btnRestart");
 btnRestart.href = quizId ? `/q/index.html?quiz=${quizId}&restart=1&start=1` : "/";
 btnRestart.addEventListener("click",(e)=>{
@@ -393,8 +416,8 @@ function renderWrongModal(list){
   title.textContent = `Câu sai (${arr.length})`;
   const items = arr.map((w,i)=>{
     const word = w.word || "(?)";
-    const u = (w.user_answer ?? w.user ?? "").trim();
-    const ex = (w.expected ?? "").trim();
+    const u = (w.user_answer ?? w.user ?? "").toString().trim();
+    const ex = (w.expected ?? "").toString().trim();
     const jump = quizId && w.id ? `/q/index.html?quiz=${quizId}&start=1#q${encodeURIComponent(String(w.id))}` : "";
     return `
       <div class="wItem" data-w="${escapeHtml(String(w.id ?? i))}">
@@ -406,8 +429,8 @@ function renderWrongModal(list){
           <div class="muted">Xem</div>
         </div>
         <div class="wDetail">
-          <div class="wDetailRow"><span class="muted">Bạn viết:</span> <b>${escapeHtml(u||"(trống)")}</b></div>
-          <div class="wDetailRow"><span class="muted">Đáp án:</span> <b>${escapeHtml(ex||"(?)")}</b></div>
+          <div class="wDetailRow"><span class="muted">Bạn trả lời:</span> <b>${escapeHtml(u||"(trống)")}</b></div>
+          <div class="wDetailRow"><span class="muted">Đáp án/ghi chú:</span> <b>${escapeHtml(ex||"(?)")}</b></div>
           ${jump ? `
             <div class="wLinkRow">
               <a class="wSmallBtn" href="${jump}">Mở đúng câu này</a>
@@ -459,7 +482,7 @@ function closeWrongModal(){
   }
 })();
 
-/* ================== RENDER ================== */
+/* ================== RENDER SUMMARY/LB ================== */
 function renderSummary({ title, sub, score10, correctCount, totalCount, wrongCount }){
   document.getElementById("title").textContent = title || "Kết quả";
   document.getElementById("sub").textContent = sub || "";
@@ -493,20 +516,19 @@ function renderLeaderboard(rows, myUserId){
   if(!Array.isArray(rows) || !rows.length){
     lb.innerHTML = `
       <div class="row1"><p class="vi">Bảng xếp hạng</p><div class="idx">TOP</div></div>
-      <div class="muted" style="margin-top:10px">Chưa có dữ liệu.</div>
+      <div class="muted" style="margin-top:10px">Chưa có dữ liệu (chưa ai nộp / hoặc DB chưa có attempt).</div>
     `;
     return;
   }
 
   const body = rows.slice(0,50).map((r,i)=>{
     const isMe = myUserId && String(r.user_id) === String(myUserId);
-    const uname = r.username || "";
     return `
       <tr ${isMe ? `style="background: rgba(124,58,237,.10)"` : ``}>
         <td style="width:70px"><b>${i+1}</b></td>
         <td>
-          ${escapeHtml(uname)}
-          ${r.role === "admin" ? ` <span style="color:#2563eb; font-weight:900">(ADMIN)</span>`:''}
+          ${escapeHtml(r.username||"(user)")}
+          ${String(r.role||"").toLowerCase()==="admin" ? ` <span style="color:#2563eb; font-weight:900">(ADMIN)</span>`:''}
           ${isMe?` <span style="color:#4c1d95; font-weight:900">(Bạn)</span>`:''}
         </td>
         <td style="width:110px"><b>${Number(r.score10||0).toFixed(1)}</b>/10</td>
@@ -516,7 +538,7 @@ function renderLeaderboard(rows, myUserId){
 
   lb.innerHTML = `
     <div class="row1"><p class="vi">Bảng xếp hạng</p><div class="idx">TOP</div></div>
-    <div class="muted" style="margin-top:8px">BXH hiển thị các lần nộp gần đây (không cần view).</div>
+    <div class="muted" style="margin-top:8px">Top theo <b>điểm cao nhất của mỗi user</b> (tie-break: nộp gần nhất).</div>
     <div style="margin-top:10px; overflow:auto">
       <table class="table">
         <thead><tr><th>#</th><th>Tên</th><th>Điểm</th></tr></thead>
@@ -526,7 +548,7 @@ function renderLeaderboard(rows, myUserId){
   `;
 }
 
-/* ================== COMMENTS (public.comments) ================== */
+/* ================== COMMENTS ================== */
 const DISCUSS_MAX = 120;
 let DISC = { tree:[], openReply:"" };
 
@@ -548,18 +570,10 @@ function discussionHtml(username){
   `;
 }
 
-function toMs(ts){
-  const d = new Date(ts);
-  const t = d.getTime();
-  return isFinite(t) ? t : Date.now();
+function isAdmin(me){
+  return !!me && (String(me.role||"").toLowerCase()==="admin" || String(me.username||"").toLowerCase()==="tuankhoi");
 }
-function formatTsMs(ms){
-  try{
-    const d = new Date(Number(ms||0));
-    const pad = (n)=>String(n).padStart(2,"0");
-    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
-  }catch{ return ""; }
-}
+
 function buildTree(rows){
   const byId = new Map();
   rows.forEach(r=>{
@@ -570,6 +584,8 @@ function buildTree(rows){
       created_at: r.created_at,
       createdAtMs: toMs(r.created_at),
       text: String(r.text||""),
+      pinned: !!r.pinned,
+      pinnedAtMs: r.pinned_at ? toMs(r.pinned_at) : 0,
       replies: []
     });
   });
@@ -583,27 +599,37 @@ function buildTree(rows){
     }
   }
 
-  roots.sort((a,b)=>a.createdAtMs-b.createdAtMs);
+  // Sort: pinned first, then pinned_at desc, then created_at asc
+  roots.sort((a,b)=>{
+    if(a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+    if(a.pinned && b.pinned && a.pinnedAtMs !== b.pinnedAtMs) return b.pinnedAtMs - a.pinnedAtMs;
+    return a.createdAtMs - b.createdAtMs;
+  });
   roots.forEach(r=>r.replies.sort((a,b)=>a.createdAtMs-b.createdAtMs));
   return roots;
 }
-function isAdmin(me){
-  return !!me && String(me.role||"").toLowerCase()==="admin";
-}
+
 function canDeleteComment(c, me){
   if(isAdmin(me)) return true;
   const a = String(c.author||"").trim().toLowerCase();
   const m = String(me?.username||"").trim().toLowerCase();
   return !!m && a === m;
 }
+
 async function loadComments(){
-  const rows = await sbGet(`comments?quiz_id=eq.${quizId}&select=id,parent_id,author,text,created_at&order=created_at.asc&limit=300`);
+  // lấy pinned + pinned_at để sort & render
+  const rows = await sbGet(
+    `comments?quiz_id=eq.${quizId}` +
+    `&select=id,parent_id,author,text,created_at,pinned,pinned_at` +
+    `&order=pinned.desc,pinned_at.desc,created_at.asc&limit=400`
+  );
   DISC.tree = buildTree(Array.isArray(rows)?rows:[]);
 }
+
 async function addComment({ text, parent_id, author }){
   const payload = {
     quiz_id: quizId,
-    parent_id: (parent_id==null ? null : Number(parent_id)), /* ✅ parent_id bigint */
+    parent_id: (parent_id==null ? null : Number(parent_id)),
     author: author || "",
     text: text || ""
   };
@@ -613,6 +639,21 @@ async function addComment({ text, parent_id, author }){
 async function deleteComment(id){
   await sbDelete(`comments?id=eq.${encodeURIComponent(id)}`);
 }
+
+async function togglePinComment({ me, commentId, pin }){
+  const token = getToken();
+  if(!token) { toast("Admin cần đăng nhập"); return; }
+  try{
+    const out = await sbRpc(RPC.pinComment, { p_token: token, p_comment_id: Number(commentId), p_pin: !!pin });
+    if(!out || out.ok!==true) throw new Error(out?.error || "Pin lỗi");
+    toast(pin ? "Đã pin" : "Đã bỏ pin");
+    await loadComments();
+    renderDiscussion(me);
+  }catch(e){
+    toast(e?.message || "Pin lỗi");
+  }
+}
+
 function renderDiscussion(me){
   const myName = me?.username || "";
   const list = document.getElementById("discussList");
@@ -629,25 +670,42 @@ function renderDiscussion(me){
     const wrap = document.createElement("div");
     wrap.className = "cmtItem";
 
-    const adminTag = (String(root.author||"").trim().toLowerCase() === String(myName||"").trim().toLowerCase() && isAdmin(me))
-      ? `<span class="adminBadgeInline">ADMIN</span>` : ``;
+    const showAdminBadge = (String(root.author||"").trim().toLowerCase() === "tuankhoi");
+    const adminTag = showAdminBadge ? `<span class="adminBadgeInline">ADMIN</span>` : ``;
 
-    const delBtn = canDeleteComment(root, me) ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(root.id)}">Xóa</button>` : ``;
+    const pinTag = root.pinned ? `<span class="pinBadgeInline">📌 PIN</span>` : ``;
+
+    const delBtn = canDeleteComment(root, me)
+      ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(root.id)}">Xóa</button>` : ``;
+
+    // ✅ Admin pin button:
+    // - chỉ root comment
+    // - KHÔNG pin nếu đã có reply (root.replies.length>0)
+    // - nếu đang pinned => cho bỏ pin (unpin) (OK)
+    const canPin = isAdmin(me) && (root.replies||[]).length===0;
+    const pinBtn = isAdmin(me)
+      ? (canPin
+          ? `<button class="cmtBtn cmtBtnPin" data-pin="${escapeHtml(root.id)}" data-pv="${root.pinned?0:1}">${root.pinned ? "Bỏ pin" : "📌 Pin"}</button>`
+          : `<span class="muted" style="font-weight:900;font-size:.82rem">Không pin được (đã có trả lời)</span>`
+        )
+      : ``;
 
     wrap.innerHTML = `
       <div class="cmtHead">
         <div class="cmtAuthor">
           <span>${escapeHtml(root.author||"—")}</span>
           ${adminTag}
+          ${pinTag}
         </div>
       </div>
       <div class="cmtText">${escapeHtml(root.text||"")}</div>
 
       <div class="cmtActions">
         <button class="cmtBtn" data-reply="${escapeHtml(root.id)}">Trả lời</button>
+        ${pinBtn}
         ${delBtn}
       </div>
-      <div class="cmtTime">${escapeHtml(formatTsMs(root.createdAtMs))}</div>
+      <div class="cmtTime">${escapeHtml(fmtTs(root.created_at))}</div>
 
       <div class="replySlot" data-slot="${escapeHtml(root.id)}"></div>
       <div class="replyWrap" data-replies="${escapeHtml(root.id)}"></div>
@@ -679,7 +737,8 @@ function renderDiscussion(me){
         item.className = "cmtItem";
         item.style.margin = "0";
 
-        const rDelBtn = canDeleteComment(r, me) ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(r.id)}">Xóa</button>` : ``;
+        const rDelBtn = canDeleteComment(r, me)
+          ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(r.id)}">Xóa</button>` : ``;
 
         item.innerHTML = `
           <div class="cmtHead">
@@ -689,7 +748,7 @@ function renderDiscussion(me){
           </div>
           <div class="cmtText">${escapeHtml(r.text||"")}</div>
           <div class="cmtActions">${rDelBtn}</div>
-          <div class="cmtTime">${escapeHtml(formatTsMs(r.createdAtMs))}</div>
+          <div class="cmtTime">${escapeHtml(fmtTs(r.created_at))}</div>
         `;
         rWrap.appendChild(item);
       });
@@ -698,69 +757,6 @@ function renderDiscussion(me){
 }
 
 /* ================== DATA LOADERS ================== */
-async function loadQuizMeta(){
-  const q = await sbGet(`quizzes?quiz_id=eq.${quizId}&select=title,sub&limit=1`);
-  const row = Array.isArray(q) ? q[0] : null;
-  return { title: row?.title || "", sub: row?.sub || "" };
-}
-
-async function loadAttempt(attemptId){
-  const rows = await sbGet(`attempts?attempt_id=eq.${encodeURIComponent(attemptId)}&select=attempt_id,created_at,score10,correct_count,total_count,user_id,details_json&limit=1`);
-  return Array.isArray(rows) ? rows[0] : null;
-}
-
-async function loadWrongFromAttempt(attemptId){
-  const ans = await sbGet(`attempt_answers?attempt_id=eq.${encodeURIComponent(attemptId)}&select=vocab_id,user_answer,ok,expected&limit=2000`);
-  const wrong = (ans||[]).filter(x=>x && x.ok===false);
-
-  const ids = Array.from(new Set(wrong.map(x=>Number(x.vocab_id)).filter(x=>Number.isFinite(x))));
-  const map = new Map();
-  if(ids.length){
-    const rows = await sbGet(`vocabs?id=in.(${ids.join(",")})&select=id,word&limit=2000`);
-    (rows||[]).forEach(r=>map.set(Number(r.id), String(r.word||"")));
-  }
-
-  return wrong.map(x=>({
-    id: Number(x.vocab_id),
-    word: map.get(Number(x.vocab_id)) || "",
-    user_answer: String(x.user_answer||""),
-    expected: String(x.expected||"")
-  }));
-}
-
-/*
-Leaderboard không có view v_leaderboard trong schema => làm REST thuần:
-- lấy attempts theo quiz, order score desc + created_at desc
-- rồi lấy app_users theo user_id để gắn username/role
-*/
-async function loadLeaderboard(){
-  const ats = await sbGet(`attempts?quiz_id=eq.${quizId}&select=attempt_id,user_id,score10,created_at&order=score10.desc,created_at.desc&limit=50`);
-  const rows = Array.isArray(ats) ? ats : [];
-  const userIds = Array.from(new Set(rows.map(r=>r.user_id).filter(Boolean)));
-
-  const uMap = new Map();
-  if(userIds.length){
-    // PostgREST in() với uuid: id=in.(uuid1,uuid2,...)
-    const ids = userIds.map(x=>String(x)).join(",");
-    try{
-      const us = await sbGet(`app_users?id=in.(${ids})&select=id,username,role&limit=200`);
-      (us||[]).forEach(u=>uMap.set(String(u.id), { username:u.username||"", role:u.role||"user" }));
-    }catch(e){
-      // nếu RLS chặn app_users -> fallback username trống
-    }
-  }
-
-  return rows.map(r=>{
-    const u = uMap.get(String(r.user_id)) || { username:"", role:"user" };
-    return {
-      user_id: r.user_id,
-      score10: Number(r.score10||0),
-      username: u.username || "(user)",
-      role: u.role || "user"
-    };
-  });
-}
-
 async function loadMeIfAny(){
   const token = getToken();
   if(!token) return null;
@@ -769,11 +765,29 @@ async function loadMeIfAny(){
     if(!out || out.ok!==true) return null;
     const m = out.me || out.user || out.data || null;
     if(m && m.id && !m.user_id) m.user_id = m.id;
-    if(m && m.user_id && !m.username && m.name) m.username = m.name;
     return m;
   }catch(_e){
     return null;
   }
+}
+
+async function loadQuizMeta(){
+  const out = await sbRpc(RPC.quizMeta, { p_quiz_id: quizId });
+  if(!out || out.ok!==true) throw new Error(out?.error || "Không load quiz meta");
+  const q = out.quiz || {};
+  return { title: q.title || "", sub: q.sub || "" };
+}
+
+async function loadAttemptPublic(attemptId, token){
+  const out = await sbRpc(RPC.attemptPublic, { p_attempt_id: attemptId, p_token: token || "" });
+  if(!out || out.ok!==true) throw new Error(out?.error || "Không load attempt");
+  return out;
+}
+
+async function loadLeaderboard(){
+  const rows = await sbRpc(RPC.leaderboard, { p_quiz_id: quizId, p_limit: 50 });
+  // PostgREST RPC table-return => array
+  return Array.isArray(rows) ? rows : [];
 }
 
 /* ================== BOOT ================== */
@@ -785,17 +799,19 @@ async function loadMeIfAny(){
     return;
   }
 
-  // 1) render nhanh từ cache
+  // cache nhanh
   let cached = null;
   try{ cached = JSON.parse(sessionStorage.getItem(`tk_last_result::${quizId}`)||"null"); }catch{}
   const fallbackName = loadName();
 
+  const token = getToken();
   let me = await loadMeIfAny(); // có thể null
+
   let username = me?.username || (cached?.me?.username || fallbackName || "");
   let myUserId = me?.user_id || (cached?.me?.user_id || "");
 
   let score10 = cached?.result?.score10 || 0;
-  let correctCount = cached?.result?.correctCount || 0;
+  let correctCount = cached?.result?.fullCorrectCount || cached?.result?.correctCount || 0;
   let totalCount = cached?.result?.totalCount || 0;
   let wrongList = cached?.result?.wrong || [];
 
@@ -809,7 +825,7 @@ async function loadMeIfAny(){
     wrongCount: CURRENT_WRONG_LIST.length
   });
 
-  // 2) quiz meta
+  // quiz meta (RPC, không bị permission denied)
   let qTitle="", qSub="";
   try{
     const qm = await loadQuizMeta();
@@ -817,31 +833,24 @@ async function loadMeIfAny(){
     qSub = qm.sub || "";
   }catch{}
 
-  // 3) attempt thật (schema đúng: không có name)
+  // attempt thật (RPC)
   if(attemptId){
     try{
-      const a = await loadAttempt(attemptId);
-      if(a){
-        score10 = Number(a.score10||0);
-        correctCount = Number(a.correct_count||0);
-        totalCount = Number(a.total_count||0);
+      const out = await loadAttemptPublic(attemptId, token);
+      const a = out.attempt || {};
+      const u = out.user || {};
 
-        // nếu me chưa có, thử map user_id -> username
-        if(!username){
-          try{
-            const u = await sbGet(`app_users?id=eq.${encodeURIComponent(a.user_id)}&select=id,username,role&limit=1`);
-            const u0 = Array.isArray(u) ? u[0] : null;
-            if(u0?.username) username = u0.username;
-          }catch{}
-        }
+      score10 = Number(a.score10||0);
+      correctCount = Number(a.correct_count||0);
+      totalCount = Number(a.total_count||0);
 
-        // load wrong chuẩn từ attempt_answers
-        try{
-          wrongList = await loadWrongFromAttempt(attemptId);
-        }catch(_e){
-          // RLS chặn thì giữ wrongList từ cache
-        }
-      }
+      if(!username && u.username) username = u.username;
+      if(!myUserId && me?.user_id) myUserId = me.user_id;
+
+      // wrong list ưu tiên details_json.wrong
+      const dj = a.details_json || {};
+      if(Array.isArray(dj.wrong)) wrongList = dj.wrong;
+      else if(cached?.result?.wrong) wrongList = cached.result.wrong;
     }catch(_e){}
   }
 
@@ -855,7 +864,7 @@ async function loadMeIfAny(){
     wrongCount: CURRENT_WRONG_LIST.length
   });
 
-  // 4) leaderboard
+  // leaderboard (RPC)
   try{
     const lb = await loadLeaderboard();
     renderLeaderboard(lb, myUserId);
@@ -863,19 +872,20 @@ async function loadMeIfAny(){
     renderLeaderboard([], "");
   }
 
-  // 5) discussion
+  // discussion
   const discussionEl = document.getElementById("discussion");
   discussionEl.innerHTML = discussionHtml(username || fallbackName || "—");
 
   const rootInput = document.getElementById("rootInput");
   const rootCount = document.getElementById("rootCount");
   const btnPostRoot = document.getElementById("btnPostRoot");
-
   rootInput.addEventListener("input", ()=>{ rootCount.textContent = String((rootInput.value||"").length); }, {passive:true});
+
+  const meForUI = me || { username: username || fallbackName || "", role:"user" };
 
   try{
     await loadComments();
-    renderDiscussion(me || { username: username || fallbackName || "", role:"user" });
+    renderDiscussion(meForUI);
   }catch(e){
     discussionEl.innerHTML += `<div class="muted" style="margin-top:10px">Không load được comments (kiểm tra RLS bảng public.comments).</div>`;
   }
@@ -884,13 +894,13 @@ async function loadMeIfAny(){
     const text = String(rootInput.value||"").trim();
     if(!text || text.length > DISCUSS_MAX){ toast("Tối đa 120 ký tự"); return; }
     const author = (username || fallbackName || "").trim();
-    if(!author){ toast("Thiếu tên (vào quiz nhập tên trước)"); return; }
+    if(!author){ toast("Thiếu tên"); return; }
 
     rootInput.value = ""; rootCount.textContent = "0";
     try{
       await addComment({ text, parent_id:null, author });
       await loadComments();
-      renderDiscussion(me || { username: author, role:"user" });
+      renderDiscussion(meForUI);
       toast("Đã gửi");
     }catch(e){
       toast("Gửi lỗi (có thể do RLS)");
@@ -898,6 +908,14 @@ async function loadMeIfAny(){
   });
 
   discussionEl.addEventListener("click", async (e)=>{
+    const pinBtn = e.target.closest("[data-pin]");
+    if(pinBtn){
+      const id = pinBtn.getAttribute("data-pin");
+      const pv = pinBtn.getAttribute("data-pv"); // 1=pin,0=unpin
+      await togglePinComment({ me: meForUI, commentId: id, pin: pv==="1" });
+      return;
+    }
+
     const delBtn = e.target.closest("[data-del]");
     if(delBtn){
       const id = String(delBtn.getAttribute("data-del")||"");
@@ -906,7 +924,7 @@ async function loadMeIfAny(){
       try{
         await deleteComment(id);
         await loadComments();
-        renderDiscussion(me || { username: username || fallbackName || "", role:"user" });
+        renderDiscussion(meForUI);
         toast("Đã xóa");
       }catch(err){
         toast("Xóa lỗi (có thể do RLS)");
@@ -918,7 +936,7 @@ async function loadMeIfAny(){
     if(replyBtn){
       const rootId = String(replyBtn.getAttribute("data-reply")||"");
       DISC.openReply = (DISC.openReply === rootId) ? "" : rootId;
-      renderDiscussion(me || { username: username || fallbackName || "", role:"user" });
+      renderDiscussion(meForUI);
       const slot = discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
       const ta = slot ? slot.querySelector("textarea") : null;
       if(ta) ta.focus();
@@ -928,7 +946,7 @@ async function loadMeIfAny(){
     const cancelBtn = e.target.closest("[data-cancelreply]");
     if(cancelBtn){
       DISC.openReply = "";
-      renderDiscussion(me || { username: username || fallbackName || "", role:"user" });
+      renderDiscussion(meForUI);
       return;
     }
 
@@ -944,12 +962,12 @@ async function loadMeIfAny(){
       if(!author){ toast("Thiếu tên"); return; }
 
       DISC.openReply = "";
-      renderDiscussion(me || { username: author, role:"user" });
+      renderDiscussion(meForUI);
 
       try{
         await addComment({ text, parent_id: rootId, author });
         await loadComments();
-        renderDiscussion(me || { username: author, role:"user" });
+        renderDiscussion(meForUI);
         toast("Đã gửi");
       }catch(err){
         toast("Gửi lỗi (có thể do RLS)");
