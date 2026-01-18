@@ -919,7 +919,7 @@ function isAnswered(q){
     return n>=1 && n<=4;
   }
   if(t === "tf4"){
-    return Array.isArray(v) && v.length===4 && v.every(x => typeof x === "boolean");
+    return Array.isArray(v) && v.length===4 && v.every(x => x === true || x === false);
   }
   // essay / short4
   return String(v||"").trim().length > 0;
@@ -938,7 +938,7 @@ function gradeOne(q){
 
   if(t === "tf4"){
     const keys = Array.isArray(q.meta?.keys) ? q.meta.keys : [true,false,false,false];
-    const user = Array.isArray(state.answers[q.id]) ? state.answers[q.id] : [false,false,false,false];
+    const user = Array.isArray(state.answers[q.id]) ? state.answers[q.id] : [null,null,null,null];
 
     let correctCount = 0;
     for(let i=0;i<4;i++){
@@ -1543,7 +1543,7 @@ function renderShort4(q){
 }
 function renderTf4(q){
   const stmts = Array.isArray(q.meta?.statements) ? q.meta.statements : ["","","",""];
-  const user = Array.isArray(state.answers[q.id]) ? state.answers[q.id] : [false,false,false,false];
+  const user = Array.isArray(state.answers[q.id]) ? state.answers[q.id] : [null,null,null,null];
 
   return `
     <div class="tfList">
@@ -1675,7 +1675,7 @@ content.addEventListener("click", (e)=>{
     const id = Number(tf.getAttribute("data-tf"));
     const k = Number(tf.getAttribute("data-k"));
     const v = (tf.getAttribute("data-v")==="1");
-    const cur = Array.isArray(state.answers[id]) ? state.answers[id].slice(0,4) : [false,false,false,false];
+    const cur = Array.isArray(state.answers[id]) ? state.answers[id].slice(0,4) : [null,null,null,null];
     cur[k] = v;
     state.answers[id] = cur;
     saveLocalProgress();
