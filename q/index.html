@@ -1645,32 +1645,20 @@ function short4ApplyKey(id, key){
 }
 
 content.addEventListener("click", (e)=>{
-  ...
-  const mcq = e.target.closest("[data-mcq]");
-  if(mcq){
-    const id = Number(mcq.getAttribute("data-mcq"));
-    const v = Number(mcq.getAttribute("data-v"));
-    state.answers[id] = v;
-    saveLocalProgress();
-    renderQuiz();
+  const img = e.target.closest("[data-img]");
+  if(img){
+    openImg(img.getAttribute("data-img"));
     return;
   }
 
   // short4 keypad
-  const tf = e.target.closest("[data-tf]");
-  if(tf){
-    const id = Number(tf.getAttribute("data-tf"));
-    const k = Number(tf.getAttribute("data-k"));
-    const v = (tf.getAttribute("data-v")==="1");
-    const cur = Array.isArray(state.answers[id]) ? state.answers[id].slice(0,4) : [false,false,false,false];
-    cur[k] = v;
-    state.answers[id] = cur;
-    saveLocalProgress();
-    renderQuiz();
+  const s4 = e.target.closest("[data-s4key]");
+  if(s4){
+    const id = Number(s4.getAttribute("data-s4id"));
+    const key = String(s4.getAttribute("data-s4key") || "");
+    short4ApplyKey(id, key);
     return;
-   }
-  ...
-});
+  }
 
   const mcq = e.target.closest("[data-mcq]");
   if(mcq){
