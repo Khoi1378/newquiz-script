@@ -163,6 +163,7 @@
       padding:11px 12px;font-size:.95rem;font-weight:700;
       outline:none;background:var(--soft);
       transition:border-color .15s ease, box-shadow .15s ease;
+      font-family:inherit;
     }
     .input:focus{
       border-color:rgba(124,58,237,.55);
@@ -212,6 +213,7 @@
     #resetBackdrop{z-index:20025}
     #profileBackdrop{z-index:20030}
     #submitBackdrop{z-index:20035}
+    #imgBackdrop{z-index:20060}
 
     .modal{
       width:100%;max-width:620px;
@@ -280,12 +282,139 @@
     .missList{ margin:10px 0 12px; padding-left:18px; color:#374151; font-weight:800; line-height:1.35; }
     .missList li{ margin:6px 0; }
 
+    /* ===== Question UI ===== */
+    .qPrompt{
+      margin-top:10px;
+      white-space:pre-wrap;
+      font-weight:850;
+      line-height:1.35;
+    }
+    .qImgThumb{
+      margin-top:10px;
+      width:100%;
+      max-width:320px;
+      height:auto;
+      border-radius:16px;
+      border:1px solid #e5e7eb;
+      box-shadow:0 10px 24px rgba(0,0,0,.08);
+      cursor:pointer;
+      display:block;
+    }
+
+    .optGrid{ display:grid; gap:10px; margin-top:10px; }
+    .optBtn{
+      text-align:left;
+      border-radius:16px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      padding:12px;
+      cursor:pointer;
+      font-weight:900;
+      box-shadow:none;
+      transition:transform .12s ease, filter .12s ease;
+    }
+    .optBtn:hover{ transform:translateY(-1px); filter:brightness(.99); }
+    .optBtn.active{
+      border-color:rgba(124,58,237,.55);
+      box-shadow:0 0 0 5px rgba(124,58,237,.10);
+      background:#fff;
+    }
+    .optKey{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:28px; height:28px; border-radius:999px;
+      background:#f3f4f6; border:1px solid #e5e7eb;
+      font-weight:1000; margin-right:10px;
+    }
+
+    .boxes4{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .boxDigit{
+      width:58px;
+      text-align:center;
+      font-size:1.05rem;
+      font-weight:1000;
+      border-radius:16px;
+      padding:12px 8px;
+    }
+
+    .tfList{ display:grid; gap:10px; margin-top:10px; }
+    .tfRow{
+      border:1px solid #e5e7eb;
+      border-radius:16px;
+      padding:12px;
+      background:#fff;
+    }
+    .tfTop{ display:flex; gap:10px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+    .tfStmt{ font-weight:900; line-height:1.35; }
+    .tfBtns{ display:flex; gap:8px; flex-wrap:wrap; }
+    .tfBtn{
+      border-radius:999px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      padding:8px 12px;
+      font-weight:1000;
+      cursor:pointer;
+      box-shadow:none;
+    }
+    .tfBtn.active{
+      border-color:rgba(124,58,237,.55);
+      box-shadow:0 0 0 5px rgba(124,58,237,.10);
+    }
+
+    /* Image viewer modal */
+    .imgModal{
+      width:100%;
+      max-width:min(980px, 100%);
+      background:transparent;
+      border:0;
+      box-shadow:none;
+      padding:0;
+      max-height:88vh;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+    }
+    .imgFrame{
+      background:#fff;
+      border:1px solid rgba(229,231,235,.85);
+      border-radius:18px;
+      box-shadow:0 22px 70px rgba(0,0,0,.22);
+      max-width:100%;
+      max-height:88vh;
+      overflow:hidden;
+      position:relative;
+    }
+    .imgFrame img{
+      display:block;
+      max-width:90vw;
+      max-height:78vh;
+      width:auto;
+      height:auto;
+      object-fit:contain;
+    }
+    .imgClose{
+      position:absolute;
+      top:10px; right:10px;
+      width:50px; height:50px;
+      border-radius:16px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      cursor:pointer;
+      font-weight:1000;
+      font-size:1.6rem;
+      line-height:1;
+      box-shadow:0 12px 24px rgba(0,0,0,.10);
+    }
+
     @media (max-width: 820px) {
       .progressline { max-width: 100%; }
       .btn { padding: 9px 12px; font-size: .85rem; }
       .resultRow{ grid-template-columns: 120px 1fr; }
       .userCorner .name { max-width: 66vw; }
       .btn-check{ min-width: 84px; }
+      .boxDigit{ width:56px; }
     }
   </style>
 </head>
@@ -403,6 +532,16 @@
     </div>
   </div>
 
+  <!-- Image viewer -->
+  <div class="modal-backdrop" id="imgBackdrop" aria-hidden="true">
+    <div class="imgModal" role="dialog" aria-modal="true">
+      <div class="imgFrame">
+        <button class="imgClose" id="btnImgClose" aria-label="Đóng">✕</button>
+        <img id="imgViewer" alt="image" src="" />
+      </div>
+    </div>
+  </div>
+
 <script>
 /* ================== CONFIG ================== */
 const HOME_URL = "/";
@@ -411,7 +550,6 @@ const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
 const RPC = {
-  getQuiz: "api_get_quiz",
   checkUsername: "api_check_username",
   login: "api_login",
   register: "api_register",
@@ -455,32 +593,24 @@ function setNameCache(name){ try{ if(!name) localStorage.removeItem(NAME_KEY); e
 function clearAuthLocal(){ setToken(""); setMeCache(null); }
 function goHome(){ location.href = HOME_URL; }
 
-/* ✅ FIX: quizId lấy được cả /q/index.html?quiz=abcde, #abcde, hoặc /q/abcde */
+/* quizId lấy được cả /q/index.html?quiz=abcde, #abcde, hoặc /q/abcde */
 function parseQuizIdFromUrl(){
-  // 1) query ?quiz=abcde
   try{
     const qs = new URLSearchParams(location.search);
     const q = (qs.get("quiz")||"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
     if(q && q.length===5) return q;
   }catch{}
-
-  // 2) hash #abcde
   const h = (location.hash||"").replace(/^#/,"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
   if(h && h.length===5) return h;
-
-  // 3) path /q/abcde hoặc /q/abcde/
   const p = location.pathname;
   const m = p.match(/\/q\/([a-z]{5})(?:\/|$)/i);
   if(m && m[1]) return String(m[1]).toLowerCase();
-
-  // 4) fallback: /q/abcde.html (nếu có)
   const m2 = p.match(/\/q\/([a-z]{5})\.html$/i);
   if(m2 && m2[1]) return String(m2[1]).toLowerCase();
-
   return "";
 }
 
-/* ================== URL FLAGS (restart/start) ================== */
+/* ================== URL FLAGS ================== */
 const URLP = new URLSearchParams(location.search);
 const FLAG_START = (URLP.get("start")==="1");
 const FLAG_RESTART = (URLP.get("restart")==="1");
@@ -539,7 +669,6 @@ async function sbPost(path, body, { preferReturn=false, upsert=false } = {}){
   };
   if(preferReturn) headers["Prefer"] = "return=representation";
   if(upsert){
-    // PostgREST upsert
     headers["Prefer"] = (headers["Prefer"] ? headers["Prefer"] + "," : "") + "resolution=merge-duplicates";
   }
 
@@ -559,19 +688,52 @@ async function sbPost(path, body, { preferReturn=false, upsert=false } = {}){
   return data;
 }
 
-/* ================== ACTIONBAR VISIBILITY ================== */
+/* ================== UI refs ================== */
 const actionbar = document.getElementById("actionbar");
 const btnHome = document.getElementById("btnHome");
 const btnScrollTop = document.getElementById("btnScrollTop");
 const btnSubmit = document.getElementById("btnSubmit");
 const btnReset = document.getElementById("btnReset");
 
-/* APP STATE */
+const content = document.getElementById("content");
+const quizTitleEl = document.getElementById("quizTitle");
+const quizSubEl   = document.getElementById("quizSub");
+const userCorner  = document.getElementById("userCorner");
+const userCornerName = document.getElementById("userCornerName");
+const userCornerAdmin= document.getElementById("userCornerAdmin");
+
+function setUserCorner(me){
+  if(!me || !me.username){ userCorner.style.display="none"; return; }
+  userCornerName.textContent = me.username;
+  userCornerAdmin.style.display = isAdminUser(me) ? "inline-flex" : "none";
+  userCorner.style.display = "inline-flex";
+}
+function renderLoading(msg){
+  content.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">${escapeHtml(msg||"Đang tải...")}</p>
+        <div class="meta"><span class="idx">LOADING</span></div>
+      </div>
+      <div class="muted" style="margin-top:8px">Vui lòng chờ...</div>
+    </div>`;
+}
+
+/* ================== Quiz data model ================== */
+/*
+QUIZ = {
+  quiz_id, title, sub,
+  require_login: boolean,
+  items: [
+    { id, no, q_type, prompt, answers:[], points, meta:{} }
+  ]
+}
+*/
 const quizId = parseQuizIdFromUrl();
 const PROGRESS_KEY = quizId ? `tk_progress::${quizId}` : `tk_progress::unknown`;
 
 let me = null;
-let QUIZ = { quiz_id: quizId, title:"Quiz", sub:"", items:[] };
+let QUIZ = { quiz_id: quizId, title:"Quiz", sub:"", require_login:true, items:[] };
 let view = { started:false };
 
 let state = {
@@ -591,12 +753,25 @@ function syncActionbar(){
   btnReset.classList.toggle("hidden", !started);
 }
 
-/* ================== SERVER PROGRESS (progress table) ================== */
-/*
-Schema:
-progress(user_id uuid, quiz_id text, updated_at timestamptz default now(), state_json jsonb)
-PK (user_id, quiz_id)
-*/
+/* ================== IMAGE VIEWER ================== */
+const imgBackdrop = document.getElementById("imgBackdrop");
+const imgViewer = document.getElementById("imgViewer");
+const btnImgClose = document.getElementById("btnImgClose");
+function openImg(url){
+  if(!url) return;
+  imgViewer.src = url;
+  imgBackdrop.classList.add("show");
+  imgBackdrop.setAttribute("aria-hidden","false");
+}
+function closeImg(){
+  imgBackdrop.classList.remove("show");
+  imgBackdrop.setAttribute("aria-hidden","true");
+  imgViewer.src = "";
+}
+btnImgClose.onclick = closeImg;
+imgBackdrop.addEventListener("click",(e)=>{ if(e.target===imgBackdrop) closeImg(); });
+
+/* ================== SERVER PROGRESS (optional) ================== */
 let PROG_TIMER = null;
 function snapshotStateForServer(){
   return {
@@ -618,11 +793,8 @@ function scheduleSaveProgressServer(){
         quiz_id: quizId,
         state_json: snapshotStateForServer()
       };
-      // upsert theo PK user_id,quiz_id
       await sbPost(`progress?on_conflict=user_id,quiz_id`, body, { upsert:true });
-    }catch(_e){
-      // RLS có thể chặn -> ignore
-    }
+    }catch(_e){}
   }, 500);
 }
 async function tryLoadProgressServer(){
@@ -663,6 +835,225 @@ function loadLocalProgress(){
 function saveLocalProgress(){
   state.ts = Date.now();
   try{ localStorage.setItem(PROGRESS_KEY, JSON.stringify(state)); }catch{}
+}
+
+/* ================== Result helper ================== */
+function bestAttemptIdForResult(){
+  const a1 = String(state.attempt_id||"").trim();
+  if(a1) return a1;
+  try{
+    const raw = sessionStorage.getItem(`tk_last_result::${quizId}`);
+    if(raw){
+      const x = JSON.parse(raw);
+      if(x && x.quiz_id===quizId && x.attempt_id) return String(x.attempt_id);
+    }
+  }catch{}
+  return "";
+}
+function goResult(){
+  const qs = new URLSearchParams();
+  qs.set("quiz", quizId);
+  const a = bestAttemptIdForResult();
+  if(a) qs.set("attempt", a);
+  location.href = `/result.html?${qs.toString()}`;
+}
+
+/* ================== Grading helpers ================== */
+function normalizeForCompare(s) {
+  let t = String(s||"").trim().toLowerCase();
+  t = t.replace(/đ/g, "d");
+  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); } catch {}
+  t = t.replace(/[“”"']/g, " ");
+  t = t.replace(/[^a-z0-9\s\-,.]/g, " ");
+  t = t.replace(/\s+/g, " ").trim();
+  return t;
+}
+function looseEq(user, expected){
+  const u = normalizeForCompare(user);
+  const a = normalizeForCompare(expected);
+  if (!u || !a) return false;
+  if (u === a) return true;
+  if (u.replace(/\s/g,"") === a.replace(/\s/g,"")) return true;
+  return false;
+}
+function acceptedAnswersFromQuestion(q){
+  const out = [];
+  if(Array.isArray(q.answers)) out.push(...q.answers);
+  const seen = new Set();
+  const uniq = [];
+  for(const x of out){
+    const k = normalizeForCompare(x);
+    if(!k) continue;
+    if(seen.has(k)) continue;
+    seen.add(k);
+    uniq.push(String(x).trim());
+  }
+  return uniq;
+}
+function pointsOf(q){
+  const p = Number(q.points ?? 0);
+  return (isFinite(p) && p > 0) ? p : 1;
+}
+function isAnswered(q){
+  const v = state.answers[q.id];
+  if(q.q_type === "mcq1"){
+    const n = Number(v);
+    return n>=1 && n<=4;
+  }
+  if(q.q_type === "tf4"){
+    return Array.isArray(v) && v.length===4 && v.every(x => typeof x === "boolean");
+  }
+  // essay / short4: string
+  return String(v||"").trim().length > 0;
+}
+function gradeOne(q){
+  const max = pointsOf(q);
+
+  if(q.q_type === "mcq1"){
+    const user = Number(state.answers[q.id] || 0);
+    const correct = Number(q.meta?.correct || 0) || 1;
+    const ok = user === correct;
+    const expected = `Đáp án: ${"ABCD"[correct-1] || "A"}`;
+    return { ok, expected, earned: ok ? max : 0, max };
+  }
+
+  if(q.q_type === "tf4"){
+    const keys = Array.isArray(q.meta?.keys) ? q.meta.keys : [true,false,false,false];
+    const user = Array.isArray(state.answers[q.id]) ? state.answers[q.id] : [false,false,false,false];
+
+    let correctCount = 0;
+    for(let i=0;i<4;i++){
+      if(Boolean(user[i]) === Boolean(keys[i])) correctCount++;
+    }
+
+    const rule = q.meta?.rule?.byCorrectCount || { "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 };
+    const mult = Number(rule[String(correctCount)] ?? 0) || 0;
+
+    const earned = Math.round(max * mult * 100) / 100;
+    const ok = (correctCount === 4);
+    const expected = `Đúng ${correctCount}/4 (điểm: ${earned}/${max})`;
+    return { ok, expected, earned, max };
+  }
+
+  // essay / short4
+  const user = String(state.answers[q.id] || "").trim();
+  const acc = acceptedAnswersFromQuestion(q);
+  const expected = acc[0] ? `Đáp án: ${acc[0]}` : "Đáp án: (chưa set)";
+  if(!user) return { ok:false, expected, earned: 0, max };
+  let ok = false;
+  for(const a of acc){
+    if(looseEq(user, a)){ ok = true; break; }
+  }
+  return { ok, expected, earned: ok ? max : 0, max };
+}
+
+/* ================== Stats ================== */
+function updateStats(){
+  const total = QUIZ.items.length;
+  let answered = 0;
+  for(const q of QUIZ.items){
+    if(isAnswered(q)) answered++;
+  }
+  document.getElementById("answeredCount").textContent = String(answered);
+  document.getElementById("totalCount").textContent = String(total);
+  document.getElementById("progressFill").style.width = total ? Math.round(answered*100/total)+"%" : "0%";
+
+  // enable submit:
+  // - nếu quiz yêu cầu login => phải có me
+  // - nếu quiz không yêu cầu login => cho nộp (kết quả local vẫn chạy)
+  const canSubmit =
+    !!view.started &&
+    !state.finalized &&
+    (QUIZ.require_login ? (!!me && !!me.user_id) : true);
+
+  btnSubmit.disabled = !canSubmit;
+  syncActionbar();
+}
+
+/* ================== Gate (login) ================== */
+function renderGate(){
+  view.started = false;
+  syncActionbar();
+
+  content.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Nhập USERNAME</p>
+        <div><span class="idx">BẮT BUỘC</span></div>
+      </div>
+      <div class="muted" style="margin-top:6px; line-height:1.35">
+        Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b>.
+      </div>
+
+      <div style="margin-top:10px; display:grid; gap:10px;">
+        <input id="nameInput" class="input" placeholder="vd: tuankhoi123" maxlength="15" autocomplete="off"/>
+        <button id="btnContinue" class="btn btn-primary" style="justify-content:center;">➡️ Tiếp tục</button>
+        <div class="muted" id="gateStatus">Sẵn sàng.</div>
+      </div>
+    </div>
+  `;
+
+  const nameInput = document.getElementById("nameInput");
+  const btnContinue = document.getElementById("btnContinue");
+  const gateStatus = document.getElementById("gateStatus");
+
+  nameInput.addEventListener("input",()=>{
+    const v = normUsername(nameInput.value);
+    if(nameInput.value!==v) nameInput.value=v;
+  },{passive:true});
+  try{ nameInput.focus(); }catch{}
+
+  const doFlow = async ()=>{
+    const u = normUsername(nameInput.value);
+    const err = validateUsername(u);
+    if(err){ toast(err); return; }
+
+    btnContinue.disabled=true; btnContinue.textContent="⏳";
+    gateStatus.textContent="Đang kiểm tra username…";
+    try{
+      const ck = await sbRpc(RPC.checkUsername, { p_username: u });
+      if(!ck || ck.ok === false) throw new Error((ck && ck.error) ? ck.error : "check fail");
+
+      const exists = (typeof ck.exists === "boolean") ? ck.exists : null;
+      const pinLen = (u==="tuankhoi") ? 6 : (Number(ck.pinLen||ck.pin_len||4)||4);
+
+      if(exists === true){
+        gateStatus.textContent="Đăng nhập…";
+        await openPin({ username:u, mode:"login", pinLen });
+        return;
+      }
+
+      if(exists === false){
+        gateStatus.textContent=`Username "${u}" chưa đăng ký.`;
+        const ok = await openRegisterPrompt(u);
+        if(!ok){ gateStatus.textContent="Bạn có thể nhập username khác."; return; }
+
+        const regPinLen = (u==="tuankhoi") ? 6 : 4;
+        gateStatus.textContent="Tạo mật khẩu…";
+        const pin = await openPin({ username:u, mode:"set", pinLen: regPinLen });
+
+        gateStatus.textContent="Đang tạo tài khoản…";
+        const out = await sbRpc(RPC.register, { p_username: u, p_pin: String(pin||"") });
+        if(!out || !out.ok || !out.token) throw new Error(out?.error || "register fail");
+
+        toast("Đã đăng ký & đăng nhập");
+        await enterAfterAuth(out);
+        return;
+      }
+
+      gateStatus.textContent="Thử đăng nhập…";
+      await openPin({ username:u, mode:"login", pinLen: (u==="tuankhoi")?6:4 });
+
+    }catch(e){
+      if(!(e && e.message==="cancel")) toast(e.message||"Lỗi");
+      gateStatus.textContent="Sẵn sàng.";
+    }finally{
+      btnContinue.disabled=false; btnContinue.textContent="➡️ Tiếp tục";
+    }
+  };
+
+  btnContinue.onclick = doFlow;
+  nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); doFlow(); }});
 }
 
 /* ================== MODALS (register + pin) ================== */
@@ -761,8 +1152,7 @@ function pinErrorPulse(msg){
   },520);
 }
 function updatePinHeader(){
-  const u = normUsername(PIN.username);
-  const note = (u==="tuankhoi") ? "Tài khoản tuankhoi dùng mật khẩu 6 số." : "Mật khẩu chỉ gồm số.";
+  const note = (normUsername(PIN.username)==="tuankhoi") ? "Tài khoản tuankhoi dùng mật khẩu 6 số." : "Mật khẩu chỉ gồm số.";
   if(PIN.mode==="login"){
     pinTitle.textContent="Đăng nhập";
     pinDesc.textContent=`Username: ${PIN.username}`;
@@ -779,7 +1169,7 @@ function openPin({username, mode="login", pinLen=4}){
     PIN.mode=mode;
     PIN.pinLen=Math.max(4, Number(pinLen)||4);
     PIN.value=""; PIN.first=""; PIN.submitting=false; PIN.payload=null;
-    PIN.step = (mode==="set") ? "one" : "one";
+    PIN.step = "one";
     buildPinKeypadOnce();
     buildDots(PIN.pinLen);
     updatePinHeader();
@@ -799,203 +1189,6 @@ function closePin(why){
   if(why==="ok"){ if(res) res(payload); return; }
   if(rej) rej(new Error("cancel"));
 }
-function pickPinLen(ck, username){
-  const u = normUsername(username);
-  if(u === "tuankhoi") return 6;
-  const raw = (ck && (ck.pinLen ?? ck.pin_len ?? ck.pin_length ?? 4));
-  let n = Number(raw) || 4;
-  if(!isFinite(n) || n < 4) n = 4;
-  if(n > 12) n = 12;
-  return n;
-}
-function pickExists(ck){
-  if(ck && typeof ck.exists === "boolean") return ck.exists;
-  if(ck && ck.ok === true && typeof ck.exists === "boolean") return ck.exists;
-  return null;
-}
-
-/* ================== QUIZ LOGIC ================== */
-function normalizeForCompare(s) {
-  let t = String(s||"").trim().toLowerCase();
-  t = t.replace(/đ/g, "d");
-  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); } catch {}
-  t = t.replace(/[“”"']/g, " ");
-  t = t.replace(/[^a-z0-9\s]/g, " ");
-  t = t.replace(/\s+/g, " ").trim();
-  return t;
-}
-function looseEq(user, expected){
-  const u = normalizeForCompare(user);
-  const a = normalizeForCompare(expected);
-  if (!u || !a) return false;
-  if (u === a) return true;
-  if (u.replace(/\s/g,"") === a.replace(/\s/g,"")) return true;
-  return false;
-}
-
-/* UI refs */
-const content = document.getElementById("content");
-const quizTitleEl = document.getElementById("quizTitle");
-const quizSubEl   = document.getElementById("quizSub");
-const userCorner  = document.getElementById("userCorner");
-const userCornerName = document.getElementById("userCornerName");
-const userCornerAdmin= document.getElementById("userCornerAdmin");
-
-function setUserCorner(me){
-  if(!me || !me.username){ userCorner.style.display="none"; return; }
-  userCornerName.textContent = me.username;
-  userCornerAdmin.style.display = isAdminUser(me) ? "inline-flex" : "none";
-  userCorner.style.display = "inline-flex";
-}
-function renderLoading(msg){
-  content.innerHTML = `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">${escapeHtml(msg||"Đang tải...")}</p>
-        <div class="meta"><span class="idx">LOADING</span></div>
-      </div>
-      <div class="muted" style="margin-top:8px">Vui lòng chờ...</div>
-    </div>`;
-}
-
-function acceptedAnswers(item){
-  const out = [];
-  if(Array.isArray(item.answers)) out.push(...item.answers);
-  if(item.meaning){
-    const t = String(item.meaning||"");
-    t.split(/[|;/]/g).forEach(x=>{
-      const p = x.trim();
-      if(p) out.push(p);
-      if(p.includes(",")){
-        p.split(",").forEach(y=>{ const q=y.trim(); if(q) out.push(q); });
-      }
-    });
-  }
-  const seen = new Set();
-  const uniq = [];
-  for(const x of out){
-    const k = normalizeForCompare(x);
-    if(!k) continue;
-    if(seen.has(k)) continue;
-    seen.add(k);
-    uniq.push(String(x).trim());
-  }
-  return uniq;
-}
-function gradeOne(item, userAns){
-  const u = String(userAns||"").trim();
-  const acc = acceptedAnswers(item);
-  const expected = acc[0] || String(item.meaning||"");
-  if(!u) return { ok:false, expected };
-  for(const a of acc){
-    if(looseEq(u,a)) return { ok:true, expected };
-  }
-  return { ok:false, expected };
-}
-
-function updateStats(){
-  const total = QUIZ.items.length;
-  let answered = 0;
-  for(const it of QUIZ.items){
-    const v = String(state.answers[it.id]||"").trim();
-    if (v) answered++;
-  }
-  document.getElementById("answeredCount").textContent = String(answered);
-  document.getElementById("totalCount").textContent = String(total);
-  document.getElementById("progressFill").style.width = total ? Math.round(answered*100/total)+"%" : "0%";
-
-  const canSubmit = !!me && !!me.user_id && !state.finalized && view.started;
-  btnSubmit.disabled = !canSubmit;
-  syncActionbar();
-}
-
-/* ================== Gate ================== */
-function renderGate(){
-  view.started = false;
-  syncActionbar();
-
-  content.innerHTML = `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">Nhập USERNAME</p>
-        <div><span class="idx">BẮT BUỘC</span></div>
-      </div>
-      <div class="muted" style="margin-top:6px; line-height:1.35">
-        Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b>.
-      </div>
-
-      <div style="margin-top:10px; display:grid; gap:10px;">
-        <input id="nameInput" class="input" placeholder="vd: tuankhoi123" maxlength="15" autocomplete="off"/>
-        <button id="btnContinue" class="btn btn-primary" style="justify-content:center;">➡️ Tiếp tục</button>
-        <div class="muted" id="gateStatus">Sẵn sàng.</div>
-      </div>
-    </div>
-  `;
-
-  const nameInput = document.getElementById("nameInput");
-  const btnContinue = document.getElementById("btnContinue");
-  const gateStatus = document.getElementById("gateStatus");
-
-  nameInput.addEventListener("input",()=>{
-    const v = normUsername(nameInput.value);
-    if(nameInput.value!==v) nameInput.value=v;
-  },{passive:true});
-  try{ nameInput.focus(); }catch{}
-
-  const doFlow = async ()=>{
-    const u = normUsername(nameInput.value);
-    const err = validateUsername(u);
-    if(err){ toast(err); return; }
-
-    btnContinue.disabled=true; btnContinue.textContent="⏳";
-    gateStatus.textContent="Đang kiểm tra username…";
-    try{
-      const ck = await sbRpc(RPC.checkUsername, { p_username: u });
-      if(!ck || ck.ok === false) throw new Error((ck && ck.error) ? ck.error : "check fail");
-
-      const exists = pickExists(ck);
-      const pinLen = pickPinLen(ck, u);
-
-      if(exists === true){
-        gateStatus.textContent="Đăng nhập…";
-        await openPin({ username:u, mode:"login", pinLen });
-        return;
-      }
-
-      if(exists === false){
-        gateStatus.textContent=`Username "${u}" chưa đăng ký.`;
-        const ok = await openRegisterPrompt(u);
-        if(!ok){ gateStatus.textContent="Bạn có thể nhập username khác."; return; }
-
-        const regPinLen = (u==="tuankhoi") ? 6 : 4;
-        gateStatus.textContent="Tạo mật khẩu…";
-        const pin = await openPin({ username:u, mode:"set", pinLen: regPinLen });
-
-        gateStatus.textContent="Đang tạo tài khoản…";
-        const out = await sbRpc(RPC.register, { p_username: u, p_pin: String(pin||"") });
-        if(!out || !out.ok || !out.token) throw new Error(out?.error || "register fail");
-
-        toast("Đã đăng ký & đăng nhập");
-        await enterAfterAuth(out);
-        return;
-      }
-
-      gateStatus.textContent="Thử đăng nhập…";
-      await openPin({ username:u, mode:"login", pinLen: (u==="tuankhoi")?6:4 });
-
-    }catch(e){
-      if(!(e && e.message==="cancel")) toast(e.message||"Lỗi");
-      gateStatus.textContent="Sẵn sàng.";
-    }finally{
-      btnContinue.disabled=false; btnContinue.textContent="➡️ Tiếp tục";
-    }
-  };
-
-  btnContinue.onclick = doFlow;
-  nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); doFlow(); }});
-}
-
-/* PIN submit handler */
 async function onPinKey(k){
   if(!PIN.open || PIN.submitting) return;
 
@@ -1053,28 +1246,7 @@ async function onPinKey(k){
   }
 }
 
-/* ================== Result helper ================== */
-function bestAttemptIdForResult(){
-  const a1 = String(state.attempt_id||"").trim();
-  if(a1) return a1;
-  try{
-    const raw = sessionStorage.getItem(`tk_last_result::${quizId}`);
-    if(raw){
-      const x = JSON.parse(raw);
-      if(x && x.quiz_id===quizId && x.attempt_id) return String(x.attempt_id);
-    }
-  }catch{}
-  return "";
-}
-function goResult(){
-  const qs = new URLSearchParams();
-  qs.set("quiz", quizId);
-  const a = bestAttemptIdForResult();
-  if(a) qs.set("attempt", a);
-  location.href = `/result.html?${qs.toString()}`;
-}
-
-/* ================== Start / Quiz ================== */
+/* ================== Quiz rendering ================== */
 function renderStart(){
   view.started = false;
   syncActionbar();
@@ -1082,34 +1254,42 @@ function renderStart(){
   updateStats();
 
   const prevAttempt = bestAttemptIdForResult();
+  const hasResult = !!prevAttempt || !!state.finalized;
+
+  const loginNote = QUIZ.require_login
+    ? `<div class="muted" style="margin-top:8px;line-height:1.35">Bạn đang đăng nhập: <b>${escapeHtml(me?.username||"")}</b></div>`
+    : `<div class="muted" style="margin-top:8px;line-height:1.35">Quiz này <b>không yêu cầu đăng nhập</b>. Bạn có thể làm ngay. (Kết quả vẫn xem được.)</div>`;
 
   content.innerHTML = `
     <div class="card">
       <div class="row1">
-        <p class="vi">Đang chuẩn bị…</p>
+        <p class="vi">Sẵn sàng làm bài</p>
         <div class="meta"><span class="idx">${escapeHtml(QUIZ.quiz_id||quizId)}</span></div>
       </div>
 
-      <div class="muted" style="margin-top:8px; line-height:1.35">
-        Bạn đang đăng nhập: <b>${escapeHtml(me?.username||"")}</b><br/>
-        ${prevAttempt ? `Bạn đã làm bài trước đó. Đang mở lại kết quả…` : `Đang vào màn hình làm bài…`}
+      ${loginNote}
+
+      <div class="muted" style="margin-top:10px; line-height:1.35">
+        Tổng số câu: <b>${QUIZ.items.length}</b>
       </div>
 
-      <div class="muted" style="margin-top:10px">
-        (Nếu không tự chuyển, hãy thử tải lại trang.)
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+        ${hasResult ? `<button class="btn btn-ghost" id="btnViewResult" type="button">📄 Xem lại kết quả</button>` : ``}
+        <button class="btn btn-primary" id="btnGo" type="button">🚀 Vào làm</button>
       </div>
+
+      ${hasResult ? `<div class="muted" style="margin-top:10px">Bạn có thể xem kết quả cũ hoặc làm lại/nộp lại.</div>` : ``}
     </div>
   `;
 
-  setTimeout(()=>{
-    if(prevAttempt && !FLAG_RESTART && !FLAG_START){
-      goResult();
-      return;
-    }
+  document.getElementById("btnGo").onclick = ()=>{
     view.started = true;
     renderQuiz();
     scrollToHashIfAny();
-  }, 650);
+  };
+  if(hasResult){
+    document.getElementById("btnViewResult").onclick = ()=>goResult();
+  }
 }
 
 function renderQuiz(){
@@ -1131,35 +1311,108 @@ function renderQuiz(){
   }
 
   let html = "";
-  QUIZ.items.forEach((it, idx)=>{
-    const typed = String(state.answers[it.id]||"");
-    const ck = state.checked[it.id];
+  QUIZ.items.forEach((q, idx)=>{
+    const ck = state.checked[q.id];
     const locked = ck && ck.locked;
+    const img = String(q.meta?.image_url || "").trim();
+    const showImg = !!img;
 
     html += `
-      <div class="card" data-card="${it.id}" id="q${it.id}">
+      <div class="card" data-card="${q.id}" id="q${q.id}">
         <div class="row1">
-          <p class="vi">Câu ${idx+1}. <b>${escapeHtml(it.word||"")}</b> <span class="muted">(${escapeHtml(it.pos||"")})</span></p>
+          <p class="vi">Câu ${idx+1} <span class="muted">(${escapeHtml(q.q_type||"")})</span></p>
           <div class="meta"><span class="idx">#${idx+1}</span></div>
         </div>
 
-        <div style="margin-top:10px;">
-          <div class="qaRow">
-            <input class="input ans" data-id="${it.id}" placeholder="Nhập đáp án" value="${escapeHtml(typed)}" ${locked ? "disabled":""}/>
-            <button class="btn btn-primary btn-check" data-check="${it.id}" ${locked ? "disabled":""}>${locked?"Đã check":"Check"}</button>
-          </div>
+        <div class="qPrompt">${escapeHtml(q.prompt||"")}</div>
+
+        ${showImg ? `<img class="qImgThumb" data-img="${escapeHtml(img)}" src="${escapeHtml(img)}" alt="image">` : ``}
+
+        ${q.q_type==="mcq1" ? renderMcq(q, locked) : ``}
+        ${q.q_type==="essay" ? renderEssay(q, locked) : ``}
+        ${q.q_type==="short4" ? renderShort4(q, locked) : ``}
+        ${q.q_type==="tf4" ? renderTf4(q, locked) : ``}
+
+        <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap">
+          <button class="btn btn-primary btn-check" data-check="${q.id}" ${locked ? "disabled":""}>${locked?"Đã check":"Check"}</button>
         </div>
 
         ${locked ? `
           <div class="resultRow">
             <div>${ck.ok ? `<span class="oktxt">ĐÚNG</span>` : `<span class="badtxt">SAI</span>`}</div>
-            <div>${ck.ok ? `` : `<span class="muted">Đáp án:</span> <b>${escapeHtml(ck.expected||"")}</b>`}</div>
+            <div><span class="muted">${escapeHtml(ck.expected||"")}</span></div>
           </div>` : ``}
-      </div>`;
+      </div>
+    `;
   });
 
   content.innerHTML = html;
   updateStats();
+}
+
+function renderMcq(q, locked){
+  const opts = Array.isArray(q.meta?.options) ? q.meta.options : ["","","",""];
+  const user = Number(state.answers[q.id] || 0);
+
+  const rows = [0,1,2,3].map(i=>{
+    const letter = "ABCD"[i];
+    const text = String(opts[i] ?? "");
+    const active = (user === (i+1));
+    return `
+      <button class="optBtn ${active?"active":""}" data-mcq="${q.id}" data-v="${i+1}" ${locked?"disabled":""} type="button">
+        <span class="optKey">${letter}</span>${escapeHtml(text)}
+      </button>
+    `;
+  }).join("");
+
+  return `<div class="optGrid" role="group" aria-label="options">${rows}</div>`;
+}
+function renderEssay(q, locked){
+  const v = String(state.answers[q.id] || "");
+  return `
+    <div style="margin-top:10px">
+      <div class="qaRow">
+        <input class="input ans" data-id="${q.id}" placeholder="Nhập đáp án" value="${escapeHtml(v)}" ${locked ? "disabled":""}/>
+      </div>
+      <div class="muted" style="margin-top:8px">Gợi ý: có thể có nhiều đáp án đúng (do admin set).</div>
+    </div>
+  `;
+}
+function renderShort4(q, locked){
+  const raw = String(state.answers[q.id] || "");
+  const chars = [raw[0]||"", raw[1]||"", raw[2]||"", raw[3]||""];
+  return `
+    <div style="margin-top:10px">
+      <div class="muted">Nhập 4 ô (0-9, dấu -, dấu ,). Bạn có thể bỏ trống ô nào cũng được.</div>
+      <div class="boxes4">
+        ${chars.map((c,i)=>`
+          <input class="input boxDigit short4" data-id="${q.id}" data-k="${i}" maxlength="1" inputmode="text"
+            value="${escapeHtml(c)}" ${locked?"disabled":""}/>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+function renderTf4(q, locked){
+  const stmts = Array.isArray(q.meta?.statements) ? q.meta.statements : ["","","",""];
+  const user = Array.isArray(state.answers[q.id]) ? state.answers[q.id] : [false,false,false,false];
+
+  const rows = [0,1,2,3].map(i=>{
+    const s = String(stmts[i]||"").trim();
+    return `
+      <div class="tfRow">
+        <div class="tfTop">
+          <div class="tfStmt"><b>${"ABCD"[i]}.</b> ${escapeHtml(s || "(trống)")}</div>
+          <div class="tfBtns">
+            <button class="tfBtn ${user[i]===true?"active":""}" data-tf="${q.id}" data-k="${i}" data-v="1" ${locked?"disabled":""} type="button">Đúng</button>
+            <button class="tfBtn ${user[i]===false?"active":""}" data-tf="${q.id}" data-k="${i}" data-v="0" ${locked?"disabled":""} type="button">Sai</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  return `<div class="tfList">${rows}</div>`;
 }
 
 function scrollToHashIfAny(){
@@ -1172,63 +1425,102 @@ function scrollToHashIfAny(){
   }, 80);
 }
 
-/* ================== Enter => next question ================== */
-function focusNextAnswerInput(currentId){
-  const inputs = Array.from(content.querySelectorAll("input.ans"));
-  if(!inputs.length) return;
-  const idx = inputs.findIndex(x => Number(x.dataset.id) === Number(currentId));
-  const next = (idx>=0 && idx+1 < inputs.length) ? inputs[idx+1] : null;
-  if(next){
-    try{ next.focus(); next.scrollIntoView({ behavior:"smooth", block:"center" }); }catch{}
-  }else{
-    try{ btnSubmit.focus(); }catch{}
-  }
-}
-
 /* ================== EVENTS ================== */
-content.addEventListener("keydown",(e)=>{
-  const t = e.target;
-  if(!t || !(t.classList && t.classList.contains("ans"))) return;
-  if(e.key === "Enter"){
-    e.preventDefault();
-    const id = Number(t.dataset.id);
-    focusNextAnswerInput(id);
-  }
-});
-
-content.addEventListener("input", (e)=>{
-  const t = e.target;
-  if(!t || !t.classList.contains("ans")) return;
-  const id = Number(t.dataset.id);
-  state.answers[id] = String(t.value||"");
-  const ck = state.checked[id];
-  if(ck && ck.locked){
-    t.value = String(state.answers[id]||"");
+content.addEventListener("click", (e)=>{
+  const img = e.target.closest("[data-img]");
+  if(img){
+    openImg(img.getAttribute("data-img"));
     return;
   }
-  saveLocalProgress();
-  scheduleSaveProgressServer();
-  updateStats();
-}, {passive:true});
 
-content.addEventListener("click", (e)=>{
+  const mcq = e.target.closest("[data-mcq]");
+  if(mcq){
+    const id = Number(mcq.getAttribute("data-mcq"));
+    const v = Number(mcq.getAttribute("data-v"));
+    state.answers[id] = v;
+    saveLocalProgress();
+    scheduleSaveProgressServer();
+    renderQuiz();
+    return;
+  }
+
+  const tf = e.target.closest("[data-tf]");
+  if(tf){
+    const id = Number(tf.getAttribute("data-tf"));
+    const k = Number(tf.getAttribute("data-k"));
+    const v = (tf.getAttribute("data-v")==="1");
+    const cur = Array.isArray(state.answers[id]) ? state.answers[id].slice(0,4) : [false,false,false,false];
+    cur[k] = v;
+    state.answers[id] = cur;
+    saveLocalProgress();
+    scheduleSaveProgressServer();
+    renderQuiz();
+    return;
+  }
+
   const b = e.target.closest("[data-check]");
   if(!b) return;
+
   const id = Number(b.dataset.check);
-  const item = QUIZ.items.find(x=>Number(x.id)===id);
-  if(!item) return;
+  const q = QUIZ.items.find(x=>Number(x.id)===id);
+  if(!q) return;
 
-  const ans = String(state.answers[id]||"").trim();
-  if(!ans){ toast("Chưa nhập"); return; }
+  if(!isAnswered(q)){
+    toast("Chưa làm câu này");
+    return;
+  }
 
-  const g = gradeOne(item, ans);
+  const g = gradeOne(q);
   state.checked[id] = { ok: !!g.ok, expected: String(g.expected||""), locked:true };
   saveLocalProgress();
   scheduleSaveProgressServer();
   toast(g.ok ? "ĐÚNG" : "SAI");
   renderQuiz();
-  try{ document.querySelector(`#q${CSS.escape(String(id))}`)?.scrollIntoView({behavior:"smooth",block:"start"}); }catch{}
-});
+}, {passive:true});
+
+content.addEventListener("input", (e)=>{
+  const t = e.target;
+  if(!t) return;
+
+  if(t.classList && t.classList.contains("ans")){
+    const id = Number(t.dataset.id);
+    const ck = state.checked[id];
+    if(ck && ck.locked){
+      t.value = String(state.answers[id]||"");
+      return;
+    }
+    state.answers[id] = String(t.value||"");
+    saveLocalProgress();
+    scheduleSaveProgressServer();
+    updateStats();
+    return;
+  }
+
+  if(t.classList && t.classList.contains("short4")){
+    const id = Number(t.getAttribute("data-id"));
+    const k = Number(t.getAttribute("data-k"));
+
+    const ck = state.checked[id];
+    if(ck && ck.locked){
+      renderQuiz();
+      return;
+    }
+
+    let v = String(t.value||"");
+    // lọc kí tự cho gọn
+    v = v.replace(/[^0-9\-,]/g,"").slice(0,1);
+    if(t.value !== v) t.value = v;
+
+    const raw = String(state.answers[id] || "____");
+    const arr = [raw[0]||"", raw[1]||"", raw[2]||"", raw[3]||""];
+    arr[k] = v || "";
+    state.answers[id] = arr.join("");
+    saveLocalProgress();
+    scheduleSaveProgressServer();
+    updateStats();
+    return;
+  }
+}, {passive:true});
 
 btnScrollTop.onclick = ()=>{
   document.getElementById("shell").scrollTo({ top:0, behavior:"smooth" });
@@ -1286,46 +1578,65 @@ function closeSubmitConfirm(ans){
   SUBMIT_PROMPT.resolve=null;
   if(r) r(!!ans);
 }
-
 function getMissingItems(){
   const miss = [];
-  QUIZ.items.forEach((it, idx)=>{
-    const v = String(state.answers[it.id]||"").trim();
-    if(!v) miss.push({ idx: idx+1, id: it.id, word: it.word||"" });
+  QUIZ.items.forEach((q, idx)=>{
+    if(!isAnswered(q)) miss.push({ idx: idx+1, id: q.id });
   });
   return miss;
 }
 
 /* ================== SUBMIT ================== */
 function computeFinal(){
-  let correct = 0;
-  const wrong = [];
-  for(const it of QUIZ.items){
-    const ans = String(state.answers[it.id]||"").trim();
-    const g = gradeOne(it, ans);
-    if(g.ok) correct++;
-    else wrong.push({ id: it.id, word: it.word, user: ans, expected: g.expected });
-    state.checked[it.id] = { ok: !!g.ok, expected: String(g.expected||""), locked:true };
+  let earned = 0;
+  let max = 0;
+  let fullCorrectCount = 0;
+
+  const per = [];
+  for(const q of QUIZ.items){
+    const g = gradeOne(q);
+    max += g.max;
+    earned += g.earned;
+    if(g.ok) fullCorrectCount++;
+
+    state.checked[q.id] = { ok: !!g.ok, expected: String(g.expected||""), locked:true };
+
+    per.push({
+      id: q.id,
+      no: q.no,
+      q_type: q.q_type,
+      ok: !!g.ok,
+      earned: g.earned,
+      max: g.max
+    });
   }
-  const total = QUIZ.items.length;
-  const score10 = total ? Math.round((correct/total*10)*10)/10 : 0;
-  return { score10, correctCount: correct, totalCount: total, wrong };
+
+  const score10 = max > 0 ? Math.round((earned/max*10)*10)/10 : 0;
+  return { score10, earned, max, fullCorrectCount, totalCount: QUIZ.items.length, per };
 }
 
-/* ✅ FIX theo schema: attempts KHÔNG có cột name -> bỏ name, dùng details_json */
+/* attempts table OK, attempt_answers FK vocabs -> không dùng nữa */
 async function submitToSupabase(result){
+  if(!me || !me.user_id) throw new Error("need login");
   const attemptBody = {
     quiz_id: quizId,
     user_id: me.user_id,
     score10: Number(result.score10||0),
-    correct_count: Number(result.correctCount||0),
+    correct_count: Number(result.fullCorrectCount||0),
     total_count: Number(result.totalCount||0),
     details_json: {
       client: "q/index.html",
       ts: Date.now(),
-      answered_count: Object.values(state.answers||{}).filter(x=>String(x||"").trim()).length,
-      // lưu nhẹ: chỉ lưu id + user_answer (tránh phình json)
-      answers: Object.entries(state.answers||{}).map(([k,v])=>({ id:Number(k), a:String(v||"").trim() }))
+      mode: "questions",
+      quiz_id: quizId,
+      earned: result.earned,
+      max: result.max,
+      per: result.per,
+      // lưu câu trả lời thô để result page có thể dùng
+      answers: state.answers || {},
+      questions: QUIZ.items.map(q=>({
+        id:q.id, no:q.no, q_type:q.q_type, prompt:q.prompt, points:q.points, meta:q.meta
+      }))
     }
   };
 
@@ -1333,42 +1644,17 @@ async function submitToSupabase(result){
   const row = Array.isArray(inserted) ? inserted[0] : inserted;
   const attemptId = row?.attempt_id;
   if(!attemptId) throw new Error("Không lấy được attempt_id");
-
-  const ansRows = QUIZ.items.map(it=>{
-    const userAnswer = String(state.answers[it.id]||"").trim();
-    const g = gradeOne(it, userAnswer);
-    return {
-      attempt_id: attemptId,
-      vocab_id: it.id,
-      user_answer: userAnswer,
-      ok: !!g.ok,
-      expected: String(g.expected||"")
-    };
-  });
-
-  // ✅ upsert để tránh lỗi nếu submit retry
-  try{
-    await sbPost(`attempt_answers?on_conflict=attempt_id,vocab_id`, ansRows, { upsert:true });
-  }catch(e){
-    // ignore
-  }
-
-  // sau khi submit thì clear progress server (optional)
-  try{
-    await sbPost(`progress?on_conflict=user_id,quiz_id`, {
-      user_id: me.user_id,
-      quiz_id: quizId,
-      state_json: { ...snapshotStateForServer(), finalized:true, attempt_id: attemptId }
-    }, { upsert:true });
-  }catch(_e){}
-
   return attemptId;
 }
 
 async function doSubmitNow(){
-  if(!me || !me.user_id){ toast("Chưa login"); renderGate(); return; }
   if(state.finalized) return;
   if(!view.started){ toast("Chưa vào làm"); return; }
+  if(QUIZ.require_login && (!me || !me.user_id)){
+    toast("Quiz này cần đăng nhập");
+    renderGate();
+    return;
+  }
 
   state.finalized = true;
 
@@ -1386,7 +1672,8 @@ async function doSubmitNow(){
     saveLocalProgress();
     scheduleSaveProgressServer();
   }catch(e){
-    toast("Không gửi được Supabase (xem kết quả vẫn OK)");
+    // guest mode / hoặc RLS chặn -> vẫn cho xem result local
+    toast("Không gửi DB (xem kết quả vẫn OK)");
   }
 
   try{
@@ -1394,7 +1681,7 @@ async function doSubmitNow(){
       quiz_id: quizId,
       title: QUIZ.title,
       sub: QUIZ.sub,
-      me: { username: me.username, role: me.role, user_id: me.user_id },
+      me: me ? { username: me.username, role: me.role, user_id: me.user_id } : null,
       attempt_id: attemptId || "",
       result,
       ts: Date.now()
@@ -1408,9 +1695,14 @@ async function doSubmitNow(){
 }
 
 btnSubmit.onclick = async ()=>{
-  if(!me || !me.user_id){ toast("Chưa login"); renderGate(); return; }
   if(state.finalized) return;
   if(!view.started){ toast("Chưa vào làm"); return; }
+
+  if(QUIZ.require_login && (!me || !me.user_id)){
+    toast("Quiz này cần đăng nhập");
+    renderGate();
+    return;
+  }
 
   const miss = getMissingItems();
   const missCount = miss.length;
@@ -1419,7 +1711,7 @@ btnSubmit.onclick = async ()=>{
   if(missCount === 0){
     body = `<p><b>Bạn có muốn nộp bài không?</b></p>`;
   }else if(missCount < 5){
-    const lis = miss.map(x=>`<li><b>Câu ${x.idx}</b> <span class="muted">(${escapeHtml(x.word)})</span></li>`).join("");
+    const lis = miss.map(x=>`<li><b>Câu ${x.idx}</b></li>`).join("");
     body = `
       <p><b>Bạn chưa làm các câu sau:</b></p>
       <ul class="missList">${lis}</ul>
@@ -1452,46 +1744,63 @@ async function loadMeIfAny(){
     return null;
   }
 }
+
+/* ✅ LOAD QUIZ từ quizzes + questions */
 async function loadQuiz(){
+  const qArr = await sbGet(`quizzes?quiz_id=eq.${quizId}&select=quiz_id,title,sub,require_login,is_hidden,is_public&limit=1`);
+  const q = (Array.isArray(qArr) && qArr[0]) ? qArr[0] : null;
+  if(!q) throw new Error("Không tìm thấy quiz");
+
+  if(q.is_hidden){
+    // vẫn cho xem nếu bạn muốn, nhưng báo nhẹ
+  }
+
+  let items = [];
   try{
-    const token = getToken();
-    const out = await sbRpc(RPC.getQuiz, { p_quiz_id: quizId, p_token: token || "" });
-    if(out && out.ok===true){
-      const q = out.quiz || {};
-      const items = out.items || [];
-      return {
-        quiz_id: q.quiz_id || quizId,
-        title: q.title || "Quiz",
-        sub: q.sub || "",
-        items: items.map(x=>({
+    const rows = await sbGet(`questions?quiz_id=eq.${quizId}&select=id,no,q_type,prompt,answers,points,meta&order=no.asc,id.asc`);
+    items = Array.isArray(rows) ? rows : [];
+  }catch(_e){
+    items = [];
+  }
+
+  // fallback: nếu questions trống, thử quiz_questions (chỉ mcq1)
+  if(!items.length){
+    try{
+      const rows2 = await sbGet(`quiz_questions?quiz_id=eq.${quizId}&select=id,no,qtype,prompt,options,answer,points&order=no.asc,id.asc`);
+      const arr2 = Array.isArray(rows2) ? rows2 : [];
+      items = arr2.map(x=>{
+        const ans = String(x.answer||"A").toUpperCase();
+        const correct = {A:1,B:2,C:3,D:4}[ans] || 1;
+        return {
           id: Number(x.id),
           no: x.no,
-          word: x.word,
-          pos: x.pos,
-          meaning: x.meaning,
-          answers: x.answers || []
-        }))
-      };
-    }
-  }catch(e){}
+          q_type: "mcq1",
+          prompt: x.prompt || "",
+          answers: [],
+          points: x.points ?? 1,
+          meta: { options: x.options || ["","","",""], correct }
+        };
+      });
+    }catch(_e){}
+  }
 
-  const qArr = await sbGet(`quizzes?quiz_id=eq.${quizId}&select=quiz_id,title,sub&limit=1`);
-  const q = (Array.isArray(qArr) && qArr[0]) ? qArr[0] : { quiz_id: quizId, title:"Quiz", sub:"" };
-  const items = await sbGet(`vocabs?quiz_id=eq.${quizId}&select=id,no,word,pos,meaning,answers&order=no.asc,id.asc`);
   return {
     quiz_id: q.quiz_id || quizId,
     title: q.title || "Quiz",
     sub: q.sub || "",
-    items: (items||[]).map(x=>({
+    require_login: (q.require_login !== false),
+    items: items.map(x=>({
       id: Number(x.id),
       no: x.no,
-      word: x.word,
-      pos: x.pos,
-      meaning: x.meaning,
-      answers: x.answers || []
+      q_type: String(x.q_type || x.qtype || "essay"),
+      prompt: x.prompt || "",
+      answers: Array.isArray(x.answers) ? x.answers : [],
+      points: x.points ?? 1,
+      meta: (x.meta && typeof x.meta === "object") ? x.meta : {}
     }))
   };
 }
+
 async function enterAfterAuth(out){
   const token = out?.token || "";
   if(token) setToken(token);
@@ -1510,7 +1819,6 @@ async function enterAfterAuth(out){
     setNameCache(me.username || "");
     setUserCorner(me);
 
-    // ✅ ưu tiên load progress từ server (nếu có) rồi merge vào local
     const serverProg = await tryLoadProgressServer();
     if(serverProg && serverProg.answers){
       state.answers = serverProg.answers || state.answers;
@@ -1520,14 +1828,9 @@ async function enterAfterAuth(out){
       saveLocalProgress();
     }
 
-    if(FLAG_START && !state.finalized){
-      dropFlagsFromUrl();
-      view.started = true;
-      renderQuiz();
-      scrollToHashIfAny();
-    }else{
-      renderStart();
-    }
+    // vào start
+    renderStart();
+    updateStats();
   }else{
     toast("Không lấy được user");
     renderGate();
@@ -1547,7 +1850,8 @@ document.getElementById("btnLogout").addEventListener("click", ()=>{
   setUserCorner(null);
   closeProfileModal();
   toast("Đã đăng xuất");
-  renderGate();
+  // nếu quiz không yêu cầu login: quay về start; nếu cần login: gate
+  if(QUIZ.require_login) renderGate(); else renderStart();
   updateStats();
 });
 function openProfileModal(){
@@ -1579,15 +1883,7 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
     loadLocalProgress();
   }
 
-  me = getMeCache();
-  if(me && me.id && !me.user_id) me.user_id = me.id;
-
-  if(getToken() && (!me || !me.user_id)){
-    const m2 = await loadMeIfAny();
-    if(m2){ me = m2; setMeCache(me); }
-  }
-  if(me && me.username) setNameCache(me.username || "");
-
+  // load quiz first (để biết require_login)
   try{
     QUIZ = await loadQuiz();
     quizTitleEl.textContent = QUIZ.title || "Quiz";
@@ -1597,22 +1893,52 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
     return;
   }
 
+  // restore me if token exists
+  me = getMeCache();
+  if(me && me.id && !me.user_id) me.user_id = me.id;
+
+  if(getToken() && (!me || !me.user_id)){
+    const m2 = await loadMeIfAny();
+    if(m2){ me = m2; setMeCache(me); }
+  }
+  if(me && me.username) setNameCache(me.username || "");
+
   updateStats();
 
-  if(me && me.user_id){
-    setUserCorner(me);
-    view.started = false;
-
-    // ✅ nếu server có progress mới hơn local, ưu tiên server
-    const serverProg = await tryLoadProgressServer();
-    if(serverProg && serverProg.answers){
-      state.answers = serverProg.answers || state.answers;
-      state.checked = serverProg.checked || state.checked;
-      state.finalized = !!serverProg.finalized || state.finalized;
-      state.attempt_id = serverProg.attempt_id || state.attempt_id;
-      saveLocalProgress();
+  // ✅ logic yêu cầu: quiz không cần login -> không hiện màn hình login
+  if(QUIZ.require_login){
+    if(me && me.user_id){
+      setUserCorner(me);
+      const serverProg = await tryLoadProgressServer();
+      if(serverProg && serverProg.answers){
+        state.answers = serverProg.answers || state.answers;
+        state.checked = serverProg.checked || state.checked;
+        state.finalized = !!serverProg.finalized || state.finalized;
+        state.attempt_id = serverProg.attempt_id || state.attempt_id;
+        saveLocalProgress();
+      }
+      renderStart();
+    }else{
+      setUserCorner(null);
+      renderGate();
+    }
+  }else{
+    // open quiz
+    if(me && me.user_id){
+      setUserCorner(me);
+      const serverProg = await tryLoadProgressServer();
+      if(serverProg && serverProg.answers){
+        state.answers = serverProg.answers || state.answers;
+        state.checked = serverProg.checked || state.checked;
+        state.finalized = !!serverProg.finalized || state.finalized;
+        state.attempt_id = serverProg.attempt_id || state.attempt_id;
+        saveLocalProgress();
+      }
+    }else{
+      setUserCorner(null);
     }
 
+    // nếu URL ?start=1 thì vào thẳng làm
     if(FLAG_START && !state.finalized){
       dropFlagsFromUrl();
       view.started = true;
@@ -1621,10 +1947,6 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
     }else{
       renderStart();
     }
-  }else{
-    setUserCorner(null);
-    view.started = false;
-    renderGate();
   }
 })();
 </script>
