@@ -926,7 +926,7 @@ function renderStore(){
     const openBadge = !needLogin ? `<span class="idx badge-open">OPEN</span>` : ``;
     const codeBadge = q.require_access_code ? `<span class="idx badge-code">CÓ MÃ</span>` : ``;
 
-    const href = `/q/${encodeURIComponent(q.quiz_id)}`;
+    const href = `{encodeURIComponent(q.quiz_id)}`;
     const btnHtml = needLogin
       ? `<a href="${href}"><button class="btn btn-primary">Vào</button></a>`
       : `<a href="${href}"><button class="btn btn-primary">Vào</button></a>`;
@@ -938,7 +938,7 @@ function renderStore(){
             <div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div>
             <div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div>
             <div class="muted" style="margin-top:6px">
-              <span class="idx">/q/${escapeHtml(q.quiz_id)}</span>
+              <span class="idx">{escapeHtml(q.quiz_id)}</span>
               ${openBadge} ${codeBadge}
             </div>
           </div>
