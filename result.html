@@ -111,7 +111,36 @@
     }
     .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
-    /* comments UI (từ code cũ, rút gọn) */
+    /* Wrong list (click to open) */
+    .wList{display:grid;gap:10px;margin-top:10px}
+    .wItem{
+      border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:#fff;
+      cursor:pointer; user-select:none;
+      transition:transform .12s ease, filter .12s ease;
+    }
+    .wItem:hover{transform:translateY(-1px);filter:brightness(.99)}
+    .wHead{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+    .wLeft{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .wNo{
+      font-weight:1000;font-size:.82rem;
+      padding:6px 10px;border-radius:999px;
+      background:rgba(220,38,38,.10);
+      border:1px solid rgba(220,38,38,.25);
+      color:#991b1b;
+      white-space:nowrap;
+    }
+    .wWord{font-weight:950}
+    .wDetail{display:none;margin-top:10px;line-height:1.35}
+    .wItem.open .wDetail{display:block}
+    .wDetailRow{margin-top:8px}
+    .wLinkRow{margin-top:10px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+    .wSmallBtn{
+      border-radius:999px;padding:7px 10px;font-weight:900;
+      border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:.82rem;
+      text-decoration:none;color:#111827;
+    }
+
+    /* comments UI */
     .input{
       width:100%;
       border-radius:14px;border:2px solid #e5e7eb;
@@ -124,7 +153,7 @@
       box-shadow:0 0 0 5px rgba(124,58,237,.10);
       background:#fff;
     }
-    .cmtBox{display:grid;gap:12px}
+    .cmtBox{display:grid;gap:12px;margin-top:10px}
     .cmtItem{border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:#fff}
     .cmtHead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
     .cmtAuthor{font-weight:950;color:#6b7280;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -159,14 +188,13 @@
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
           <a class="btn" id="btnBackStore" href="/">← Store</a>
-          <a class="btn btn-primary" id="btnBackQuiz" href="/q/abcde">↩️ Làm lại</a>
+          <a class="btn btn-primary" id="btnRestart" href="/q/abcde">↩️ Làm lại</a>
         </div>
       </div>
 
       <div id="summary" class="card"></div>
       <div id="wrong" class="card"></div>
 
-      <!-- BXH + Comment nằm cuối -->
       <div id="lb" class="card"></div>
       <div id="discussion" class="card"></div>
     </div>
@@ -176,7 +204,7 @@
 
 <script>
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmRzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o".replace("c3VwYWJzZS","c3VwYWJzZS"); // giữ nguyên
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
 const TOKEN_KEY = "tk_token_v2";
 const NAME_KEY  = "tk_display_name_v1";
@@ -192,20 +220,18 @@ function escapeHtml(s) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
-function getToken(){ try { return (localStorage.getItem(TOKEN_KEY)||"").trim(); } catch { return ""; } }
 function loadName(){ try { return (localStorage.getItem(NAME_KEY)||"").trim(); } catch { return ""; } }
 
-function sbHeaders({ useUserToken=true } = {}){
+function sbHeaders(){
   const anon = String(SUPABASE_ANON_KEY||"").trim();
-  const tk = useUserToken ? getToken() : "";
   return {
     "apikey": anon,
-    "Authorization": "Bearer " + (tk || anon),
+    "Authorization": "Bearer " + anon,
     "Content-Type": "application/json"
   };
 }
-async function sbGet(path, { useUserToken=true } = {}){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{ headers: sbHeaders({useUserToken}) });
+async function sbGet(path){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{ headers: sbHeaders() });
   const txt = await res.text();
   let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
   if(!res.ok){
@@ -216,8 +242,8 @@ async function sbGet(path, { useUserToken=true } = {}){
   }
   return data;
 }
-async function sbPost(path, body, { useUserToken=true, preferReturn=true } = {}){
-  const h = sbHeaders({useUserToken});
+async function sbPost(path, body, { preferReturn=true } = {}){
+  const h = sbHeaders();
   if(preferReturn) h["Prefer"]="return=representation";
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
     method:"POST",
@@ -234,10 +260,10 @@ async function sbPost(path, body, { useUserToken=true, preferReturn=true } = {})
   }
   return data;
 }
-async function sbDelete(path, { useUserToken=true } = {}){
+async function sbDelete(path){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
     method:"DELETE",
-    headers: sbHeaders({useUserToken})
+    headers: sbHeaders()
   });
   const txt = await res.text();
   let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
@@ -262,7 +288,22 @@ const qs = new URLSearchParams(location.search);
 const quizId = String(qs.get("quiz")||"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
 const attemptId = String(qs.get("attempt")||"").trim();
 
-document.getElementById("btnBackQuiz").href = quizId ? `/q/${quizId}` : "/";
+const PROGRESS_KEY = `tk_progress::${quizId}`;
+
+function clearForRestart(){
+  try{ localStorage.removeItem(PROGRESS_KEY); }catch{}
+  try{ sessionStorage.removeItem(`tk_last_result::${quizId}`); }catch{}
+}
+
+const btnRestart = document.getElementById("btnRestart");
+btnRestart.href = quizId ? `/q/${quizId}?restart=1&start=1` : "/";
+btnRestart.addEventListener("click",(e)=>{
+  // luôn clear trước rồi đi
+  if(!quizId) return;
+  e.preventDefault();
+  clearForRestart();
+  location.href = `/q/${quizId}?restart=1&start=1`;
+});
 
 function renderSummary({ title, sub, username, score10, correctCount, totalCount, when }){
   document.getElementById("title").textContent = title || "Kết quả";
@@ -281,9 +322,12 @@ function renderSummary({ title, sub, username, score10, correctCount, totalCount
     </div>
   `;
 }
+
+let WRONG_OPEN = new Set();
 function renderWrong(list){
+  const wrap = document.getElementById("wrong");
   if(!Array.isArray(list) || !list.length){
-    document.getElementById("wrong").innerHTML = `
+    wrap.innerHTML = `
       <div class="row1">
         <p class="vi">Câu sai</p>
         <div class="idx">0</div>
@@ -293,28 +337,54 @@ function renderWrong(list){
     return;
   }
 
-  const rows = list.map((w,i)=>`
-    <tr>
-      <td style="width:70px">${i+1}</td>
-      <td>${escapeHtml(w.word||"")}</td>
-      <td>${escapeHtml(w.user_answer||w.user||"")}</td>
-      <td>${escapeHtml(w.expected||"")}</td>
-    </tr>
-  `).join("");
+  const items = list.map((w,i)=>{
+    const key = String(w.id ?? i);
+    const open = WRONG_OPEN.has(key);
+    const word = w.word || "(?)";
+    const u = (w.user_answer ?? w.user ?? "").trim();
+    const ex = (w.expected ?? "").trim();
+    const jump = quizId && w.id ? `/q/${quizId}?start=1#q${encodeURIComponent(String(w.id))}` : "";
+    return `
+      <div class="wItem ${open?"open":""}" data-w="${escapeHtml(key)}">
+        <div class="wHead">
+          <div class="wLeft">
+            <span class="wNo">SAI • Câu ${i+1}</span>
+            <span class="wWord">${escapeHtml(word)}</span>
+          </div>
+          <div class="muted">${open ? "Ẩn" : "Xem"}</div>
+        </div>
+        <div class="wDetail">
+          <div class="wDetailRow"><span class="muted">Bạn viết:</span> <b>${escapeHtml(u||"(trống)")}</b></div>
+          <div class="wDetailRow"><span class="muted">Đáp án:</span> <b>${escapeHtml(ex||"(?)")}</b></div>
+          ${jump ? `
+            <div class="wLinkRow">
+              <a class="wSmallBtn" href="${jump}">Mở đúng câu này</a>
+            </div>` : ``}
+        </div>
+      </div>
+    `;
+  }).join("");
 
-  document.getElementById("wrong").innerHTML = `
+  wrap.innerHTML = `
     <div class="row1">
       <p class="vi">Câu sai</p>
       <div class="idx">${list.length}</div>
     </div>
-    <div style="margin-top:10px; overflow:auto">
-      <table class="table">
-        <thead><tr><th>#</th><th>Từ</th><th>Bạn viết</th><th>Đáp án</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
+    <div class="muted" style="margin-top:8px">Bấm vào từng câu để xem chi tiết.</div>
+    <div class="wList">${items}</div>
   `;
+
+  wrap.querySelector(".wList").addEventListener("click",(e)=>{
+    const item = e.target.closest(".wItem");
+    if(!item) return;
+    const k = String(item.getAttribute("data-w")||"");
+    if(!k) return;
+    if(WRONG_OPEN.has(k)) WRONG_OPEN.delete(k); else WRONG_OPEN.add(k);
+    // re-render giữ trạng thái
+    renderWrong(list);
+  }, { passive:true });
 }
+
 function renderLeaderboard(rows, myName){
   if(!Array.isArray(rows) || !rows.length){
     document.getElementById("lb").innerHTML = `
@@ -326,15 +396,15 @@ function renderLeaderboard(rows, myName){
   const key = (s)=>String(s||"").trim().toLowerCase();
   const myK = key(myName);
 
-  const body = rows.slice(0,30).map((r,i)=>{
+  const body = rows.slice(0,50).map((r,i)=>{
     const isMe = myK && key(r.name)===myK;
     return `
       <tr ${isMe ? `style="background: rgba(124,58,237,.10)"` : ``}>
         <td style="width:70px"><b>${i+1}</b></td>
         <td>
           ${escapeHtml(r.name||"")}
-          ${r.is_admin ? ` <span style="color:${'#2563eb'}; font-weight:900">(ADMIN)</span>`:''}
-          ${isMe?` <span style="color:${'#4c1d95'}; font-weight:900">(Bạn)</span>`:''}
+          ${r.is_admin ? ` <span style="color:#2563eb; font-weight:900">(ADMIN)</span>`:''}
+          ${isMe?` <span style="color:#4c1d95; font-weight:900">(Bạn)</span>`:''}
         </td>
         <td style="width:110px"><b>${Number(r.score10||0).toFixed(1)}</b>/10</td>
       </tr>
@@ -343,6 +413,7 @@ function renderLeaderboard(rows, myName){
 
   document.getElementById("lb").innerHTML = `
     <div class="row1"><p class="vi">Bảng xếp hạng</p><div class="idx">TOP</div></div>
+    <div class="muted" style="margin-top:8px">0 điểm vẫn có trong BXH (miễn là đã nộp bài).</div>
     <div style="margin-top:10px; overflow:auto">
       <table class="table">
         <thead><tr><th>#</th><th>Tên</th><th>Điểm</th></tr></thead>
@@ -352,9 +423,9 @@ function renderLeaderboard(rows, myName){
   `;
 }
 
-/** ===== COMMENTS (table: comments OR quiz_comments) ===== */
+/** ===== COMMENTS (table: public.comments) ===== */
 const DISCUSS_MAX = 120;
-let DISC = { table:"comments", loaded:false, tree:[], openReply:"" };
+let DISC = { tree:[], openReply:"" };
 
 function discussionHtml(username){
   return `
@@ -374,6 +445,11 @@ function discussionHtml(username){
   `;
 }
 
+function toMs(ts){
+  const d = new Date(ts);
+  const t = d.getTime();
+  return isFinite(t) ? t : Date.now();
+}
 function formatTsMs(ms){
   try{
     const d = new Date(Number(ms||0));
@@ -381,13 +457,6 @@ function formatTsMs(ms){
     return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`;
   }catch{ return ""; }
 }
-
-function toMs(ts){
-  const d = new Date(ts);
-  const t = d.getTime();
-  return isFinite(t) ? t : Date.now();
-}
-
 function buildTree(rows){
   const byId = new Map();
   rows.forEach(r=>{
@@ -415,14 +484,29 @@ function buildTree(rows){
   roots.forEach(r=>r.replies.sort((a,b)=>a.createdAtMs-b.createdAtMs));
   return roots;
 }
-
 function canDeleteComment(c, myName, isAdmin){
   if(isAdmin) return true;
   const a = String(c.author||"").trim().toLowerCase();
   const m = String(myName||"").trim().toLowerCase();
   return !!m && a === m;
 }
-
+async function loadComments(){
+  const rows = await sbGet(`comments?quiz_id=eq.${quizId}&select=id,parent_id,author,text,created_at&order=created_at.asc&limit=300`);
+  DISC.tree = buildTree(Array.isArray(rows)?rows:[]);
+}
+async function addComment({ text, parent_id, author }){
+  const payload = {
+    quiz_id: quizId,
+    parent_id: parent_id || null,
+    author: author || "",
+    text: text || ""
+  };
+  const res = await sbPost("comments", payload, {preferReturn:true});
+  return Array.isArray(res) ? res[0] : res;
+}
+async function deleteComment(id){
+  await sbDelete(`comments?id=eq.${encodeURIComponent(id)}`);
+}
 function renderDiscussion(myName, isAdmin){
   const list = document.getElementById("discussList");
   if(!list) return;
@@ -507,51 +591,25 @@ function renderDiscussion(myName, isAdmin){
   });
 }
 
-async function tryGetCommentsTable(){
-  // ưu tiên comments, nếu lỗi thì thử quiz_comments
-  try{
-    await sbGet(`comments?quiz_id=eq.${quizId}&select=id&limit=1`);
-    return "comments";
-  }catch(e){
-    await sbGet(`quiz_comments?quiz_id=eq.${quizId}&select=id&limit=1`);
-    return "quiz_comments";
+/* ===== Load wrong from attempt (robust, no join) ===== */
+async function loadWrongFromAttempt(attemptId){
+  const ans = await sbGet(`attempt_answers?attempt_id=eq.${encodeURIComponent(attemptId)}&select=vocab_id,user_answer,ok,expected&limit=2000`);
+  const wrong = (ans||[]).filter(x=>x && x.ok===false);
+
+  const ids = Array.from(new Set(wrong.map(x=>Number(x.vocab_id)).filter(x=>Number.isFinite(x))));
+  const map = new Map();
+  if(ids.length){
+    // in.(1,2,3)
+    const rows = await sbGet(`vocabs?id=in.(${ids.join(",")})&select=id,word&limit=2000`);
+    (rows||[]).forEach(r=>map.set(Number(r.id), String(r.word||"")));
   }
-}
 
-async function loadComments(){
-  if(!quizId) return;
-  if(!DISC.table){
-    try{ DISC.table = await tryGetCommentsTable(); }
-    catch(e){
-      // không có bảng comment
-      DISC.table = "";
-      return;
-    }
-  }
-  if(!DISC.table) return;
-
-  const rows = await sbGet(`${DISC.table}?quiz_id=eq.${quizId}&select=id,parent_id,author,text,created_at&order=created_at.asc&limit=300`);
-  DISC.tree = buildTree(Array.isArray(rows)?rows:[]);
-  DISC.loaded = true;
-}
-
-async function addComment({ text, parent_id, author }){
-  if(!DISC.table) return;
-  const payload = {
-    quiz_id: quizId,
-    parent_id: parent_id || null,
-    author: author || "",
-    text: text || ""
-  };
-  const res = await sbPost(DISC.table, payload, {preferReturn:true});
-  const row = Array.isArray(res) ? res[0] : res;
-  return row;
-}
-
-async function deleteComment(id){
-  if(!DISC.table) return;
-  // DELETE /rest/v1/comments?id=eq.xxx
-  await sbDelete(`${DISC.table}?id=eq.${encodeURIComponent(id)}`);
+  return wrong.map(x=>({
+    id: Number(x.vocab_id),
+    word: map.get(Number(x.vocab_id)) || "",
+    user_answer: String(x.user_answer||""),
+    expected: String(x.expected||"")
+  }));
 }
 
 /** ===== Boot ===== */
@@ -605,22 +663,13 @@ async function deleteComment(id){
         totalCount = Number(a.total_count||0);
         if(a.name && !username) username = String(a.name);
 
-        // load wrong from attempt_answers join vocabs
         try{
-          const ans = await sbGet(`attempt_answers?attempt_id=eq.${encodeURIComponent(attemptId)}&select=user_answer,ok,expected,vocab:vocabs(word)&limit=2000`);
-          const list = (ans||[]).filter(x=>x && x.ok===false).map(x=>({
-            word: x.vocab?.word || "",
-            user_answer: x.user_answer || "",
-            expected: x.expected || ""
-          }));
-          wrongList = list;
+          wrongList = await loadWrongFromAttempt(attemptId);
         }catch(e){
-          // nếu RLS chặn join -> vẫn dùng cached.wrong
+          // nếu RLS chặn -> vẫn dùng cached.wrong
         }
       }
-    }catch(e){
-      // giữ cache
-    }
+    }catch(e){}
   }
 
   renderSummary({
@@ -632,9 +681,9 @@ async function deleteComment(id){
   });
   renderWrong(wrongList);
 
-  // leaderboard (view v_leaderboard)
+  // leaderboard (view v_leaderboard) - 0 điểm vẫn có nếu đã nộp
   try{
-    const rows = await sbGet(`v_leaderboard?quiz_id=eq.${quizId}&select=name,is_admin,score10&order=score10.desc&limit=30`);
+    const rows = await sbGet(`v_leaderboard?quiz_id=eq.${quizId}&select=name,is_admin,score10&order=score10.desc&limit=50`);
     renderLeaderboard(rows||[], username||"");
   }catch(e){
     renderLeaderboard([], "");
@@ -650,13 +699,14 @@ async function deleteComment(id){
 
   rootInput.addEventListener("input", ()=>{ rootCount.textContent = String((rootInput.value||"").length); }, {passive:true});
 
+  const isAdmin = (String(username||"").toLowerCase()==="tuankhoi");
+
   // load comments
-  let isAdmin = false; // nếu bạn muốn lấy admin từ token/me thì có thể bổ sung sau
   try{
     await loadComments();
     renderDiscussion(username || fallbackName || "", isAdmin);
   }catch(e){
-    discussionEl.innerHTML += `<div class="muted" style="margin-top:10px">Không có hệ thống comment trên Supabase (chưa có bảng comments).</div>`;
+    discussionEl.innerHTML += `<div class="muted" style="margin-top:10px">Không load được comments. (Kiểm tra table public.comments + RLS).</div>`;
   }
 
   btnPostRoot.addEventListener("click", async ()=>{
