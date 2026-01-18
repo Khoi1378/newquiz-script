@@ -9,11 +9,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
 
-  <!-- ✅ FIX LaTeX render 100% ở phần hiển thị câu hỏi: KaTeX auto-render -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" crossorigin="anonymous">
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js" crossorigin="anonymous" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" crossorigin="anonymous" defer></script>
-
   <style>
     :root {
       --bg1: #ffecd2; --bg2: #fcb69f;
@@ -39,7 +34,8 @@
     .btn, .btn-x, .pinKey { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     .hidden{ display:none !important; }
 
-    #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 110px; touch-action: pan-y; }
+    /* tăng padding bottom để không bị submitbar che */
+    #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 170px; touch-action: pan-y; }
     .wrap { max-width: 980px; margin: 0 auto; padding: 0 14px; }
 
     .userCorner{
@@ -93,17 +89,7 @@
     }
     .btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
     .btn-danger{background:var(--bad);color:#fff;border:0}
-    .btn-check {
-      border-radius: 12px;
-      padding: 9px 10px;
-      font-size: .86rem;
-      font-weight: 950;
-      box-shadow: 0 10px 20px rgba(124,58,237,.14);
-      width: auto;
-      min-width: 86px;
-      justify-content: center;
-    }
-    .btn[disabled], .btn-check[disabled]{opacity:.65;cursor:not-allowed;transform:none !important;filter:none !important}
+    .btn[disabled]{opacity:.65;cursor:not-allowed;transform:none !important;filter:none !important}
 
     .topbar{
       margin-top:10px;
@@ -175,9 +161,6 @@
       box-shadow:0 0 0 5px rgba(124,58,237,.10);
       background:#fff;
     }
-
-    .qaRow{ display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
-    .qaRow .input{ flex: 1 1 260px; }
 
     .resultRow{
       display:grid;
@@ -293,9 +276,7 @@
       white-space:pre-wrap;
       font-weight:850;
       line-height:1.35;
-      overflow-wrap:anywhere;
     }
-    .qPrompt .katex { font-weight: 850; }
     .qImgThumb{
       margin-top:10px;
       width:100%;
@@ -312,7 +293,7 @@
     .optBtn{
       text-align:left;
       border-radius:16px;
-      border:1px solid #e5e7eb;
+      border:2px solid #e5e7eb; /* dày hơn */
       background:#fff;
       padding:12px;
       cursor:pointer;
@@ -323,6 +304,7 @@
     .optBtn:hover{ transform:translateY(-1px); filter:brightness(.99); }
     .optBtn.active{
       border-color:rgba(124,58,237,.55);
+      border-width:3px; /* dày hơn khi chọn */
       box-shadow:0 0 0 5px rgba(124,58,237,.10);
       background:#fff;
     }
@@ -331,7 +313,6 @@
       width:28px; height:28px; border-radius:999px;
       background:#f3f4f6; border:1px solid #e5e7eb;
       font-weight:1000; margin-right:10px;
-      flex: 0 0 auto;
     }
 
     .boxes4{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
@@ -343,32 +324,28 @@
       border-radius:16px;
       padding:12px 8px;
     }
-    /* ✅ short4 keypad */
-    .s4Pad{
+
+    /* keypad cho short4 */
+    .keypad4{
       margin-top:10px;
-      display:grid;
-      grid-template-columns:repeat(7,1fr);
+      display:flex;
+      flex-wrap:wrap;
       gap:8px;
       user-select:none;
     }
-    .s4Key{
-      height:48px;
-      border-radius:16px;
-      border:1px solid #e5e7eb;
+    .kpBtn{
+      border-radius:999px;
+      border:2px solid #e5e7eb;
       background:#fff;
+      padding:9px 12px;
       font-weight:1000;
-      font-size:1.05rem;
       cursor:pointer;
-      box-shadow:0 10px 22px rgba(0,0,0,.08);
-      transition:transform .12s ease, filter .12s ease;
+      box-shadow:none;
+      min-width:54px;
+      text-align:center;
     }
-    .s4Key:hover{ transform:translateY(-1px); filter:brightness(.99); }
-    .s4Key:active{ transform:translateY(0); }
-    .s4Key.small{ font-size:.92rem; font-weight:950; letter-spacing:.02em; }
-    @media (max-width: 520px){
-      .s4Pad{ grid-template-columns:repeat(5,1fr); }
-      .s4Key{ height:46px; }
-    }
+    .kpBtn:active{ transform: translateY(0); }
+    .kpBtn.small{ min-width:74px; }
 
     .tfList{ display:grid; gap:10px; margin-top:10px; }
     .tfRow{
@@ -378,11 +355,11 @@
       background:#fff;
     }
     .tfTop{ display:flex; gap:10px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
-    .tfStmt{ font-weight:900; line-height:1.35; overflow-wrap:anywhere; }
+    .tfStmt{ font-weight:900; line-height:1.35; }
     .tfBtns{ display:flex; gap:8px; flex-wrap:wrap; }
     .tfBtn{
       border-radius:999px;
-      border:1px solid #e5e7eb;
+      border:2px solid #e5e7eb; /* dày hơn */
       background:#fff;
       padding:8px 12px;
       font-weight:1000;
@@ -391,6 +368,7 @@
     }
     .tfBtn.active{
       border-color:rgba(124,58,237,.55);
+      border-width:3px; /* dày hơn khi chọn */
       box-shadow:0 0 0 5px rgba(124,58,237,.10);
     }
 
@@ -442,15 +420,56 @@
       box-shadow:0 12px 24px rgba(0,0,0,.10);
     }
 
+    /* ===== Submit bar (fixed bottom) ===== */
+    .submitbar{
+      position:fixed;
+      left:0; right:0;
+      bottom:calc(env(safe-area-inset-bottom) + 0px);
+      z-index:20010;
+      padding:10px 14px;
+      background:rgba(255,255,255,.86);
+      border-top:1px solid rgba(229,231,235,.9);
+      backdrop-filter:blur(8px);
+      box-shadow:0 -14px 40px rgba(0,0,0,.10);
+      display:none;
+    }
+    .submitwrap{
+      max-width:980px;
+      margin:0 auto;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .btn-big{
+      width:min(520px, 100%);
+      border-radius:18px;
+      padding:14px 16px;
+      font-size:1.05rem;
+      font-weight:1000;
+      letter-spacing:.02em;
+      justify-content:center;
+    }
+    .subhint{
+      font-weight:850;
+      color:var(--muted);
+      line-height:1.2;
+      white-space:nowrap;
+    }
+
     @media (max-width: 820px) {
       .progressline { max-width: 100%; }
       .btn { padding: 9px 12px; font-size: .85rem; }
       .resultRow{ grid-template-columns: 120px 1fr; }
       .userCorner .name { max-width: 66vw; }
-      .btn-check{ min-width: 84px; }
       .boxDigit{ width:56px; }
+      .subhint{ white-space:normal; }
     }
   </style>
+
+  <!-- ✅ KaTeX (LaTeX render) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 </head>
 
 <body>
@@ -463,7 +482,6 @@
     <div class="actionbar" id="actionbar">
       <button class="btn btn-ghost" id="btnHome">Trang chủ</button>
       <button class="btn" id="btnScrollTop">⬆️ Lên đầu</button>
-      <button class="btn btn-primary" id="btnSubmit" disabled>Nộp bài</button>
       <button class="btn btn-reset" id="btnReset">🔁 Làm lại</button>
     </div>
 
@@ -488,6 +506,14 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <!-- ✅ Submit bar -->
+  <div class="submitbar" id="submitBar">
+    <div class="submitwrap">
+      <button class="btn btn-primary btn-big" id="btnSubmitBig" disabled>✅ NỘP BÀI</button>
+      <div class="subhint" id="submitHint">Không chọn là tính sai</div>
+    </div>
+  </div>
 
   <!-- Register prompt -->
   <div class="modal-backdrop" id="registerBackdrop" aria-hidden="true">
@@ -522,7 +548,7 @@
   <div class="modal-backdrop" id="resetBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <h3>Làm lại bài?</h3>
-      <p>Xóa lần làm hiện tại (trên máy) và làm lại. (Nếu admin bật shuffle, thứ tự sẽ được đảo lại)</p>
+      <p>Xóa lần làm hiện tại (trên máy) và làm lại (nếu quiz có đảo thì sẽ đảo lại).</p>
       <div class="modal-actions">
         <button class="btn btn-ghost" id="btnCancelReset">Hủy</button>
         <button class="btn btn-danger" id="btnConfirmReset">Xóa & Làm lại</button>
@@ -576,6 +602,10 @@
     </div>
   </div>
 
+  <!-- ✅ KaTeX JS -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
 <script>
 /* ================== CONFIG ================== */
 const HOME_URL = "/";
@@ -595,7 +625,7 @@ const TOKEN_KEY = "tk_token_v2";
 const ME_KEY = "tk_me_v2";
 const NAME_KEY = "tk_display_name_v1";
 
-/* ================== HARD DEBUG (để khỏi “mất hút”) ================== */
+/* ================== HARD DEBUG ================== */
 function renderFatal(err){
   const msg = (err && (err.message || err)) ? (err.message || String(err)) : "Unknown error";
   renderLoading("Lỗi JS: " + msg);
@@ -715,8 +745,11 @@ async function sbPost(path, body, { preferReturn=false, upsert=false } = {}){
 const actionbar = document.getElementById("actionbar");
 const btnHome = document.getElementById("btnHome");
 const btnScrollTop = document.getElementById("btnScrollTop");
-const btnSubmit = document.getElementById("btnSubmit");
 const btnReset = document.getElementById("btnReset");
+
+const submitBar = document.getElementById("submitBar");
+const btnSubmitBig = document.getElementById("btnSubmitBig");
+const submitHint = document.getElementById("submitHint");
 
 const content = document.getElementById("content");
 const quizTitleEl = document.getElementById("quizTitle");
@@ -742,31 +775,20 @@ function renderLoading(msg){
     </div>`;
 }
 
-/* ================== LaTeX render in quiz content ================== */
-let __mathQueued = false;
-function applyMathNow(){
+/* ================== KaTeX apply ================== */
+function applyMath(rootEl){
+  if(!rootEl) return;
   if(typeof window.renderMathInElement !== "function") return;
   try{
-    window.renderMathInElement(content, {
+    window.renderMathInElement(rootEl, {
       delimiters: [
         { left: "$$", right: "$$", display: true },
-        { left: "$",  right: "$",  display: false },
-        { left: "\\(", right: "\\)", display: false },
-        { left: "\\[", right: "\\]", display: true }
+        { left: "$", right: "$", display: false }
       ],
       throwOnError: false
     });
   }catch{}
 }
-function applyMath(){
-  if(__mathQueued) return;
-  __mathQueued = true;
-  requestAnimationFrame(()=>{
-    __mathQueued = false;
-    if(typeof window.renderMathInElement === "function") applyMathNow();
-  });
-}
-window.addEventListener("load", ()=>{ applyMathNow(); }, { passive:true });
 
 /* ================== IMAGE VIEWER ================== */
 const imgBackdrop = document.getElementById("imgBackdrop");
@@ -802,33 +824,29 @@ let view = { started:false };
 let state = {
   quiz_id: quizId,
   answers: {},
-  checked: {},      // chỉ dùng cho essay (check)
+  checked: {},      // chỉ dùng cho essay-check
   finalized: false,
   attempt_id: "",
-  shuffle: null,    // ✅ lưu order shuffle để “tiếp tục làm” không bị đổi thứ tự
-  ts: 0
+  ts: 0,
+
+  // ✅ shuffle state (persist để "tiếp tục làm" giữ đúng thứ tự)
+  order: [],
+  mcq_perm: {}
 };
 
 function syncActionbar(){
   const started = !!view.started;
   btnHome.classList.toggle("hidden", started);
   btnScrollTop.classList.toggle("hidden", !started);
-  btnSubmit.classList.toggle("hidden", !started);
   btnReset.classList.toggle("hidden", !started);
+
+  submitBar.style.display = started ? "" : "none";
 }
 
 /* ================== LOCAL PROGRESS ================== */
-function resetAttemptLocal({ keepLastResult=false } = {}){
-  state.answers = {};
-  state.checked = {};
-  state.finalized = false;
-  state.attempt_id = "";
-  state.shuffle = null;
-  try{ localStorage.removeItem(PROGRESS_KEY); }catch{}
-  if(!keepLastResult){
-    try{ sessionStorage.removeItem(`tk_last_result::${quizId}`); }catch{}
-  }
-  saveLocalProgress();
+function saveLocalProgress(){
+  state.ts = Date.now();
+  try{ localStorage.setItem(PROGRESS_KEY, JSON.stringify(state)); }catch{}
 }
 function loadLocalProgress(){
   try{
@@ -837,14 +855,26 @@ function loadLocalProgress(){
     const s = JSON.parse(raw);
     if(s && s.quiz_id === quizId){
       state = { ...state, ...s };
-      if(!state.answers || typeof state.answers !== "object") state.answers = {};
-      if(!state.checked || typeof state.checked !== "object") state.checked = {};
+      if(!state.answers || typeof state.answers!=="object") state.answers = {};
+      if(!state.checked || typeof state.checked!=="object") state.checked = {};
+      if(!Array.isArray(state.order)) state.order = [];
+      if(!state.mcq_perm || typeof state.mcq_perm!=="object") state.mcq_perm = {};
     }
   }catch{}
 }
-function saveLocalProgress(){
-  state.ts = Date.now();
-  try{ localStorage.setItem(PROGRESS_KEY, JSON.stringify(state)); }catch{}
+function hasLocalWork(){
+  const vals = Object.values(state.answers || {});
+  for(const v of vals){
+    if(Array.isArray(v)){
+      if(v.some(x => x === true || x === false)) return true;
+      continue;
+    }
+    if(String(v||"").trim().length > 0) return true;
+  }
+  return false;
+}
+function clearLocalProgressOnly(){
+  try{ localStorage.removeItem(PROGRESS_KEY); }catch{}
 }
 
 /* ================== Result helper ================== */
@@ -860,15 +890,102 @@ function bestAttemptIdForResult(){
   }catch{}
   return "";
 }
-function hasLastResult(){
-  return !!bestAttemptIdForResult();
-}
 function goResult(){
   const qs = new URLSearchParams();
   qs.set("quiz", quizId);
   const a = bestAttemptIdForResult();
   if(a) qs.set("attempt", a);
   location.href = `/result.html?${qs.toString()}`;
+}
+
+/* ================== Shuffle helpers ================== */
+function shuffleArray(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function qTypeOf(q){
+  return String(q.q_type || "essay").toLowerCase();
+}
+function getMcqPerm(qid){
+  const p = state.mcq_perm && state.mcq_perm[qid];
+  if(Array.isArray(p) && p.length===4 && p.every(x=>Number.isInteger(x) && x>=0 && x<=3)) return p;
+  return [0,1,2,3];
+}
+function ensureShuffle({force=false} = {}){
+  const mode = String(QUIZ.shuffle_mode || "none");
+  const ids = QUIZ.items.map(x=>Number(x.id));
+
+  if(mode === "none"){
+    state.order = [];
+    state.mcq_perm = {};
+    saveLocalProgress();
+    return;
+  }
+
+  const needOrder =
+    force ||
+    !Array.isArray(state.order) ||
+    state.order.length !== ids.length ||
+    state.order.some(id => !ids.includes(Number(id)));
+
+  if(needOrder){
+    state.order = shuffleArray(ids);
+  }
+
+  if(mode === "qa"){
+    const next = (state.mcq_perm && typeof state.mcq_perm==="object") ? {...state.mcq_perm} : {};
+    for(const q of QUIZ.items){
+      const t = qTypeOf(q);
+      if(t === "mcq1" || t === "mcq"){
+        if(force || !Array.isArray(next[q.id]) || next[q.id].length!==4){
+          next[q.id] = shuffleArray([0,1,2,3]);
+        }
+      }
+    }
+    state.mcq_perm = next;
+  }else{
+    // q: chỉ đảo câu, không đảo đáp án
+    state.mcq_perm = {};
+  }
+
+  saveLocalProgress();
+}
+function getViewItems(){
+  const mode = String(QUIZ.shuffle_mode || "none");
+  if(mode === "none") return QUIZ.items;
+
+  const order = Array.isArray(state.order) ? state.order : [];
+  if(!order.length) return QUIZ.items;
+
+  const map = new Map(QUIZ.items.map(q => [Number(q.id), q]));
+  const out = [];
+  for(const id of order){
+    const qq = map.get(Number(id));
+    if(qq) out.push(qq);
+  }
+  // phòng hờ câu mới
+  for(const q of QUIZ.items){
+    if(!order.includes(Number(q.id))) out.push(q);
+  }
+  return out;
+}
+function resetForNewAttempt({reshuffle=true} = {}){
+  state.answers = {};
+  state.checked = {};
+  state.finalized = false;
+  state.attempt_id = "";
+
+  if(reshuffle){
+    state.order = [];
+    state.mcq_perm = {};
+    ensureShuffle({force:true});
+  }else{
+    saveLocalProgress();
+  }
 }
 
 /* ================== Grading helpers ================== */
@@ -907,9 +1024,6 @@ function pointsOf(q){
   const p = Number(q.points ?? 0);
   return (isFinite(p) && p > 0) ? p : 1;
 }
-function qTypeOf(q){
-  return String(q.q_type || "essay").toLowerCase();
-}
 function isAnswered(q){
   const t = qTypeOf(q);
   const v = state.answers[q.id];
@@ -921,7 +1035,6 @@ function isAnswered(q){
   if(t === "tf4"){
     return Array.isArray(v) && v.length===4 && v.every(x => x === true || x === false);
   }
-  // essay / short4
   return String(v||"").trim().length > 0;
 }
 function gradeOne(q){
@@ -929,10 +1042,14 @@ function gradeOne(q){
   const max = pointsOf(q);
 
   if(t === "mcq1" || t === "mcq"){
-    const user = Number(state.answers[q.id] || 0);
-    const correct = Number(q.meta?.correct || 1) || 1; // correct là index theo options gốc
-    const ok = user === correct;
-    const expected = `Đáp án: ${"ABCD"[correct-1] || "A"}`;
+    const userOrig = Number(state.answers[q.id] || 0); // lưu theo ORIGINAL index 1..4
+    const correctOrig = Number(q.meta?.correct || 1) || 1;
+    const ok = (userOrig === correctOrig);
+
+    // expected theo "thứ tự hiển thị" (nếu QA shuffle)
+    const perm = getMcqPerm(q.id); // display -> origIdx(0..3)
+    const displayCorrect = Math.max(1, perm.indexOf(correctOrig-1) + 1);
+    const expected = `Đáp án: ${"ABCD"[displayCorrect-1] || "A"}`;
     return { ok, expected, earned: ok ? max : 0, max };
   }
 
@@ -942,7 +1059,7 @@ function gradeOne(q){
 
     let correctCount = 0;
     for(let i=0;i<4;i++){
-      if(Boolean(user[i]) === Boolean(keys[i])) correctCount++;
+      if((user[i] === true || user[i] === false) && user[i] === Boolean(keys[i])) correctCount++;
     }
 
     const rule = q.meta?.rule?.byCorrectCount || { "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 };
@@ -967,104 +1084,12 @@ function gradeOne(q){
   return { ok, expected, earned: ok ? max : 0, max };
 }
 
-/* ================== Shuffle (theo quizzes.shuffle_mode) ================== */
-function mulberry32(seed){
-  let t = seed >>> 0;
-  return function(){
-    t += 0x6D2B79F5;
-    let x = Math.imul(t ^ (t >>> 15), 1 | t);
-    x ^= x + Math.imul(x ^ (x >>> 7), 61 | x);
-    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-  };
-}
-function shuffleInPlace(arr, rnd){
-  for(let i=arr.length-1;i>0;i--){
-    const j = Math.floor(rnd() * (i+1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-function hasInProgress(){
-  if(state.finalized) return false;
-  if(!QUIZ.items.length) return false;
-  let answered = 0;
-  for(const q of QUIZ.items) if(isAnswered(q)) answered++;
-  return answered > 0;
-}
-function ensureShufflePlan(forceNew=false){
-  const mode = String(QUIZ.shuffle_mode || "none");
-  const ids = QUIZ.items.map(q=>Number(q.id));
-
-  // none => không cần plan
-  if(mode === "none"){
-    state.shuffle = null;
-    return;
-  }
-
-  const inProg = hasInProgress();
-  const needNew =
-    forceNew ||
-    !state.shuffle ||
-    state.shuffle.quiz_id !== quizId ||
-    state.shuffle.mode !== mode ||
-    !Array.isArray(state.shuffle.qIds) ||
-    state.shuffle.qIds.length !== ids.length;
-
-  if(!needNew) return;
-
-  // ✅ nếu đang “tiếp tục làm” mà trước đó chưa có shuffle-plan (do bản cũ),
-  // giữ nguyên thứ tự hiện tại để khỏi “nhảy” câu/đáp án; chỉ shuffle khi làm mới.
-  const keepIdentity = (!forceNew && inProg);
-
-  const seed = (Math.floor(Math.random()*1e9) ^ Date.now()) >>> 0;
-  const rnd = mulberry32(seed);
-
-  let qIds = ids.slice();
-  if(!keepIdentity && (mode === "q" || mode === "qa")){
-    shuffleInPlace(qIds, rnd);
-  }
-
-  const opts = {};
-  if(mode === "qa" && !keepIdentity){
-    for(const q of QUIZ.items){
-      const t = qTypeOf(q);
-      if(t === "mcq1" || t === "mcq"){
-        const ord = [1,2,3,4]; // hiển thị -> index gốc
-        shuffleInPlace(ord, rnd);
-        opts[String(q.id)] = ord;
-      }
-    }
-  }
-
-  state.shuffle = { quiz_id: quizId, mode, seed, qIds, opts };
-  saveLocalProgress();
-}
-function orderedItems(){
-  ensureShufflePlan(false);
-
-  if(!state.shuffle || !Array.isArray(state.shuffle.qIds)) return QUIZ.items;
-  const map = new Map(QUIZ.items.map(q=>[Number(q.id), q]));
-  const out = [];
-  for(const id of state.shuffle.qIds){
-    const q = map.get(Number(id));
-    if(q) out.push(q);
-  }
-  // fallback nếu thiếu
-  if(out.length !== QUIZ.items.length) return QUIZ.items;
-  return out;
-}
-function optOrderFor(q){
-  if(!state.shuffle || state.shuffle.mode !== "qa") return [1,2,3,4];
-  const ord = state.shuffle.opts ? state.shuffle.opts[String(q.id)] : null;
-  if(Array.isArray(ord) && ord.length===4) return ord;
-  return [1,2,3,4];
-}
-
 /* ================== Stats ================== */
 function updateStats(){
-  const total = QUIZ.items.length;
+  const items = getViewItems();
+  const total = items.length;
   let answered = 0;
-  for(const q of QUIZ.items){
+  for(const q of items){
     if(isAnswered(q)) answered++;
   }
   document.getElementById("answeredCount").textContent = String(answered);
@@ -1076,7 +1101,7 @@ function updateStats(){
     !state.finalized &&
     (QUIZ.require_login ? (!!me && !!me.user_id) : true);
 
-  btnSubmit.disabled = !canSubmit;
+  btnSubmitBig.disabled = !canSubmit;
   syncActionbar();
 }
 
@@ -1363,14 +1388,13 @@ function renderStart(){
   setUserCorner(me);
   updateStats();
 
-  const inProg = hasInProgress();
-  const hasResult = hasLastResult();
+  const hasProgress = hasLocalWork();
+  const prevAttempt = bestAttemptIdForResult();
+  const hasResult = !!prevAttempt;
 
   const loginNote = QUIZ.require_login
     ? `<div class="muted" style="margin-top:8px;line-height:1.35">Bạn đang đăng nhập: <b>${escapeHtml(me?.username||"")}</b></div>`
     : `<div class="muted" style="margin-top:8px;line-height:1.35">Quiz này <b>không yêu cầu đăng nhập</b>. Bạn có thể làm ngay.</div>`;
-
-  const btnLabel = inProg ? "▶️ Tiếp tục làm" : (hasResult ? "🆕 Làm bài mới" : "🚀 Vào làm");
 
   content.innerHTML = `
     <div class="card">
@@ -1383,30 +1407,24 @@ function renderStart(){
 
       <div class="muted" style="margin-top:10px; line-height:1.35">
         Tổng số câu: <b>${QUIZ.items.length}</b>
-        ${inProg ? `<div style="margin-top:6px"><b>Tiếp tục làm</b> (đang có bài làm dở trên máy)</div>` : ``}
       </div>
 
       <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
         ${hasResult ? `<button class="btn btn-ghost" id="btnViewResult" type="button">📄 Xem lại kết quả</button>` : ``}
-        <button class="btn btn-primary" id="btnGo" type="button">${btnLabel}</button>
+        <button class="btn btn-primary" id="btnGo" type="button">${hasProgress ? "▶️ Tiếp tục làm" : "🚀 Vào làm"}</button>
       </div>
     </div>
   `;
 
   document.getElementById("btnGo").onclick = ()=>{
-    // ✅ nếu đã nộp bài trước đó: vào là làm bài mới (reset local), nhưng vẫn giữ “Xem kết quả”
-    if(!inProg && hasResult){
-      resetAttemptLocal({ keepLastResult:true });
-      ensureShufflePlan(true); // ✅ làm lại => shuffle lại nếu bật
-    }else{
-      ensureShufflePlan(false);
+    // nếu đã submit trước đó mà còn state cũ => bắt đầu attempt mới
+    if(state.finalized){
+      resetForNewAttempt({reshuffle:true});
     }
-
     view.started = true;
     renderQuiz();
     scrollToHashIfAny();
   };
-
   if(hasResult){
     document.getElementById("btnViewResult").onclick = ()=>goResult();
   }
@@ -1417,9 +1435,7 @@ function renderQuiz(){
   syncActionbar();
   setUserCorner(me);
 
-  const items = orderedItems();
-
-  if(!items.length){
+  if(!QUIZ.items.length){
     content.innerHTML = `
       <div class="card">
         <div class="row1">
@@ -1432,20 +1448,24 @@ function renderQuiz(){
     return;
   }
 
+  // ✅ đảm bảo shuffle cho attempt hiện tại
+  ensureShuffle({force:false});
+
+  const items = getViewItems();
   let html = "";
+
   items.forEach((q, idx)=>{
     const t = qTypeOf(q);
     const img = String(q.meta?.image_url || q.meta?.image || q.meta?.img || "").trim();
 
-    // ✅ chỉ essay mới có check
-    const ck = state.checked[q.id];
-    const locked = (t === "essay") && !!(ck && ck.locked);
-    const showCheck = (t === "essay") && !state.finalized;
+    const allowCheck = (t === "essay");      // ✅ chỉ essay có check
+    const ck = allowCheck ? state.checked[q.id] : null;
+    const locked = state.finalized || (allowCheck && ck && ck.locked);
 
     html += `
       <div class="card" id="q${q.id}">
         <div class="row1">
-          <p class="vi">Câu ${idx+1} <span class="muted">(${escapeHtml(t)})</span></p>
+          <p class="vi">Câu ${idx+1}</p>
           <div class="meta"><span class="idx">#${idx+1}</span></div>
         </div>
 
@@ -1453,48 +1473,51 @@ function renderQuiz(){
 
         ${img ? `<img class="qImgThumb" data-img="${escapeHtml(img)}" src="${escapeHtml(img)}" alt="image">` : ``}
 
-        ${t==="mcq1" || t==="mcq" ? renderMcq(q) : ``}
+        ${t==="mcq1" || t==="mcq" ? renderMcq(q, locked) : ``}
         ${t==="essay" ? renderEssay(q, locked) : ``}
-        ${t==="short4" ? renderShort4(q) : ``}
-        ${t==="tf4" ? renderTf4(q) : ``}
+        ${t==="short4" ? renderShort4(q, locked) : ``}
+        ${t==="tf4" ? renderTf4(q, locked) : ``}
 
-        ${showCheck ? `
+        ${allowCheck ? `
           <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap">
-            <button class="btn btn-primary btn-check" data-check="${q.id}" ${locked ? "disabled":""}>${locked?"Đã check":"Check"}</button>
+            <button class="btn btn-primary" data-check="${q.id}" ${locked ? "disabled":""} type="button">${locked?"Đã check":"Check"}</button>
+          </div>
+          <div class="essayResultHolder" data-essay-result="${q.id}">
+            ${locked && ck ? `
+              <div class="resultRow">
+                <div>${ck.ok ? `<span class="oktxt">ĐÚNG</span>` : `<span class="badtxt">SAI</span>`}</div>
+                <div><span class="muted">${escapeHtml(ck.expected||"")}</span></div>
+              </div>
+            ` : ``}
           </div>
         ` : ``}
-
-        ${(showCheck && locked) ? `
-          <div class="resultRow">
-            <div>${ck.ok ? `<span class="oktxt">ĐÚNG</span>` : `<span class="badtxt">SAI</span>`}</div>
-            <div><span class="muted">${escapeHtml(ck.expected||"")}</span></div>
-          </div>` : ``}
       </div>
     `;
   });
 
   content.innerHTML = html;
 
-  // ✅ render LaTeX sau khi vẽ xong
-  applyMath();
+  // ✅ render math 1 lần
+  applyMath(content);
 
   updateStats();
 }
 
-function renderMcq(q){
-  const optsRaw = Array.isArray(q.meta?.options) ? q.meta.options : ["","","",""];
-  const order = optOrderFor(q); // display position -> origIndex (1..4)
+function renderMcq(q, locked){
+  const opts = Array.isArray(q.meta?.options) ? q.meta.options : ["","","",""];
+  const perm = getMcqPerm(q.id); // display -> origIdx
   const userOrig = Number(state.answers[q.id] || 0);
 
   return `
     <div class="optGrid" role="group" aria-label="options">
-      ${[0,1,2,3].map(pos=>{
-        const orig = Number(order[pos] || (pos+1));
-        const letter = "ABCD"[pos];
-        const text = String(optsRaw[orig-1] ?? "");
-        const active = (userOrig === orig);
+      ${[0,1,2,3].map(d=>{
+        const origIdx = perm[d] ?? d;
+        const origAns = origIdx + 1; // 1..4
+        const letter = "ABCD"[d];
+        const text = String(opts[origIdx] ?? "");
+        const active = (userOrig === origAns);
         return `
-          <button class="optBtn ${active?"active":""}" data-mcq="${q.id}" data-v="${orig}" type="button">
+          <button class="optBtn ${active?"active":""}" data-mcq="${q.id}" data-orig="${origAns}" ${locked?"disabled":""} type="button">
             <span class="optKey">${letter}</span>${escapeHtml(text)}
           </button>
         `;
@@ -1510,40 +1533,34 @@ function renderEssay(q, locked){
     </div>
   `;
 }
-function renderShort4(q){
+function renderShort4(q, locked){
   const raw = String(state.answers[q.id] || "");
   const chars = [raw[0]||"", raw[1]||"", raw[2]||"", raw[3]||""];
-  const keys = ["-",
-                ",",
-                "0","1","2","3","4",
-                "5","6","7","8","9",
-                "<","CLR"];
   return `
     <div style="margin-top:10px">
-      <div class="muted">4 ô: dùng bàn phím dưới ( - chỉ ở ô 1, ô 1 không được là dấu phẩy ).</div>
-
-      <div class="boxes4" data-s4wrap="${q.id}">
+      <div class="muted">Nhập 4 ô (0-9, dấu -, dấu ,).</div>
+      <div class="boxes4">
         ${chars.map((c,i)=>`
-          <input class="input boxDigit short4Box"
-            data-s4box="${q.id}" data-k="${i}"
-            maxlength="1" inputmode="none" readonly
-            value="${escapeHtml(c)}"
-          />
+          <input class="input boxDigit short4" data-id="${q.id}" data-k="${i}" maxlength="1" inputmode="text"
+            value="${escapeHtml(c)}" ${locked?"disabled":""}/>
         `).join("")}
       </div>
 
-      <div class="s4Pad" data-s4pad="${q.id}">
-        ${keys.map(k=>{
-          const isSmall = (k==="CLR" || k==="<");
-          return `<button type="button" class="s4Key ${isSmall?"small":""}" data-s4key="${escapeHtml(k)}" data-s4id="${q.id}">${escapeHtml(k)}</button>`;
-        }).join("")}
+      <div class="keypad4" role="group" aria-label="short4 keypad">
+        <button class="kpBtn" data-kpid="${q.id}" data-kpkey="-" ${locked?"disabled":""} type="button">-</button>
+        <button class="kpBtn" data-kpid="${q.id}" data-kpkey="," ${locked?"disabled":""} type="button">,</button>
+        ${["0","1","2","3","4","5","6","7","8","9"].map(x=>`
+          <button class="kpBtn" data-kpid="${q.id}" data-kpkey="${x}" ${locked?"disabled":""} type="button">${x}</button>
+        `).join("")}
+        <button class="kpBtn small" data-kpid="${q.id}" data-kpkey="<" ${locked?"disabled":""} type="button">&lt;</button>
+        <button class="kpBtn small" data-kpid="${q.id}" data-kpkey="CLR" ${locked?"disabled":""} type="button">CLR</button>
       </div>
     </div>
   `;
 }
-function renderTf4(q){
+function renderTf4(q, locked){
   const stmts = Array.isArray(q.meta?.statements) ? q.meta.statements : ["","","",""];
-  const user = Array.isArray(state.answers[q.id]) ? state.answers[q.id] : [null,null,null,null];
+  const user = Array.isArray(state.answers[q.id]) ? state.answers[q.id] : [null,null,null,null]; // ✅ mặc định TRỐNG
 
   return `
     <div class="tfList">
@@ -1554,8 +1571,8 @@ function renderTf4(q){
             <div class="tfTop">
               <div class="tfStmt"><b>${"ABCD"[i]}.</b> ${escapeHtml(s || "(trống)")}</div>
               <div class="tfBtns">
-                <button class="tfBtn ${user[i]===true?"active":""}" data-tf="${q.id}" data-k="${i}" data-v="1" type="button">Đúng</button>
-                <button class="tfBtn ${user[i]===false?"active":""}" data-tf="${q.id}" data-k="${i}" data-v="0" type="button">Sai</button>
+                <button class="tfBtn ${user[i]===true?"active":""}" data-tf="${q.id}" data-k="${i}" data-v="1" ${locked?"disabled":""} type="button">Đúng</button>
+                <button class="tfBtn ${user[i]===false?"active":""}" data-tf="${q.id}" data-k="${i}" data-v="0" ${locked?"disabled":""} type="button">Sai</button>
               </div>
             </div>
           </div>
@@ -1575,74 +1592,16 @@ function scrollToHashIfAny(){
   }, 80);
 }
 
-/* ================== EVENTS ================== */
-function short4ArrFromState(id){
-  const raw = String(state.answers[id] || "");
-  return [raw[0]||"", raw[1]||"", raw[2]||"", raw[3]||""];
-}
-function short4CanPlace(arr, idx, key){
-  if(idx < 0 || idx > 3) return false;
+/* ================== EVENTS (NO JUMP) ================== */
+let SHORT4_FOCUS = { id: null, k: 0 };
 
-  // '-' chỉ được ở ô đầu tiên và chỉ khi ô đầu tiên đang trống
-  if(key === "-"){
-    return idx === 0 && (arr[0] === "");
+content.addEventListener("focusin",(e)=>{
+  const t = e.target;
+  if(t && t.classList && t.classList.contains("short4")){
+    SHORT4_FOCUS.id = Number(t.getAttribute("data-id"));
+    SHORT4_FOCUS.k = Number(t.getAttribute("data-k"));
   }
-  // ',' không được ở ô đầu tiên, và chỉ 1 dấu ',' trong 4 ô
-  if(key === ","){
-    if(idx === 0) return false;
-    if(arr.includes(",")) return false;
-    return true;
-  }
-  // 0-9
-  if(/^[0-9]$/.test(key)) return true;
-
-  return false;
-}
-function short4ApplyKey(id, key){
-  id = Number(id);
-  if(!id) return;
-
-  let arr = short4ArrFromState(id);
-
-  if(key === "CLR"){
-    arr = ["","","",""];
-    state.answers[id] = "";
-    saveLocalProgress();
-    renderQuiz();
-    return;
-  }
-
-  if(key === "<"){
-    // xóa ô cuối cùng đang có ký tự
-    let last = -1;
-    for(let i=3;i>=0;i--){
-      if(arr[i] !== ""){ last = i; break; }
-    }
-    if(last >= 0){
-      arr[last] = "";
-      state.answers[id] = arr.join("");
-      saveLocalProgress();
-      renderQuiz();
-    }
-    return;
-  }
-
-  // điền theo thứ tự: tìm ô trống đầu tiên
-  let idx = arr.findIndex(x=>x==="");
-  if(idx < 0) return; // full rồi thì bỏ qua
-
-  // ràng buộc: ô đầu tiên không được là dấu phẩy (đã chặn),
-  // dấu '-' chỉ ở ô 0 (đã chặn).
-  if(!short4CanPlace(arr, idx, key)) return;
-
-  arr[idx] = key;
-
-  // thêm ràng buộc: nếu ô 0 là '-' thì ô 0 không thể là ',' (đã ok),
-  // và ô 0 không được chứa ',' (đã ok).
-  state.answers[id] = arr.join("");
-  saveLocalProgress();
-  renderQuiz();
-}
+},{passive:true});
 
 content.addEventListener("click", (e)=>{
   const img = e.target.closest("[data-img]");
@@ -1651,46 +1610,143 @@ content.addEventListener("click", (e)=>{
     return;
   }
 
-  // short4 keypad
-  const s4 = e.target.closest("[data-s4key]");
-  if(s4){
-    const id = Number(s4.getAttribute("data-s4id"));
-    const key = String(s4.getAttribute("data-s4key") || "");
-    short4ApplyKey(id, key);
-    return;
-  }
-
+  // ✅ MCQ: update DOM tại chỗ => không renderQuiz() => không nhảy
   const mcq = e.target.closest("[data-mcq]");
   if(mcq){
     const id = Number(mcq.getAttribute("data-mcq"));
-    const orig = Number(mcq.getAttribute("data-v")); // ✅ lưu theo index gốc (để grading đúng dù shuffle)
+    const orig = Number(mcq.getAttribute("data-orig")); // 1..4 theo ORIGINAL
     state.answers[id] = orig;
     saveLocalProgress();
-    renderQuiz();
+    updateStats();
+
+    const card = mcq.closest(".card");
+    if(card){
+      card.querySelectorAll(`[data-mcq="${id}"]`).forEach(btn=>{
+        const o = Number(btn.getAttribute("data-orig"));
+        btn.classList.toggle("active", o === orig);
+      });
+    }
     return;
   }
 
+  // ✅ TF4: mặc định null, chọn mới set true/false, update DOM tại chỗ
   const tf = e.target.closest("[data-tf]");
   if(tf){
     const id = Number(tf.getAttribute("data-tf"));
     const k = Number(tf.getAttribute("data-k"));
     const v = (tf.getAttribute("data-v")==="1");
+
     const cur = Array.isArray(state.answers[id]) ? state.answers[id].slice(0,4) : [null,null,null,null];
+    while(cur.length < 4) cur.push(null);
     cur[k] = v;
     state.answers[id] = cur;
+
     saveLocalProgress();
-    renderQuiz();
+    updateStats();
+
+    const card = tf.closest(".card");
+    if(card){
+      card.querySelectorAll(`[data-tf="${id}"][data-k="${k}"]`).forEach(btn=>{
+        const bv = (btn.getAttribute("data-v")==="1");
+        btn.classList.toggle("active", bv === v);
+      });
+    }
     return;
   }
 
-  // ✅ chỉ essay mới có check
+  // ✅ short4 keypad
+  const kp = e.target.closest("[data-kpid][data-kpkey]");
+  if(kp){
+    const id = Number(kp.getAttribute("data-kpid"));
+    const key = String(kp.getAttribute("data-kpkey")||"");
+    const card = kp.closest(".card");
+    if(!card) return;
+
+    // locked?
+    if(state.finalized) return;
+
+    const raw = String(state.answers[id] || "");
+    const arr = [raw[0]||"", raw[1]||"", raw[2]||"", raw[3]||""];
+
+    let cursor = (SHORT4_FOCUS.id === id) ? Number(SHORT4_FOCUS.k||0) : arr.findIndex(x=>!x);
+    if(cursor < 0) cursor = 3;
+
+    const clamp = (n)=>Math.max(0, Math.min(3, n));
+
+    if(key === "CLR"){
+      arr[0]=arr[1]=arr[2]=arr[3]="";
+      cursor = 0;
+    }else if(key === "<"){
+      // backspace
+      cursor = clamp(cursor);
+      if(arr[cursor]){
+        arr[cursor] = "";
+      }else{
+        let j = cursor-1;
+        while(j>=0 && !arr[j]) j--;
+        if(j>=0){ arr[j]=""; cursor=j; }
+      }
+    }else{
+      // insert
+      let pos = clamp(cursor);
+      if(arr[pos]){ // tìm ô trống tiếp theo
+        let j = pos;
+        while(j<4 && arr[j]) j++;
+        if(j>=4) j = -1;
+        pos = j;
+      }
+      if(pos >= 0){
+        let ch = key;
+
+        // rule: '-' chỉ ô 0
+        if(ch === "-" && pos !== 0) ch = "";
+        // rule: ô 0 không được ','
+        if(ch === "," && pos === 0) ch = "";
+
+        if(ch){
+          // nếu '-' thì chỉ cho khi ô 0 đang trống
+          if(ch === "-" && arr[0]) ch = "";
+          if(ch){
+            arr[pos] = ch;
+            // move to next
+            let j = pos+1;
+            while(j<4 && arr[j]) j++;
+            cursor = (j<4) ? j : 3;
+          }
+        }
+      }
+    }
+
+    state.answers[id] = arr.join("");
+    saveLocalProgress();
+    updateStats();
+
+    // update DOM inputs
+    const inputs = card.querySelectorAll(`.short4[data-id="${id}"]`);
+    inputs.forEach(inp=>{
+      const k = Number(inp.getAttribute("data-k"));
+      inp.value = arr[k] || "";
+    });
+
+    // focus next
+    const next = card.querySelector(`.short4[data-id="${id}"][data-k="${cursor}"]`);
+    if(next){
+      try{ next.focus(); }catch{}
+      SHORT4_FOCUS.id = id;
+      SHORT4_FOCUS.k = cursor;
+    }
+    return;
+  }
+
+  // ✅ Essay check only
   const b = e.target.closest("[data-check]");
   if(!b) return;
 
   const id = Number(b.dataset.check);
   const q = QUIZ.items.find(x=>Number(x.id)===id);
   if(!q) return;
-  if(qTypeOf(q) !== "essay") return;
+
+  if(qTypeOf(q)!=="essay") return; // safety
 
   if(!isAnswered(q)){
     toast("Chưa làm câu này");
@@ -1701,7 +1757,25 @@ content.addEventListener("click", (e)=>{
   state.checked[id] = { ok: !!g.ok, expected: String(g.expected||""), locked:true };
   saveLocalProgress();
   toast(g.ok ? "ĐÚNG" : "SAI");
-  renderQuiz();
+
+  // update UI card only
+  const card = document.getElementById(`q${id}`);
+  if(card){
+    const input = card.querySelector(`.ans[data-id="${id}"]`);
+    if(input) input.setAttribute("disabled","disabled");
+    b.setAttribute("disabled","disabled");
+    b.textContent = "Đã check";
+
+    const holder = card.querySelector(`[data-essay-result="${id}"]`);
+    if(holder){
+      holder.innerHTML = `
+        <div class="resultRow">
+          <div>${g.ok ? `<span class="oktxt">ĐÚNG</span>` : `<span class="badtxt">SAI</span>`}</div>
+          <div><span class="muted">${escapeHtml(g.expected||"")}</span></div>
+        </div>`;
+      applyMath(holder);
+    }
+  }
 });
 
 content.addEventListener("input", (e)=>{
@@ -1720,7 +1794,70 @@ content.addEventListener("input", (e)=>{
     updateStats();
     return;
   }
+
+  if(t.classList && t.classList.contains("short4")){
+    const id = Number(t.getAttribute("data-id"));
+    const k = Number(t.getAttribute("data-k"));
+
+    // locked?
+    if(state.finalized) return;
+
+    SHORT4_FOCUS.id = id;
+    SHORT4_FOCUS.k = k;
+
+    let v = String(t.value||"");
+    v = v.replace(/[^0-9\-,]/g,"").slice(0,1);
+
+    // rule: '-' only at k=0
+    if(v === "-" && k !== 0) v = "";
+    // rule: first box cannot be comma
+    if(v === "," && k === 0) v = "";
+    // rule: '-' only if box0 empty
+    if(v === "-" && k === 0){
+      const raw0 = String(state.answers[id]||"");
+      if((raw0[0]||"") && raw0[0] !== "-") v = "";
+    }
+
+    if(t.value !== v) t.value = v;
+
+    const raw = String(state.answers[id] || "");
+    const arr = [raw[0]||"", raw[1]||"", raw[2]||"", raw[3]||""];
+    arr[k] = v || "";
+    state.answers[id] = arr.join("");
+
+    saveLocalProgress();
+    updateStats();
+
+    // auto move next if typed
+    if(v && k < 3){
+      const card = t.closest(".card");
+      const next = card && card.querySelector(`.short4[data-id="${id}"][data-k="${k+1}"]`);
+      if(next){
+        try{ next.focus(); }catch{}
+        SHORT4_FOCUS.k = k+1;
+      }
+    }
+    return;
+  }
 }, {passive:true});
+
+content.addEventListener("keydown",(e)=>{
+  const t = e.target;
+  if(!t || !t.classList || !t.classList.contains("short4")) return;
+  const id = Number(t.getAttribute("data-id"));
+  const k = Number(t.getAttribute("data-k"));
+  if(e.key === "Backspace"){
+    if(String(t.value||"") === "" && k > 0){
+      const card = t.closest(".card");
+      const prev = card && card.querySelector(`.short4[data-id="${id}"][data-k="${k-1}"]`);
+      if(prev){
+        try{ prev.focus(); }catch{}
+        SHORT4_FOCUS.id = id;
+        SHORT4_FOCUS.k = k-1;
+      }
+    }
+  }
+});
 
 btnScrollTop.onclick = ()=>{ document.getElementById("shell").scrollTo({ top:0, behavior:"smooth" }); };
 btnHome.onclick = ()=>goHome();
@@ -1734,9 +1871,8 @@ document.getElementById("btnConfirmReset").onclick = ()=>{
   resetBackdrop.classList.remove("show");
   resetBackdrop.setAttribute("aria-hidden","true");
 
-  // ✅ làm lại: xoá bài làm + shuffle lại theo setting (nếu có)
-  resetAttemptLocal({ keepLastResult:false });
-  ensureShufflePlan(true);
+  // ✅ làm lại = clear answers + reshuffle nếu quiz yêu cầu
+  resetForNewAttempt({reshuffle:true});
 
   toast("Đã làm lại");
   if(view.started) renderQuiz(); else updateStats();
@@ -1769,8 +1905,8 @@ function closeSubmitConfirm(ans){
   if(r) r(!!ans);
 }
 function getMissingItems(){
+  const items = getViewItems();
   const miss = [];
-  const items = orderedItems(); // ✅ để số câu khớp thứ tự đang hiển thị
   items.forEach((q, idx)=>{
     if(!isAnswered(q)) miss.push({ idx: idx+1, id: q.id });
   });
@@ -1778,13 +1914,12 @@ function getMissingItems(){
 }
 
 function computeFinal(){
+  const items = getViewItems();
   let earned = 0;
   let max = 0;
   let fullCorrectCount = 0;
 
   const per = [];
-  const items = orderedItems(); // ✅ theo thứ tự hiện tại
-
   for(const q of items){
     const g = gradeOne(q);
     max += g.max;
@@ -1802,8 +1937,6 @@ function computeFinal(){
 async function submitToSupabase(result){
   if(!me || !me.user_id) throw new Error("need login");
 
-  const items = orderedItems();
-
   const attemptBody = {
     quiz_id: quizId,
     user_id: me.user_id,
@@ -1816,11 +1949,11 @@ async function submitToSupabase(result){
       mode: "questions",
       quiz_id: quizId,
       shuffle_mode: QUIZ.shuffle_mode || "none",
+      order: state.order || [],
       earned: result.earned,
       max: result.max,
       per: result.per,
-      answers: state.answers || {},
-      questions: items.map(q=>({ id:q.id, no:q.no, q_type:q.q_type, prompt:q.prompt, points:q.points, meta:q.meta }))
+      answers: state.answers || {}
     }
   };
 
@@ -1842,13 +1975,11 @@ async function doSubmitNow(){
   }
 
   state.finalized = true;
+  saveLocalProgress();
 
   renderLoading("Đang tính điểm…");
   const result = computeFinal();
-  saveLocalProgress();
 
-  // Không show “check”/locked UI (vì yêu cầu chỉ essay có check),
-  // submit xong sẽ chuyển thẳng sang result.
   let attemptId = "";
   try{
     attemptId = await submitToSupabase(result);
@@ -1870,13 +2001,18 @@ async function doSubmitNow(){
     }));
   }catch{}
 
+  // ✅ sau khi nộp: vào lại là làm bài mới
+  // (giữ result trong sessionStorage để xem lại)
+  resetForNewAttempt({reshuffle:true});
+  clearLocalProgressOnly(); // xóa luôn tiến độ cũ cho chắc
+
   const qs = new URLSearchParams();
   qs.set("quiz", quizId);
   if(attemptId) qs.set("attempt", attemptId);
   location.href = `/result.html?${qs.toString()}`;
 }
 
-btnSubmit.onclick = async ()=>{
+btnSubmitBig.onclick = async ()=>{
   if(state.finalized) return;
   if(!view.started){ toast("Chưa vào làm"); return; }
 
@@ -1894,9 +2030,9 @@ btnSubmit.onclick = async ()=>{
     body = `<p><b>Bạn có muốn nộp bài không?</b></p>`;
   }else if(missCount < 5){
     const lis = miss.map(x=>`<li><b>Câu ${x.idx}</b></li>`).join("");
-    body = `<p><b>Bạn chưa làm các câu sau:</b></p><ul class="missList">${lis}</ul><p>Bạn vẫn muốn nộp chứ?</p>`;
+    body = `<p><b>Bạn chưa làm các câu sau:</b></p><ul class="missList">${lis}</ul><p>Không chọn là tính sai. Vẫn nộp chứ?</p>`;
   }else{
-    body = `<p><b>Bạn chưa làm ${missCount} câu.</b></p><p>Xác nhận nộp bài?</p>`;
+    body = `<p><b>Bạn chưa làm ${missCount} câu.</b></p><p>Không chọn là tính sai. Xác nhận nộp bài?</p>`;
   }
 
   const ok = await openSubmitConfirm(body);
@@ -1934,10 +2070,7 @@ async function loadQuiz(){
     title: q.title || "Quiz",
     sub: q.sub || "",
     require_login: (q.require_login !== false),
-    require_access_code: !!q.require_access_code,
-    shuffle_mode: String(q.shuffle_mode || "none"), // ✅ dùng theo SQL
-    login_required: !!out.login_required,
-    access_code_required: !!out.access_code_required,
+    shuffle_mode: String(q.shuffle_mode || "none"), // ✅ lấy shuffle_mode từ DB
     items: items.map(x=>({
       id: Number(x.id),
       no: x.no,
@@ -1968,15 +2101,19 @@ async function enterAfterAuth(out){
     setNameCache(me.username || "");
     setUserCorner(me);
 
-    // reload quiz để lấy items nếu require_login
     try{
       QUIZ = await loadQuiz();
       quizTitleEl.textContent = QUIZ.title || "Quiz";
       quizSubEl.textContent = QUIZ.sub || "";
-      ensureShufflePlan(false);
     }catch(e){
       renderLoading("Lỗi tải đề: " + (e?.message || e));
       return;
+    }
+
+    // nếu local progress đang finalized (do cache cũ) => attempt mới
+    if(state.finalized){
+      resetForNewAttempt({reshuffle:true});
+      clearLocalProgressOnly();
     }
 
     renderStart();
@@ -2025,7 +2162,9 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
   renderLoading("Đang tải quiz…");
 
   if(FLAG_RESTART){
-    resetAttemptLocal({ keepLastResult:false });
+    loadLocalProgress();
+    resetForNewAttempt({reshuffle:true});
+    clearLocalProgressOnly();
     dropFlagsFromUrl();
   }else{
     loadLocalProgress();
@@ -2039,7 +2178,7 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
     if(m2){ me = m2; setMeCache(me); }
   }
 
-  // load quiz (dùng token nếu có)
+  // load quiz
   try{
     QUIZ = await loadQuiz();
     quizTitleEl.textContent = QUIZ.title || "Quiz";
@@ -2049,28 +2188,23 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
     return;
   }
 
-  // ✅ nếu local đang là “đã nộp” (bản cũ): vào là làm bài mới (reset) nhưng vẫn giữ link kết quả
+  // ✅ nếu cache cũ đã finalized -> vào lại là attempt mới
   if(state.finalized){
-    resetAttemptLocal({ keepLastResult:true });
+    resetForNewAttempt({reshuffle:true});
+    clearLocalProgressOnly();
   }
 
-  ensureShufflePlan(false);
+  // chuẩn bị shuffle nếu quiz có mode (giữ ổn định khi "tiếp tục làm")
+  ensureShuffle({force:false});
+
   updateStats();
 
-  // ✅ quiz không require_login => KHÔNG hiện màn login
   if(!QUIZ.require_login){
     if(me && me.user_id) setUserCorner(me); else setUserCorner(null);
 
     if(FLAG_START){
       dropFlagsFromUrl();
       view.started = true;
-
-      // nếu mở thẳng start=1 mà có result cũ nhưng không có progress => vẫn là bài mới
-      if(!hasInProgress() && hasLastResult()){
-        resetAttemptLocal({ keepLastResult:true });
-        ensureShufflePlan(true);
-      }
-
       renderQuiz();
       scrollToHashIfAny();
     }else{
@@ -2079,7 +2213,6 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
     return;
   }
 
-  // quiz require_login
   if(me && me.user_id){
     setUserCorner(me);
     renderStart();
