@@ -703,23 +703,61 @@ let QUESTIONS = [];       // array of {type,prompt,answers,points,meta}
 
 let ACTIVE_TEXTAREA = null;
 
+/* ================== NO-LOGIN-IN-ADMIN ================== */
+/* Admin panel chỉ dùng phiên đăng nhập từ trang chủ (TOKEN_KEY). */
+function renderNeedLogin(msg){
+  gate.innerHTML = `
+    <div class="row1">
+      <p class="vi" style="margin:0">Chưa đăng nhập</p>
+      <span class="idx warn">${esc(msg || "Bạn cần đăng nhập ở trang chủ")}</span>
+    </div>
+
+    <div class="hint" style="margin-top:8px">
+      Admin panel <b>không</b> đăng nhập ở đây nữa.<br>
+      Vui lòng đăng nhập tài khoản <b>tuankhoi</b> ở trang chủ, rồi mở lại <code>/admin.html</code>.
+    </div>
+
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn btn-primary" id="btnGoHome" type="button">🏠 Về trang chủ</button>
+      <button class="btn btn-ghost" id="btnClearToken" type="button">🧹 Xóa phiên</button>
+    </div>
+  `;
+
+  gate.querySelector("#btnGoHome").onclick = ()=> location.href = "/";
+  gate.querySelector("#btnClearToken").onclick = ()=>{
+    clearToken();
+    toast("Đã xóa phiên");
+    renderNeedLogin("Đã xóa token");
+  };
+}
+
 /* ================== AUTH GATE ================== */
 async function gateCheck(){
   const token = getToken();
   if(!token){
     mePill.textContent = "No login";
-    renderLoginUI("Chưa có token");
+    renderNeedLogin("Chưa có phiên đăng nhập");
     return false;
   }
+
   try{
-    const meOut = await rpc(RPC.me,{p_token:token});
+    // api_me sẽ auto gia hạn token ở DB (SQL bên dưới)
+    const meOut = await rpc(RPC.me, { p_token: token });
+
     if(!meOut?.ok) throw new Error(meOut?.error || "not logged");
     ME = meOut.me;
 
-    const isAdmin = (String(ME.role||"").toLowerCase()==="admin") || (String(ME.username||"").toLowerCase()==="tuankhoi");
+    // (Optional) nếu sau này api_me trả thêm token mới thì set lại
+    if(meOut.token) setToken(meOut.token);
+
+    const isAdmin =
+      (String(ME.role||"").toLowerCase()==="admin") ||
+      (String(ME.username||"").toLowerCase()==="tuankhoi");
+
     if(!isAdmin){
       mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="idx warn">NOT ADMIN</span>`;
-      gate.innerHTML = `Bạn không phải admin. <button class="btn btn-ghost" id="btnLogoutGate" type="button">Logout</button>`;
+      gate.innerHTML = `Bạn không phải admin.
+        <button class="btn btn-ghost" id="btnLogoutGate" type="button">Logout</button>`;
       gate.querySelector("#btnLogoutGate").onclick = doLogout;
       return false;
     }
@@ -727,20 +765,24 @@ async function gateCheck(){
     mePill.innerHTML = `
       Xin chào <b>${esc(ME.username)}</b>
       <span class="badge-admin">ADMIN</span>
-      <button class="btn btn-ghost" id="btnLogoutTop" type="button" style="padding:8px 10px;box-shadow:none">Logout</button>
+      <button class="btn btn-ghost" id="btnLogoutTop" type="button"
+        style="padding:8px 10px;box-shadow:none">Logout</button>
     `;
     mePill.querySelector("#btnLogoutTop").onclick = doLogout;
 
     gate.innerHTML = `<span class="idx ok">OK</span> Admin: <b>${esc(ME.username)}</b>`;
     app.style.display = "";
     return true;
+
   }catch(e){
-    mePill.textContent = "Login error";
-    renderLoginUI("Token lỗi / hết hạn: " + (e.message||""));
+    // token lỗi => xóa và bắt login lại ở trang chủ
+    clearToken();
+    mePill.textContent = "Login required";
+    renderNeedLogin("Phiên hết hạn / token lỗi: " + (e.message||""));
     return false;
   }
 }
-
+  
 /* ================== QUIZ FORM ================== */
 const quizIdEl = document.getElementById("quizId");
 const titleEl = document.getElementById("title");
