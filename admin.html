@@ -514,7 +514,12 @@ const TOKEN_KEY = "tk_token_v2";
 
 /* RPC names */
 const RPC = {
+  // auth
   me: "api_me",
+  loginPin: "api_login_pin",
+  logout: "api_logout",
+
+  // quizzes
   adminUpsertQuiz: "admin_upsert_quiz",
   adminListQuizzes: "admin_list_quizzes",
   adminDeleteQuiz: "admin_delete_quiz",
@@ -522,6 +527,7 @@ const RPC = {
   adminReplaceQuestions: "admin_replace_questions",
   adminImportQuestions: "admin_import_questions",
 
+  // users
   adminListUsers: "admin_list_users",
   adminDeleteUser: "admin_delete_user",
   adminForceRename: "admin_force_rename",
@@ -540,6 +546,8 @@ function esc(s){
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
 function getToken(){ return (localStorage.getItem(TOKEN_KEY) || "").trim(); }
+function setToken(t){ localStorage.setItem(TOKEN_KEY, String(t||"").trim()); }
+function clearToken(){ localStorage.removeItem(TOKEN_KEY); }
 function normalizeQuizId(x){
   x = String(x||"").trim().toLowerCase();
   x = x.replace(/[^a-z]/g,"").slice(0,5);
@@ -665,32 +673,127 @@ function tryLoadDraft(qid){
   try{ return JSON.parse(raw); }catch{ return null; }
 }
 
+/* ================== SIMPLE LOGIN UI (PIN) ================== */
+function renderLoginUI(msg){
+  const lastU = localStorage.getItem("admin_last_username") || "tuankhoi";
+  gate.innerHTML = `
+    <div class="row1">
+      <p class="vi" style="margin:0">Đăng nhập Admin</p>
+      <span class="idx warn">${esc(msg || "Chưa đăng nhập")}</span>
+    </div>
+
+    <div class="hint" style="margin-top:8px">
+      Nhập <b>username</b> + <b>PIN 6 số</b>. Token sẽ tự lưu (bạn không cần quan tâm).
+    </div>
+
+    <div class="grid2" style="margin-top:12px">
+      <div>
+        <label>Username</label>
+        <input class="input mono" id="loginUsername" placeholder="tuankhoi" value="${esc(lastU)}" autocomplete="username" />
+      </div>
+      <div>
+        <label>PIN (6 số)</label>
+        <input class="input mono" id="loginPin" placeholder="072008" inputmode="numeric" maxlength="6" autocomplete="one-time-code" />
+      </div>
+    </div>
+
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn btn-ghost" id="btnClearToken" type="button">🧹 Xóa login</button>
+      <button class="btn btn-primary" id="btnDoLogin" type="button">🔓 Vào Admin</button>
+    </div>
+  `;
+
+  const uEl = gate.querySelector("#loginUsername");
+  const pEl = gate.querySelector("#loginPin");
+
+  pEl.addEventListener("input", ()=>{
+    pEl.value = String(pEl.value||"").replace(/[^0-9]/g,"").slice(0,6);
+  }, {passive:true});
+
+  gate.querySelector("#btnClearToken").onclick = ()=>{
+    clearToken();
+    toast("Đã xóa login");
+    renderLoginUI("Đã xóa token");
+  };
+
+  gate.querySelector("#btnDoLogin").onclick = ()=>doLoginPin();
+
+  pEl.addEventListener("keydown",(e)=>{
+    if(e.key==="Enter") doLoginPin();
+  });
+  uEl.addEventListener("keydown",(e)=>{
+    if(e.key==="Enter") doLoginPin();
+  });
+}
+
+async function doLoginPin(){
+  const u = (gate.querySelector("#loginUsername")?.value || "").trim().toLowerCase();
+  const pin = (gate.querySelector("#loginPin")?.value || "").trim();
+  if(!u) return toast("Thiếu username");
+  if(!/^[0-9]{6}$/.test(pin)) return toast("PIN phải đúng 6 số (vd: 072008)");
+
+  try{
+    gate.querySelector("#btnDoLogin").setAttribute("disabled","disabled");
+    const out = await rpc(RPC.loginPin, { p_username: u, p_pin: pin });
+    if(!out?.ok) throw new Error(out?.error || "login failed");
+    if(!out?.token) throw new Error("RPC không trả token");
+
+    setToken(out.token);
+    localStorage.setItem("admin_last_username", u);
+
+    toast("Login OK");
+    await boot(); // chạy vào panel
+  }catch(e){
+    toast(e.message || "Login error");
+    renderLoginUI(e.message || "Login error");
+  }finally{
+    try{ gate.querySelector("#btnDoLogin")?.removeAttribute("disabled"); }catch{}
+  }
+}
+
+async function doLogout(){
+  const tk = getToken();
+  clearToken();
+  try{ if(tk) await rpc(RPC.logout, { p_token: tk }); }catch{}
+  app.style.display = "none";
+  mePill.textContent = "Logged out";
+  renderLoginUI("Bạn đã logout");
+}
+
 /* ================== AUTH GATE ================== */
 async function gateCheck(){
   const token = getToken();
   if(!token){
-    gate.innerHTML = `Bạn chưa login. Vào <a href="/">trang chủ</a> để login admin.`;
-    mePill.textContent = "No token";
+    mePill.textContent = "No login";
+    renderLoginUI("Chưa có token");
     return false;
   }
   try{
     const meOut = await rpc(RPC.me,{p_token:token});
-    if(!meOut.ok) throw new Error(meOut.error||"not logged");
+    if(!meOut?.ok) throw new Error(meOut?.error || "not logged");
     ME = meOut.me;
 
-    // schema: app_users.role ∈ {user, admin}
     const isAdmin = (String(ME.role||"").toLowerCase()==="admin") || (String(ME.username||"").toLowerCase()==="tuankhoi");
-    mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="badge-admin">ADMIN</span>`;
     if(!isAdmin){
-      gate.textContent = "Bạn không phải admin.";
+      mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="idx warn">NOT ADMIN</span>`;
+      gate.innerHTML = `Bạn không phải admin. <button class="btn btn-ghost" id="btnLogoutGate" type="button">Logout</button>`;
+      gate.querySelector("#btnLogoutGate").onclick = doLogout;
       return false;
     }
+
+    mePill.innerHTML = `
+      Xin chào <b>${esc(ME.username)}</b>
+      <span class="badge-admin">ADMIN</span>
+      <button class="btn btn-ghost" id="btnLogoutTop" type="button" style="padding:8px 10px;box-shadow:none">Logout</button>
+    `;
+    mePill.querySelector("#btnLogoutTop").onclick = doLogout;
+
     gate.innerHTML = `<span class="idx ok">OK</span> Admin: <b>${esc(ME.username)}</b>`;
     app.style.display = "";
     return true;
   }catch(e){
-    gate.innerHTML = `Lỗi gate: ${esc(e.message)}. Về <a href="/">trang chủ</a> để login lại.`;
-    mePill.textContent = "Gate error";
+    mePill.textContent = "Login error";
+    renderLoginUI("Token lỗi / hết hạn: " + (e.message||""));
     return false;
   }
 }
@@ -1357,7 +1460,6 @@ async function saveQuizOnly(){
   }
   if(!qid || qid.length!==5) throw new Error("Quiz ID phải đúng 5 chữ a-z");
 
-  // ✅ Schema quizzes có is_hidden, không có shuffle_mode
   const payload = {
     p_token: token,
     p_quiz_id: qid,
@@ -1369,7 +1471,7 @@ async function saveQuizOnly(){
     p_require_login: (requireLoginEl.value === "true"),
     p_pinned: (pinnedEl.value === "true"),
     p_require_access_code: (requireCodeEl.value === "true"),
-    p_access_code: accessCodeEl.value.trim(), // function sẽ hash vào access_code_hash
+    p_access_code: accessCodeEl.value.trim(),
     p_scoring_mode: scoringModeEl.value,
     p_total_score: Number(totalScoreEl.value || "10") || 10
   };
@@ -1404,10 +1506,9 @@ async function publishAll(){
     const qid = await saveQuizOnly();
     const token = getToken();
 
-    // ✅ Schema questions: (quiz_id, no, q_type, prompt, answers, points, meta)
     const items = applyScoring(QUESTIONS).map((q, idx)=>({
       no: idx+1,
-      q_type: q.type, // ✅ q_type
+      q_type: q.type,
       prompt: (q.prompt||"").trim(),
       answers: Array.isArray(q.answers)?q.answers:[],
       points: q.points ?? 0,
@@ -1547,14 +1648,11 @@ async function loadQuizToForm(qid){
     }
   }
 
-  // load questions from DB
   QUESTIONS = [];
   try{
     const token = getToken();
     const out = await rpc(RPC.adminGetQuestions,{p_token: token, p_quiz_id: qid});
     const items = out.items || [];
-
-    // ✅ map schema q_type -> UI type
     QUESTIONS = items.map(x=>({
       type: x.q_type || x.type || "mcq1",
       prompt: x.prompt || "",
@@ -1562,9 +1660,7 @@ async function loadQuizToForm(qid){
       points: x.points ?? null,
       meta: x.meta || {}
     }));
-  }catch{
-    // ignore if function missing
-  }
+  }catch{}
   renderQuestions();
   saveDraftSoon();
 
@@ -1643,7 +1739,7 @@ async function renameUser(id){
   await reloadUsers();
 }
 async function resetPin(id){
-  const pin = prompt("Set new PIN (4-6 digits).");
+  const pin = prompt("Set new PIN (6 digits, ví dụ 072008).");
   if(!pin) return;
   const token = getToken();
   await rpc(RPC.adminForceSetPin,{p_token:token, p_user_id:id, p_new_pin:pin});
@@ -1652,14 +1748,13 @@ async function resetPin(id){
 }
 
 /* ================== BOOT ================== */
-(async ()=>{
+async function boot(){
   const ok = await gateCheck();
   if(!ok) return;
 
   setQBMode(QB_MODE || "manual");
   setLastType(LAST_QTYPE || "mcq1");
 
-  // restore NEW draft if exists
   const d = tryLoadDraft("NEW");
   if(d){
     setMode("NEW");
@@ -1695,7 +1790,9 @@ async function resetPin(id){
   await reloadQuizzes();
   await reloadUsers();
   setTab("q");
-})();
+}
+
+(async ()=>{ await boot(); })();
 </script>
 </body>
 </html>
