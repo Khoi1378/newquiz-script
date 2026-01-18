@@ -297,7 +297,7 @@
 
   <div id="shell">
     <div class="actionbar">
-      <button class="btn btn-ghost" id="btnHome">🏠 Trang chủ</button>
+      <button class="btn btn-ghost" id="btnHome">Trang chủ</button>
       <button class="btn" id="btnScrollTop">⬆️ Lên đầu</button>
       <button class="btn btn-primary" id="btnSubmit" disabled>🏁 Nộp bài</button>
       <button class="btn btn-reset" id="btnReset">🔁 Làm lại</button>
@@ -384,7 +384,7 @@
 
       <div class="divider"></div>
       <div class="grid2">
-        <button class="btn btn-ghost" id="btnProfileHome" style="justify-content:center;">🏠 Trang chủ</button>
+        <button class="btn btn-ghost" id="btnProfileHome" style="justify-content:center;">Trang chủ</button>
         <button class="btn btn-red" id="btnLogout" style="justify-content:center;">🚪 Đăng xuất</button>
       </div>
     </div>
@@ -987,8 +987,8 @@ function renderStart(){
       </div>
 
       <div style="margin-top:12px; display:grid; gap:10px;">
-        <button class="btn btn-primary" id="btnStart" style="justify-content:center;">✅ Vào làm</button>
-        <button class="btn btn-ghost" id="btnViewResult" style="justify-content:center;">📊 Xem kết quả</button>
+        <button class="btn btn-primary" id="btnStart" style="justify-content:center;">Vào làm</button>
+        <button class="btn btn-ghost" id="btnViewResult" style="justify-content:center;">Xem lại kết quả</button>
       </div>
     </div>
   `;
@@ -1041,7 +1041,7 @@ function renderQuiz(){
 
         ${locked ? `
           <div class="resultRow">
-            <div>${ck.ok ? `<span class="oktxt">ĐÚNG ✅</span>` : `<span class="badtxt">SAI ❌</span>`}</div>
+            <div>${ck.ok ? `<span class="oktxt">ĐÚNG</span>` : `<span class="badtxt">SAI</span>`}</div>
             <div>${ck.ok ? `` : `<span class="muted">Đáp án:</span> <b>${escapeHtml(ck.expected||"")}</b>`}</div>
           </div>` : ``}
       </div>`;
