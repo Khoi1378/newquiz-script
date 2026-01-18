@@ -37,7 +37,6 @@
     #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 110px; touch-action: pan-y; }
     .wrap { max-width: 980px; margin: 0 auto; padding: 0 14px; }
 
-    /* userCorner */
     .userCorner{
       position:fixed;top:10px;left:12px;z-index:10010;
       display:none;align-items:center;gap:8px;
@@ -64,7 +63,6 @@
       white-space:nowrap;
     }
 
-    /* actionbar */
     .actionbar {
       position: sticky; top: 10px; z-index: 9999;
       display: flex; justify-content: flex-end; gap: 10px; padding: 0 14px;
@@ -234,7 +232,6 @@
       box-shadow:0 12px 24px rgba(0,0,0,.10);
     }
 
-    /* PIN keypad */
     .pinWrap{display:grid;gap:12px}
     .pinDots{
       display:flex;justify-content:center;gap:10px;
@@ -270,7 +267,6 @@
     }
     .pinNote.error{color:var(--bad)}
 
-    /* Profile UI */
     .divider{ height:1px; background: #e5e7eb; margin: 12px 0; }
     .btn-red{
       background: var(--bad);
@@ -281,7 +277,6 @@
     .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     @media (max-width: 520px){ .grid2{ grid-template-columns: 1fr; } }
 
-    /* submit confirm list */
     .missList{ margin:10px 0 12px; padding-left:18px; color:#374151; font-weight:800; line-height:1.35; }
     .missList li{ margin:6px 0; }
 
@@ -458,14 +453,32 @@ function getMeCache(){ try{ return JSON.parse(localStorage.getItem(ME_KEY)||"nul
 function setMeCache(me){ try{ if(!me) localStorage.removeItem(ME_KEY); else localStorage.setItem(ME_KEY, JSON.stringify(me)); }catch{} }
 function setNameCache(name){ try{ if(!name) localStorage.removeItem(NAME_KEY); else localStorage.setItem(NAME_KEY, String(name)); }catch{} }
 function clearAuthLocal(){ setToken(""); setMeCache(null); }
-function parseQuizIdFromUrl(){
-  const p = location.pathname;
-  const m = p.match(/^\/q\/([^\/]+)\/?$/);
-  let id = m ? m[1] : "";
-  id = id.replace(/\.html$/i,"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
-  return id;
-}
 function goHome(){ location.href = HOME_URL; }
+
+/* ✅ FIX: quizId lấy được cả /q/index.html?quiz=abcde, #abcde, hoặc /q/abcde */
+function parseQuizIdFromUrl(){
+  // 1) query ?quiz=abcde
+  try{
+    const qs = new URLSearchParams(location.search);
+    const q = (qs.get("quiz")||"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
+    if(q && q.length===5) return q;
+  }catch{}
+
+  // 2) hash #abcde
+  const h = (location.hash||"").replace(/^#/,"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
+  if(h && h.length===5) return h;
+
+  // 3) path /q/abcde hoặc /q/abcde/
+  const p = location.pathname;
+  const m = p.match(/\/q\/([a-z]{5})(?:\/|$)/i);
+  if(m && m[1]) return String(m[1]).toLowerCase();
+
+  // 4) fallback: /q/abcde.html (nếu có)
+  const m2 = p.match(/\/q\/([a-z]{5})\.html$/i);
+  if(m2 && m2[1]) return String(m2[1]).toLowerCase();
+
+  return "";
+}
 
 /* ================== URL FLAGS (restart/start) ================== */
 const URLP = new URLSearchParams(location.search);
@@ -518,13 +531,17 @@ async function sbGet(path){
   }
   return data;
 }
-async function sbPost(path, body, { preferReturn=false } = {}){
+async function sbPost(path, body, { preferReturn=false, upsert=false } = {}){
   const headers = {
     "apikey": String(SUPABASE_ANON_KEY).trim(),
     "Authorization": "Bearer " + String(SUPABASE_ANON_KEY).trim(),
     "Content-Type":"application/json"
   };
   if(preferReturn) headers["Prefer"] = "return=representation";
+  if(upsert){
+    // PostgREST upsert
+    headers["Prefer"] = (headers["Prefer"] ? headers["Prefer"] + "," : "") + "resolution=merge-duplicates";
+  }
 
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
     method:"POST",
@@ -549,15 +566,103 @@ const btnScrollTop = document.getElementById("btnScrollTop");
 const btnSubmit = document.getElementById("btnSubmit");
 const btnReset = document.getElementById("btnReset");
 
-function syncActionbar(){
-  // Màn hình chờ (chưa vào làm): chỉ có Trang chủ
-  // Màn hình làm bài: KHÔNG có Trang chủ, còn lại hiện
-  const started = !!view.started;
+/* APP STATE */
+const quizId = parseQuizIdFromUrl();
+const PROGRESS_KEY = quizId ? `tk_progress::${quizId}` : `tk_progress::unknown`;
 
+let me = null;
+let QUIZ = { quiz_id: quizId, title:"Quiz", sub:"", items:[] };
+let view = { started:false };
+
+let state = {
+  quiz_id: quizId,
+  answers: {},
+  checked: {},
+  finalized: false,
+  attempt_id: "",
+  ts: 0
+};
+
+function syncActionbar(){
+  const started = !!view.started;
   btnHome.classList.toggle("hidden", started);
   btnScrollTop.classList.toggle("hidden", !started);
   btnSubmit.classList.toggle("hidden", !started);
   btnReset.classList.toggle("hidden", !started);
+}
+
+/* ================== SERVER PROGRESS (progress table) ================== */
+/*
+Schema:
+progress(user_id uuid, quiz_id text, updated_at timestamptz default now(), state_json jsonb)
+PK (user_id, quiz_id)
+*/
+let PROG_TIMER = null;
+function snapshotStateForServer(){
+  return {
+    quiz_id: quizId,
+    answers: state.answers || {},
+    checked: state.checked || {},
+    finalized: !!state.finalized,
+    attempt_id: state.attempt_id || "",
+    ts: Date.now()
+  };
+}
+function scheduleSaveProgressServer(){
+  if(!me || !me.user_id || !quizId) return;
+  if(PROG_TIMER) clearTimeout(PROG_TIMER);
+  PROG_TIMER = setTimeout(async ()=>{
+    try{
+      const body = {
+        user_id: me.user_id,
+        quiz_id: quizId,
+        state_json: snapshotStateForServer()
+      };
+      // upsert theo PK user_id,quiz_id
+      await sbPost(`progress?on_conflict=user_id,quiz_id`, body, { upsert:true });
+    }catch(_e){
+      // RLS có thể chặn -> ignore
+    }
+  }, 500);
+}
+async function tryLoadProgressServer(){
+  if(!me || !me.user_id || !quizId) return null;
+  try{
+    const rows = await sbGet(`progress?user_id=eq.${me.user_id}&quiz_id=eq.${quizId}&select=state_json,updated_at&limit=1`);
+    const row = Array.isArray(rows) ? rows[0] : null;
+    const sj = row?.state_json;
+    if(!sj || typeof sj !== "object") return null;
+    if(sj.quiz_id && sj.quiz_id !== quizId) return null;
+    return sj;
+  }catch(_e){
+    return null;
+  }
+}
+
+/* ================== LOCAL PROGRESS ================== */
+function hardResetProgressLocal(){
+  state.answers = {};
+  state.checked = {};
+  state.finalized = false;
+  state.attempt_id = "";
+  try{ localStorage.removeItem(PROGRESS_KEY); }catch{}
+  try{ sessionStorage.removeItem(`tk_last_result::${quizId}`); }catch{}
+  saveLocalProgress();
+  scheduleSaveProgressServer();
+}
+function loadLocalProgress(){
+  try{
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if(!raw) return;
+    const s = JSON.parse(raw);
+    if(s && s.quiz_id === quizId){
+      state = { ...state, ...s };
+    }
+  }catch{}
+}
+function saveLocalProgress(){
+  state.ts = Date.now();
+  try{ localStorage.setItem(PROGRESS_KEY, JSON.stringify(state)); }catch{}
 }
 
 /* ================== MODALS (register + pin) ================== */
@@ -753,47 +858,6 @@ function renderLoading(msg){
     </div>`;
 }
 
-/* APP STATE */
-const quizId = parseQuizIdFromUrl();
-const PROGRESS_KEY = `tk_progress::${quizId}`;
-
-let me = null;
-let QUIZ = { quiz_id: quizId, title:"Quiz", sub:"", items:[] };
-let view = { started:false };
-
-let state = {
-  quiz_id: quizId,
-  answers: {},
-  checked: {},
-  finalized: false,
-  attempt_id: "",
-  ts: 0
-};
-
-function hardResetProgressLocal(){
-  state.answers = {};
-  state.checked = {};
-  state.finalized = false;
-  state.attempt_id = "";
-  try{ localStorage.removeItem(PROGRESS_KEY); }catch{}
-  try{ sessionStorage.removeItem(`tk_last_result::${quizId}`); }catch{}
-  saveLocalProgress();
-}
-function loadLocalProgress(){
-  try{
-    const raw = localStorage.getItem(PROGRESS_KEY);
-    if(!raw) return;
-    const s = JSON.parse(raw);
-    if(s && s.quiz_id === quizId){
-      state = { ...state, ...s };
-    }
-  }catch{}
-}
-function saveLocalProgress(){
-  state.ts = Date.now();
-  try{ localStorage.setItem(PROGRESS_KEY, JSON.stringify(state)); }catch{}
-}
-
 function acceptedAnswers(item){
   const out = [];
   if(Array.isArray(item.answers)) out.push(...item.answers);
@@ -840,7 +904,6 @@ function updateStats(){
   document.getElementById("totalCount").textContent = String(total);
   document.getElementById("progressFill").style.width = total ? Math.round(answered*100/total)+"%" : "0%";
 
-  // Cho nộp ngay cả khi 0 câu (để vẫn có attempt/0 điểm), miễn là đã vào làm
   const canSubmit = !!me && !!me.user_id && !state.finalized && view.started;
   btnSubmit.disabled = !canSubmit;
   syncActionbar();
@@ -947,7 +1010,6 @@ async function onPinKey(k){
   const val = PIN.value;
   if(!/^[0-9]+$/.test(val)){ pinErrorPulse("Mật khẩu chỉ gồm số"); return; }
 
-  // LOGIN
   if(PIN.mode==="login"){
     PIN.submitting=true;
     try{
@@ -969,7 +1031,6 @@ async function onPinKey(k){
     return;
   }
 
-  // REGISTER (set pin twice)
   if(PIN.mode==="set"){
     if(PIN.step==="one"){
       PIN.first = val;
@@ -1015,7 +1076,6 @@ function goResult(){
 
 /* ================== Start / Quiz ================== */
 function renderStart(){
-  // Màn hình chờ: không có nút nào (trong content), actionbar chỉ Trang chủ
   view.started = false;
   syncActionbar();
   setUserCorner(me);
@@ -1041,7 +1101,6 @@ function renderStart(){
     </div>
   `;
 
-  // Auto: nếu đã từng làm => mở lại kết quả, còn chưa => vào làm
   setTimeout(()=>{
     if(prevAttempt && !FLAG_RESTART && !FLAG_START){
       goResult();
@@ -1122,7 +1181,6 @@ function focusNextAnswerInput(currentId){
   if(next){
     try{ next.focus(); next.scrollIntoView({ behavior:"smooth", block:"center" }); }catch{}
   }else{
-    // hết câu -> focus nút nộp
     try{ btnSubmit.focus(); }catch{}
   }
 }
@@ -1149,6 +1207,7 @@ content.addEventListener("input", (e)=>{
     return;
   }
   saveLocalProgress();
+  scheduleSaveProgressServer();
   updateStats();
 }, {passive:true});
 
@@ -1165,9 +1224,9 @@ content.addEventListener("click", (e)=>{
   const g = gradeOne(item, ans);
   state.checked[id] = { ok: !!g.ok, expected: String(g.expected||""), locked:true };
   saveLocalProgress();
+  scheduleSaveProgressServer();
   toast(g.ok ? "ĐÚNG" : "SAI");
   renderQuiz();
-  // giữ vị trí
   try{ document.querySelector(`#q${CSS.escape(String(id))}`)?.scrollIntoView({behavior:"smooth",block:"start"}); }catch{}
 });
 
@@ -1252,14 +1311,22 @@ function computeFinal(){
   const score10 = total ? Math.round((correct/total*10)*10)/10 : 0;
   return { score10, correctCount: correct, totalCount: total, wrong };
 }
+
+/* ✅ FIX theo schema: attempts KHÔNG có cột name -> bỏ name, dùng details_json */
 async function submitToSupabase(result){
   const attemptBody = {
     quiz_id: quizId,
     user_id: me.user_id,
-    name: me.username,
     score10: Number(result.score10||0),
     correct_count: Number(result.correctCount||0),
-    total_count: Number(result.totalCount||0)
+    total_count: Number(result.totalCount||0),
+    details_json: {
+      client: "q/index.html",
+      ts: Date.now(),
+      answered_count: Object.values(state.answers||{}).filter(x=>String(x||"").trim()).length,
+      // lưu nhẹ: chỉ lưu id + user_answer (tránh phình json)
+      answers: Object.entries(state.answers||{}).map(([k,v])=>({ id:Number(k), a:String(v||"").trim() }))
+    }
   };
 
   const inserted = await sbPost(`attempts?select=attempt_id,created_at`, attemptBody, { preferReturn:true });
@@ -1278,7 +1345,22 @@ async function submitToSupabase(result){
       expected: String(g.expected||"")
     };
   });
-  try{ await sbPost("attempt_answers", ansRows, { preferReturn:false }); }catch(e){}
+
+  // ✅ upsert để tránh lỗi nếu submit retry
+  try{
+    await sbPost(`attempt_answers?on_conflict=attempt_id,vocab_id`, ansRows, { upsert:true });
+  }catch(e){
+    // ignore
+  }
+
+  // sau khi submit thì clear progress server (optional)
+  try{
+    await sbPost(`progress?on_conflict=user_id,quiz_id`, {
+      user_id: me.user_id,
+      quiz_id: quizId,
+      state_json: { ...snapshotStateForServer(), finalized:true, attempt_id: attemptId }
+    }, { upsert:true });
+  }catch(_e){}
 
   return attemptId;
 }
@@ -1293,6 +1375,7 @@ async function doSubmitNow(){
   renderLoading("Đang tính điểm…");
   const result = computeFinal();
   saveLocalProgress();
+  scheduleSaveProgressServer();
 
   renderQuiz();
 
@@ -1301,6 +1384,7 @@ async function doSubmitNow(){
     attemptId = await submitToSupabase(result);
     state.attempt_id = attemptId;
     saveLocalProgress();
+    scheduleSaveProgressServer();
   }catch(e){
     toast("Không gửi được Supabase (xem kết quả vẫn OK)");
   }
@@ -1415,13 +1499,27 @@ async function enterAfterAuth(out){
   let m = out?.me || out?.user || out?.data || null;
   if(m && m.id && !m.user_id) m.user_id = m.id;
 
+  if(!m || !m.user_id){
+    const m2 = await loadMeIfAny();
+    if(m2) m = m2;
+  }
+
   if(m && m.user_id){
     me = m;
     setMeCache(m);
     setNameCache(me.username || "");
     setUserCorner(me);
 
-    // Nếu có ?start=1 thì vào làm luôn
+    // ✅ ưu tiên load progress từ server (nếu có) rồi merge vào local
+    const serverProg = await tryLoadProgressServer();
+    if(serverProg && serverProg.answers){
+      state.answers = serverProg.answers || state.answers;
+      state.checked = serverProg.checked || state.checked;
+      state.finalized = !!serverProg.finalized || state.finalized;
+      state.attempt_id = serverProg.attempt_id || state.attempt_id;
+      saveLocalProgress();
+    }
+
     if(FLAG_START && !state.finalized){
       dropFlagsFromUrl();
       view.started = true;
@@ -1431,25 +1529,8 @@ async function enterAfterAuth(out){
       renderStart();
     }
   }else{
-    const m2 = await loadMeIfAny();
-    if(m2){
-      me = m2;
-      setMeCache(m2);
-      setNameCache(me.username || "");
-      setUserCorner(me);
-
-      if(FLAG_START && !state.finalized){
-        dropFlagsFromUrl();
-        view.started = true;
-        renderQuiz();
-        scrollToHashIfAny();
-      }else{
-        renderStart();
-      }
-    }else{
-      toast("Không lấy được user");
-      renderGate();
-    }
+    toast("Không lấy được user");
+    renderGate();
   }
 }
 
@@ -1485,13 +1566,12 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
 /* ================== BOOT ================== */
 (async function boot(){
   if(!quizId || quizId.length!==5){
-    renderLoading("Sai link quiz. Dạng đúng: /q/abcde");
+    renderLoading("Thiếu quiz_id. Mở đúng dạng: /q/index.html?quiz=abcde  (hoặc /q/abcde)");
     return;
   }
 
   renderLoading("Đang tải quiz…");
 
-  // nếu từ result bấm “Làm lại” thì clear local progress ngay
   if(FLAG_RESTART){
     hardResetProgressLocal();
     dropFlagsFromUrl();
@@ -1523,6 +1603,16 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
     setUserCorner(me);
     view.started = false;
 
+    // ✅ nếu server có progress mới hơn local, ưu tiên server
+    const serverProg = await tryLoadProgressServer();
+    if(serverProg && serverProg.answers){
+      state.answers = serverProg.answers || state.answers;
+      state.checked = serverProg.checked || state.checked;
+      state.finalized = !!serverProg.finalized || state.finalized;
+      state.attempt_id = serverProg.attempt_id || state.attempt_id;
+      saveLocalProgress();
+    }
+
     if(FLAG_START && !state.finalized){
       dropFlagsFromUrl();
       view.started = true;
@@ -1538,5 +1628,6 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
   }
 })();
 </script>
+
 </body>
 </html>
