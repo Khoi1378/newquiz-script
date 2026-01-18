@@ -1907,28 +1907,41 @@ async function resetPin(id){
 }
 
 /* ================== BOOT ================== */
-(async ()=>{
-  const ok = await gateCheck();
-  if(!ok) return;
+(async () => {
+  try {
+    const ok = await gateCheck();
+    if (!ok) return;
 
-  setMode("NEW");
-  setQBMode(QB_MODE || "manual");
-  setLastType(LAST_QTYPE || "mcq1");
+    setMode("NEW");
+    setQBMode(QB_MODE || "manual");
+    setLastType(LAST_QTYPE || "mcq1");
 
-  QUESTIONS = [];
-  renderQuestions();
+    QUESTIONS = [];
+    renderQuestions();
 
-  document.getElementById("btnPublishAll2").addEventListener("click", ()=>document.getElementById("btnPublishAll").click());
+    document
+      .getElementById("btnPublishAll2")
+      ?.addEventListener("click", () =>
+        document.getElementById("btnPublishAll")?.click()
+      );
 
-  await reloadQuizzes();
-  await reloadUsers();
-  setTab("q");
+    await reloadQuizzes();
+    await reloadUsers();
+    setTab("q");
 
-  // KaTeX: đôi khi script defer chưa kịp load; render lại lần nữa
-  setTimeout(()=> {
-    document.querySelectorAll('[data-preview="1"]').forEach(pv=>katexRenderSafe(pv));
-  }, 400);
+    // KaTeX render lại lần nữa cho chắc
+    setTimeout(() => {
+      document
+        .querySelectorAll('[data-preview="1"]')
+        .forEach(pv => katexRenderSafe(pv));
+    }, 400);
+
+  } catch (e) {
+    console.error("BOOT ERROR", e);
+    toast("Boot error: " + (e.message || e));
+  }
 })();
+
 </script>
 </body>
 </html>
