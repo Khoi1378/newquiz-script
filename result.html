@@ -1049,7 +1049,9 @@ async function loadLeaderboard(){
     await loadComments();
     renderDiscussion(meForUI);
   }catch(e){
-    discussionEl.innerHTML += `<div class="muted" style="margin-top:10px">Không load được comments (kiểm tra RLS bảng public.comments).</div>`;
+  discussionEl.innerHTML += `<div class="muted" style="margin-top:10px">
+    Không load được comments: <b>${escapeHtml(e?.message || String(e))}</b>
+  </div>`;
   }
 
   btnPostRoot.addEventListener("click", async ()=>{
