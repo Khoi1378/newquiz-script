@@ -33,6 +33,11 @@
       touch-action: pan-x pan-y;
     }
 
+    /* remove underline globally */
+    a{color:inherit;text-decoration:none}
+    a:hover,a:active,a:visited{text-decoration:none}
+    a:focus-visible{outline:3px solid rgba(124,58,237,.25); outline-offset:3px; border-radius:14px}
+
     .btn,.pinKey,.btn-x{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 
     #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px;touch-action:pan-y}
@@ -84,6 +89,12 @@
     .btn-danger{background:var(--bad);color:#fff;border:0}
     .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none !important;filter:none !important}
 
+    .btn-admin{
+      background:linear-gradient(135deg,#2563eb,#22c55e);
+      color:#fff;border:0;
+      box-shadow:0 12px 24px rgba(37,99,235,.16);
+    }
+
     .topbar{
       margin-top:10px;
       background:rgba(255,255,255,.86);
@@ -104,6 +115,20 @@
     }
     .titles h1{font-size:1.02rem;margin:0;font-weight:800}
     .titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
+
+    .actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex:1 1 320px}
+    .statusPill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:9px 12px;border-radius:999px;
+      background:rgba(255,255,255,.75);
+      border:1px solid rgba(229,231,235,.9);
+      color:rgba(31,41,55,.8);
+      font-weight:800;font-size:.9rem;
+      box-shadow:0 10px 22px rgba(0,0,0,.05);
+      user-select:none;
+      max-width:72vw;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
 
     .content{padding:12px 0 0}
     .card{
@@ -127,6 +152,9 @@
     }
     .badge-code{
       background:#fff7ed;color:#9a3412;border-color:#fed7aa;
+    }
+    .badge-pin{
+      background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe;
     }
 
     .input{
@@ -244,7 +272,13 @@
             <div class="tiny">Chọn quiz để làm</div>
           </div>
         </div>
-        <div class="muted" id="statusPill">—</div>
+
+        <div class="actions">
+          <div class="statusPill" id="statusPill">—</div>
+          <a href="/admin" id="adminLinkTop" style="display:none;">
+            <button class="btn btn-admin">🛠️ Admin panel</button>
+          </a>
+        </div>
       </div>
 
       <div class="content" id="content"></div>
@@ -382,6 +416,32 @@ function isAdminUser(me){
   return me.role==="admin" || u==="tuankhoi";
 }
 
+function toTime(v){
+  const t = Date.parse(String(v||""));
+  return Number.isFinite(t) ? t : 0;
+}
+function sortQuizzes(list){
+  const arr = [...(list||[])];
+  arr.sort((a,b)=>{
+    const ap = a && a.pinned === true;
+    const bp = b && b.pinned === true;
+    if(ap !== bp) return bp ? 1 : -1; // pinned lên đầu
+    const at = Math.max(
+      toTime(a?.pinned_at || a?.pinnedAt),
+      toTime(a?.updated_at || a?.updatedAt),
+      toTime(a?.created_at || a?.createdAt)
+    );
+    const bt = Math.max(
+      toTime(b?.pinned_at || b?.pinnedAt),
+      toTime(b?.updated_at || b?.updatedAt),
+      toTime(b?.created_at || b?.createdAt)
+    );
+    if(at !== bt) return bt - at; // mới lên trên
+    return String(a?.quiz_id||"").localeCompare(String(b?.quiz_id||""));
+  });
+  return arr;
+}
+
 /* ================== SUPABASE RPC ================== */
 async function rpc(fn, args){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
@@ -403,16 +463,56 @@ async function rpc(fn, args){
   return data;
 }
 
+/* === RPC fallback để “liên hệ SQL ok” khi tên/param RPC khác nhau === */
+async function rpcTry(fns, argsList){
+  let lastErr = null;
+  for(const fn of (fns||[])){
+    for(const args of (argsList||[])){
+      try{
+        return await rpc(fn, args);
+      }catch(e){
+        lastErr = e;
+      }
+    }
+  }
+  throw (lastErr || new Error("RPC failed"));
+}
+
 const API = {
-  // api_me có thể chưa tạo; index này có fallback cache ME nên không bị loop
   me: (token)=>rpc("api_me",{p_token:token}),
   logout:(token)=>rpc("api_logout",{p_token:token}),
   checkUsername:(username)=>rpc("api_check_username",{p_username:username}),
   login:(username,pin)=>rpc("api_login",{p_username:username,p_pin:String(pin||"")}),
   register:(username,pin)=>rpc("api_register",{p_username:username,p_pin:String(pin||"")}),
   listStore:()=>rpc("api_list_public_quizzes",{}),
-  changeUsername:(token,newU)=>rpc("api_change_username",{p_token:token,p_new_username:newU}),
-  changePin:(token,oldPin,newPin)=>rpc("api_change_pin",{p_token:token,p_old_pin:String(oldPin||""),p_new_pin:String(newPin||"")})
+
+  // đổi username: thử nhiều biến thể args / function name (không sửa SQL)
+  changeUsername: async (token,newU)=>{
+    return await rpcTry(
+      ["api_change_username","api_rename_username","api_update_username"],
+      [
+        {p_token:token, p_new_username:newU},
+        {p_token:token, p_username:newU},
+        {token:token, new_username:newU},
+        {token:token, username:newU},
+      ]
+    );
+  },
+
+  // đổi pin: thử nhiều biến thể args / function name (không sửa SQL)
+  changePin: async (token,oldPin,newPin)=>{
+    const o = String(oldPin||"");
+    const n = String(newPin||"");
+    return await rpcTry(
+      ["api_change_pin","api_update_pin","api_change_password","api_change_passcode"],
+      [
+        {p_token:token, p_old_pin:o, p_new_pin:n},
+        {p_token:token, p_old:o, p_new:n},
+        {token:token, old_pin:o, new_pin:n},
+        {token:token, old:o, new:n},
+      ]
+    );
+  }
 };
 
 /* ================== STATE ================== */
@@ -420,11 +520,9 @@ let ME = null;     // { username, role }
 let STORE = [];    // list quiz
 
 function requiresLogin(q){
-  // mặc định: cần login
   const v = (q && (q.require_login ?? q.requireLogin ?? q.login_required ?? q.loginRequired ?? q.require_auth ?? q.requireAuth ?? q.requires_login ?? q.requiresLogin));
   if(typeof v === "boolean") return v;
 
-  // nếu có flag mở (không cần login) -> false
   const open = (q && (q.allow_anonymous ?? q.allowAnonymous ?? q.public_open ?? q.publicOpen ?? q.open_access ?? q.openAccess ?? q.is_open ?? q.isOpen));
   if(open === true) return false;
 
@@ -435,7 +533,6 @@ function pickPinLen(ck, username){
   const u = normUsername(username);
   if(u === "tuankhoi") return 6;
 
-  // support nhiều key do RPC có thể trả camelCase/snake_case
   const raw =
     (ck && (ck.pinLen ?? ck.pin_len ?? (ck.user && (ck.user.pinLen ?? ck.user.pin_len)) ?? ck.pin_length ?? 4));
 
@@ -449,7 +546,7 @@ function pickExists(ck){
   if(ck && typeof ck.exists === "boolean") return ck.exists;
   if(ck && ck.ok === true && typeof ck.exists === "boolean") return ck.exists;
   if(ck && ck.userId) return true;
-  return null; // unknown
+  return null;
 }
 
 /* ================== USER CORNER + PROFILE ================== */
@@ -457,12 +554,16 @@ const userCorner = document.getElementById("userCorner");
 const userCornerName = document.getElementById("userCornerName");
 const userCornerAdmin = document.getElementById("userCornerAdmin");
 const statusPill = document.getElementById("statusPill");
+const adminLinkTop = document.getElementById("adminLinkTop");
 
 const profileBackdrop = document.getElementById("profileBackdrop");
 document.getElementById("btnCloseProfile").onclick = closeProfileModal;
 profileBackdrop.addEventListener("click",(e)=>{ if(e.target===profileBackdrop) closeProfileModal(); });
 
 function updateUserCorner(){
+  const isAdmin = isAdminUser(ME);
+  adminLinkTop.style.display = (ME && ME.username && isAdmin) ? "inline-flex" : "none";
+
   if(!ME || !ME.username){
     userCorner.style.display="none";
     statusPill.textContent="Chưa đăng nhập";
@@ -470,9 +571,9 @@ function updateUserCorner(){
   }
   userCorner.style.display="inline-flex";
   userCornerName.textContent = ME.username;
-  userCornerAdmin.style.display = isAdminUser(ME) ? "inline-flex" : "none";
+  userCornerAdmin.style.display = isAdmin ? "inline-flex" : "none";
 
-  statusPill.innerHTML = `Xin chào <b>${escapeHtml(ME.username)}</b> ${isAdminUser(ME) ? `<span class="adminBadgeInline">ADMIN</span>`:""}`;
+  statusPill.innerHTML = `Xin chào <b>${escapeHtml(ME.username)}</b> ${isAdmin ? `<span class="adminBadgeInline">ADMIN</span>`:""}`;
 }
 userCorner.addEventListener("click", ()=>{ if(ME) openProfileModal(); });
 
@@ -483,11 +584,10 @@ function openProfileModal(){
   const isAdmin = isAdminUser(ME);
   document.getElementById("profileHint").textContent =
     isAdmin ? "Tài khoản admin (tuankhoi) dùng mật khẩu 6 số. Không đổi username/pin ở đây."
-            : "Bạn có thể đổi username (theo rule server) và đổi pin 4 số.";
+            : "Bạn có thể đổi username và đổi pin 4 số.";
 
   document.getElementById("newUsername").value = "";
 
-  // disable actions for admin
   document.getElementById("btnChangePin").disabled = isAdmin;
   document.getElementById("btnSaveNewUsername").disabled = isAdmin;
   document.getElementById("newUsername").disabled = isAdmin;
@@ -652,16 +752,12 @@ async function enterAfterAuth({ token, me, redirectNext=true }){
   }
   updateUserCorner();
 
-  // redirect nếu có next
-  if(redirectNext){
-    const next = safeNextPath();
-    if(next){
-      location.href = next;
-      return;
-    }
+  const next = redirectNext ? safeNextPath() : "";
+  if(next){
+    location.href = next;
+    return;
   }
 
-  // load store + render store ngay (không gọi boot() để khỏi đá về login)
   await loadStore();
   renderStore();
 }
@@ -691,21 +787,20 @@ async function onPinKey(k){
     return;
   }
 
-  // LOGIN (submit ngay)
   if(PIN.mode==="login"){
     PIN.submitting=true;
     try{
       setPinNote("Đang kiểm tra…");
       const out = await API.login(PIN.username, val);
-      if(out && out.ok && out.token){
+      if(out && out.ok && (out.token || out.session_token || out.sessionToken)){
+        const token = out.token || out.session_token || out.sessionToken;
         const me = out.me || out.user || out.profile || null;
 
         PIN.payload = val;
         closePin("ok");
 
         toast("Đăng nhập thành công");
-
-        await enterAfterAuth({ token: out.token, me, redirectNext:true });
+        await enterAfterAuth({ token, me, redirectNext:true });
         return;
       }
       pinErrorPulse(out?.error || "Sai mật khẩu");
@@ -717,7 +812,6 @@ async function onPinKey(k){
     return;
   }
 
-  // REGISTER (set pin twice)
   if(PIN.mode==="set"){
     if(PIN.step==="one"){
       PIN.first = val;
@@ -739,7 +833,6 @@ async function onPinKey(k){
     }
   }
 
-  // CHANGE PIN: old -> new -> confirm
   if(PIN.mode==="change"){
     if(PIN.step==="old"){
       PIN.old = val;
@@ -755,7 +848,6 @@ async function onPinKey(k){
       updatePinHeader(); updateDots();
       return;
     }
-    // confirm
     if(PIN.first !== val){
       pinErrorPulse("Mật khẩu mới không khớp");
       PIN.first=""; PIN.step="new1";
@@ -772,7 +864,8 @@ async function onPinKey(k){
 const content = document.getElementById("content");
 
 function renderGate(){
-  const openQuizzes = (STORE||[]).filter(q => !requiresLogin(q));
+  const openQuizzes = sortQuizzes((STORE||[]).filter(q => !requiresLogin(q)));
+
   const openSection = openQuizzes.length ? `
     <div class="card">
       <div class="row1">
@@ -780,23 +873,29 @@ function renderGate(){
         <div><span class="idx badge-open">OPEN</span></div>
       </div>
       <div style="margin-top:10px; display:grid; gap:10px;">
-        ${openQuizzes.map(q => `
-          <div class="card" style="box-shadow:none;border-width:1px;margin:0">
-            <div class="row1">
-              <div style="min-width:0">
-                <div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div>
-                <div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div>
-                <div class="muted" style="margin-top:6px">
-                  <span class="idx badge-open">KHÔNG CẦN LOGIN</span>
-                  ${q.require_access_code ? `<span class="idx badge-code">CÓ MÃ</span>` : ``}
+        ${openQuizzes.map(q => {
+          const pinBadge = q.pinned ? `<span class="idx badge-pin">📌 PINNED</span>` : ``;
+          const codeBadge = q.require_access_code ? `<span class="idx badge-code">CÓ MÃ</span>` : ``;
+          const href = `/q/${encodeURIComponent(q.quiz_id)}`;
+          return `
+            <div class="card" style="box-shadow:none;border-width:1px;margin:0">
+              <div class="row1">
+                <div style="min-width:0">
+                  <div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div>
+                  <div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div>
+                  <div class="muted" style="margin-top:6px">
+                    <span class="idx">MÃ: ${escapeHtml(q.quiz_id)}</span>
+                    <span class="idx badge-open">OPEN</span>
+                    ${pinBadge} ${codeBadge}
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+                  <a href="${href}"><button class="btn btn-primary">Vào</button></a>
                 </div>
               </div>
-              <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-                <a href="{encodeURIComponent(q.quiz_id)}"><button class="btn btn-primary">Vào quiz</button></a>
-              </div>
             </div>
-          </div>
-        `).join("")}
+          `;
+        }).join("")}
       </div>
     </div>
   ` : "";
@@ -847,7 +946,6 @@ function renderGate(){
       const exists = pickExists(ck);
       const pinLen = pickPinLen(ck, u);
 
-      // nếu server có reserved, vẫn support (không bắt buộc)
       const reserved = !!(ck && (ck.reserved === true || ck.is_reserved === true));
 
       if(exists === true && reserved === true){
@@ -873,14 +971,14 @@ function renderGate(){
 
         gateStatus.textContent="Đang tạo tài khoản…";
         const out = await API.register(u, pin);
-        if(!out || !out.ok || !out.token) throw new Error(out?.error || "register fail");
+        const token = out?.token || out?.session_token || out?.sessionToken;
+        if(!out || !out.ok || !token) throw new Error(out?.error || "register fail");
 
         toast("Đã đăng ký & đăng nhập");
-        await enterAfterAuth({ token: out.token, me: (out.me || out.user || null), redirectNext:true });
+        await enterAfterAuth({ token, me: (out.me || out.user || null), redirectNext:true });
         return;
       }
 
-      // exists unknown -> thử login luôn
       gateStatus.textContent="Không rõ trạng thái. Thử đăng nhập…";
       const forcedLen = (u==="tuankhoi") ? 6 : 4;
       await openPin({username:u, mode:"login", pinLen: forcedLen});
@@ -900,36 +998,36 @@ function renderGate(){
 function renderStore(){
   updateUserCorner();
 
-  const adminLink = (ME && isAdminUser(ME)) ? `<a href="/admin" class="muted" style="font-weight:900">Admin panel</a>` : `<span class="muted"></span>`;
+  const isAdmin = isAdminUser(ME);
+  const adminBtn = (ME && isAdmin) ? `
+    <a href="/admin"><button class="btn btn-admin">🛠️ Admin panel</button></a>
+  ` : ``;
 
   content.innerHTML = `
     <div class="card">
       <div class="row1">
         <p class="vi">Danh sách quiz</p>
-        <div>${adminLink}</div>
-      </div>
-      <div class="muted" style="margin-top:6px; line-height:1.35">
-        Mặc định: quiz <b>cần đăng nhập</b>. Quiz nào “mở” sẽ có badge <span class="idx badge-open">OPEN</span>.
+        <div style="display:flex;gap:10px;align-items:center">${adminBtn}</div>
       </div>
       <div id="storeList" style="margin-top:10px"></div>
     </div>
   `;
 
   const list = document.getElementById("storeList");
-  if(!STORE.length){
+  const sorted = sortQuizzes(STORE);
+
+  if(!sorted.length){
     list.innerHTML = `<div class="muted">Chưa có quiz public.</div>`;
     return;
   }
 
-  list.innerHTML = STORE.map(q=>{
+  list.innerHTML = sorted.map(q=>{
     const needLogin = requiresLogin(q);
     const openBadge = !needLogin ? `<span class="idx badge-open">OPEN</span>` : ``;
     const codeBadge = q.require_access_code ? `<span class="idx badge-code">CÓ MÃ</span>` : ``;
+    const pinBadge = q.pinned ? `<span class="idx badge-pin">📌 PINNED</span>` : ``;
 
     const href = `/q/${encodeURIComponent(q.quiz_id)}`;
-    const btnHtml = needLogin
-      ? `<a href="${href}"><button class="btn btn-primary">Vào</button></a>`
-      : `<a href="${href}"><button class="btn btn-primary">Vào</button></a>`;
 
     return `
       <div class="card" style="box-shadow:none;border-width:1px;margin:10px 0">
@@ -938,12 +1036,12 @@ function renderStore(){
             <div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div>
             <div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div>
             <div class="muted" style="margin-top:6px">
-              <span class="idx">/q/${escapeHtml(q.quiz_id)}</span>
-              ${openBadge} ${codeBadge}
+              <span class="idx">MÃ: ${escapeHtml(q.quiz_id)}</span>
+              ${openBadge} ${pinBadge} ${codeBadge}
             </div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-            ${btnHtml}
+            <a href="${href}"><button class="btn btn-primary">Vào</button></a>
           </div>
         </div>
       </div>
@@ -987,9 +1085,9 @@ document.getElementById("btnSaveNewUsername").onclick = async ()=>{
 
   try{
     const out = await API.changeUsername(getToken(), newU);
-    if(!out || !out.ok) throw new Error(out?.error || "rename fail");
+    if(!out || out.ok === false) throw new Error(out?.error || out?.message || "rename fail");
 
-    const me2 = out.me || out.user || { username: newU, role: ME.role || "user" };
+    const me2 = out.me || out.user || out.profile || { username: newU, role: ME.role || "user" };
     ME = me2;
     setMeCache(me2);
 
@@ -1009,27 +1107,24 @@ document.getElementById("btnChangePin").onclick = async ()=>{
   try{
     const payload = await openPin({username: ME.username, mode:"change", pinLen:4});
     const out = await API.changePin(getToken(), payload.oldPin, payload.newPin);
-    if(!out || !out.ok) throw new Error(out?.error || "change pin fail");
+    if(!out || out.ok === false) throw new Error(out?.error || out?.message || "change pin fail");
 
     toast("Đã đổi mật khẩu");
     closeProfileModal();
   }catch(e){
-    if(!(e && e.message==="cancel")) toast("Đổi mật khẩu lỗi");
+    if(!(e && e.message==="cancel")) toast(e.message || "Đổi mật khẩu lỗi");
   }
 };
 
 /* ================== BOOT ================== */
 async function boot(){
-  // load store (public) trước để gate có thể show quiz mở
   await loadStore();
 
-  // auth restore
   ME = getMeCache();
   updateUserCorner();
 
   const t = getToken();
 
-  // nếu có token mà chưa có ME cache -> thử gọi api_me (nếu có)
   if(t && (!ME || !ME.username)){
     try{
       const meOut = await API.me(t);
@@ -1037,10 +1132,7 @@ async function boot(){
         ME = meOut.me;
         setMeCache(ME);
       }
-    }catch{
-      // không clear token ở đây để tránh vòng lặp khó chịu
-      // (nếu api_me chưa tạo / lỗi, vẫn cho user login lại khi cần)
-    }
+    }catch{}
   }
 
   updateUserCorner();
