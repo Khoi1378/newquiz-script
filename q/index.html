@@ -683,6 +683,7 @@ function parseQuizIdFromUrl(){
 
 /* ================== URL FLAGS ================== */
 const URLP = new URLSearchParams(location.search);
+const FORCE_SHUFFLE = normShuffleMode(URLP.get("shuffle") || URLP.get("sm") || "");
 const FLAG_START = (URLP.get("start")==="1");
 const FLAG_RESTART = (URLP.get("restart")==="1");
 function dropFlagsFromUrl(){
@@ -724,7 +725,43 @@ async function sbPost(path, body, { preferReturn=false, upsert=false } = {}){
   if(upsert){
     headers["Prefer"] = (headers["Prefer"] ? headers["Prefer"] + "," : "") + "resolution=merge-duplicates";
   }
+  const SHUFFLE_ALLOWED = new Set(["none","q","qa"]);
+function normShuffleMode(x){
+  const m = String(x ?? "").toLowerCase().trim();
+  return SHUFFLE_ALLOWED.has(m) ? m : "";
+}
 
+async function sbGet(path){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
+    method:"GET",
+    headers:{
+      "apikey": String(SUPABASE_ANON_KEY).trim(),
+      "Authorization": "Bearer " + String(SUPABASE_ANON_KEY).trim(),
+      "Accept": "application/json"
+    }
+  });
+  const txt = await res.text();
+  let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
+  if(!res.ok){
+    const msg = (data && (data.message||data.error||data.hint||data.details))
+      ? (data.message||data.error||data.hint||data.details)
+      : txt;
+    throw new Error(msg || "REST GET error");
+  }
+  return data;
+}
+
+async function fetchShuffleModeFromQuizzesTable(qid){
+  try{
+    // đọc trực tiếp cột quizzes.shuffle_mode (READ ONLY)
+    const rows = await sbGet(`quizzes?select=shuffle_mode&quiz_id=eq.${encodeURIComponent(qid)}&limit=1`);
+    const m = normShuffleMode(rows?.[0]?.shuffle_mode);
+    return m || "";
+  }catch{
+    return "";
+  }
+}
+  
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
     method:"POST",
     headers,
@@ -2065,12 +2102,30 @@ async function loadQuiz(){
   const q = out.quiz || {};
   const items = Array.isArray(out.items) ? out.items : [];
 
+  // 1) thử lấy từ RPC (nhiều key khác nhau phòng RPC đổi tên field)
+  let sm =
+    normShuffleMode(q.shuffle_mode) ||
+    normShuffleMode(q.shuffleMode) ||
+    normShuffleMode(q.shuffle) ||
+    normShuffleMode(out.shuffle_mode) ||
+    normShuffleMode(out.shuffleMode) ||
+    normShuffleMode(out.shuffle);
+
+  // 2) READ-ONLY: đọc trực tiếp từ bảng quizzes để override nếu RPC không đúng
+  const direct = await fetchShuffleModeFromQuizzesTable(quizId);
+  if(direct) sm = direct;
+
+  // 3) override bằng URL nếu có (dùng để test/debug)
+  if(FORCE_SHUFFLE) sm = FORCE_SHUFFLE;
+
+  if(!sm) sm = "none";
+
   return {
     quiz_id: q.quiz_id || quizId,
     title: q.title || "Quiz",
     sub: q.sub || "",
     require_login: (q.require_login !== false),
-    shuffle_mode: String(q.shuffle_mode || "none"), // ✅ lấy shuffle_mode từ DB
+    shuffle_mode: sm,
     items: items.map(x=>({
       id: Number(x.id),
       no: x.no,
