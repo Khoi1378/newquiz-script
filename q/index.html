@@ -550,11 +550,11 @@ const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
 const RPC = {
+  getQuiz: "api_get_quiz2",
   checkUsername: "api_check_username",
   login: "api_login",
   register: "api_register",
   me: "api_me"
-  getQuiz: "api_get_quiz2",
 };
 
 const TOKEN_KEY = "tk_token_v2";
@@ -568,6 +568,12 @@ function toast(msg){
   t.classList.add("show");
   setTimeout(()=>t.classList.remove("show"), 1300);
 }
+  
+// đặt NGAY SAU toast(), chỉ 1 lần
+window.addEventListener("error", (e)=>{
+  try{ toast("JS error: " + (e?.message || "unknown")); }catch{}
+});
+  
 function escapeHtml(s){
   return String(s??"")
     .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
@@ -1749,7 +1755,11 @@ async function loadMeIfAny(){
 /* ✅ LOAD QUIZ từ quizzes + questions */
 async function loadQuiz(){
   const token = getToken() || "";
-  const out = await sbRpc(RPC.getQuiz, { p_quiz_id: quizId, p_token: token, p_access_code: "" });
+  const out = await sbRpc(RPC.getQuiz, {
+    p_quiz_id: quizId,
+    p_token: token,
+    p_access_code: ""
+  });
 
   if(!out || out.ok !== true) throw new Error(out?.error || "Không tải được quiz");
 
@@ -1764,10 +1774,10 @@ async function loadQuiz(){
     require_access_code: !!q.require_access_code,
     login_required: !!out.login_required,
     access_code_required: !!out.access_code_required,
-    items: items.map(x=>({
+    items: items.map(x => ({
       id: Number(x.id),
       no: x.no,
-      q_type: String(x.q_type || "essay"),
+      q_type: String(x.q_type || x.qtype || "essay"),
       prompt: x.prompt || "",
       answers: Array.isArray(x.answers) ? x.answers : [],
       points: x.points ?? 1,
@@ -1775,6 +1785,7 @@ async function loadQuiz(){
     }))
   };
 }
+
 
   return {
     quiz_id: q.quiz_id || quizId,
