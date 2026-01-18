@@ -635,17 +635,6 @@ async function rpcOptional(fn, args){
   }
 }
 
-async function rpcOptional(fn, args){
-  try{ return await rpc(fn,args); }
-  catch(e){
-    const m = String(e?.message||"");
-    if(m.includes("Could not find the function") || m.includes("schema cache")){
-      return null;
-    }
-    return null;
-  }
-}
-
 /* ================== STORAGE (upload image) ================== */
 function encodePath(path){
   return String(path||"").split("/").map(encodeURIComponent).join("/");
