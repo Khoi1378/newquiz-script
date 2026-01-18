@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
 
-  <!-- KaTeX (render $...$ preview ngay trong admin) -->
+  <!-- KaTeX -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
@@ -147,7 +147,6 @@
     .hr{height:1px;background:#e5e7eb;margin:12px 0}
     .mono{font-family:ui-monospace,Consolas,monospace}
 
-    /* Quiz list cards */
     .qItem{
       border:1px solid rgba(229,231,235,.95);
       border-radius:16px;
@@ -160,7 +159,6 @@
     .qBadges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
     .qActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 
-    /* Builder header */
     .qbHead{display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap}
     .qbTabs{
       display:flex; gap:8px; flex-wrap:wrap;
@@ -200,7 +198,6 @@
     .hint{font-weight:650;color:var(--muted);line-height:1.35; font-size:.88rem}
     .hidden{display:none !important;}
 
-    /* Image */
     .imgRow{display:flex; gap:10px; flex-wrap:wrap; align-items:stretch; margin-top:10px}
     .imgDrop{
       flex:1 1 320px;
@@ -221,7 +218,6 @@
       flex:0 0 auto;
     }
 
-    /* Preview */
     .previewBox{
       margin-top:10px;
       border:1px dashed rgba(229,231,235,.95);
@@ -234,7 +230,6 @@
     .previewBody .muted{font-weight:700}
     .previewBody img{max-width:100%;border-radius:12px;border:1px solid #e5e7eb;margin-top:8px}
 
-    /* FAB add question */
     .qFab{
       position:fixed; left:0; right:0;
       bottom:calc(env(safe-area-inset-bottom) + 18px);
@@ -344,7 +339,6 @@
         <!-- QUIZZES -->
         <div id="viewQuizzes">
           <div class="topGrid">
-            <!-- settings -->
             <div class="card">
               <div class="row1">
                 <p class="vi">Quiz</p>
@@ -438,7 +432,7 @@
               <input class="input mono" id="totalScore" value="10" />
 
               <div class="hint" style="margin-top:10px">
-                Ảnh sẽ được upload lên <b>Supabase Storage</b> (không nhét base64 vào DB nữa).<br>
+                Ảnh sẽ được upload lên <b>Supabase Storage</b>.<br>
                 LaTeX nhập bằng <code>$...$</code> (vd: <code>$x^2$</code>, <code>$(x+y)/2$</code>) — có preview ngay bên dưới.
               </div>
 
@@ -448,7 +442,6 @@
               </div>
             </div>
 
-            <!-- list -->
             <div class="card">
               <div class="row1">
                 <p class="vi">Danh sách quiz</p>
@@ -458,7 +451,6 @@
             </div>
           </div>
 
-          <!-- question editor -->
           <div class="card" style="margin-top:10px">
             <div class="qbHead">
               <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -485,7 +477,7 @@
 
             <div id="qbImportArea" style="display:none; margin-top:10px">
               <div class="hint" style="margin-top:0">
-                Import (dòng có <code>*...*</code> là đúng). Sau import: hệ thống tự xóa <code>*</code> để khỏi lòi đáp án.
+                Import (dòng có <code>*...*</code> là đúng). Sau import: hệ thống tự xóa <code>*</code>.
                 <div class="mono" style="white-space:pre-wrap; margin-top:8px; background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:10px">
 &lt;tn&gt;@1: Câu trắc nghiệm
 A
@@ -541,7 +533,6 @@ D
     </div>
   </div>
 
-  <!-- FAB add question -->
   <div class="qFab" id="qFab">
     <div class="qFabInner">
       <button class="qFabBtn" id="btnAddQFab" type="button">➕ THÊM CÂU HỎI</button>
@@ -549,18 +540,17 @@ D
   </div>
 
   <input id="qImgPick" type="file" accept="image/*" style="display:none" />
-
   <div class="toast" id="toast"></div>
 
-  <!-- LOGIN MODAL (auto show when token missing/bad) -->
+  <!-- LOGIN MODAL -->
   <div class="modalBack" id="loginBack" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-label="Admin login">
       <div class="modalHead">
         <div>
           <p class="modalTitle">🔐 Admin Login</p>
-          <p class="modalSub">Nhập username + PIN để vào Admin Panel (tự lưu token).</p>
+          <p class="modalSub">Nhập username + PIN để vào Admin Panel. (Tự nhớ đăng nhập 30 ngày)</p>
         </div>
-        <button class="btn btn-ghost" id="btnLogout" type="button" title="Xóa token & đăng xuất">Logout</button>
+        <button class="btn btn-ghost" id="btnLogout" type="button" title="Đăng xuất">Logout</button>
       </div>
 
       <label>Username</label>
@@ -577,7 +567,7 @@ D
       </div>
 
       <div class="smallLink" style="margin-top:8px">
-        Nếu bị “schema cache”: vào Supabase → Settings → API → Reload schema.
+        Nếu báo “schema cache” thì Supabase → Settings → API → Reload schema.
       </div>
     </div>
   </div>
@@ -586,7 +576,10 @@ D
 /* ================== CONFIG ================== */
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
-const TOKEN_KEY = "tk_token_v2";
+
+/* ✅ Session lưu ẩn (30 ngày) */
+const SESSION_KEY = "tk_admin_session_v1";
+const SESSION_TTL_DAYS = 30;
 
 /* Storage bucket để upload ảnh câu hỏi. */
 const STORAGE_BUCKET = "Quiz";
@@ -608,8 +601,7 @@ const RPC = {
   adminForceRename: "admin_force_rename",
   adminForceSetPin: "admin_force_set_pin",
 
-  // optional
-  adminRegradeQuiz: "admin_regrade_quiz"
+  adminRegradeQuiz: "admin_regrade_quiz" // optional
 };
 
 /* ================== UI HELPERS ================== */
@@ -623,12 +615,8 @@ function esc(s){
   return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
-function getToken(){ return (localStorage.getItem(TOKEN_KEY) || "").trim(); }
-function setToken(t){
-  t = String(t||"").trim();
-  if(t) localStorage.setItem(TOKEN_KEY, t);
-  else localStorage.removeItem(TOKEN_KEY);
-}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
 function normalizeQuizId(x){
   x = String(x||"").trim().toLowerCase();
   x = x.replace(/[^a-z]/g,"").slice(0,5);
@@ -640,7 +628,38 @@ function genQuizId5(){
   for(let i=0;i<5;i++) s += letters[Math.floor(Math.random()*letters.length)];
   return s;
 }
-function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function normalizeUsername(x){
+  return String(x||"").trim().toLowerCase().replace(/[^a-z0-9_]/g,"");
+}
+
+/* ================== SESSION (hidden) ================== */
+function getSession(){
+  try{
+    const raw = localStorage.getItem(SESSION_KEY);
+    if(!raw) return "";
+    const obj = JSON.parse(raw);
+    if(!obj || !obj.t || !obj.e) return "";
+    if(Date.now() > Number(obj.e)){
+      localStorage.removeItem(SESSION_KEY);
+      return "";
+    }
+    return String(obj.t||"").trim();
+  }catch{
+    return "";
+  }
+}
+function setSession(token){
+  token = String(token||"").trim();
+  try{
+    if(!token){
+      localStorage.removeItem(SESSION_KEY);
+      return;
+    }
+    const ttl = SESSION_TTL_DAYS * 24 * 60 * 60 * 1000;
+    const obj = { t: token, e: Date.now() + ttl };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(obj));
+  }catch{}
+}
 
 /* ================== KaTeX preview ================== */
 function katexRenderSafe(root){
@@ -688,42 +707,45 @@ async function rpcRaw(fn, args){
   return data;
 }
 
-/* rpc wrapper: auto-attach p_token if missing, and auto-popup login when bad token */
+function isSchemaCacheError(m){
+  m = String(m||"");
+  return m.includes("schema cache") || m.includes("Could not find the function");
+}
 function isAuthErrorMessage(m){
   m = String(m||"").toLowerCase();
   return (
-    m.includes("no auth token") ||
+    m.includes("no auth") ||
     m.includes("bad token") ||
     m.includes("not logged") ||
-    m.includes("jwt") ||
     m.includes("permission") ||
-    m.includes("not admin")
+    m.includes("not admin") ||
+    m.includes("jwt")
   );
 }
+
+/* ✅ RPC dùng session ẩn, tự gắn p_token */
 async function rpc(fn, args){
-  const tok = getToken();
-  if(!tok) throw new Error("No auth token");
+  const tok = getSession();
+  if(!tok) throw new Error("NEED_LOGIN");
   const a = (args && typeof args === "object") ? {...args} : {};
   if(a.p_token === undefined) a.p_token = tok;
+
   try{
     return await rpcRaw(fn, a);
   }catch(e){
-    const m = String(e?.message||"");
-    // token invalid => clear & show login
-    if(isAuthErrorMessage(m)){
-      setToken("");
-      showLogin("Token hết hạn / sai. Login lại nhé.");
+    const msg = String(e?.message||"");
+    if(isAuthErrorMessage(msg)){
+      setSession("");
+      showLogin("Phiên đăng nhập hết hạn / sai. Login lại nhé.");
     }
     throw e;
   }
 }
 async function rpcOptional(fn, args){
-  try{ return await rpc(fn,args); }
+  try{ return await rpc(fn, args); }
   catch(e){
     const m = String(e?.message||"");
-    if(m.includes("Could not find the function") || m.includes("schema cache")){
-      return null;
-    }
+    if(isSchemaCacheError(m)) return null;
     return null;
   }
 }
@@ -767,8 +789,7 @@ async function storagePutObject(bucket, path, mime, bytes){
   const txt = await res.text();
   if(res.ok) return txt;
 
-  const url2 = `${SUPABASE_URL}/storage/v1/object/${bucket}/${encodePath(path)}`;
-  const res2 = await fetch(url2, {
+  const res2 = await fetch(url, {
     method: "POST",
     headers: {
       "apikey": SUPABASE_ANON_KEY,
@@ -778,9 +799,7 @@ async function storagePutObject(bucket, path, mime, bytes){
     body: bytes
   });
   const txt2 = await res2.text();
-  if(!res2.ok){
-    throw new Error(txt2 || txt || "Upload image failed");
-  }
+  if(!res2.ok) throw new Error(txt2 || txt || "Upload image failed");
   return txt2;
 }
 function randId(){
@@ -822,10 +841,8 @@ function showLogin(msg){
   loginWarn.classList.toggle("show", !!msg);
   loginBack.classList.add("show");
   loginBack.setAttribute("aria-hidden","false");
-  setTimeout(()=>{
-    if(!loginUser.value) loginUser.focus();
-    else loginPin.focus();
-  }, 50);
+  app.style.display = "none";
+  setTimeout(()=>{ (loginUser.value ? loginPin : loginUser).focus(); }, 50);
 }
 function hideLogin(){
   loginBack.classList.remove("show");
@@ -834,13 +851,14 @@ function hideLogin(){
   loginWarn.textContent = "";
 }
 btnLoginClose.onclick = ()=>hideLogin();
+
 btnLogout.onclick = ()=>{
-  setToken("");
+  setSession("");
   ME = null;
   mePill.textContent = "Logged out";
-  gate.innerHTML = `Đã logout.`;
+  gate.innerHTML = `Đã đăng xuất.`;
   app.style.display = "none";
-  showLogin("Đã xóa token. Login lại.");
+  showLogin("Đăng nhập lại để vào Admin Panel.");
 };
 
 loginBack.addEventListener("click",(e)=>{
@@ -849,21 +867,98 @@ loginBack.addEventListener("click",(e)=>{
 window.addEventListener("keydown",(e)=>{
   if(e.key === "Escape" && loginBack.classList.contains("show")) hideLogin();
 });
-function normalizeUsername(x){
-  return String(x||"").trim().toLowerCase().replace(/[^a-z0-9_]/g,"");
+
+/* ================== STATE ================== */
+let ME = null;
+let QUIZZES = [];
+let USERS = [];
+let CURRENT_QID = "";
+let CURRENT_MODE = "NEW"; // NEW | EDIT
+let QUESTIONS = [];
+
+/* ================== AUTH CHECK ================== */
+function pickLoginToken(out){
+  if(!out) return "";
+  // hỗ trợ nhiều format để khỏi lệch DB
+  return (
+    out.token ||
+    out.access_token ||
+    out.jwt ||
+    out.session_token ||
+    out.p_token ||
+    out.data?.token ||
+    out.data?.access_token ||
+    out.data?.jwt ||
+    ""
+  );
 }
+function pickMe(out){
+  if(!out) return null;
+  return out.me || out.user || out.data?.me || out.data?.user || null;
+}
+function meOk(out){
+  if(!out) return false;
+  if(out.ok === true || out.success === true) return true;
+  if(out.ok === false) return false;
+  return !!(out.me || out.user || out.data?.me || out.data?.user);
+}
+function isAdminUser(me){
+  if(!me) return false;
+  const u = String(me.username||me.user||"").toLowerCase();
+  const r = String(me.role||"").toLowerCase();
+  return (r==="admin") || (u==="tuankhoi");
+}
+
+async function gateCheck(){
+  const tok = getSession();
+  if(!tok){
+    mePill.textContent = "Not logged";
+    gate.innerHTML = `Chưa đăng nhập.`;
+    showLogin("Đăng nhập để vào Admin Panel.");
+    return false;
+  }
+  try{
+    const out = await rpcRaw(RPC.me, { p_token: tok });
+    if(!meOk(out)) throw new Error(out?.error || "AUTH_FAIL");
+    const me = pickMe(out);
+    if(!isAdminUser(me)){
+      ME = me;
+      mePill.innerHTML = `Xin chào <b>${esc(me?.username||"")}</b>`;
+      gate.innerHTML = `Bạn không phải admin.`;
+      showLogin("User này không có quyền admin.");
+      return false;
+    }
+    ME = me;
+    mePill.innerHTML = `Xin chào <b>${esc(me?.username||"")}</b> <span class="badge-admin">ADMIN</span>`;
+    gate.innerHTML = `<span class="idx ok">OK</span> Admin: <b>${esc(me?.username||"")}</b>`;
+    app.style.display = "";
+    hideLogin();
+    return true;
+  }catch(e){
+    setSession("");
+    ME = null;
+    mePill.textContent = "Not logged";
+    gate.innerHTML = `Phiên đăng nhập lỗi.`;
+    showLogin("Phiên đăng nhập lỗi. Login lại nhé.");
+    return false;
+  }
+}
+
+/* ================== LOGIN ACTION ================== */
 async function doLogin(){
   const u = normalizeUsername(loginUser.value);
   const p = String(loginPin.value||"").trim();
   if(!u) return showLogin("Thiếu username");
   if(!p) return showLogin("Thiếu PIN");
+
   btnLoginGo.disabled = true;
   btnLoginGo.textContent = "Đang đăng nhập...";
   try{
     const out = await rpcRaw(RPC.login, { p_username: u, p_pin: p });
-    if(!out?.ok || !out?.token) throw new Error(out?.error || "login failed");
-    setToken(out.token);
-    hideLogin();
+    if(out?.ok === false) throw new Error(out?.error || "Login fail");
+    const t = pickLoginToken(out);
+    if(!t) throw new Error("Login OK nhưng không nhận được phiên đăng nhập (token rỗng). Check api_login return field.");
+    setSession(t);
     loginPin.value = "";
     toast("Login OK");
     await bootAfterAuth();
@@ -875,56 +970,8 @@ async function doLogin(){
   }
 }
 btnLoginGo.onclick = doLogin;
-loginPin.addEventListener("keydown",(e)=>{
-  if(e.key === "Enter") doLogin();
-});
-loginUser.addEventListener("keydown",(e)=>{
-  if(e.key === "Enter") doLogin();
-});
-
-/* ================== STATE ================== */
-let ME = null;
-let QUIZZES = [];
-let USERS = [];
-let CURRENT_QID = "";
-let CURRENT_MODE = "NEW"; // NEW | EDIT
-let QUESTIONS = [];       // array of {type,prompt,answers,points,meta}
-
-/* ================== AUTH CHECK ================== */
-async function gateCheck(){
-  const token = getToken();
-  if(!token){
-    mePill.textContent = "No token";
-    gate.innerHTML = `Chưa login.`;
-    showLogin("Login để vào Admin Panel.");
-    return false;
-  }
-  try{
-    const meOut = await rpcRaw(RPC.me, { p_token: token });
-    if(!meOut?.ok) throw new Error(meOut?.error||"bad token");
-    ME = meOut.me;
-    const isAdmin = (ME.role==="admin") || (String(ME.username||"").toLowerCase()==="tuankhoi");
-    if(!isAdmin){
-      mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b>`;
-      gate.textContent = "Bạn không phải admin.";
-      app.style.display = "none";
-      showLogin("User này không phải admin.");
-      return false;
-    }
-    mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="badge-admin">ADMIN</span>`;
-    gate.innerHTML = `<span class="idx ok">OK</span> Admin: <b>${esc(ME.username)}</b>`;
-    app.style.display = "";
-    return true;
-  }catch(e){
-    setToken("");
-    ME = null;
-    mePill.textContent = "Bad token";
-    gate.innerHTML = `Token lỗi / hết hạn.`;
-    app.style.display = "none";
-    showLogin("Token lỗi / hết hạn. Login lại nhé.");
-    return false;
-  }
-}
+loginPin.addEventListener("keydown",(e)=>{ if(e.key==="Enter") doLogin(); });
+loginUser.addEventListener("keydown",(e)=>{ if(e.key==="Enter") doLogin(); });
 
 /* ================== QUIZ FORM ================== */
 const quizIdEl = document.getElementById("quizId");
@@ -964,7 +1011,7 @@ function validateQuiz(){
   return null;
 }
 
-/* ================== QUESTION BUILDER ================== */
+/* ================== QUESTION BUILDER (giữ nguyên logic) ================== */
 const qList = document.getElementById("qList");
 const qCountPill = document.getElementById("qCountPill");
 const qbTabManual = document.getElementById("qbTabManual");
@@ -1028,7 +1075,6 @@ function ensureMeta(q){
   if(typeof q.meta.image_data_url !== "string") q.meta.image_data_url = "";
   if(typeof q.meta.image_url !== "string") q.meta.image_url = "";
 }
-
 function insertAtCursor(el, text, afterSelOffset=0){
   if(!el) return;
   el.focus();
@@ -1064,12 +1110,10 @@ function buildPreviewHtml(q){
     }).join("") + `</ol>`;
   }
 
-  if(q.type==="essay"){
+  if(q.type==="essay" || q.type==="short4"){
     html += `<div style="margin-top:8px"><span class="muted">Đáp án (ẩn khi làm):</span> ${esc((q.answers||[]).join(" | "))}</div>`;
   }
-  if(q.type==="short4"){
-    html += `<div style="margin-top:8px"><span class="muted">Đáp án (ẩn khi làm):</span> ${esc((q.answers||[]).join(" | "))}</div>`;
-  }
+
   if(q.type==="tf4"){
     const stmts = q.meta.statements||["","","",""];
     const keys = q.meta.keys||[false,false,false,false];
@@ -1248,14 +1292,13 @@ function syncQuestionFromCard(card){
     q.points = null;
   }
 
-  if(type==="essay"){
+  if(type==="essay" || type==="short4"){
     const raw = card.querySelector(".qAnswers")?.value || "";
     q.answers = raw.split("|").map(s=>s.trim()).filter(Boolean);
-    q.meta = { ...(q.meta||{}), fuzzy:true, image_data_url:q.meta.image_data_url||"", image_url:q.meta.image_url||"" };
-  }else if(type==="short4"){
-    const raw = card.querySelector(".qAnswers")?.value || "";
-    q.answers = raw.split("|").map(s=>s.trim()).filter(Boolean);
-    q.meta = { ...(q.meta||{}), format:"4boxes", image_data_url:q.meta.image_data_url||"", image_url:q.meta.image_url||"" };
+    q.meta = { ...(q.meta||{}),
+      ...(type==="essay"?{fuzzy:true}:{format:"4boxes"}),
+      image_data_url:q.meta.image_data_url||"", image_url:q.meta.image_url||""
+    };
   }else if(type==="mcq1"){
     const opts = Array.from(card.querySelectorAll(".qOpt")).map(x=>x.value);
     const correct = Number(card.querySelector(".qCorrect")?.value || "1") || 1;
@@ -1300,6 +1343,9 @@ qList.addEventListener("change",(e)=>{
   }
 },{passive:true});
 
+const qImgPick = document.getElementById("qImgPick");
+let IMG_PICK_FOR_INDEX = -1;
+
 qList.addEventListener("click",(e)=>{
   const btn = e.target.closest("button");
   if(!btn) return;
@@ -1309,40 +1355,12 @@ qList.addEventListener("click",(e)=>{
   const act = btn.getAttribute("data-act");
   if(!act) return;
 
-  if(act==="del"){
-    QUESTIONS.splice(i,1);
-    renderQuestions();
-    return;
-  }
-  if(act==="dup"){
-    const clone = JSON.parse(JSON.stringify(QUESTIONS[i]));
-    QUESTIONS.splice(i+1,0,clone);
-    renderQuestions();
-    return;
-  }
-  if(act==="up" && i>0){
-    [QUESTIONS[i-1], QUESTIONS[i]] = [QUESTIONS[i], QUESTIONS[i-1]];
-    renderQuestions();
-    return;
-  }
-  if(act==="down" && i<QUESTIONS.length-1){
-    [QUESTIONS[i+1], QUESTIONS[i]] = [QUESTIONS[i], QUESTIONS[i+1]];
-    renderQuestions();
-    return;
-  }
-  if(act==="removeimg"){
-    ensureMeta(QUESTIONS[i]);
-    QUESTIONS[i].meta.image_data_url = "";
-    QUESTIONS[i].meta.image_url = "";
-    renderQuestions();
-    toast("Đã xóa ảnh");
-    return;
-  }
-  if(act==="pickimg"){
-    IMG_PICK_FOR_INDEX = i;
-    qImgPick.click();
-    return;
-  }
+  if(act==="del"){ QUESTIONS.splice(i,1); renderQuestions(); return; }
+  if(act==="dup"){ const clone = JSON.parse(JSON.stringify(QUESTIONS[i])); QUESTIONS.splice(i+1,0,clone); renderQuestions(); return; }
+  if(act==="up" && i>0){ [QUESTIONS[i-1], QUESTIONS[i]] = [QUESTIONS[i], QUESTIONS[i-1]]; renderQuestions(); return; }
+  if(act==="down" && i<QUESTIONS.length-1){ [QUESTIONS[i+1], QUESTIONS[i]] = [QUESTIONS[i], QUESTIONS[i+1]]; renderQuestions(); return; }
+  if(act==="removeimg"){ ensureMeta(QUESTIONS[i]); QUESTIONS[i].meta.image_data_url=""; QUESTIONS[i].meta.image_url=""; renderQuestions(); toast("Đã xóa ảnh"); return; }
+  if(act==="pickimg"){ IMG_PICK_FOR_INDEX = i; qImgPick.click(); return; }
   if(act==="latex"){
     const active = document.activeElement;
     const target = (active && (active.tagName==="TEXTAREA" || active.tagName==="INPUT")) ? active : card.querySelector(".qPrompt");
@@ -1366,15 +1384,9 @@ document.getElementById("btnAddQFab").onclick = ()=>{
   scrollToLastQuestionAndFocus();
 };
 
-/* scoring mode rerender */
-scoringModeEl.addEventListener("change", ()=>{
-  renderQuestions();
-},{passive:true});
+scoringModeEl.addEventListener("change", ()=>renderQuestions(), {passive:true});
 
-/* ================== IMAGE (per question) ================== */
-const qImgPick = document.getElementById("qImgPick");
-let IMG_PICK_FOR_INDEX = -1;
-
+/* ===== image handling ===== */
 function readImageToDataURL(file){
   return new Promise((resolve,reject)=>{
     const fr = new FileReader();
@@ -1399,7 +1411,6 @@ async function downscaleDataURL(dataUrl, maxW=1200){
   c.width = nw; c.height = nh;
   const ctx = c.getContext("2d");
   ctx.drawImage(img, 0, 0, nw, nh);
-
   return c.toDataURL("image/jpeg", 0.86);
 }
 async function setQuestionImage(i, file){
@@ -1412,23 +1423,20 @@ async function setQuestionImage(i, file){
   renderQuestions();
   toast("Đã gắn ảnh (sẽ upload khi Publish)");
 }
-
 qImgPick.addEventListener("change", async ()=>{
   const f = qImgPick.files?.[0];
   if(!f) return;
   const i = IMG_PICK_FOR_INDEX;
   IMG_PICK_FOR_INDEX = -1;
   qImgPick.value = "";
-  try{ await setQuestionImage(i, f); }catch(e){ toast("Lỗi ảnh"); }
+  try{ await setQuestionImage(i, f); }catch{ toast("Lỗi ảnh"); }
 });
-
 qList.addEventListener("dragover",(e)=>{
   const card = e.target.closest(".qCard");
   const drop = e.target.closest("[data-imgdrop]");
   if(!card || !drop) return;
   e.preventDefault();
 },{passive:false});
-
 qList.addEventListener("drop", async (e)=>{
   const card = e.target.closest(".qCard");
   const drop = e.target.closest("[data-imgdrop]");
@@ -1439,14 +1447,12 @@ qList.addEventListener("drop", async (e)=>{
   if(!f) return;
   try{ await setQuestionImage(i, f); }catch{ toast("Lỗi ảnh"); }
 },{passive:false});
-
 window.addEventListener("paste", async (e)=>{
   const items = e.clipboardData?.items || [];
   const imgItem = Array.from(items).find(it=>it.type && it.type.startsWith("image/"));
   if(!imgItem) return;
   const f = imgItem.getAsFile();
   if(!f) return;
-
   const active = document.activeElement;
   const card = active ? active.closest?.(".qCard") : null;
   if(!card) return;
@@ -1454,7 +1460,7 @@ window.addEventListener("paste", async (e)=>{
   try{ await setQuestionImage(i, f); }catch{ toast("Lỗi ảnh"); }
 },{passive:true});
 
-/* ================== IMPORT PARSER (strip *) ================== */
+/* ================== IMPORT PARSER ================== */
 const importBox = document.getElementById("importBox");
 document.getElementById("btnImportReplace").onclick = ()=>{
   const parsed = parseImportText(importBox.value);
@@ -1676,7 +1682,7 @@ async function saveQuizOnly(){
     out = await rpc(RPC.adminUpsertQuiz, payload);
   }catch(e){
     const m = String(e?.message||"");
-    if(m.includes("Could not find the function") || m.includes("schema cache")){
+    if(isSchemaCacheError(m)){
       const payloadOld = { ...payload };
       delete payloadOld.p_shuffle_mode;
       out = await rpc(RPC.adminUpsertQuiz, payloadOld);
@@ -1787,13 +1793,12 @@ async function publishAll(){
     let items = buildPublishItems();
     items = await uploadAllImagesIfNeeded(qid, items);
 
-    let out2 = null;
     try{
-      out2 = await rpc(RPC.adminReplaceQuestions, { p_quiz_id: qid, p_items: items });
+      await rpc(RPC.adminReplaceQuestions, { p_quiz_id: qid, p_items: items });
     }catch(e){
       const m = String(e?.message||"");
-      if(m.includes("Could not find the function") || m.includes("schema cache")){
-        out2 = await rpc(RPC.adminImportQuestions, { p_quiz_id: qid, p_items: items, p_replace: true });
+      if(isSchemaCacheError(m)){
+        await rpc(RPC.adminImportQuestions, { p_quiz_id: qid, p_items: items, p_replace: true });
         toast("⚠️ DB chưa có replace (đã import, nhớ kiểm tra trùng).");
       }else{
         throw e;
@@ -2027,30 +2032,21 @@ async function bootAfterAuth(){
   QUESTIONS = [];
   renderQuestions();
 
-  try{
-    await reloadQuizzes();
-  }catch(e){
-    toast("Load quizzes lỗi: " + (e.message||e));
-  }
-  try{
-    await reloadUsers();
-  }catch(e){
-    // nếu chưa có users RPC thì thôi
-  }
+  try{ await reloadQuizzes(); }catch(e){ toast("Load quizzes lỗi: " + (e.message||e)); }
+  try{ await reloadUsers(); }catch(e){ /* optional */ }
+
   setTab("q");
 
   setTimeout(() => {
-    document
-      .querySelectorAll('[data-preview="1"]')
-      .forEach(pv => katexRenderSafe(pv));
+    document.querySelectorAll('[data-preview="1"]').forEach(pv => katexRenderSafe(pv));
   }, 400);
 }
 
 (async () => {
-  try {
-    // nếu token OK thì auto vào, token lỗi thì popup login
+  try{
     await bootAfterAuth();
-  } catch (e) {
+    // nếu chưa login => modal sẽ tự bật trong gateCheck()
+  }catch(e){
     console.error("BOOT ERROR", e);
     toast("Boot error: " + (e.message || e));
     showLogin("Boot lỗi. Login lại thử.");
