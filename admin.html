@@ -275,9 +275,6 @@
       background:#fff; font-weight:950; cursor:pointer;
       box-shadow:none;
     }
-    .mathBtn.primary{
-      background:linear-gradient(135deg,#7c3aed,#fb7185); color:#fff; border:0;
-    }
 
     .latexPanel{
       position:fixed;
@@ -420,6 +417,14 @@
                 </div>
               </div>
 
+              <!-- ✅ NEW: shuffle mode -->
+              <label>Trộn câu hỏi / đáp án</label>
+              <select id="shuffleMode">
+                <option value="none">Không đảo</option>
+                <option value="q">Đảo câu hỏi</option>
+                <option value="qa">Đảo câu hỏi + đáp án</option>
+              </select>
+
               <div class="grid2" style="margin-top:10px">
                 <div>
                   <label>Mã truy cập</label>
@@ -560,28 +565,25 @@ B
       </div>
     </div>
 
-    <div class="latexGrid" id="latexGrid">
-      <!-- buttons injected by JS -->
-    </div>
+    <div class="latexGrid" id="latexGrid"></div>
   </div>
 
 <script>
 /* ================== CONFIG ================== */
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
+
+/* ✅ Admin panel KHÔNG login ở đây nữa. Nó chỉ dùng token của trang chủ. */
 const TOKEN_KEY = "tk_token_v2";
 
 /* Storage */
-const STORAGE_BUCKET = "quiz"; // bucket của bạn
+const STORAGE_BUCKET = "quiz";
 
 /* RPC names */
 const RPC = {
-  // auth
   me: "api_me",
-  loginPin: "api_login_pin",
   logout: "api_logout",
 
-  // quizzes
   adminUpsertQuiz: "admin_upsert_quiz",
   adminListQuizzes: "admin_list_quizzes",
   adminDeleteQuiz: "admin_delete_quiz",
@@ -589,7 +591,6 @@ const RPC = {
   adminReplaceQuestions: "admin_replace_questions_v3",
   adminImportQuestions: "admin_import_questions_v3",
 
-  // users
   adminListUsers: "admin_list_users",
   adminDeleteUser: "admin_delete_user",
   adminForceRename: "admin_force_rename",
@@ -610,6 +611,32 @@ function esc(s){
 function getToken(){ return (localStorage.getItem(TOKEN_KEY) || "").trim(); }
 function setToken(t){ localStorage.setItem(TOKEN_KEY, String(t||"").trim()); }
 function clearToken(){ localStorage.removeItem(TOKEN_KEY); }
+
+function renderNeedLogin(msg){
+  const gate = document.getElementById("gate");
+  gate.innerHTML = `
+    <div class="row1">
+      <p class="vi" style="margin:0">Chưa đăng nhập</p>
+      <span class="idx warn">${esc(msg || "Bạn cần đăng nhập ở trang chủ")}</span>
+    </div>
+
+    <div class="hint" style="margin-top:8px">
+      Admin panel <b>không</b> đăng nhập ở đây nữa.<br>
+      Vui lòng đăng nhập tài khoản <b>tuankhoi</b> ở trang chủ, rồi mở lại <code>/admin.html</code>.
+    </div>
+
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn btn-primary" id="btnGoHome" type="button">🏠 Về trang chủ</button>
+      <button class="btn btn-ghost" id="btnClearToken" type="button">🧹 Xóa phiên</button>
+    </div>
+  `;
+  gate.querySelector("#btnGoHome").onclick = ()=> location.href = "/";
+  gate.querySelector("#btnClearToken").onclick = ()=>{
+    clearToken();
+    toast("Đã xóa phiên");
+    renderNeedLogin("Đã xóa token");
+  };
+}
 
 function normalizeQuizId(x){
   x = String(x||"").trim().toLowerCase();
@@ -651,10 +678,7 @@ function publicObjectUrl(bucket, path){
   const safe = path.split("/").map(encodeURIComponent).join("/");
   return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${safe}`;
 }
-
 async function uploadToBucket(bucket, path, blob, contentType){
-  // NOTE: việc upload được hay không phụ thuộc policy bucket của bạn
-  // (bạn nói đã có bucket rồi). Nếu bị 403 => cần mở policy insert/update cho anon hoặc dùng signed upload.
   const url = `${SUPABASE_URL}/storage/v1/object/${bucket}/${path.split("/").map(encodeURIComponent).join("/")}`;
   const res = await fetch(url, {
     method: "POST",
@@ -698,37 +722,18 @@ let QUIZZES = [];
 let USERS = [];
 
 let CURRENT_QID = "";
-let CURRENT_MODE = "NEW"; // NEW | EDIT
-let QUESTIONS = [];       // array of {type,prompt,answers,points,meta}
+let CURRENT_MODE = "NEW";
+let QUESTIONS = [];
 
 let ACTIVE_TEXTAREA = null;
 
-/* ================== NO-LOGIN-IN-ADMIN ================== */
-/* Admin panel chỉ dùng phiên đăng nhập từ trang chủ (TOKEN_KEY). */
-function renderNeedLogin(msg){
-  gate.innerHTML = `
-    <div class="row1">
-      <p class="vi" style="margin:0">Chưa đăng nhập</p>
-      <span class="idx warn">${esc(msg || "Bạn cần đăng nhập ở trang chủ")}</span>
-    </div>
-
-    <div class="hint" style="margin-top:8px">
-      Admin panel <b>không</b> đăng nhập ở đây nữa.<br>
-      Vui lòng đăng nhập tài khoản <b>tuankhoi</b> ở trang chủ, rồi mở lại <code>/admin.html</code>.
-    </div>
-
-    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-      <button class="btn btn-primary" id="btnGoHome" type="button">🏠 Về trang chủ</button>
-      <button class="btn btn-ghost" id="btnClearToken" type="button">🧹 Xóa phiên</button>
-    </div>
-  `;
-
-  gate.querySelector("#btnGoHome").onclick = ()=> location.href = "/";
-  gate.querySelector("#btnClearToken").onclick = ()=>{
-    clearToken();
-    toast("Đã xóa phiên");
-    renderNeedLogin("Đã xóa token");
-  };
+/* ================== LOGOUT ================== */
+async function doLogout(){
+  const tk = getToken();
+  clearToken();
+  try{ if(tk) await rpc(RPC.logout, { p_token: tk }); }catch{}
+  toast("Đã logout");
+  setTimeout(()=>location.href="/", 350);
 }
 
 /* ================== AUTH GATE ================== */
@@ -739,15 +744,12 @@ async function gateCheck(){
     renderNeedLogin("Chưa có phiên đăng nhập");
     return false;
   }
-
   try{
-    // api_me sẽ auto gia hạn token ở DB (SQL bên dưới)
-    const meOut = await rpc(RPC.me, { p_token: token });
-
+    const meOut = await rpc(RPC.me,{p_token:token});
     if(!meOut?.ok) throw new Error(meOut?.error || "not logged");
     ME = meOut.me;
 
-    // (Optional) nếu sau này api_me trả thêm token mới thì set lại
+    // nếu sau này SQL trả token mới thì update luôn (không bắt buộc)
     if(meOut.token) setToken(meOut.token);
 
     const isAdmin =
@@ -756,8 +758,7 @@ async function gateCheck(){
 
     if(!isAdmin){
       mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="idx warn">NOT ADMIN</span>`;
-      gate.innerHTML = `Bạn không phải admin.
-        <button class="btn btn-ghost" id="btnLogoutGate" type="button">Logout</button>`;
+      gate.innerHTML = `Bạn không phải admin. <button class="btn btn-ghost" id="btnLogoutGate" type="button">Logout</button>`;
       gate.querySelector("#btnLogoutGate").onclick = doLogout;
       return false;
     }
@@ -765,24 +766,21 @@ async function gateCheck(){
     mePill.innerHTML = `
       Xin chào <b>${esc(ME.username)}</b>
       <span class="badge-admin">ADMIN</span>
-      <button class="btn btn-ghost" id="btnLogoutTop" type="button"
-        style="padding:8px 10px;box-shadow:none">Logout</button>
+      <button class="btn btn-ghost" id="btnLogoutTop" type="button" style="padding:8px 10px;box-shadow:none">Logout</button>
     `;
     mePill.querySelector("#btnLogoutTop").onclick = doLogout;
 
     gate.innerHTML = `<span class="idx ok">OK</span> Admin: <b>${esc(ME.username)}</b>`;
     app.style.display = "";
     return true;
-
   }catch(e){
-    // token lỗi => xóa và bắt login lại ở trang chủ
     clearToken();
     mePill.textContent = "Login required";
     renderNeedLogin("Phiên hết hạn / token lỗi: " + (e.message||""));
     return false;
   }
 }
-  
+
 /* ================== QUIZ FORM ================== */
 const quizIdEl = document.getElementById("quizId");
 const titleEl = document.getElementById("title");
@@ -792,9 +790,10 @@ const isHiddenEl = document.getElementById("isHidden");
 const showInStoreEl = document.getElementById("showInStore");
 const requireLoginEl = document.getElementById("requireLogin");
 const pinnedEl = document.getElementById("pinned");
+const scoringModeEl = document.getElementById("scoringMode");
+const shuffleModeEl = document.getElementById("shuffleMode");  // ✅ NEW
 const requireCodeEl = document.getElementById("requireCode");
 const accessCodeEl = document.getElementById("accessCode");
-const scoringModeEl = document.getElementById("scoringMode");
 const totalScoreEl = document.getElementById("totalScore");
 const editModePill = document.getElementById("editModePill");
 
@@ -817,6 +816,9 @@ function validateQuiz(){
   let qid = (CURRENT_MODE==="EDIT") ? CURRENT_QID : normalizeQuizId(quizIdEl.value);
   if(CURRENT_MODE==="NEW" && !qid) return "Quiz ID trống (bấm Tạo mới hoặc nhập 5 chữ)";
   if(qid && qid.length!==5) return "Quiz ID phải đúng 5 chữ a-z";
+  // shuffleMode validation
+  const sm = String(shuffleModeEl.value||"none");
+  if(!["none","q","qa"].includes(sm)) return "Shuffle mode không hợp lệ";
   return null;
 }
 
@@ -1132,16 +1134,13 @@ document.getElementById("btnAddQFab").onclick = ()=>{
   scrollToLastQuestionAndFocus();
 };
 
-scoringModeEl.addEventListener("change", ()=>{
-  renderQuestions();
-},{passive:true});
+scoringModeEl.addEventListener("change", ()=>{ renderQuestions(); },{passive:true});
 
-/* ================== IMAGE (per question) upload to bucket ================== */
+/* ================== IMAGE upload ================== */
 const qImgPick = document.getElementById("qImgPick");
 let IMG_PICK_FOR_INDEX = -1;
 
 async function fileToDownscaledJpegBlob(file, maxW=1200, quality=0.86){
-  // downscale để nhẹ (upload thật lên bucket)
   const dataUrl = await new Promise((resolve,reject)=>{
     const fr = new FileReader();
     fr.onload = ()=>resolve(String(fr.result||""));
@@ -1179,7 +1178,6 @@ async function ensureQuizIdSaved(){
     qid = genQuizId5();
     quizIdEl.value = qid;
   }
-  // auto-save quiz trước để có folder qid
   await saveQuizOnly();
   return CURRENT_QID || qid;
 }
@@ -1193,7 +1191,6 @@ async function setQuestionImage(i, file){
 
   const ts = Date.now();
   const path = `${qid}/q${String(i+1).padStart(3,"0")}_${ts}.jpg`;
-
   const url = await uploadToBucket(STORAGE_BUCKET, path, blob, "image/jpeg");
 
   ensureMeta(QUESTIONS[i]);
@@ -1245,7 +1242,7 @@ window.addEventListener("paste", async (e)=>{
   try{ await setQuestionImage(i, f); }catch(e){ toast(e.message || "Lỗi upload ảnh"); }
 },{passive:true});
 
-/* ================== IMPORT PARSER (auto remove * and **) ================== */
+/* ================== IMPORT PARSER ================== */
 const importBox = document.getElementById("importBox");
 document.getElementById("btnImportReplace").onclick = ()=>{
   const parsed = parseImportText(importBox.value);
@@ -1268,40 +1265,24 @@ function isHeaderLine(line){
   const s = line.trim();
   return /^<(tn|tl|tln|tf)>\s*@\d+\s*:/.test(s);
 }
-
-// remove surrounding *...* or **...**
 function stripStars(s){
   let t = String(s||"").trim();
-  // lặp để xoá nhiều lớp
   for(let k=0;k<3;k++){
     t = t.trim();
-    if((t.startsWith("**") && t.endsWith("**") && t.length>=4)){
-      t = t.slice(2,-2).trim();
-      continue;
-    }
-    if((t.startsWith("*") && t.endsWith("*") && t.length>=2)){
-      t = t.slice(1,-1).trim();
-      continue;
-    }
+    if((t.startsWith("**") && t.endsWith("**") && t.length>=4)){ t = t.slice(2,-2).trim(); continue; }
+    if((t.startsWith("*") && t.endsWith("*") && t.length>=2)){ t = t.slice(1,-1).trim(); continue; }
     break;
   }
   return t;
 }
-function cleanLine(s){
-  // xoá markdown bold/italic nhẹ nhàng
-  return stripStars(String(s||"").trim());
-}
+function cleanLine(s){ return stripStars(String(s||"").trim()); }
 
 function parseImportText(text){
   const lines = String(text||"").replace(/\r/g,"").split("\n");
   const blocks = [];
   let cur = null;
 
-  function pushCur(){
-    if(!cur) return;
-    blocks.push(cur);
-    cur = null;
-  }
+  function pushCur(){ if(cur){ blocks.push(cur); cur=null; } }
 
   for(let i=0;i<lines.length;i++){
     const line = lines[i].trimEnd();
@@ -1330,10 +1311,7 @@ function parseImportText(text){
       for(const ln0 of body){
         let isCorrect = false;
         let t = ln0.trim();
-        // đúng nếu line bọc * hoặc **
-        if((t.startsWith("**") && t.endsWith("**") && t.length>=4) || (t.startsWith("*") && t.endsWith("*") && t.length>=2)){
-          isCorrect = true;
-        }
+        if((t.startsWith("**") && t.endsWith("**") && t.length>=4) || (t.startsWith("*") && t.endsWith("*") && t.length>=2)) isCorrect = true;
         t = cleanLine(t);
         opts.push(t);
         if(isCorrect) correctIdx = opts.length;
@@ -1342,55 +1320,29 @@ function parseImportText(text){
       const options4 = opts.slice(0,4);
       if(correctIdx<1 || correctIdx>4) correctIdx = 1;
 
-      out.push({
-        type:"mcq1",
-        prompt: head,
-        answers: [],
-        points: null,
-        meta: { options: options4, correct: correctIdx, image_url:"", image_path:"" }
-      });
+      out.push({ type:"mcq1", prompt: head, answers: [], points: null, meta: { options: options4, correct: correctIdx, image_url:"", image_path:"" }});
       continue;
     }
 
     if(tag==="tl"){
-      let answers = body
-        .filter(x=>{
-          const s = x.trim();
-          return (s.startsWith("*") && s.endsWith("*")) || (s.startsWith("**") && s.endsWith("**"));
-        })
-        .map(x=>cleanLine(x));
-      if(!answers.length){
-        if(body.length) answers = [ cleanLine(body.join(" ")) ];
-      }
+      let answers = body.filter(x=>{
+        const s = x.trim();
+        return (s.startsWith("*") && s.endsWith("*")) || (s.startsWith("**") && s.endsWith("**"));
+      }).map(x=>cleanLine(x));
+      if(!answers.length && body.length) answers = [ cleanLine(body.join(" ")) ];
       answers = answers.map(x=>x.trim()).filter(Boolean);
-      out.push({
-        type:"essay",
-        prompt: head,
-        answers,
-        points: null,
-        meta: { fuzzy:true, image_url:"", image_path:"" }
-      });
+      out.push({ type:"essay", prompt: head, answers, points: null, meta: { fuzzy:true, image_url:"", image_path:"" }});
       continue;
     }
 
     if(tag==="tln"){
-      let answers = body
-        .filter(x=>{
-          const s = x.trim();
-          return (s.startsWith("*") && s.endsWith("*")) || (s.startsWith("**") && s.endsWith("**"));
-        })
-        .map(x=>cleanLine(x));
-      if(!answers.length){
-        if(body.length) answers = [ cleanLine(body.join(" ")) ];
-      }
+      let answers = body.filter(x=>{
+        const s = x.trim();
+        return (s.startsWith("*") && s.endsWith("*")) || (s.startsWith("**") && s.endsWith("**"));
+      }).map(x=>cleanLine(x));
+      if(!answers.length && body.length) answers = [ cleanLine(body.join(" ")) ];
       answers = answers.map(x=>x.trim()).filter(Boolean);
-      out.push({
-        type:"short4",
-        prompt: head,
-        answers,
-        points: null,
-        meta: { format:"4boxes", image_url:"", image_path:"" }
-      });
+      out.push({ type:"short4", prompt: head, answers, points: null, meta: { format:"4boxes", image_url:"", image_path:"" }});
       continue;
     }
 
@@ -1413,16 +1365,8 @@ function parseImportText(text){
       }
 
       out.push({
-        type:"tf4",
-        prompt: head,
-        answers: [],
-        points: null,
-        meta: {
-          statements: stmts,
-          keys,
-          rule:{ byCorrectCount:{ "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 } },
-          image_url:"", image_path:""
-        }
+        type:"tf4", prompt: head, answers: [], points: null,
+        meta: { statements: stmts, keys, rule:{ byCorrectCount:{ "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 } }, image_url:"", image_path:"" }
       });
       continue;
     }
@@ -1433,19 +1377,13 @@ function parseImportText(text){
   return out;
 }
 
-/* ================== LaTeX INSERTION ================== */
+/* ================== LaTeX ================== */
 const latexPanel = document.getElementById("latexPanel");
 const latexGrid = document.getElementById("latexGrid");
 document.getElementById("btnLatex").onclick = ()=>showLatexPanel();
 
-function showLatexPanel(){
-  latexPanel.classList.add("show");
-  latexPanel.setAttribute("aria-hidden","false");
-}
-function hideLatexPanel(){
-  latexPanel.classList.remove("show");
-  latexPanel.setAttribute("aria-hidden","true");
-}
+function showLatexPanel(){ latexPanel.classList.add("show"); latexPanel.setAttribute("aria-hidden","false"); }
+function hideLatexPanel(){ latexPanel.classList.remove("show"); latexPanel.setAttribute("aria-hidden","true"); }
 
 latexPanel.addEventListener("click",(e)=>{
   const b = e.target.closest("[data-latex-act]");
@@ -1457,12 +1395,10 @@ latexPanel.addEventListener("click",(e)=>{
 });
 
 function getActiveTextTarget(){
-  // ưu tiên textarea đang focus; fallback: textarea đầu tiên trong qList
   const el = ACTIVE_TEXTAREA && document.contains(ACTIVE_TEXTAREA) ? ACTIVE_TEXTAREA : qList.querySelector("textarea.qPrompt");
   if(!el) toast("Click vào ô nhập trước");
   return el;
 }
-
 function insertTemplate(tpl){
   const el = getActiveTextTarget();
   if(!el) return;
@@ -1470,7 +1406,6 @@ function insertTemplate(tpl){
   const start = el.selectionStart ?? el.value.length;
   const end = el.selectionEnd ?? el.value.length;
 
-  // tpl có thể chứa ký hiệu | để đặt con trỏ
   const cursorAt = tpl.indexOf("|");
   const real = tpl.replace("|","");
 
@@ -1478,26 +1413,18 @@ function insertTemplate(tpl){
   const sel = el.value.slice(start,end);
   const after = el.value.slice(end);
 
-  // nếu template có marker {SEL} thì thay selection vào
   const real2 = real.includes("{SEL}") ? real.replace("{SEL}", sel || "") : real;
-
   el.value = before + real2 + after;
 
-  // set cursor
   let pos = before.length + real2.length;
-  if(cursorAt >= 0){
-    pos = before.length + cursorAt;
-  }else if(real.includes("{SEL}")){
-    pos = before.length + real.indexOf("{SEL}") + (sel||"").length;
-  }
+  if(cursorAt >= 0) pos = before.length + cursorAt;
+
   el.focus();
   el.setSelectionRange(pos,pos);
 
-  // sync vào state
   const card = el.closest(".qCard");
   if(card) syncQuestionFromCard(card);
 }
-
 function wrapSelection(left,right){
   const el = getActiveTextTarget();
   if(!el) return;
@@ -1509,10 +1436,8 @@ function wrapSelection(left,right){
   const before = el.value.slice(0,start);
   const after = el.value.slice(end);
 
-  const wrapped = `${left}${sel}${right}`;
-  el.value = before + wrapped + after;
+  el.value = before + `${left}${sel}${right}` + after;
   el.focus();
-  // highlight inside
   el.setSelectionRange(before.length + left.length, before.length + left.length + sel.length);
 
   const card = el.closest(".qCard");
@@ -1551,14 +1476,7 @@ latexGrid.innerHTML = LATEX_TEMPLATES.map(x=>{
 latexGrid.addEventListener("click",(e)=>{
   const b = e.target.closest("[data-tpl]");
   if(!b) return;
-  const tpl = b.getAttribute("data-tpl");
-  insertTemplate(tpl);
-});
-
-/* per-question wrap buttons */
-qList.addEventListener("click",(e)=>{
-  const act = e.target.closest("[data-act]")?.getAttribute("data-act");
-  if(act==="latex"){ showLatexPanel(); }
+  insertTemplate(b.getAttribute("data-tpl"));
 });
 
 /* ================== APPLY SCORING ================== */
@@ -1592,9 +1510,10 @@ document.getElementById("btnNewQuiz").onclick = ()=>{
   showInStoreEl.value = "true";
   requireLoginEl.value = "true";
   pinnedEl.value = "false";
+  scoringModeEl.value = "equal";
+  shuffleModeEl.value = "none"; // ✅ reset
   requireCodeEl.value = "false";
   accessCodeEl.value = "";
-  scoringModeEl.value = "equal";
   totalScoreEl.value = "10";
 
   QUESTIONS = [];
@@ -1625,14 +1544,14 @@ async function saveQuizOnly(){
     p_show_in_store: (showInStoreEl.value === "true"),
     p_require_login: (requireLoginEl.value === "true"),
     p_pinned: (pinnedEl.value === "true"),
-    p_require_access_code: (requireCodeEl.value === "true"),
-    p_access_code: accessCodeEl.value.trim(),
     p_scoring_mode: scoringModeEl.value,
-    p_total_score: Number(totalScoreEl.value || "10") || 10
+    p_total_score: Number(totalScoreEl.value || "10") || 10,
+    p_shuffle_mode: String(shuffleModeEl.value || "none"), // ✅ NEW
+    p_require_access_code: (requireCodeEl.value === "true"),
+    p_access_code: accessCodeEl.value.trim()
   };
 
   const out = await rpc(RPC.adminUpsertQuiz, payload);
-
   CURRENT_QID = out.quiz_id || qid;
   quizIdEl.value = CURRENT_QID;
   setMode("EDIT");
@@ -1662,9 +1581,7 @@ async function publishAll(){
 
     const items = applyScoring(QUESTIONS).map((q, idx)=>{
       ensureMeta(q);
-      // IMPORTANT: meta chỉ lưu url/path, không lưu base64
       const meta = { ...(q.meta||{}) };
-      // nếu ai lỡ có key cũ image_data_url thì xoá để không phá DB
       delete meta.image_data_url;
 
       return {
@@ -1677,12 +1594,8 @@ async function publishAll(){
       };
     });
 
-    try{
-      await rpc(RPC.adminReplaceQuestions, { p_token: token, p_quiz_id: qid, p_items: items });
-    }catch(e){
-      await rpc(RPC.adminImportQuestions, { p_token: token, p_quiz_id: qid, p_items: items });
-      toast("⚠️ DB chưa có replace (đã import, coi chừng trùng nếu DB không clear).");
-    }
+    // replace luôn (SQL của mình có sẵn)
+    await rpc(RPC.adminReplaceQuestions, { p_token: token, p_quiz_id: qid, p_items: items });
 
     toast(`Published: ${qid}`);
     await reloadQuizzes();
@@ -1691,13 +1604,18 @@ async function publishAll(){
     toast(e.message || "Publish error");
   }
 }
-
 document.getElementById("btnPublishAll").onclick = publishAll;
 document.getElementById("btnPublishAllBottom").onclick = publishAll;
 document.getElementById("btnPublishAll2").onclick = publishAll;
 
 /* ================== QUIZ LIST ================== */
 const quizList = document.getElementById("quizList");
+
+function shuffleBadge(sm){
+  if(sm==="q") return `<span class="idx">SHUFFLE-Q</span>`;
+  if(sm==="qa") return `<span class="idx">SHUFFLE-QA</span>`;
+  return "";
+}
 
 function renderQuizList(){
   if(!QUIZZES.length){
@@ -1711,7 +1629,8 @@ function renderQuizList(){
       q.is_public ? `<span class="idx ok">PUBLIC</span>` : `<span class="idx warn">PRIVATE</span>`,
       q.show_in_store ? `<span class="idx ok">STORE</span>` : `<span class="idx warn">STORE-OFF</span>`,
       q.require_login ? `<span class="idx">LOGIN</span>` : `<span class="idx ok">OPEN</span>`,
-      q.require_access_code ? `<span class="idx warn">CODE</span>` : ""
+      q.require_access_code ? `<span class="idx warn">CODE</span>` : "",
+      shuffleBadge(q.shuffle_mode)
     ].filter(Boolean).join(" ");
 
     return `
@@ -1773,12 +1692,15 @@ async function loadQuizToForm(qid){
   showInStoreEl.value = String(!!q.show_in_store);
   requireLoginEl.value = String(!!q.require_login);
   pinnedEl.value = String(!!q.pinned);
-  requireCodeEl.value = String(!!q.require_access_code);
-  accessCodeEl.value = "";
   scoringModeEl.value = q.scoring_mode || "equal";
   totalScoreEl.value = String(q.total_score ?? 10);
 
-  // load questions from DB (không nuốt lỗi im lặng)
+  // ✅ load shuffle mode
+  shuffleModeEl.value = (q.shuffle_mode || "none");
+
+  requireCodeEl.value = String(!!q.require_access_code);
+  accessCodeEl.value = "";
+
   QUESTIONS = [];
   renderQuestions();
 
@@ -1790,11 +1712,7 @@ async function loadQuizToForm(qid){
 
     QUESTIONS = items.map(x=>{
       const meta = x.meta || {};
-      // support old schema
-      if(meta.image_data_url && !meta.image_url){
-        // nếu trước kia có base64, giữ lại *tạm* bằng image_url=base64 để preview
-        meta.image_url = meta.image_data_url;
-      }
+      if(meta.image_data_url && !meta.image_url) meta.image_url = meta.image_data_url;
       return {
         type: x.q_type || x.type || "mcq1",
         prompt: x.prompt || "",
@@ -1907,7 +1825,6 @@ async function boot(){
   await reloadUsers();
   setTab("q");
 }
-
 (async ()=>{ await boot(); })();
 </script>
 </body>
