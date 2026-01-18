@@ -32,6 +32,7 @@
       touch-action: pan-x pan-y;
     }
     .btn, .btn-x, .pinKey { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    .hidden{ display:none !important; }
 
     #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 110px; touch-action: pan-y; }
     .wrap { max-width: 980px; margin: 0 auto; padding: 0 14px; }
@@ -212,6 +213,7 @@
     #pinBackdrop{z-index:20040}
     #resetBackdrop{z-index:20025}
     #profileBackdrop{z-index:20030}
+    #submitBackdrop{z-index:20035}
 
     .modal{
       width:100%;max-width:620px;
@@ -279,6 +281,10 @@
     .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     @media (max-width: 520px){ .grid2{ grid-template-columns: 1fr; } }
 
+    /* submit confirm list */
+    .missList{ margin:10px 0 12px; padding-left:18px; color:#374151; font-weight:800; line-height:1.35; }
+    .missList li{ margin:6px 0; }
+
     @media (max-width: 820px) {
       .progressline { max-width: 100%; }
       .btn { padding: 9px 12px; font-size: .85rem; }
@@ -296,7 +302,7 @@
   </div>
 
   <div id="shell">
-    <div class="actionbar">
+    <div class="actionbar" id="actionbar">
       <button class="btn btn-ghost" id="btnHome">Trang chủ</button>
       <button class="btn" id="btnScrollTop">⬆️ Lên đầu</button>
       <button class="btn btn-primary" id="btnSubmit" disabled>🏁 Nộp bài</button>
@@ -366,6 +372,18 @@
     </div>
   </div>
 
+  <!-- Submit confirm -->
+  <div class="modal-backdrop" id="submitBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="submitTitle">
+      <h3 id="submitTitle">Xác nhận nộp bài</h3>
+      <div id="submitBody"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btnCancelSubmit">Hủy</button>
+        <button class="btn btn-primary" id="btnConfirmSubmit">✅ Nộp</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Profile modal -->
   <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
@@ -407,7 +425,7 @@ const RPC = {
 
 const TOKEN_KEY = "tk_token_v2";
 const ME_KEY = "tk_me_v2";
-const NAME_KEY = "tk_display_name_v1"; // ✅ để result.html fallback đúng
+const NAME_KEY = "tk_display_name_v1";
 
 /* ================== HELPERS ================== */
 function toast(msg){
@@ -522,6 +540,24 @@ async function sbPost(path, body, { preferReturn=false } = {}){
     throw new Error(msg || "REST POST error");
   }
   return data;
+}
+
+/* ================== ACTIONBAR VISIBILITY ================== */
+const actionbar = document.getElementById("actionbar");
+const btnHome = document.getElementById("btnHome");
+const btnScrollTop = document.getElementById("btnScrollTop");
+const btnSubmit = document.getElementById("btnSubmit");
+const btnReset = document.getElementById("btnReset");
+
+function syncActionbar(){
+  // Màn hình chờ (chưa vào làm): chỉ có Trang chủ
+  // Màn hình làm bài: KHÔNG có Trang chủ, còn lại hiện
+  const started = !!view.started;
+
+  btnHome.classList.toggle("hidden", started);
+  btnScrollTop.classList.toggle("hidden", !started);
+  btnSubmit.classList.toggle("hidden", !started);
+  btnReset.classList.toggle("hidden", !started);
 }
 
 /* ================== MODALS (register + pin) ================== */
@@ -804,12 +840,17 @@ function updateStats(){
   document.getElementById("totalCount").textContent = String(total);
   document.getElementById("progressFill").style.width = total ? Math.round(answered*100/total)+"%" : "0%";
 
-  const canSubmit = !!me && !!me.user_id && answered>0 && !state.finalized && view.started;
-  document.getElementById("btnSubmit").disabled = !canSubmit;
+  // Cho nộp ngay cả khi 0 câu (để vẫn có attempt/0 điểm), miễn là đã vào làm
+  const canSubmit = !!me && !!me.user_id && !state.finalized && view.started;
+  btnSubmit.disabled = !canSubmit;
+  syncActionbar();
 }
 
 /* ================== Gate ================== */
 function renderGate(){
+  view.started = false;
+  syncActionbar();
+
   content.innerHTML = `
     <div class="card">
       <div class="row1">
@@ -951,7 +992,7 @@ async function onPinKey(k){
   }
 }
 
-/* ================== Start / Quiz ================== */
+/* ================== Result helper ================== */
 function bestAttemptIdForResult(){
   const a1 = String(state.attempt_id||"").trim();
   if(a1) return a1;
@@ -972,38 +1013,49 @@ function goResult(){
   location.href = `/result.html?${qs.toString()}`;
 }
 
+/* ================== Start / Quiz ================== */
 function renderStart(){
+  // Màn hình chờ: không có nút nào (trong content), actionbar chỉ Trang chủ
+  view.started = false;
+  syncActionbar();
   setUserCorner(me);
   updateStats();
+
+  const prevAttempt = bestAttemptIdForResult();
 
   content.innerHTML = `
     <div class="card">
       <div class="row1">
-        <p class="vi">Sẵn sàng làm bài</p>
+        <p class="vi">Đang chuẩn bị…</p>
         <div class="meta"><span class="idx">${escapeHtml(QUIZ.quiz_id||quizId)}</span></div>
       </div>
+
       <div class="muted" style="margin-top:8px; line-height:1.35">
-        Bạn đang đăng nhập: <b>${escapeHtml(me?.username||"")}</b>
+        Bạn đang đăng nhập: <b>${escapeHtml(me?.username||"")}</b><br/>
+        ${prevAttempt ? `Bạn đã làm bài trước đó. Đang mở lại kết quả…` : `Đang vào màn hình làm bài…`}
       </div>
 
-      <div style="margin-top:12px; display:grid; gap:10px;">
-        <button class="btn btn-primary" id="btnStart" style="justify-content:center;">Vào làm</button>
-        <button class="btn btn-ghost" id="btnViewResult" style="justify-content:center;">Xem lại kết quả</button>
+      <div class="muted" style="margin-top:10px">
+        (Nếu không tự chuyển, hãy thử tải lại trang.)
       </div>
     </div>
   `;
 
-  document.getElementById("btnStart").onclick = ()=>{
+  // Auto: nếu đã từng làm => mở lại kết quả, còn chưa => vào làm
+  setTimeout(()=>{
+    if(prevAttempt && !FLAG_RESTART && !FLAG_START){
+      goResult();
+      return;
+    }
     view.started = true;
     renderQuiz();
-    // nếu có hash #q123 thì scroll
     scrollToHashIfAny();
-  };
-  document.getElementById("btnViewResult").onclick = ()=>goResult();
+  }, 650);
 }
 
 function renderQuiz(){
   view.started = true;
+  syncActionbar();
   setUserCorner(me);
 
   if(!QUIZ.items.length){
@@ -1034,7 +1086,7 @@ function renderQuiz(){
 
         <div style="margin-top:10px;">
           <div class="qaRow">
-            <input class="input ans" data-id="${it.id}" placeholder="Nhập nghĩa…" value="${escapeHtml(typed)}" ${locked ? "disabled":""}/>
+            <input class="input ans" data-id="${it.id}" placeholder="Nhập nghĩa… (Enter: qua câu tiếp)" value="${escapeHtml(typed)}" ${locked ? "disabled":""}/>
             <button class="btn btn-primary btn-check" data-check="${it.id}" ${locked ? "disabled":""}>${locked?"Đã check":"Check"}</button>
           </div>
         </div>
@@ -1061,7 +1113,31 @@ function scrollToHashIfAny(){
   }, 80);
 }
 
+/* ================== Enter => next question ================== */
+function focusNextAnswerInput(currentId){
+  const inputs = Array.from(content.querySelectorAll("input.ans"));
+  if(!inputs.length) return;
+  const idx = inputs.findIndex(x => Number(x.dataset.id) === Number(currentId));
+  const next = (idx>=0 && idx+1 < inputs.length) ? inputs[idx+1] : null;
+  if(next){
+    try{ next.focus(); next.scrollIntoView({ behavior:"smooth", block:"center" }); }catch{}
+  }else{
+    // hết câu -> focus nút nộp
+    try{ btnSubmit.focus(); }catch{}
+  }
+}
+
 /* ================== EVENTS ================== */
+content.addEventListener("keydown",(e)=>{
+  const t = e.target;
+  if(!t || !(t.classList && t.classList.contains("ans"))) return;
+  if(e.key === "Enter"){
+    e.preventDefault();
+    const id = Number(t.dataset.id);
+    focusNextAnswerInput(id);
+  }
+});
+
 content.addEventListener("input", (e)=>{
   const t = e.target;
   if(!t || !t.classList.contains("ans")) return;
@@ -1091,17 +1167,18 @@ content.addEventListener("click", (e)=>{
   saveLocalProgress();
   toast(g.ok ? "ĐÚNG" : "SAI");
   renderQuiz();
-  scrollToHashIfAny();
+  // giữ vị trí
+  try{ document.querySelector(`#q${CSS.escape(String(id))}`)?.scrollIntoView({behavior:"smooth",block:"start"}); }catch{}
 });
 
-document.getElementById("btnScrollTop").onclick = ()=>{
+btnScrollTop.onclick = ()=>{
   document.getElementById("shell").scrollTo({ top:0, behavior:"smooth" });
 };
-document.getElementById("btnHome").onclick = ()=>goHome();
+btnHome.onclick = ()=>goHome();
 
 /* reset modal */
 const resetBackdrop = document.getElementById("resetBackdrop");
-document.getElementById("btnReset").onclick = ()=>{
+btnReset.onclick = ()=>{
   resetBackdrop.classList.add("show");
   resetBackdrop.setAttribute("aria-hidden","false");
 };
@@ -1120,10 +1197,45 @@ document.getElementById("btnConfirmReset").onclick = ()=>{
   resetBackdrop.setAttribute("aria-hidden","true");
   hardResetProgressLocal();
   toast("Đã làm lại");
-  // nếu đang làm thì render lại; nếu chưa thì về start/auto-start theo flag
   if(view.started) renderQuiz();
   else updateStats();
 };
+
+/* ================== SUBMIT CONFIRM MODAL ================== */
+const submitBackdrop = document.getElementById("submitBackdrop");
+const submitBody = document.getElementById("submitBody");
+document.getElementById("btnCancelSubmit").onclick = ()=>closeSubmitConfirm(false);
+document.getElementById("btnConfirmSubmit").onclick = ()=>closeSubmitConfirm(true);
+submitBackdrop.addEventListener("click",(e)=>{ if(e.target===submitBackdrop) closeSubmitConfirm(false); });
+
+let SUBMIT_PROMPT = { open:false, resolve:null };
+function openSubmitConfirm(htmlBody){
+  return new Promise((resolve)=>{
+    SUBMIT_PROMPT.open = true;
+    SUBMIT_PROMPT.resolve = resolve;
+    submitBody.innerHTML = htmlBody || `<p>Bạn có muốn nộp bài không?</p>`;
+    submitBackdrop.classList.add("show");
+    submitBackdrop.setAttribute("aria-hidden","false");
+  });
+}
+function closeSubmitConfirm(ans){
+  if(!SUBMIT_PROMPT.open) return;
+  submitBackdrop.classList.remove("show");
+  submitBackdrop.setAttribute("aria-hidden","true");
+  const r = SUBMIT_PROMPT.resolve;
+  SUBMIT_PROMPT.open=false;
+  SUBMIT_PROMPT.resolve=null;
+  if(r) r(!!ans);
+}
+
+function getMissingItems(){
+  const miss = [];
+  QUIZ.items.forEach((it, idx)=>{
+    const v = String(state.answers[it.id]||"").trim();
+    if(!v) miss.push({ idx: idx+1, id: it.id, word: it.word||"" });
+  });
+  return miss;
+}
 
 /* ================== SUBMIT ================== */
 function computeFinal(){
@@ -1144,7 +1256,7 @@ async function submitToSupabase(result){
   const attemptBody = {
     quiz_id: quizId,
     user_id: me.user_id,
-    name: me.username,                    // ✅ để result.html/attempts có tên
+    name: me.username,
     score10: Number(result.score10||0),
     correct_count: Number(result.correctCount||0),
     total_count: Number(result.totalCount||0)
@@ -1171,10 +1283,10 @@ async function submitToSupabase(result){
   return attemptId;
 }
 
-document.getElementById("btnSubmit").onclick = async ()=>{
+async function doSubmitNow(){
   if(!me || !me.user_id){ toast("Chưa login"); renderGate(); return; }
   if(state.finalized) return;
-  if(!view.started){ toast("Bấm Vào làm trước"); return; }
+  if(!view.started){ toast("Chưa vào làm"); return; }
 
   state.finalized = true;
 
@@ -1209,6 +1321,36 @@ document.getElementById("btnSubmit").onclick = async ()=>{
   qs.set("quiz", quizId);
   if(attemptId) qs.set("attempt", attemptId);
   location.href = `/result.html?${qs.toString()}`;
+}
+
+btnSubmit.onclick = async ()=>{
+  if(!me || !me.user_id){ toast("Chưa login"); renderGate(); return; }
+  if(state.finalized) return;
+  if(!view.started){ toast("Chưa vào làm"); return; }
+
+  const miss = getMissingItems();
+  const missCount = miss.length;
+
+  let body = "";
+  if(missCount === 0){
+    body = `<p><b>Bạn có muốn nộp bài không?</b></p>`;
+  }else if(missCount < 5){
+    const lis = miss.map(x=>`<li><b>Câu ${x.idx}</b> <span class="muted">(${escapeHtml(x.word)})</span></li>`).join("");
+    body = `
+      <p><b>Bạn chưa làm các câu sau:</b></p>
+      <ul class="missList">${lis}</ul>
+      <p>Bạn vẫn muốn nộp chứ?</p>
+    `;
+  }else{
+    body = `
+      <p><b>Bạn chưa làm ${missCount} câu.</b></p>
+      <p>Xác nhận nộp bài?</p>
+    `;
+  }
+
+  const ok = await openSubmitConfirm(body);
+  if(!ok) return;
+  await doSubmitNow();
 };
 
 /* ================== AUTH RESTORE + LOAD QUIZ ================== */
@@ -1276,12 +1418,12 @@ async function enterAfterAuth(out){
   if(m && m.user_id){
     me = m;
     setMeCache(m);
-    setNameCache(me.username || ""); // ✅
+    setNameCache(me.username || "");
     setUserCorner(me);
-    view.started = false;
 
-    // ✅ nếu link có ?start=1 thì auto vào làm (không cần bấm)
+    // Nếu có ?start=1 thì vào làm luôn
     if(FLAG_START && !state.finalized){
+      dropFlagsFromUrl();
       view.started = true;
       renderQuiz();
       scrollToHashIfAny();
@@ -1295,9 +1437,9 @@ async function enterAfterAuth(out){
       setMeCache(m2);
       setNameCache(me.username || "");
       setUserCorner(me);
-      view.started = false;
 
       if(FLAG_START && !state.finalized){
+        dropFlagsFromUrl();
         view.started = true;
         renderQuiz();
         scrollToHashIfAny();
@@ -1311,7 +1453,7 @@ async function enterAfterAuth(out){
   }
 }
 
-/* ================== Profile modal (minimal) ================== */
+/* ================== Profile modal ================== */
 const profileBackdrop = document.getElementById("profileBackdrop");
 document.getElementById("btnCloseProfile").onclick = ()=>closeProfileModal();
 profileBackdrop.addEventListener("click",(e)=>{ if(e.target===profileBackdrop) closeProfileModal(); });
@@ -1349,7 +1491,7 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
 
   renderLoading("Đang tải quiz…");
 
-  // ✅ nếu từ result bấm “Làm lại” thì clear local progress ngay
+  // nếu từ result bấm “Làm lại” thì clear local progress ngay
   if(FLAG_RESTART){
     hardResetProgressLocal();
     dropFlagsFromUrl();
