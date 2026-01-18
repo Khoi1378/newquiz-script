@@ -1,3 +1,547 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
+  <title>Quiz</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg1: #ffecd2; --bg2: #fcb69f;
+      --card: #fff; --text: #1f2937; --muted: #6b7280;
+      --primary: #7c3aed; --ok: #16a34a; --bad: #dc2626;
+      --border: #e5e7eb; --soft: #f8fafc;
+      --shadow: 0 14px 40px rgba(0,0,0,.10);
+      --radius: 18px;
+      --admin: #2563eb;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
+                  linear-gradient(120deg, var(--bg1) 0%, var(--bg2) 100%);
+      overflow: hidden;
+      touch-action: pan-x pan-y;
+    }
+    .btn, .btn-x, .pinKey { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    .hidden{ display:none !important; }
+
+    #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 110px; touch-action: pan-y; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 0 14px; }
+
+    .userCorner{
+      position:fixed;top:10px;left:12px;z-index:10010;
+      display:none;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;
+      background:rgba(255,255,255,.55);
+      border:1px solid rgba(229,231,235,.65);
+      backdrop-filter:blur(6px);
+      box-shadow:0 10px 22px rgba(0,0,0,.06);
+      user-select:none;
+      max-width:calc(100vw - 24px);
+      cursor:pointer;
+    }
+    .userCorner .name{
+      font-weight:950;font-size:.88rem;color:rgba(31,41,55,.55);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      max-width:58vw;
+    }
+    .userCorner .adminBadge{
+      padding:4px 8px;border-radius:999px;
+      font-weight:950;font-size:.78rem;
+      background:rgba(37,99,235,.12);
+      border:1px solid rgba(37,99,235,.35);
+      color:var(--admin);
+      white-space:nowrap;
+    }
+
+    .actionbar {
+      position: sticky; top: 10px; z-index: 9999;
+      display: flex; justify-content: flex-end; gap: 10px; padding: 0 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn{
+      border:0;cursor:pointer;border-radius:999px;padding:10px 14px;
+      font-weight:900;font-size:.9rem;
+      transition:transform .16s ease, filter .16s ease;
+      display:inline-flex;align-items:center;gap:8px;
+      user-select:none;white-space:nowrap;
+      box-shadow:0 12px 24px rgba(0,0,0,.12);
+      background:#fff;color:#111827;border:1px solid #e5e7eb;
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
+    .btn:active{transform:translateY(0)}
+    .btn-reset { background: #111827; color: #fff; border: 0; }
+    .btn-primary{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff;border:0;
+      box-shadow:0 12px 24px rgba(124,58,237,.18);
+    }
+    .btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
+    .btn-danger{background:var(--bad);color:#fff;border:0}
+    .btn-check {
+      border-radius: 12px;
+      padding: 9px 10px;
+      font-size: .86rem;
+      font-weight: 950;
+      box-shadow: 0 10px 20px rgba(124,58,237,.14);
+      width: auto;
+      min-width: 86px;
+      justify-content: center;
+    }
+    .btn[disabled], .btn-check[disabled]{opacity:.65;cursor:not-allowed;transform:none !important;filter:none !important}
+
+    .topbar{
+      margin-top:10px;
+      background:rgba(255,255,255,.86);
+      border:1px solid rgba(229,231,235,.9);
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,.06);
+      padding:14px;
+      display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+    }
+    .titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
+    .logo{
+      width:42px;height:42px;border-radius:16px;
+      background:linear-gradient(135deg,#a78bfa,#fb7185);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:900;
+      box-shadow:0 10px 22px rgba(124,58,237,.18);
+      user-select:none;
+    }
+    .titles h1{font-size:1.02rem;margin:0;font-weight:800}
+    .titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
+
+    .stats { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .pill {
+      background: #f3f4f6; border: 1px solid #e5e7eb;
+      border-radius: 999px; padding: 8px 12px;
+      font-weight: 800; font-size: .9rem; color: #374151; white-space: nowrap;
+    }
+    .pill strong { color: var(--primary); }
+    .progressline {
+      height: 10px; border-radius: 999px; background: #f3f4f6; overflow: hidden;
+      border: 1px solid #e5e7eb; width: 100%; max-width: 360px;
+    }
+    .progressfill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #22c55e, #a78bfa);
+      transition: width .25s ease;
+    }
+
+    .content { padding: 12px 0 0; }
+    .card{
+      background:var(--card);
+      border:2px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;margin:12px 0;
+    }
+    .row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+    .vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25}
+    .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .idx{
+      font-size:.78rem;font-weight:900;
+      padding:6px 10px;border-radius:999px;
+      background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;
+      white-space:nowrap;
+    }
+    .muted{color:var(--muted);font-weight:650}
+
+    .input{
+      width:100%;
+      border-radius:14px;border:2px solid #e5e7eb;
+      padding:11px 12px;font-size:.95rem;font-weight:700;
+      outline:none;background:var(--soft);
+      transition:border-color .15s ease, box-shadow .15s ease;
+      font-family:inherit;
+    }
+    .input:focus{
+      border-color:rgba(124,58,237,.55);
+      box-shadow:0 0 0 5px rgba(124,58,237,.10);
+      background:#fff;
+    }
+
+    .qaRow{ display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
+    .qaRow .input{ flex: 1 1 260px; }
+
+    .resultRow{
+      display:grid;
+      grid-template-columns: 140px 1fr;
+      gap:10px;
+      align-items:center;
+      margin-top:10px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px dashed #e5e7eb;
+      background: #fff;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+    .oktxt { color: var(--ok); font-weight: 1000; }
+    .badtxt { color: var(--bad); font-weight: 1000; }
+
+    .toast{
+      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
+      background:rgba(17,24,39,.92);color:#fff;
+      padding:10px 12px;border-radius:14px;
+      font-weight:800;font-size:.9rem;
+      opacity:0;pointer-events:none;
+      transition:opacity .18s ease, transform .18s ease;
+      max-width:calc(100% - 28px);
+      z-index:20050;text-align:center;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.35);
+      display:none;align-items:center;justify-content:center;
+      padding:16px;z-index:20000;
+    }
+    .modal-backdrop.show{display:flex}
+    #registerBackdrop{z-index:20015}
+    #pinBackdrop{z-index:20040}
+    #resetBackdrop{z-index:20025}
+    #profileBackdrop{z-index:20030}
+    #submitBackdrop{z-index:20035}
+    #imgBackdrop{z-index:20060}
+
+    .modal{
+      width:100%;max-width:620px;
+      background:#fff;border-radius:18px;border:1px solid #e5e7eb;
+      box-shadow:0 20px 60px rgba(0,0,0,.18);
+      padding:14px;max-height:82vh;overflow:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+    .modal h3{margin:4px 0 6px;font-size:1.02rem}
+    .modal p{margin:0 0 12px;color:var(--muted);font-weight:650;font-size:.92rem;line-height:1.35}
+    .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+    .xclose{position:sticky;top:0;display:flex;justify-content:flex-end;z-index:2;margin-bottom:4px}
+    .btn-x{
+      width:56px;height:56px;border-radius:16px;
+      border:1px solid #e5e7eb;background:#fff;cursor:pointer;
+      font-weight:1000;font-size:1.8rem;line-height:1;
+      box-shadow:0 12px 24px rgba(0,0,0,.10);
+    }
+
+    .pinWrap{display:grid;gap:12px}
+    .pinDots{
+      display:flex;justify-content:center;gap:10px;
+      padding:8px 0 2px;user-select:none;
+    }
+    .dot{
+      width:14px;height:14px;border-radius:999px;
+      border:2px solid #e5e7eb;background:#fff;
+      box-shadow:0 10px 22px rgba(0,0,0,.08);
+    }
+    .dot.filled{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      border-color:rgba(124,58,237,.25);
+    }
+    .pinKeypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .pinKey{
+      height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;
+      font-weight:1000;font-size:1.25rem;cursor:pointer;
+      box-shadow:0 10px 22px rgba(0,0,0,.08);
+      transition:transform .12s ease, filter .12s ease;
+      user-select:none;
+    }
+    .pinKey:hover{transform:translateY(-1px);filter:brightness(.99)}
+    .pinKey:active{transform:translateY(0)}
+    .pinKey.small{font-size:.95rem;font-weight:950;letter-spacing:.02em}
+    .pinNote{text-align:center;color:var(--muted);font-weight:750;font-size:.9rem;line-height:1.35}
+    @keyframes shakeX{0%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-4px)}90%{transform:translateX(4px)}100%{transform:translateX(0)}}
+    .pinWrap.shake{animation:shakeX .5s ease}
+    .pinDots.error .dot{border-color:rgba(220,38,38,.65)}
+    .pinDots.error .dot.filled{
+      background:linear-gradient(135deg,#fca5a5,#dc2626);
+      border-color:rgba(220,38,38,.55);
+    }
+    .pinNote.error{color:var(--bad)}
+
+    .divider{ height:1px; background: #e5e7eb; margin: 12px 0; }
+    .btn-red{
+      background: var(--bad);
+      color:#fff;
+      border:0;
+      box-shadow: 0 12px 24px rgba(220,38,38,.18);
+    }
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 520px){ .grid2{ grid-template-columns: 1fr; } }
+
+    .missList{ margin:10px 0 12px; padding-left:18px; color:#374151; font-weight:800; line-height:1.35; }
+    .missList li{ margin:6px 0; }
+
+    /* ===== Question UI ===== */
+    .qPrompt{
+      margin-top:10px;
+      white-space:pre-wrap;
+      font-weight:850;
+      line-height:1.35;
+    }
+    .qImgThumb{
+      margin-top:10px;
+      width:100%;
+      max-width:320px;
+      height:auto;
+      border-radius:16px;
+      border:1px solid #e5e7eb;
+      box-shadow:0 10px 24px rgba(0,0,0,.08);
+      cursor:pointer;
+      display:block;
+    }
+
+    .optGrid{ display:grid; gap:10px; margin-top:10px; }
+    .optBtn{
+      text-align:left;
+      border-radius:16px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      padding:12px;
+      cursor:pointer;
+      font-weight:900;
+      box-shadow:none;
+      transition:transform .12s ease, filter .12s ease;
+    }
+    .optBtn:hover{ transform:translateY(-1px); filter:brightness(.99); }
+    .optBtn.active{
+      border-color:rgba(124,58,237,.55);
+      box-shadow:0 0 0 5px rgba(124,58,237,.10);
+      background:#fff;
+    }
+    .optKey{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:28px; height:28px; border-radius:999px;
+      background:#f3f4f6; border:1px solid #e5e7eb;
+      font-weight:1000; margin-right:10px;
+    }
+
+    .boxes4{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .boxDigit{
+      width:58px;
+      text-align:center;
+      font-size:1.05rem;
+      font-weight:1000;
+      border-radius:16px;
+      padding:12px 8px;
+    }
+
+    .tfList{ display:grid; gap:10px; margin-top:10px; }
+    .tfRow{
+      border:1px solid #e5e7eb;
+      border-radius:16px;
+      padding:12px;
+      background:#fff;
+    }
+    .tfTop{ display:flex; gap:10px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+    .tfStmt{ font-weight:900; line-height:1.35; }
+    .tfBtns{ display:flex; gap:8px; flex-wrap:wrap; }
+    .tfBtn{
+      border-radius:999px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      padding:8px 12px;
+      font-weight:1000;
+      cursor:pointer;
+      box-shadow:none;
+    }
+    .tfBtn.active{
+      border-color:rgba(124,58,237,.55);
+      box-shadow:0 0 0 5px rgba(124,58,237,.10);
+    }
+
+    /* Image viewer modal */
+    .imgModal{
+      width:100%;
+      max-width:min(980px, 100%);
+      background:transparent;
+      border:0;
+      box-shadow:none;
+      padding:0;
+      max-height:88vh;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+    }
+    .imgFrame{
+      background:#fff;
+      border:1px solid rgba(229,231,235,.85);
+      border-radius:18px;
+      box-shadow:0 22px 70px rgba(0,0,0,.22);
+      max-width:100%;
+      max-height:88vh;
+      overflow:hidden;
+      position:relative;
+    }
+    .imgFrame img{
+      display:block;
+      max-width:90vw;
+      max-height:78vh;
+      width:auto;
+      height:auto;
+      object-fit:contain;
+    }
+    .imgClose{
+      position:absolute;
+      top:10px; right:10px;
+      width:50px; height:50px;
+      border-radius:16px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      cursor:pointer;
+      font-weight:1000;
+      font-size:1.6rem;
+      line-height:1;
+      box-shadow:0 12px 24px rgba(0,0,0,.10);
+    }
+
+    @media (max-width: 820px) {
+      .progressline { max-width: 100%; }
+      .btn { padding: 9px 12px; font-size: .85rem; }
+      .resultRow{ grid-template-columns: 120px 1fr; }
+      .userCorner .name { max-width: 66vw; }
+      .btn-check{ min-width: 84px; }
+      .boxDigit{ width:56px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="userCorner" id="userCorner" title="Bấm để mở tài khoản">
+    <span class="name" id="userCornerName">—</span>
+    <span class="adminBadge" id="userCornerAdmin" style="display:none;">ADMIN</span>
+  </div>
+
+  <div id="shell">
+    <div class="actionbar" id="actionbar">
+      <button class="btn btn-ghost" id="btnHome">Trang chủ</button>
+      <button class="btn" id="btnScrollTop">⬆️ Lên đầu</button>
+      <button class="btn btn-primary" id="btnSubmit" disabled>Nộp bài</button>
+      <button class="btn btn-reset" id="btnReset">🔁 Làm lại</button>
+    </div>
+
+    <div class="wrap">
+      <div class="topbar">
+        <div class="titlebox">
+          <div class="logo">Hi!</div>
+          <div class="titles">
+            <h1 id="quizTitle">Quiz</h1>
+            <div class="tiny" id="quizSub"></div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="pill">Đã làm: <strong id="answeredCount">0</strong>/<span id="totalCount">0</span></div>
+          <div class="progressline"><div class="progressfill" id="progressFill"></div></div>
+        </div>
+      </div>
+
+      <div class="content" id="content"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Register prompt -->
+  <div class="modal-backdrop" id="registerBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
+      <h3 id="registerTitle">Đăng ký tài khoản?</h3>
+      <p id="registerDesc">Username chưa đăng ký. Bạn có muốn đăng ký không?</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btnRegisterNo">Nhập lại</button>
+        <button class="btn btn-primary" id="btnRegisterYes">Đăng ký</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIN keypad -->
+  <div class="modal-backdrop" id="pinBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+      <div class="xclose">
+        <button class="btn-x" id="btnClosePin" aria-label="Đóng">✕</button>
+      </div>
+      <h3 id="pinTitle">Mật khẩu</h3>
+      <p id="pinDesc">Nhập mật khẩu số.</p>
+
+      <div class="pinWrap" id="pinWrap">
+        <div class="pinDots" id="pinDots"></div>
+        <div class="pinKeypad" id="pinKeypad"></div>
+        <div class="pinNote" id="pinNote"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset confirm -->
+  <div class="modal-backdrop" id="resetBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h3>Làm lại bài?</h3>
+      <p>Xóa lần làm hiện tại (trên máy) và làm lại.</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btnCancelReset">Hủy</button>
+        <button class="btn btn-danger" id="btnConfirmReset">Xóa & Làm lại</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit confirm -->
+  <div class="modal-backdrop" id="submitBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="submitTitle">
+      <h3 id="submitTitle">Xác nhận nộp bài</h3>
+      <div id="submitBody"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btnCancelSubmit">Hủy</button>
+        <button class="btn btn-primary" id="btnConfirmSubmit">Nộp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile modal -->
+  <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+      <div class="xclose">
+        <button class="btn-x" id="btnCloseProfile" aria-label="Đóng">✕</button>
+      </div>
+      <h3 id="profileTitle">Tài khoản</h3>
+      <p id="profileSub">Thông tin user.</p>
+
+      <div class="card" style="margin:10px 0 0; box-shadow:none;">
+        <div class="row1">
+          <p class="vi" style="margin:0">Username: <b id="profileUsername">—</b></p>
+          <div class="meta"><span class="idx" id="profileRole">USER</span></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div class="grid2">
+        <button class="btn btn-ghost" id="btnProfileHome" style="justify-content:center;">Trang chủ</button>
+        <button class="btn btn-red" id="btnLogout" style="justify-content:center;">🚪 Đăng xuất</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image viewer -->
+  <div class="modal-backdrop" id="imgBackdrop" aria-hidden="true">
+    <div class="imgModal" role="dialog" aria-modal="true">
+      <div class="imgFrame">
+        <button class="imgClose" id="btnImgClose" aria-label="Đóng">✕</button>
+        <img id="imgViewer" alt="image" src="" />
+      </div>
+    </div>
+  </div>
+
 <script>
 /* ================== CONFIG ================== */
 const HOME_URL = "/";
@@ -1260,3 +1804,6 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
   }
 })();
 </script>
+
+</body>
+</html>
