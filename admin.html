@@ -599,9 +599,10 @@ async function rpc(fn, args){
     method: "POST",
     headers: {
       "apikey": SUPABASE_ANON_KEY,
-      "Authorization": "Bearer " + token,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY, // ✅ luôn dùng anon key
       "Content-Type": "application/json"
     },
+
     body: JSON.stringify(args || {})
   });
 
