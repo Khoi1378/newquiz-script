@@ -590,19 +590,16 @@ function katexRenderSafe(root){
   }catch{}
 }
 
-/* ================== SUPABASE RPC ================== */
+/* ================== SUPABASE RPC (FIXED) ================== */
 async function rpc(fn, args){
   const token = getToken(); // JWT user đã login
-
-  if (!token) {
-    throw new Error("No auth token");
-  }
+  if(!token) throw new Error("No auth token");
 
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
     method: "POST",
     headers: {
-      apikey: SUPABASE_ANON_KEY,
-      Authorization: "Bearer " + token, // ✅ ĐÚNG
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + token,
       "Content-Type": "application/json"
     },
     body: JSON.stringify(args || {})
@@ -610,28 +607,17 @@ async function rpc(fn, args){
 
   const txt = await res.text();
   let data = null;
-  try { data = txt ? JSON.parse(txt) : null; } catch {}
+  try{ data = txt ? JSON.parse(txt) : null; } catch {}
 
-  if (!res.ok) {
-    throw new Error(
+  if(!res.ok){
+    const msg =
       data?.message ||
       data?.error ||
       data?.hint ||
+      data?.details ||
       txt ||
-      `RPC failed: ${fn}`
-    );
-  }
-  return data;
-}
-
-  const txt = await res.text();
-  let data=null;
-  try{ data = txt ? JSON.parse(txt) : null; }catch{}
-  if(!res.ok){
-    const msg = (data && (data.message||data.error||data.hint||data.details))
-      ? (data.message||data.error||data.hint||data.details)
-      : txt;
-    throw new Error(msg || `RPC failed: ${fn}`);
+      `RPC failed: ${fn}`;
+    throw new Error(msg);
   }
   return data;
 }
@@ -945,8 +931,6 @@ function renderQuestions(){
   qList.innerHTML = QUESTIONS.map((q, idx)=>{
     ensureMeta(q);
     const no = idx+1;
-
-    // choose preview image
     const img = q.meta.image_url || q.meta.image_data_url || "";
 
     return `
@@ -1107,14 +1091,12 @@ function syncQuestionFromCard(card){
   }else if(type==="mcq1"){
     const opts = Array.from(card.querySelectorAll(".qOpt")).map(x=>x.value);
     const correct = Number(card.querySelector(".qCorrect")?.value || "1") || 1;
-    // IMPORTANT: set answers để backend nào cũng chấm được
     const letter = ["A","B","C","D"][Math.max(1,Math.min(4,correct))-1];
     q.answers = [letter];
     q.meta = { ...(q.meta||{}), options: opts, correct, image_data_url:q.meta.image_data_url||"", image_url:q.meta.image_url||"" };
   }else if(type==="tf4"){
     const stmts = Array.from(card.querySelectorAll(".qStmt")).map(x=>x.value);
     const keys = Array.from(card.querySelectorAll(".qKey")).map(x=>x.value==="1");
-    // answers cũng gắn keys để backend nào cũng “ăn”
     q.answers = keys.map(v=>v? "T":"F");
     q.meta = { ...(q.meta||{}),
       statements: stmts,
@@ -1195,11 +1177,10 @@ qList.addEventListener("click",(e)=>{
     return;
   }
   if(act==="latex"){
-    // chèn $ $ vào input/textarea gần nhất (ưu tiên element đang focus)
     const active = document.activeElement;
     const target = (active && (active.tagName==="TEXTAREA" || active.tagName==="INPUT")) ? active : card.querySelector(".qPrompt");
     if(!target) return;
-    insertAtCursor(target, "$$SEL$$", -1); // đặt con trỏ vào giữa
+    insertAtCursor(target, "$$SEL$$", -1);
     return;
   }
 });
@@ -1252,7 +1233,6 @@ async function downscaleDataURL(dataUrl, maxW=1200){
   const ctx = c.getContext("2d");
   ctx.drawImage(img, 0, 0, nw, nh);
 
-  // lưu jpeg cho nhẹ
   return c.toDataURL("image/jpeg", 0.86);
 }
 async function setQuestionImage(i, file){
@@ -1261,8 +1241,7 @@ async function setQuestionImage(i, file){
   const raw = await readImageToDataURL(file);
   const scaled = await downscaleDataURL(raw);
   ensureMeta(QUESTIONS[i]);
-  QUESTIONS[i].meta.image_data_url = scaled;  // local preview
-  // KHÔNG set image_url ở đây, publish mới upload
+  QUESTIONS[i].meta.image_data_url = scaled;
   renderQuestions();
   toast("Đã gắn ảnh (sẽ upload khi Publish)");
 }
@@ -1294,7 +1273,6 @@ qList.addEventListener("drop", async (e)=>{
   try{ await setQuestionImage(i, f); }catch{ toast("Lỗi ảnh"); }
 },{passive:false});
 
-// paste image: gắn vào câu đang focus
 window.addEventListener("paste", async (e)=>{
   const items = e.clipboardData?.items || [];
   const imgItem = Array.from(items).find(it=>it.type && it.type.startsWith("image/"));
@@ -1333,7 +1311,6 @@ function isHeaderLine(line){
   return /^<(tn|tl|tln|tf)>\s*@\d+\s*:/.test(s);
 }
 function stripStarsAll(s){
-  // xóa *...* ở đầu/cuối hoặc trong chuỗi (case import dính “*C*  bla”)
   let t = String(s||"");
   t = t.replace(/\*(.*?)\*/g, "$1");
   return t.trim();
@@ -1397,11 +1374,9 @@ function parseImportText(text){
     }
 
     if(tag==="tl"){
-      let answers = [];
-      // chấp nhận dạng: "*a*|*b*" trong 1 dòng hoặc nhiều dòng
       const joined = body.join("\n");
       const parts = joined.split("|").map(x=>x.trim()).filter(Boolean);
-      answers = parts.map(stripStarsAll).filter(Boolean);
+      const answers = parts.map(stripStarsAll).filter(Boolean);
       out.push({
         type:"essay",
         prompt: head,
@@ -1530,10 +1505,9 @@ async function saveQuizOnly(){
     p_access_code: accessCodeEl.value.trim(),
     p_scoring_mode: scoringModeEl.value,
     p_total_score: Number(totalScoreEl.value || "10") || 10,
-    p_shuffle_mode: shuffleModeEl.value  // none | q | qa
+    p_shuffle_mode: shuffleModeEl.value
   };
 
-  // nếu DB chưa kịp update signature: thử fallback bỏ p_shuffle_mode
   let out = null;
   try{
     out = await rpc(RPC.adminUpsertQuiz, payload);
@@ -1568,7 +1542,6 @@ document.getElementById("btnSaveQuiz").onclick = async ()=>{
 };
 
 async function uploadAllImagesIfNeeded(qid, items){
-  // items là list publish (đã apply scoring). meta.image_data_url -> upload -> meta.image_url
   for(let i=0;i<items.length;i++){
     const it = items[i];
     const meta = it.meta || {};
@@ -1583,13 +1556,11 @@ async function uploadAllImagesIfNeeded(qid, items){
       await storagePutObject(STORAGE_BUCKET, path, mime, bytes);
 
       meta.image_url = publicObjectUrl(STORAGE_BUCKET, path);
-      meta.image_data_url = ""; // bỏ base64 để payload nhỏ
+      meta.image_data_url = "";
       it.meta = meta;
 
-      // nhẹ nhàng tránh rate-limit
       await sleep(60);
     }catch(e){
-      // Nếu upload fail: vẫn để data_url (nhưng có thể publish fail nếu payload lớn)
       toast("⚠️ Upload ảnh fail: " + (e.message||""));
     }
   }
@@ -1600,7 +1571,6 @@ function buildPublishItems(){
   const scored = applyScoring(QUESTIONS).map((q, idx)=>{
     ensureMeta(q);
 
-    // đảm bảo luôn có correct/options/keys/answers đúng format
     let meta = q.meta || {};
     let answers = Array.isArray(q.answers) ? q.answers : [];
 
@@ -1629,17 +1599,12 @@ function buildPublishItems(){
 
     return {
       no: idx+1,
-
-      // nhiều backend khác nhau: gửi đủ alias
       type: q.type,
       qtype: q.type,
-
       prompt: (q.prompt||"").trim(),
       word: (q.prompt||"").trim(),
-
       answers: answers,
       points: q.points,
-
       meta: meta,
       q_json: meta
     };
@@ -1660,12 +1625,10 @@ async function publishAll(){
     let items = buildPublishItems();
     items = await uploadAllImagesIfNeeded(qid, items);
 
-    // Replace questions
     let out2 = null;
     try{
       out2 = await rpc(RPC.adminReplaceQuestions, { p_token: token, p_quiz_id: qid, p_items: items });
     }catch(e){
-      // fallback import (nhưng cảnh báo có thể trùng nếu DB không clear)
       const m = String(e?.message||"");
       if(m.includes("Could not find the function") || m.includes("schema cache")){
         out2 = await rpc(RPC.adminImportQuestions, { p_token: token, p_quiz_id: qid, p_items: items, p_replace: true });
@@ -1675,14 +1638,11 @@ async function publishAll(){
       }
     }
 
-    // Optional: regrade attempts nếu DB có function
     const rg = await rpcOptional(RPC.adminRegradeQuiz, { p_token: token, p_quiz_id: qid });
     if(rg && rg.ok) toast("Regrade: OK");
 
     toast(`Published: ${qid}`);
     await reloadQuizzes();
-
-    // mở quiz
     location.href = `/q/${qid}`;
   }catch(e){
     toast(e.message || "Publish error");
@@ -1756,7 +1716,6 @@ async function delQuiz(qid){
 }
 
 function fromDbQuestion(x){
-  // chống mọi kiểu schema: prompt/word, meta/q_json, type/qtype...
   const type = (x.type || x.qtype || "mcq1");
   const prompt = (x.prompt || x.word || "");
   const points = (x.points ?? null);
@@ -1785,7 +1744,6 @@ async function loadQuizToForm(qid){
   totalScoreEl.value = String(q.total_score ?? 10);
   shuffleModeEl.value = q.shuffle_mode || "none";
 
-  // load questions from DB (KHÔNG nuốt lỗi)
   QUESTIONS = [];
   renderQuestions();
   toast("Đang tải câu hỏi...");
@@ -1796,22 +1754,18 @@ async function loadQuizToForm(qid){
     const items = out.items || [];
     QUESTIONS = items.map(fromDbQuestion);
 
-    // normalize meta image keys
     QUESTIONS.forEach(qx=>{
       ensureMeta(qx);
-      // nếu backend lưu image_url nhưng không có key chuẩn
       if(!qx.meta.image_url && qx.meta.image) qx.meta.image_url = qx.meta.image;
       if(!qx.meta.image_url && qx.meta.img_url) qx.meta.image_url = qx.meta.img_url;
-      // không giữ base64 từ db
       if(qx.meta.image_data_url && qx.meta.image_data_url.length > 50) qx.meta.image_data_url = "";
-      // mcq: nếu meta.correct có mà answers rỗng => set answers
+
       if(qx.type==="mcq1"){
         const c = Number(qx.meta.correct||1)||1;
         const letter = ["A","B","C","D"][Math.max(1,Math.min(4,c))-1];
         if(!Array.isArray(qx.answers) || qx.answers.length===0) qx.answers = [letter];
         if(!qx.meta.options) qx.meta.options = ["","","",""];
       }
-      // tf4: nếu meta.keys có mà answers rỗng => set answers
       if(qx.type==="tf4"){
         const keys = Array.isArray(qx.meta.keys) ? qx.meta.keys : [false,false,false,false];
         qx.meta.keys = keys.slice(0,4);
@@ -1919,17 +1873,10 @@ async function resetPin(id){
     QUESTIONS = [];
     renderQuestions();
 
-    document
-      .getElementById("btnPublishAll2")
-      ?.addEventListener("click", () =>
-        document.getElementById("btnPublishAll")?.click()
-      );
-
     await reloadQuizzes();
     await reloadUsers();
     setTab("q");
 
-    // KaTeX render lại lần nữa cho chắc
     setTimeout(() => {
       document
         .querySelectorAll('[data-preview="1"]')
@@ -1941,7 +1888,6 @@ async function resetPin(id){
     toast("Boot error: " + (e.message || e));
   }
 })();
-
 </script>
 </body>
 </html>
