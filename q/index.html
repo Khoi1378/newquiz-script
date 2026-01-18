@@ -554,6 +554,7 @@ const RPC = {
   login: "api_login",
   register: "api_register",
   me: "api_me"
+  getQuiz: "api_get_quiz2",
 };
 
 const TOKEN_KEY = "tk_token_v2";
@@ -1747,42 +1748,33 @@ async function loadMeIfAny(){
 
 /* ✅ LOAD QUIZ từ quizzes + questions */
 async function loadQuiz(){
-  const qArr = await sbGet(`quizzes?quiz_id=eq.${quizId}&select=quiz_id,title,sub,require_login,is_hidden,is_public&limit=1`);
-  const q = (Array.isArray(qArr) && qArr[0]) ? qArr[0] : null;
-  if(!q) throw new Error("Không tìm thấy quiz");
+  const token = getToken() || "";
+  const out = await sbRpc(RPC.getQuiz, { p_quiz_id: quizId, p_token: token, p_access_code: "" });
 
-  if(q.is_hidden){
-    // vẫn cho xem nếu bạn muốn, nhưng báo nhẹ
-  }
+  if(!out || out.ok !== true) throw new Error(out?.error || "Không tải được quiz");
 
-  let items = [];
-  try{
-    const rows = await sbGet(`questions?quiz_id=eq.${quizId}&select=id,no,q_type,prompt,answers,points,meta&order=no.asc,id.asc`);
-    items = Array.isArray(rows) ? rows : [];
-  }catch(_e){
-    items = [];
-  }
+  const q = out.quiz || {};
+  const items = Array.isArray(out.items) ? out.items : [];
 
-  // fallback: nếu questions trống, thử quiz_questions (chỉ mcq1)
-  if(!items.length){
-    try{
-      const rows2 = await sbGet(`quiz_questions?quiz_id=eq.${quizId}&select=id,no,qtype,prompt,options,answer,points&order=no.asc,id.asc`);
-      const arr2 = Array.isArray(rows2) ? rows2 : [];
-      items = arr2.map(x=>{
-        const ans = String(x.answer||"A").toUpperCase();
-        const correct = {A:1,B:2,C:3,D:4}[ans] || 1;
-        return {
-          id: Number(x.id),
-          no: x.no,
-          q_type: "mcq1",
-          prompt: x.prompt || "",
-          answers: [],
-          points: x.points ?? 1,
-          meta: { options: x.options || ["","","",""], correct }
-        };
-      });
-    }catch(_e){}
-  }
+  return {
+    quiz_id: q.quiz_id || quizId,
+    title: q.title || "Quiz",
+    sub: q.sub || "",
+    require_login: (q.require_login !== false),
+    require_access_code: !!q.require_access_code,
+    login_required: !!out.login_required,
+    access_code_required: !!out.access_code_required,
+    items: items.map(x=>({
+      id: Number(x.id),
+      no: x.no,
+      q_type: String(x.q_type || "essay"),
+      prompt: x.prompt || "",
+      answers: Array.isArray(x.answers) ? x.answers : [],
+      points: x.points ?? 1,
+      meta: (x.meta && typeof x.meta === "object") ? x.meta : {}
+    }))
+  };
+}
 
   return {
     quiz_id: q.quiz_id || quizId,
