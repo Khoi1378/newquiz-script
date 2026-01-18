@@ -29,7 +29,7 @@
         linear-gradient(120deg,var(--bg1) 0%, var(--bg2) 100%);
       overflow:hidden;
     }
-    #shell{height:100vh; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 0 110px}
+    #shell{height:100vh; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 0 130px}
     .wrap{max-width:1180px; margin:0 auto; padding:0 14px}
 
     .topbar{
@@ -131,8 +131,6 @@
     .tab.active{background:linear-gradient(135deg,#7c3aed,#fb7185); color:#fff; border:0}
 
     .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-    .grid3{display:grid; grid-template-columns:1.1fr 1.2fr 1fr; gap:10px}
-    @media(max-width:980px){ .grid3{grid-template-columns:1fr} }
     @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 
     code{background:#f6f6f6;padding:2px 6px;border-radius:8px;border:1px solid #eee}
@@ -266,6 +264,55 @@
       z-index:20050; text-align:center;
     }
     .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px)}
+
+    /* ====== LaTeX palette ====== */
+    .mathBar{
+      display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-end;
+      margin-top:8px;
+    }
+    .mathBtn{
+      padding:8px 10px; border-radius:999px; border:1px solid #e5e7eb;
+      background:#fff; font-weight:950; cursor:pointer;
+      box-shadow:none;
+    }
+    .mathBtn.primary{
+      background:linear-gradient(135deg,#7c3aed,#fb7185); color:#fff; border:0;
+    }
+
+    .latexPanel{
+      position:fixed;
+      left:50%;
+      bottom:calc(env(safe-area-inset-bottom) + 18px);
+      transform:translateX(-50%);
+      width:min(980px, calc(100% - 28px));
+      background:rgba(255,255,255,.98);
+      border:1px solid rgba(229,231,235,.95);
+      box-shadow:0 18px 50px rgba(0,0,0,.18);
+      border-radius:18px;
+      padding:12px;
+      z-index:20080;
+      display:none;
+    }
+    .latexPanel.show{display:block;}
+    .latexHead{
+      display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .latexGrid{
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .latexChip{
+      border:1px solid #e5e7eb;
+      background:#fff;
+      border-radius:999px;
+      padding:9px 12px;
+      font-weight:950;
+      cursor:pointer;
+      user-select:none;
+      box-shadow:none;
+    }
+    .latexChip:hover{filter:brightness(.98)}
+    .latexTiny{font-size:.86rem; color:var(--muted); font-weight:750}
   </style>
 </head>
 
@@ -305,7 +352,6 @@
                 <p class="vi">Quiz</p>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
                   <span class="idx" id="editModePill">NEW</span>
-                  <span class="idx" id="draftPill">DRAFT: —</span>
                 </div>
               </div>
 
@@ -393,7 +439,6 @@
 
               <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
                 <button class="btn" id="btnNewQuiz" type="button">✨ Tạo mới</button>
-                <button class="btn btn-ghost" id="btnClearDraft" type="button">🧽 Xóa nháp</button>
                 <button class="btn btn-primary" id="btnSaveQuiz" type="button">💾 Lưu quiz</button>
               </div>
             </div>
@@ -415,19 +460,22 @@
                 <p class="vi" style="margin:0">Soạn câu hỏi</p>
                 <span class="idx" id="qCountPill">0</span>
               </div>
+
               <div class="qbTabs" aria-label="Chế độ">
                 <button class="qbTab active" id="qbTabManual" type="button">📝 Thủ công</button>
                 <button class="qbTab" id="qbTabImport" type="button">📥 Import</button>
               </div>
+
               <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+                <button class="btn" id="btnLatex" type="button">🧮 LaTeX</button>
                 <button class="btn btn-primary" id="btnPublishAll" type="button">🚀 Publish</button>
               </div>
             </div>
 
             <div id="qbManualArea" style="margin-top:10px">
               <div class="hint" style="margin-top:6px">
-                Gõ ký hiệu toán học bằng <code>$...$</code> (vd: <code>$x^2$</code>, <code>$(x+y)/2$</code>).<br>
-                Ảnh là ảnh của từng câu (paste/kéo thả/chọn file ngay trong câu).
+                Dùng <code>$...$</code> hoặc <code>$$...$$</code>. Bấm nút <b>🧮 LaTeX</b> để chèn mẫu nhanh.<br>
+                Ảnh sẽ upload lên bucket <code>quiz</code> (không nhét base64 vào DB).
               </div>
 
               <div id="qList" style="margin-top:12px"></div>
@@ -440,22 +488,18 @@
 
             <div id="qbImportArea" style="display:none; margin-top:10px">
               <div class="hint" style="margin-top:0">
-                Import theo định dạng (mỗi block bắt đầu bằng tag):
+                Import theo định dạng (mỗi block bắt đầu bằng tag). Hệ thống sẽ tự xoá <code>*...*</code> / <code>**...**</code> quanh đáp án:
                 <div class="mono" style="white-space:pre-wrap; margin-top:8px; background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:10px">
 &lt;tn&gt;@1: Câu trắc nghiệm
 A
 B
-*C*  (dòng có *...* là đáp án đúng)
+**C**   (đáp án đúng)
 
 &lt;tl&gt;@2: Câu tự luận
-*Đáp án đúng*
+**Đáp án đúng**
 
 &lt;tln&gt;@3: Trả lời ngắn
-*0,02*
-
-&lt;tf&gt;@4: Đúng/Sai
-|A: ... *T*|
-|B: ... *F*|
+**0,02**
                 </div>
               </div>
 
@@ -463,12 +507,8 @@ B
               <textarea id="importBox" placeholder="Dán nội dung import vào đây..."></textarea>
 
               <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-                <button class="btn" id="btnImportReplace" type="button">⬇️ Import (thay thế danh sách)</button>
-                <button class="btn btn-primary" id="btnImportAppend" type="button">➕ Import (thêm vào cuối)</button>
-              </div>
-
-              <div class="hint" style="margin-top:10px">
-                Import xong bạn có thể chuyển qua tab “Thủ công” để chỉnh từng câu.
+                <button class="btn" id="btnImportReplace" type="button">⬇️ Import (thay thế)</button>
+                <button class="btn btn-primary" id="btnImportAppend" type="button">➕ Import (thêm)</button>
               </div>
 
               <div class="hr"></div>
@@ -506,11 +546,33 @@ B
   <input id="qImgPick" type="file" accept="image/*" style="display:none" />
   <div class="toast" id="toast"></div>
 
+  <!-- LaTeX palette -->
+  <div class="latexPanel" id="latexPanel" aria-hidden="true">
+    <div class="latexHead">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div style="font-weight:1000">🧮 LaTeX</div>
+        <div class="latexTiny">Chèn vào ô đang gõ (click vào textarea trước).</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <button class="latexChip" data-latex-act="wrapInline" type="button">Bọc $...$</button>
+        <button class="latexChip" data-latex-act="wrapBlock" type="button">Bọc $$...$$</button>
+        <button class="latexChip" data-latex-act="close" type="button">Đóng</button>
+      </div>
+    </div>
+
+    <div class="latexGrid" id="latexGrid">
+      <!-- buttons injected by JS -->
+    </div>
+  </div>
+
 <script>
 /* ================== CONFIG ================== */
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 const TOKEN_KEY = "tk_token_v2";
+
+/* Storage */
+const STORAGE_BUCKET = "quiz"; // bucket của bạn
 
 /* RPC names */
 const RPC = {
@@ -548,6 +610,7 @@ function esc(s){
 function getToken(){ return (localStorage.getItem(TOKEN_KEY) || "").trim(); }
 function setToken(t){ localStorage.setItem(TOKEN_KEY, String(t||"").trim()); }
 function clearToken(){ localStorage.removeItem(TOKEN_KEY); }
+
 function normalizeQuizId(x){
   x = String(x||"").trim().toLowerCase();
   x = x.replace(/[^a-z]/g,"").slice(0,5);
@@ -583,6 +646,33 @@ async function rpc(fn, args){
   return data;
 }
 
+/* ================== STORAGE UPLOAD ================== */
+function publicObjectUrl(bucket, path){
+  const safe = path.split("/").map(encodeURIComponent).join("/");
+  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${safe}`;
+}
+
+async function uploadToBucket(bucket, path, blob, contentType){
+  // NOTE: việc upload được hay không phụ thuộc policy bucket của bạn
+  // (bạn nói đã có bucket rồi). Nếu bị 403 => cần mở policy insert/update cho anon hoặc dùng signed upload.
+  const url = `${SUPABASE_URL}/storage/v1/object/${bucket}/${path.split("/").map(encodeURIComponent).join("/")}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+      "Content-Type": contentType || "application/octet-stream",
+      "x-upsert": "true"
+    },
+    body: blob
+  });
+  if(!res.ok){
+    const t = await res.text().catch(()=> "");
+    throw new Error(`Upload failed (${res.status}): ${t || "check bucket policy"}`);
+  }
+  return publicObjectUrl(bucket, path);
+}
+
 /* ================== DOM ================== */
 const mePill = document.getElementById("mePill");
 const gate = document.getElementById("gate");
@@ -611,67 +701,7 @@ let CURRENT_QID = "";
 let CURRENT_MODE = "NEW"; // NEW | EDIT
 let QUESTIONS = [];       // array of {type,prompt,answers,points,meta}
 
-/* ================== DRAFT ================== */
-const DRAFT_NS = "admin_draft_v6_sql";
-function draftKeyFor(qid){ return `${DRAFT_NS}::${qid || "NEW"}`; }
-const draftPill = document.getElementById("draftPill");
-let draftTimer = null;
-
-function setDraftPill(text, cls=""){
-  draftPill.textContent = text;
-  draftPill.className = "idx " + (cls||"");
-}
-function saveDraftSoon(){
-  if(draftTimer) clearTimeout(draftTimer);
-  draftTimer = setTimeout(saveDraftNow, 250);
-}
-function getFormSnapshot(){
-  return {
-    v: 1,
-    ts: Date.now(),
-    mode: CURRENT_MODE,
-    qid: CURRENT_QID || normalizeQuizId(quizIdEl.value),
-    form: {
-      quiz_id: normalizeQuizId(quizIdEl.value),
-      title: titleEl.value,
-      sub: subEl.value,
-      is_public: isPublicEl.value,
-      is_hidden: isHiddenEl.value,
-      show_in_store: showInStoreEl.value,
-      require_login: requireLoginEl.value,
-      pinned: pinnedEl.value,
-      require_access_code: requireCodeEl.value,
-      access_code: accessCodeEl.value,
-      scoring_mode: scoringModeEl.value,
-      total_score: totalScoreEl.value
-    },
-    questions: QUESTIONS
-  };
-}
-function saveDraftNow(){
-  try{
-    const snap = getFormSnapshot();
-    const key = draftKeyFor(CURRENT_QID || snap.form.quiz_id || "NEW");
-    localStorage.setItem(key, JSON.stringify(snap));
-    const d = new Date(snap.ts);
-    const hh = String(d.getHours()).padStart(2,"0");
-    const mm = String(d.getMinutes()).padStart(2,"0");
-    const ss = String(d.getSeconds()).padStart(2,"0");
-    setDraftPill(`DRAFT: ${hh}:${mm}:${ss}`, "ok");
-  }catch{
-    setDraftPill("DRAFT: OFF", "warn");
-  }
-}
-function clearDraft(){
-  const key1 = draftKeyFor(CURRENT_QID || normalizeQuizId(quizIdEl.value) || "NEW");
-  localStorage.removeItem(key1);
-  setDraftPill("DRAFT: —");
-}
-function tryLoadDraft(qid){
-  const raw = localStorage.getItem(draftKeyFor(qid || "NEW"));
-  if(!raw) return null;
-  try{ return JSON.parse(raw); }catch{ return null; }
-}
+let ACTIVE_TEXTAREA = null;
 
 /* ================== SIMPLE LOGIN UI (PIN) ================== */
 function renderLoginUI(msg){
@@ -717,13 +747,8 @@ function renderLoginUI(msg){
   };
 
   gate.querySelector("#btnDoLogin").onclick = ()=>doLoginPin();
-
-  pEl.addEventListener("keydown",(e)=>{
-    if(e.key==="Enter") doLoginPin();
-  });
-  uEl.addEventListener("keydown",(e)=>{
-    if(e.key==="Enter") doLoginPin();
-  });
+  pEl.addEventListener("keydown",(e)=>{ if(e.key==="Enter") doLoginPin(); });
+  uEl.addEventListener("keydown",(e)=>{ if(e.key==="Enter") doLoginPin(); });
 }
 
 async function doLoginPin(){
@@ -742,7 +767,7 @@ async function doLoginPin(){
     localStorage.setItem("admin_last_username", u);
 
     toast("Login OK");
-    await boot(); // chạy vào panel
+    await boot();
   }catch(e){
     toast(e.message || "Login error");
     renderLoginUI(e.message || "Login error");
@@ -811,32 +836,19 @@ const requireCodeEl = document.getElementById("requireCode");
 const accessCodeEl = document.getElementById("accessCode");
 const scoringModeEl = document.getElementById("scoringMode");
 const totalScoreEl = document.getElementById("totalScore");
-
 const editModePill = document.getElementById("editModePill");
 
 quizIdEl.addEventListener("input", ()=>{
   const v = normalizeQuizId(quizIdEl.value);
   if(quizIdEl.value !== v) quizIdEl.value = v;
-  if(CURRENT_MODE==="NEW") saveDraftSoon();
 },{passive:true});
-
-[
-  titleEl, subEl, isPublicEl, isHiddenEl, showInStoreEl, requireLoginEl,
-  pinnedEl, requireCodeEl, accessCodeEl, scoringModeEl, totalScoreEl
-].forEach(el=>{
-  el.addEventListener("input", saveDraftSoon, {passive:true});
-  el.addEventListener("change", saveDraftSoon, {passive:true});
-});
 
 function setMode(mode){
   CURRENT_MODE = mode;
   editModePill.textContent = mode;
   editModePill.className = "idx " + (mode==="EDIT" ? "ok" : "");
-  if(mode==="EDIT"){
-    quizIdEl.setAttribute("disabled","disabled");
-  }else{
-    quizIdEl.removeAttribute("disabled");
-  }
+  if(mode==="EDIT") quizIdEl.setAttribute("disabled","disabled");
+  else quizIdEl.removeAttribute("disabled");
 }
 
 function validateQuiz(){
@@ -896,23 +908,24 @@ function updateQCount(){ qCountPill.textContent = String(QUESTIONS.length || 0);
 function defaultQuestion(){
   const t = LAST_QTYPE || "mcq1";
   if(t==="mcq1"){
-    return { type:"mcq1", prompt:"", answers:[], points:null, meta:{ options:["A","B","C","D"], correct:1, image_data_url:"" } };
+    return { type:"mcq1", prompt:"", answers:[], points:null, meta:{ options:["","","",""], correct:1, image_url:"", image_path:"" } };
   }
   if(t==="short4"){
-    return { type:"short4", prompt:"", answers:[""], points:null, meta:{ format:"4boxes", image_data_url:"" } };
+    return { type:"short4", prompt:"", answers:[""], points:null, meta:{ format:"4boxes", image_url:"", image_path:"" } };
   }
   if(t==="tf4"){
     return { type:"tf4", prompt:"", answers:[], points:null, meta:{
       statements:["","","",""], keys:[true,false,false,false],
       rule:{ byCorrectCount:{ "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 } },
-      image_data_url:""
+      image_url:"", image_path:""
     }};
   }
-  return { type:"essay", prompt:"", answers:[""], points:null, meta:{ fuzzy:true, image_data_url:"" } };
+  return { type:"essay", prompt:"", answers:[""], points:null, meta:{ fuzzy:true, image_url:"", image_path:"" } };
 }
-function ensureMetaImage(q){
+function ensureMeta(q){
   q.meta = q.meta || {};
-  if(typeof q.meta.image_data_url !== "string") q.meta.image_data_url = "";
+  if(typeof q.meta.image_url !== "string") q.meta.image_url = "";
+  if(typeof q.meta.image_path !== "string") q.meta.image_path = "";
 }
 
 function renderQuestions(){
@@ -924,9 +937,9 @@ function renderQuestions(){
   const isCustom = (scoringModeEl.value === "custom");
 
   qList.innerHTML = QUESTIONS.map((q, idx)=>{
-    ensureMetaImage(q);
+    ensureMeta(q);
     const no = idx+1;
-    const img = q.meta.image_data_url || "";
+    const img = q.meta.image_url || "";
     return `
       <div class="qCard" data-i="${idx}">
         <div class="qHead">
@@ -949,21 +962,28 @@ function renderQuestions(){
           </div>
         </div>
 
+        <div class="mathBar">
+          <button class="mathBtn" data-act="latex" type="button">🧮 Chèn LaTeX</button>
+          <button class="mathBtn" data-act="wrapInline" type="button">$...$</button>
+          <button class="mathBtn" data-act="wrapBlock" type="button">$$...$$</button>
+        </div>
+
         <label>Câu hỏi</label>
-        <textarea class="qPrompt" placeholder="Bạn có thể dùng $...$ cho toán (vd: $x^2$)">${esc(q.prompt||"")}</textarea>
+        <textarea class="qPrompt" placeholder="Click rồi dùng nút 🧮 để chèn mẫu...">${esc(q.prompt||"")}</textarea>
 
         <div class="imgRow">
           <div class="imgDrop" data-imgdrop="1">
             <div style="min-width:220px">
               <div style="font-weight:950">Ảnh câu hỏi</div>
-              <small>Paste / kéo thả / chọn file • tự resize max 1200px</small>
+              <small>Paste / kéo thả / chọn file • upload bucket quiz</small>
               <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
                 <button class="btn" data-act="pickimg" type="button">📷 Chọn ảnh</button>
                 <button class="btn btn-ghost" data-act="removeimg" type="button">🗑️ Xóa ảnh</button>
               </div>
+              ${q.meta.image_path ? `<div class="hint" style="margin-top:8px">path: <code>${esc(q.meta.image_path)}</code></div>` : ``}
             </div>
           </div>
-          <img class="imgPreview" data-imgpreview="1" alt="preview" src="${img ? esc(img) : ""}" style="${img ? "display:block" : "display:none"}"/>
+          <img class="imgPreview" alt="preview" src="${img ? esc(img) : ""}" style="${img ? "display:block" : "display:none"}"/>
         </div>
 
         <div class="qEssay ${q.type==="essay"?"":"hidden"}">
@@ -972,19 +992,19 @@ function renderQuestions(){
         </div>
 
         <div class="qMcq ${q.type==="mcq1"?"":"hidden"}">
-          <label>4 lựa chọn</label>
+          <label>4 lựa chọn (thứ tự 1→4 sẽ tương ứng A→D khi làm bài)</label>
           <div class="grid2">
-            <input class="qOpt input" data-k="0" placeholder="A" value="${esc(q.meta?.options?.[0]||"")}">
-            <input class="qOpt input" data-k="1" placeholder="B" value="${esc(q.meta?.options?.[1]||"")}">
-            <input class="qOpt input" data-k="2" placeholder="C" value="${esc(q.meta?.options?.[2]||"")}">
-            <input class="qOpt input" data-k="3" placeholder="D" value="${esc(q.meta?.options?.[3]||"")}">
+            <input class="qOpt input" data-k="0" placeholder="Lựa chọn 1 (A)" value="${esc(q.meta?.options?.[0]||"")}">
+            <input class="qOpt input" data-k="1" placeholder="Lựa chọn 2 (B)" value="${esc(q.meta?.options?.[1]||"")}">
+            <input class="qOpt input" data-k="2" placeholder="Lựa chọn 3 (C)" value="${esc(q.meta?.options?.[2]||"")}">
+            <input class="qOpt input" data-k="3" placeholder="Lựa chọn 4 (D)" value="${esc(q.meta?.options?.[3]||"")}">
           </div>
           <label>Đáp án đúng</label>
           <select class="qCorrect">
-            <option value="1" ${(q.meta?.correct||1)==1?"selected":""}>A</option>
-            <option value="2" ${(q.meta?.correct||1)==2?"selected":""}>B</option>
-            <option value="3" ${(q.meta?.correct||1)==3?"selected":""}>C</option>
-            <option value="4" ${(q.meta?.correct||1)==4?"selected":""}>D</option>
+            <option value="1" ${(q.meta?.correct||1)==1?"selected":""}>A (Lựa chọn 1)</option>
+            <option value="2" ${(q.meta?.correct||1)==2?"selected":""}>B (Lựa chọn 2)</option>
+            <option value="3" ${(q.meta?.correct||1)==3?"selected":""}>C (Lựa chọn 3)</option>
+            <option value="4" ${(q.meta?.correct||1)==4?"selected":""}>D (Lựa chọn 4)</option>
           </select>
         </div>
 
@@ -1021,7 +1041,7 @@ function renderQuestions(){
     const i = Number(card.getAttribute("data-i"));
     const q = QUESTIONS[i];
     if(q?.type==="tf4"){
-      ensureMetaImage(q);
+      ensureMeta(q);
       const keys = q.meta?.keys || [true,false,false,false];
       card.querySelectorAll(".qKey").forEach(sel=>{
         const k = Number(sel.getAttribute("data-k"));
@@ -1035,11 +1055,10 @@ function syncQuestionFromCard(card){
   const i = Number(card.getAttribute("data-i"));
   const q = QUESTIONS[i];
   if(!q) return;
-  ensureMetaImage(q);
+  ensureMeta(q);
 
   const type = card.querySelector(".qType")?.value || "mcq1";
   q.type = type;
-
   q.prompt = card.querySelector(".qPrompt")?.value || "";
 
   if(scoringModeEl.value === "custom"){
@@ -1073,11 +1092,15 @@ function syncQuestionFromCard(card){
   }
 }
 
+qList.addEventListener("focusin",(e)=>{
+  const ta = e.target.closest("textarea");
+  if(ta) ACTIVE_TEXTAREA = ta;
+},{passive:true});
+
 qList.addEventListener("input",(e)=>{
   const card = e.target.closest(".qCard");
   if(!card) return;
   syncQuestionFromCard(card);
-  saveDraftSoon();
 },{passive:true});
 
 qList.addEventListener("change",(e)=>{
@@ -1090,7 +1113,6 @@ qList.addEventListener("change",(e)=>{
   }else{
     syncQuestionFromCard(card);
   }
-  saveDraftSoon();
 },{passive:true});
 
 qList.addEventListener("click",(e)=>{
@@ -1102,27 +1124,32 @@ qList.addEventListener("click",(e)=>{
   const act = btn.getAttribute("data-act");
   if(!act) return;
 
-  if(act==="del"){
-    QUESTIONS.splice(i,1);
-    renderQuestions(); saveDraftSoon(); return;
-  }
+  if(act==="del"){ QUESTIONS.splice(i,1); renderQuestions(); return; }
   if(act==="dup"){
     const clone = JSON.parse(JSON.stringify(QUESTIONS[i]));
     QUESTIONS.splice(i+1,0,clone);
-    renderQuestions(); saveDraftSoon(); return;
+    renderQuestions(); return;
   }
   if(act==="up" && i>0){
     [QUESTIONS[i-1], QUESTIONS[i]] = [QUESTIONS[i], QUESTIONS[i-1]];
-    renderQuestions(); saveDraftSoon(); return;
+    renderQuestions(); return;
   }
   if(act==="down" && i<QUESTIONS.length-1){
     [QUESTIONS[i+1], QUESTIONS[i]] = [QUESTIONS[i], QUESTIONS[i+1]];
-    renderQuestions(); saveDraftSoon(); return;
+    renderQuestions(); return;
   }
+
+  if(act==="latex"){ showLatexPanel(); return; }
+  if(act==="wrapInline"){ wrapSelection("$","$"); return; }
+  if(act==="wrapBlock"){ wrapSelection("$$","$$"); return; }
+
   if(act==="removeimg"){
-    QUESTIONS[i].meta = QUESTIONS[i].meta || {};
-    QUESTIONS[i].meta.image_data_url = "";
-    renderQuestions(); saveDraftSoon(); toast("Đã xóa ảnh"); return;
+    ensureMeta(QUESTIONS[i]);
+    QUESTIONS[i].meta.image_url = "";
+    QUESTIONS[i].meta.image_path = "";
+    renderQuestions();
+    toast("Đã xóa ảnh (chỉ xóa link, file trên bucket không tự xóa)");
+    return;
   }
   if(act==="pickimg"){
     IMG_PICK_FOR_INDEX = i;
@@ -1142,54 +1169,79 @@ function scrollToLastQuestionAndFocus(){
 document.getElementById("btnAddQFab").onclick = ()=>{
   QUESTIONS.push(defaultQuestion());
   renderQuestions();
-  saveDraftSoon();
   scrollToLastQuestionAndFocus();
 };
 
 scoringModeEl.addEventListener("change", ()=>{
   renderQuestions();
-  saveDraftSoon();
 },{passive:true});
 
-/* ================== IMAGE (per question) ================== */
+/* ================== IMAGE (per question) upload to bucket ================== */
 const qImgPick = document.getElementById("qImgPick");
 let IMG_PICK_FOR_INDEX = -1;
 
-function readImageToDataURL(file){
-  return new Promise((resolve,reject)=>{
+async function fileToDownscaledJpegBlob(file, maxW=1200, quality=0.86){
+  // downscale để nhẹ (upload thật lên bucket)
+  const dataUrl = await new Promise((resolve,reject)=>{
     const fr = new FileReader();
     fr.onload = ()=>resolve(String(fr.result||""));
     fr.onerror = ()=>reject(new Error("read file error"));
     fr.readAsDataURL(file);
   });
-}
-async function downscaleDataURL(dataUrl, maxW=1200){
+
   const img = new Image();
   img.src = dataUrl;
   await new Promise((res,rej)=>{ img.onload=res; img.onerror=()=>rej(new Error("image load error")); });
+
   const w = img.naturalWidth || img.width;
   const h = img.naturalHeight || img.height;
-  if(!w || !h) return dataUrl;
-  if(w <= maxW) return dataUrl;
-  const ratio = maxW / w;
+  if(!w || !h) throw new Error("invalid image");
+
+  const ratio = (w > maxW) ? (maxW / w) : 1;
   const nw = Math.round(w * ratio);
   const nh = Math.round(h * ratio);
+
   const c = document.createElement("canvas");
   c.width = nw; c.height = nh;
   const ctx = c.getContext("2d");
   ctx.drawImage(img, 0, 0, nw, nh);
-  return c.toDataURL("image/jpeg", 0.86);
+
+  const blob = await new Promise((resolve)=> c.toBlob(resolve, "image/jpeg", quality));
+  if(!blob) throw new Error("toBlob failed");
+  return blob;
 }
+
+async function ensureQuizIdSaved(){
+  if(CURRENT_MODE==="EDIT" && CURRENT_QID) return CURRENT_QID;
+
+  let qid = normalizeQuizId(quizIdEl.value);
+  if(!qid){
+    qid = genQuizId5();
+    quizIdEl.value = qid;
+  }
+  // auto-save quiz trước để có folder qid
+  await saveQuizOnly();
+  return CURRENT_QID || qid;
+}
+
 async function setQuestionImage(i, file){
   if(i<0 || i>=QUESTIONS.length) return;
   if(!file || !/^image\//.test(file.type)) return toast("Chỉ nhận ảnh");
-  const raw = await readImageToDataURL(file);
-  const scaled = await downscaleDataURL(raw);
-  QUESTIONS[i].meta = QUESTIONS[i].meta || {};
-  QUESTIONS[i].meta.image_data_url = scaled;
+
+  const qid = await ensureQuizIdSaved();
+  const blob = await fileToDownscaledJpegBlob(file, 1200, 0.86);
+
+  const ts = Date.now();
+  const path = `${qid}/q${String(i+1).padStart(3,"0")}_${ts}.jpg`;
+
+  const url = await uploadToBucket(STORAGE_BUCKET, path, blob, "image/jpeg");
+
+  ensureMeta(QUESTIONS[i]);
+  QUESTIONS[i].meta.image_path = path;
+  QUESTIONS[i].meta.image_url = url;
+
   renderQuestions();
-  saveDraftSoon();
-  toast("Đã gắn ảnh cho câu");
+  toast("Đã upload ảnh");
 }
 
 qImgPick.addEventListener("change", async ()=>{
@@ -1198,14 +1250,13 @@ qImgPick.addEventListener("change", async ()=>{
   const i = IMG_PICK_FOR_INDEX;
   IMG_PICK_FOR_INDEX = -1;
   qImgPick.value = "";
-  try{ await setQuestionImage(i, f); }catch(e){ toast("Lỗi ảnh"); }
+  try{ await setQuestionImage(i, f); }catch(e){ toast(e.message || "Lỗi upload ảnh"); }
 });
 
 qList.addEventListener("dragover",(e)=>{
   const card = e.target.closest(".qCard");
-  if(!card) return;
   const drop = e.target.closest("[data-imgdrop]");
-  if(!drop) return;
+  if(!card || !drop) return;
   e.preventDefault();
 },{passive:false});
 
@@ -1217,7 +1268,7 @@ qList.addEventListener("drop", async (e)=>{
   const i = Number(card.getAttribute("data-i"));
   const f = e.dataTransfer?.files?.[0];
   if(!f) return;
-  try{ await setQuestionImage(i, f); }catch{ toast("Lỗi ảnh"); }
+  try{ await setQuestionImage(i, f); }catch(e){ toast(e.message || "Lỗi upload ảnh"); }
 },{passive:false});
 
 window.addEventListener("paste", async (e)=>{
@@ -1231,17 +1282,16 @@ window.addEventListener("paste", async (e)=>{
   const card = active ? active.closest?.(".qCard") : null;
   if(!card) return;
   const i = Number(card.getAttribute("data-i"));
-  try{ await setQuestionImage(i, f); }catch{ toast("Lỗi ảnh"); }
+  try{ await setQuestionImage(i, f); }catch(e){ toast(e.message || "Lỗi upload ảnh"); }
 },{passive:true});
 
-/* ================== IMPORT PARSER ================== */
+/* ================== IMPORT PARSER (auto remove * and **) ================== */
 const importBox = document.getElementById("importBox");
 document.getElementById("btnImportReplace").onclick = ()=>{
   const parsed = parseImportText(importBox.value);
   if(!parsed.length) return toast("Không parse được gì");
   QUESTIONS = parsed;
   renderQuestions();
-  saveDraftSoon();
   setQBMode("manual");
   toast("Đã import (thay thế)");
 };
@@ -1250,7 +1300,6 @@ document.getElementById("btnImportAppend").onclick = ()=>{
   if(!parsed.length) return toast("Không parse được gì");
   QUESTIONS = QUESTIONS.concat(parsed);
   renderQuestions();
-  saveDraftSoon();
   setQBMode("manual");
   toast("Đã import (thêm)");
 };
@@ -1259,13 +1308,30 @@ function isHeaderLine(line){
   const s = line.trim();
   return /^<(tn|tl|tln|tf)>\s*@\d+\s*:/.test(s);
 }
+
+// remove surrounding *...* or **...**
 function stripStars(s){
   let t = String(s||"").trim();
-  if(t.startsWith("*") && t.endsWith("*") && t.length>=2){
-    t = t.slice(1,-1).trim();
+  // lặp để xoá nhiều lớp
+  for(let k=0;k<3;k++){
+    t = t.trim();
+    if((t.startsWith("**") && t.endsWith("**") && t.length>=4)){
+      t = t.slice(2,-2).trim();
+      continue;
+    }
+    if((t.startsWith("*") && t.endsWith("*") && t.length>=2)){
+      t = t.slice(1,-1).trim();
+      continue;
+    }
+    break;
   }
   return t;
 }
+function cleanLine(s){
+  // xoá markdown bold/italic nhẹ nhàng
+  return stripStars(String(s||"").trim());
+}
+
 function parseImportText(text){
   const lines = String(text||"").replace(/\r/g,"").split("\n");
   const blocks = [];
@@ -1278,9 +1344,7 @@ function parseImportText(text){
   }
 
   for(let i=0;i<lines.length;i++){
-    const raw = lines[i];
-    const line = raw.trimEnd();
-
+    const line = lines[i].trimEnd();
     if(isHeaderLine(line)){
       pushCur();
       const m = line.trim().match(/^<(tn|tl|tln|tf)>\s*@(\d+)\s*:\s*(.*)$/);
@@ -1289,6 +1353,7 @@ function parseImportText(text){
       continue;
     }
     if(!cur) continue;
+    if(line.trim().length===0) continue;
     cur.body.push(line);
   }
   pushCur();
@@ -1302,13 +1367,14 @@ function parseImportText(text){
     if(tag==="tn"){
       const opts = [];
       let correctIdx = 1;
-      for(const ln of body){
+      for(const ln0 of body){
         let isCorrect = false;
-        let t = ln.trim();
-        if(t.startsWith("*") && t.endsWith("*") && t.length>=2){
+        let t = ln0.trim();
+        // đúng nếu line bọc * hoặc **
+        if((t.startsWith("**") && t.endsWith("**") && t.length>=4) || (t.startsWith("*") && t.endsWith("*") && t.length>=2)){
           isCorrect = true;
-          t = stripStars(t);
         }
+        t = cleanLine(t);
         opts.push(t);
         if(isCorrect) correctIdx = opts.length;
       }
@@ -1321,17 +1387,20 @@ function parseImportText(text){
         prompt: head,
         answers: [],
         points: null,
-        meta: { options: options4, correct: correctIdx, image_data_url:"" }
+        meta: { options: options4, correct: correctIdx, image_url:"", image_path:"" }
       });
       continue;
     }
 
     if(tag==="tl"){
       let answers = body
-        .filter(x=>x.includes("*") && x.trim().startsWith("*") && x.trim().endsWith("*"))
-        .map(x=>stripStars(x));
+        .filter(x=>{
+          const s = x.trim();
+          return (s.startsWith("*") && s.endsWith("*")) || (s.startsWith("**") && s.endsWith("**"));
+        })
+        .map(x=>cleanLine(x));
       if(!answers.length){
-        if(body.length) answers = [ body.join(" ").trim() ];
+        if(body.length) answers = [ cleanLine(body.join(" ")) ];
       }
       answers = answers.map(x=>x.trim()).filter(Boolean);
       out.push({
@@ -1339,17 +1408,20 @@ function parseImportText(text){
         prompt: head,
         answers,
         points: null,
-        meta: { fuzzy:true, image_data_url:"" }
+        meta: { fuzzy:true, image_url:"", image_path:"" }
       });
       continue;
     }
 
     if(tag==="tln"){
       let answers = body
-        .filter(x=>x.trim().startsWith("*") && x.trim().endsWith("*"))
-        .map(x=>stripStars(x));
+        .filter(x=>{
+          const s = x.trim();
+          return (s.startsWith("*") && s.endsWith("*")) || (s.startsWith("**") && s.endsWith("**"));
+        })
+        .map(x=>cleanLine(x));
       if(!answers.length){
-        if(body.length) answers = [ body.join(" ").trim() ];
+        if(body.length) answers = [ cleanLine(body.join(" ")) ];
       }
       answers = answers.map(x=>x.trim()).filter(Boolean);
       out.push({
@@ -1357,7 +1429,7 @@ function parseImportText(text){
         prompt: head,
         answers,
         points: null,
-        meta: { format:"4boxes", image_data_url:"" }
+        meta: { format:"4boxes", image_url:"", image_path:"" }
       });
       continue;
     }
@@ -1371,7 +1443,7 @@ function parseImportText(text){
         const mm = s.match(/^\|?\s*([A-D])\s*:\s*(.*?)\s*\*([TF])\*\s*\|?\s*$/i);
         if(!mm) continue;
         const letter = mm[1].toUpperCase();
-        const textPart = (mm[2]||"").trim();
+        const textPart = cleanLine(mm[2]||"");
         const tf = mm[3].toUpperCase();
         const idx = "ABCD".indexOf(letter);
         if(idx>=0){
@@ -1389,16 +1461,145 @@ function parseImportText(text){
           statements: stmts,
           keys,
           rule:{ byCorrectCount:{ "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 } },
-          image_data_url:""
+          image_url:"", image_path:""
         }
       });
       continue;
     }
   }
+
   const last = out[out.length-1];
   if(last && isAllowedQType(last.type)) setLastType(last.type);
   return out;
 }
+
+/* ================== LaTeX INSERTION ================== */
+const latexPanel = document.getElementById("latexPanel");
+const latexGrid = document.getElementById("latexGrid");
+document.getElementById("btnLatex").onclick = ()=>showLatexPanel();
+
+function showLatexPanel(){
+  latexPanel.classList.add("show");
+  latexPanel.setAttribute("aria-hidden","false");
+}
+function hideLatexPanel(){
+  latexPanel.classList.remove("show");
+  latexPanel.setAttribute("aria-hidden","true");
+}
+
+latexPanel.addEventListener("click",(e)=>{
+  const b = e.target.closest("[data-latex-act]");
+  if(!b) return;
+  const act = b.getAttribute("data-latex-act");
+  if(act==="close") hideLatexPanel();
+  if(act==="wrapInline") wrapSelection("$","$");
+  if(act==="wrapBlock") wrapSelection("$$","$$");
+});
+
+function getActiveTextTarget(){
+  // ưu tiên textarea đang focus; fallback: textarea đầu tiên trong qList
+  const el = ACTIVE_TEXTAREA && document.contains(ACTIVE_TEXTAREA) ? ACTIVE_TEXTAREA : qList.querySelector("textarea.qPrompt");
+  if(!el) toast("Click vào ô nhập trước");
+  return el;
+}
+
+function insertTemplate(tpl){
+  const el = getActiveTextTarget();
+  if(!el) return;
+
+  const start = el.selectionStart ?? el.value.length;
+  const end = el.selectionEnd ?? el.value.length;
+
+  // tpl có thể chứa ký hiệu | để đặt con trỏ
+  const cursorAt = tpl.indexOf("|");
+  const real = tpl.replace("|","");
+
+  const before = el.value.slice(0,start);
+  const sel = el.value.slice(start,end);
+  const after = el.value.slice(end);
+
+  // nếu template có marker {SEL} thì thay selection vào
+  const real2 = real.includes("{SEL}") ? real.replace("{SEL}", sel || "") : real;
+
+  el.value = before + real2 + after;
+
+  // set cursor
+  let pos = before.length + real2.length;
+  if(cursorAt >= 0){
+    pos = before.length + cursorAt;
+  }else if(real.includes("{SEL}")){
+    pos = before.length + real.indexOf("{SEL}") + (sel||"").length;
+  }
+  el.focus();
+  el.setSelectionRange(pos,pos);
+
+  // sync vào state
+  const card = el.closest(".qCard");
+  if(card) syncQuestionFromCard(card);
+}
+
+function wrapSelection(left,right){
+  const el = getActiveTextTarget();
+  if(!el) return;
+
+  const start = el.selectionStart ?? el.value.length;
+  const end = el.selectionEnd ?? el.value.length;
+  const sel = el.value.slice(start,end) || "x";
+
+  const before = el.value.slice(0,start);
+  const after = el.value.slice(end);
+
+  const wrapped = `${left}${sel}${right}`;
+  el.value = before + wrapped + after;
+  el.focus();
+  // highlight inside
+  el.setSelectionRange(before.length + left.length, before.length + left.length + sel.length);
+
+  const card = el.closest(".qCard");
+  if(card) syncQuestionFromCard(card);
+}
+
+const LATEX_TEMPLATES = [
+  { label: "x^2", tpl: "$x^{2}$|" },
+  { label: "x^n", tpl: "$x^{|}$" },
+  { label: "x_i", tpl: "$x_{|}$" },
+  { label: "phân số", tpl: "$\\frac{|}{}$" },
+  { label: "căn", tpl: "$\\sqrt{|}$" },
+  { label: "căn bậc n", tpl: "$\\sqrt[|]{}$" },
+  { label: "log", tpl: "$\\log_{|}( )$" },
+  { label: "ln", tpl: "$\\ln(|)$" },
+  { label: "mũ e", tpl: "$e^{|}$" },
+  { label: "π", tpl: "$\\pi$|" },
+  { label: "θ", tpl: "$\\theta$|" },
+  { label: "α", tpl: "$\\alpha$|" },
+  { label: "Σ", tpl: "$\\sum_{i=1}^{n} |$" },
+  { label: "∫", tpl: "$\\int_{a}^{b} f(x)\\,dx$|" },
+  { label: "lim", tpl: "$\\lim_{x\\to 0} |$" },
+  { label: "→", tpl: "$\\to$|" },
+  { label: "≥", tpl: "$\\ge$|" },
+  { label: "≤", tpl: "$\\le$|" },
+  { label: "≠", tpl: "$\\ne$|" },
+  { label: "≈", tpl: "$\\approx$|" },
+  { label: "vector", tpl: "$\\vec{|}$" },
+  { label: "block", tpl: "$$|$$" }
+];
+
+latexGrid.innerHTML = LATEX_TEMPLATES.map(x=>{
+  return `<button class="latexChip" type="button" data-tpl="${esc(x.tpl)}">${esc(x.label)}</button>`;
+}).join("");
+
+latexGrid.addEventListener("click",(e)=>{
+  const b = e.target.closest("[data-tpl]");
+  if(!b) return;
+  const tpl = b.getAttribute("data-tpl");
+  insertTemplate(tpl);
+});
+
+/* per-question wrap buttons */
+qList.addEventListener("click",(e)=>{
+  const act = e.target.closest("[data-act]")?.getAttribute("data-act");
+  if(act==="latex"){ showLatexPanel(); }
+});
 
 /* ================== APPLY SCORING ================== */
 function applyScoring(items){
@@ -1438,15 +1639,9 @@ document.getElementById("btnNewQuiz").onclick = ()=>{
 
   QUESTIONS = [];
   renderQuestions();
-  setDraftPill("DRAFT: —");
   setLastType("mcq1");
   setQBMode("manual");
   toast("Tạo mới: OK");
-};
-
-document.getElementById("btnClearDraft").onclick = ()=>{
-  clearDraft();
-  toast("Đã xóa nháp");
 };
 
 async function saveQuizOnly(){
@@ -1481,7 +1676,6 @@ async function saveQuizOnly(){
   CURRENT_QID = out.quiz_id || qid;
   quizIdEl.value = CURRENT_QID;
   setMode("EDIT");
-  saveDraftNow();
   return CURRENT_QID;
 }
 
@@ -1506,28 +1700,32 @@ async function publishAll(){
     const qid = await saveQuizOnly();
     const token = getToken();
 
-    const items = applyScoring(QUESTIONS).map((q, idx)=>({
-      no: idx+1,
-      q_type: q.type,
-      prompt: (q.prompt||"").trim(),
-      answers: Array.isArray(q.answers)?q.answers:[],
-      points: q.points ?? 0,
-      meta: q.meta || {}
-    }));
+    const items = applyScoring(QUESTIONS).map((q, idx)=>{
+      ensureMeta(q);
+      // IMPORTANT: meta chỉ lưu url/path, không lưu base64
+      const meta = { ...(q.meta||{}) };
+      // nếu ai lỡ có key cũ image_data_url thì xoá để không phá DB
+      delete meta.image_data_url;
 
-    let out2 = null;
+      return {
+        no: idx+1,
+        q_type: q.type,
+        prompt: (q.prompt||"").trim(),
+        answers: Array.isArray(q.answers)?q.answers:[],
+        points: q.points ?? 0,
+        meta
+      };
+    });
+
     try{
-      out2 = await rpc(RPC.adminReplaceQuestions, { p_token: token, p_quiz_id: qid, p_items: items });
+      await rpc(RPC.adminReplaceQuestions, { p_token: token, p_quiz_id: qid, p_items: items });
     }catch(e){
-      out2 = await rpc(RPC.adminImportQuestions, { p_token: token, p_quiz_id: qid, p_items: items });
+      await rpc(RPC.adminImportQuestions, { p_token: token, p_quiz_id: qid, p_items: items });
       toast("⚠️ DB chưa có replace (đã import, coi chừng trùng nếu DB không clear).");
     }
 
     toast(`Published: ${qid}`);
     await reloadQuizzes();
-
-    localStorage.removeItem(draftKeyFor(qid));
-    setDraftPill("DRAFT: —");
     location.href = `/q/${qid}`;
   }catch(e){
     toast(e.message || "Publish error");
@@ -1620,54 +1818,40 @@ async function loadQuizToForm(qid){
   scoringModeEl.value = q.scoring_mode || "equal";
   totalScoreEl.value = String(q.total_score ?? 10);
 
-  const d = tryLoadDraft(qid);
-  if(d && d.questions){
-    const ok = confirm("Quiz này có NHÁP trên máy. Khôi phục nháp?");
-    if(ok){
-      titleEl.value = d.form?.title ?? titleEl.value;
-      subEl.value = d.form?.sub ?? subEl.value;
-      isPublicEl.value = d.form?.is_public ?? isPublicEl.value;
-      isHiddenEl.value = d.form?.is_hidden ?? isHiddenEl.value;
-      showInStoreEl.value = d.form?.show_in_store ?? showInStoreEl.value;
-      requireLoginEl.value = d.form?.require_login ?? requireLoginEl.value;
-      pinnedEl.value = d.form?.pinned ?? pinnedEl.value;
-      requireCodeEl.value = d.form?.require_access_code ?? requireCodeEl.value;
-      accessCodeEl.value = d.form?.access_code ?? accessCodeEl.value;
-      scoringModeEl.value = d.form?.scoring_mode ?? scoringModeEl.value;
-      totalScoreEl.value = d.form?.total_score ?? totalScoreEl.value;
-
-      QUESTIONS = Array.isArray(d.questions) ? d.questions : [];
-      renderQuestions();
-      saveDraftSoon();
-
-      const last = QUESTIONS[QUESTIONS.length-1];
-      setLastType(last?.type || "mcq1");
-      setQBMode(QB_MODE);
-      toast("Đã khôi phục nháp");
-      return;
-    }
-  }
-
+  // load questions from DB (không nuốt lỗi im lặng)
   QUESTIONS = [];
+  renderQuestions();
+
   try{
     const token = getToken();
     const out = await rpc(RPC.adminGetQuestions,{p_token: token, p_quiz_id: qid});
+    if(!out?.ok) throw new Error(out?.error || "admin_get_questions failed");
     const items = out.items || [];
-    QUESTIONS = items.map(x=>({
-      type: x.q_type || x.type || "mcq1",
-      prompt: x.prompt || "",
-      answers: x.answers || [],
-      points: x.points ?? null,
-      meta: x.meta || {}
-    }));
-  }catch{}
-  renderQuestions();
-  saveDraftSoon();
 
-  const last = QUESTIONS[QUESTIONS.length-1];
-  setLastType(last?.type || "mcq1");
-  setQBMode(QB_MODE);
-  toast("Loaded " + qid);
+    QUESTIONS = items.map(x=>{
+      const meta = x.meta || {};
+      // support old schema
+      if(meta.image_data_url && !meta.image_url){
+        // nếu trước kia có base64, giữ lại *tạm* bằng image_url=base64 để preview
+        meta.image_url = meta.image_data_url;
+      }
+      return {
+        type: x.q_type || x.type || "mcq1",
+        prompt: x.prompt || "",
+        answers: x.answers || [],
+        points: x.points ?? null,
+        meta
+      };
+    });
+
+    renderQuestions();
+    const last = QUESTIONS[QUESTIONS.length-1];
+    setLastType(last?.type || "mcq1");
+    setQBMode(QB_MODE);
+    toast("Loaded " + qid);
+  }catch(e){
+    toast("Load câu hỏi lỗi: " + (e.message||""));
+  }
 }
 
 /* ================== USERS ================== */
@@ -1755,38 +1939,10 @@ async function boot(){
   setQBMode(QB_MODE || "manual");
   setLastType(LAST_QTYPE || "mcq1");
 
-  const d = tryLoadDraft("NEW");
-  if(d){
-    setMode("NEW");
-    quizIdEl.value = d.form?.quiz_id ?? "";
-    titleEl.value = d.form?.title ?? "";
-    subEl.value = d.form?.sub ?? "";
-    isPublicEl.value = d.form?.is_public ?? "true";
-    isHiddenEl.value = d.form?.is_hidden ?? "false";
-    showInStoreEl.value = d.form?.show_in_store ?? "true";
-    requireLoginEl.value = d.form?.require_login ?? "true";
-    pinnedEl.value = d.form?.pinned ?? "false";
-    requireCodeEl.value = d.form?.require_access_code ?? "false";
-    accessCodeEl.value = d.form?.access_code ?? "";
-    scoringModeEl.value = d.form?.scoring_mode ?? "equal";
-    totalScoreEl.value = d.form?.total_score ?? "10";
+  setMode("NEW");
+  QUESTIONS = [];
+  renderQuestions();
 
-    QUESTIONS = Array.isArray(d.questions) ? d.questions : [];
-    renderQuestions();
-    setDraftPill("DRAFT: restored", "ok");
-
-    const last = QUESTIONS[QUESTIONS.length-1];
-    setLastType(last?.type || "mcq1");
-  }else{
-    setMode("NEW");
-    isHiddenEl.value = "false";
-    QUESTIONS = [];
-    renderQuestions();
-    setDraftPill("DRAFT: —");
-    setLastType("mcq1");
-  }
-
-  document.getElementById("btnPublishAll2").addEventListener("click", ()=>document.getElementById("btnPublishAll").click());
   await reloadQuizzes();
   await reloadUsers();
   setTab("q");
