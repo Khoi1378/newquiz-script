@@ -111,7 +111,7 @@
     }
     .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
-    /* Wrong list (click to open) */
+    /* Wrong list (in modal) */
     .wList{display:grid;gap:10px;margin-top:10px}
     .wItem{
       border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:#fff;
@@ -172,6 +172,46 @@
     .replyWrap{margin-top:10px;margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;display:grid;gap:10px}
     .replyForm{margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;margin-top:10px;display:grid;gap:10px}
     .charRow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6b7280;font-weight:800;font-size:.85rem}
+
+    /* Modal */
+    .modal{
+      position:fixed; inset:0;
+      display:none;
+      align-items:center; justify-content:center;
+      padding:18px;
+      z-index:30000;
+    }
+    .modal.show{display:flex}
+    .modalBack{
+      position:absolute; inset:0;
+      background:rgba(17,24,39,.58);
+      backdrop-filter: blur(4px);
+    }
+    .modalCard{
+      position:relative;
+      width:100%;
+      max-width:760px;
+      max-height:78vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:18px;
+      border:1px solid #e5e7eb;
+      box-shadow:0 18px 60px rgba(0,0,0,.22);
+      padding:14px;
+    }
+    .modalHead{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding-bottom:10px; border-bottom:1px solid #e5e7eb; margin-bottom:10px;
+    }
+    .modalTitle{font-weight:950;font-size:1.02rem}
+    .modalClose{
+      border-radius:999px;
+      padding:8px 12px;
+      font-weight:950;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      cursor:pointer;
+    }
   </style>
 </head>
 
@@ -193,14 +233,24 @@
       </div>
 
       <div id="summary" class="card"></div>
-      <div id="wrong" class="card"></div>
-
       <div id="lb" class="card"></div>
       <div id="discussion" class="card"></div>
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <!-- Wrong modal -->
+  <div id="wrongModal" class="modal" aria-hidden="true">
+    <div class="modalBack" id="wrongModalBack"></div>
+    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="wrongModalTitle">
+      <div class="modalHead">
+        <div class="modalTitle" id="wrongModalTitle">Câu sai</div>
+        <button class="modalClose" id="btnCloseWrong" type="button">✕</button>
+      </div>
+      <div id="wrongModalBody"></div>
+    </div>
+  </div>
 
 <script>
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
@@ -298,60 +348,43 @@ function clearForRestart(){
 const btnRestart = document.getElementById("btnRestart");
 btnRestart.href = quizId ? `/q/${quizId}?restart=1&start=1` : "/";
 btnRestart.addEventListener("click",(e)=>{
-  // luôn clear trước rồi đi
   if(!quizId) return;
   e.preventDefault();
   clearForRestart();
   location.href = `/q/${quizId}?restart=1&start=1`;
 });
 
-function renderSummary({ title, sub, username, score10, correctCount, totalCount, when }){
-  document.getElementById("title").textContent = title || "Kết quả";
-  document.getElementById("sub").textContent = sub || "";
+/* ===== WRONG MODAL ===== */
+let CURRENT_WRONG_LIST = [];
 
-  document.getElementById("summary").innerHTML = `
-    <div class="row1">
-      <p class="vi">Tổng kết</p>
-      <div class="idx">DONE</div>
-    </div>
-    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
-      <span class="pill">Tên: <strong>${escapeHtml(username||"—")}</strong></span>
-      <span class="pill">Điểm: <strong>${Number(score10||0).toFixed(1)}/10</strong></span>
-      <span class="pill">Đúng: <strong>${Number(correctCount||0)}</strong>/${Number(totalCount||0)}</span>
-      <span class="pill">Thời gian: <strong>${escapeHtml(when||"")}</strong></span>
-    </div>
-  `;
-}
+function renderWrongModal(list){
+  const body = document.getElementById("wrongModalBody");
+  const title = document.getElementById("wrongModalTitle");
+  if(!body || !title) return;
 
-let WRONG_OPEN = new Set();
-function renderWrong(list){
-  const wrap = document.getElementById("wrong");
-  if(!Array.isArray(list) || !list.length){
-    wrap.innerHTML = `
-      <div class="row1">
-        <p class="vi">Câu sai</p>
-        <div class="idx">0</div>
-      </div>
-      <div class="muted" style="margin-top:10px"><span class="oktxt">Không sai ✅</span></div>
-    `;
+  const arr = Array.isArray(list) ? list : [];
+  CURRENT_WRONG_LIST = arr;
+
+  if(!arr.length){
+    title.textContent = "Câu sai";
+    body.innerHTML = `<div class="muted"><span class="oktxt">Không có câu sai ✅</span></div>`;
     return;
   }
 
-  const items = list.map((w,i)=>{
-    const key = String(w.id ?? i);
-    const open = WRONG_OPEN.has(key);
+  title.textContent = `Câu sai (${arr.length})`;
+  const items = arr.map((w,i)=>{
     const word = w.word || "(?)";
     const u = (w.user_answer ?? w.user ?? "").trim();
     const ex = (w.expected ?? "").trim();
     const jump = quizId && w.id ? `/q/${quizId}?start=1#q${encodeURIComponent(String(w.id))}` : "";
     return `
-      <div class="wItem ${open?"open":""}" data-w="${escapeHtml(key)}">
+      <div class="wItem" data-w="${escapeHtml(String(w.id ?? i))}">
         <div class="wHead">
           <div class="wLeft">
             <span class="wNo">SAI • Câu ${i+1}</span>
             <span class="wWord">${escapeHtml(word)}</span>
           </div>
-          <div class="muted">${open ? "Ẩn" : "Xem"}</div>
+          <div class="muted">Xem</div>
         </div>
         <div class="wDetail">
           <div class="wDetailRow"><span class="muted">Bạn viết:</span> <b>${escapeHtml(u||"(trống)")}</b></div>
@@ -365,24 +398,80 @@ function renderWrong(list){
     `;
   }).join("");
 
-  wrap.innerHTML = `
-    <div class="row1">
-      <p class="vi">Câu sai</p>
-      <div class="idx">${list.length}</div>
-    </div>
-    <div class="muted" style="margin-top:8px">Bấm vào từng câu để xem chi tiết.</div>
+  body.innerHTML = `
+    <div class="muted" style="margin-top:2px">Bấm vào từng câu để xem chi tiết.</div>
     <div class="wList">${items}</div>
   `;
+}
 
-  wrap.querySelector(".wList").addEventListener("click",(e)=>{
-    const item = e.target.closest(".wItem");
-    if(!item) return;
-    const k = String(item.getAttribute("data-w")||"");
-    if(!k) return;
-    if(WRONG_OPEN.has(k)) WRONG_OPEN.delete(k); else WRONG_OPEN.add(k);
-    // re-render giữ trạng thái
-    renderWrong(list);
-  }, { passive:true });
+function openWrongModal(){
+  if(!Array.isArray(CURRENT_WRONG_LIST) || !CURRENT_WRONG_LIST.length) return;
+  renderWrongModal(CURRENT_WRONG_LIST);
+  const m = document.getElementById("wrongModal");
+  if(!m) return;
+  m.classList.add("show");
+  m.setAttribute("aria-hidden","false");
+  document.body.style.overflow = "hidden";
+}
+function closeWrongModal(){
+  const m = document.getElementById("wrongModal");
+  if(!m) return;
+  m.classList.remove("show");
+  m.setAttribute("aria-hidden","true");
+  document.body.style.overflow = "";
+}
+
+/* Toggle expand/collapse in modal */
+(function bindWrongModal(){
+  const back = document.getElementById("wrongModalBack");
+  const closeBtn = document.getElementById("btnCloseWrong");
+  const body = document.getElementById("wrongModalBody");
+
+  if(back) back.addEventListener("click", closeWrongModal, {passive:true});
+  if(closeBtn) closeBtn.addEventListener("click", closeWrongModal, {passive:true});
+
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape") closeWrongModal();
+  });
+
+  if(body){
+    body.addEventListener("click",(e)=>{
+      if(e.target.closest("a")) return; // đừng toggle khi bấm link
+      const item = e.target.closest(".wItem");
+      if(!item) return;
+      item.classList.toggle("open");
+      const label = item.querySelector(".wHead .muted");
+      if(label) label.textContent = item.classList.contains("open") ? "Ẩn" : "Xem";
+    }, {passive:true});
+  }
+})();
+
+function renderSummary({ title, sub, score10, correctCount, totalCount, wrongCount }){
+  document.getElementById("title").textContent = title || "Kết quả";
+  document.getElementById("sub").textContent = sub || "";
+
+  const wc = Number(wrongCount||0);
+
+  document.getElementById("summary").innerHTML = `
+    <div class="row1">
+      <p class="vi">Tổng kết</p>
+      <div class="idx">DONE</div>
+    </div>
+
+    <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+        <span class="pill">Điểm: <strong>${Number(score10||0).toFixed(1)}/10</strong></span>
+        <span class="pill">Đúng: <strong>${Number(correctCount||0)}</strong>/${Number(totalCount||0)}</span>
+      </div>
+
+      ${wc > 0 ? `<button class="btn" id="btnWrong" type="button">❌ Câu sai (${wc})</button>` : ``}
+    </div>
+  `;
+
+  const btnWrong = document.getElementById("btnWrong");
+  if(btnWrong){
+    btnWrong.addEventListener("click", openWrongModal, {passive:true});
+  }
 }
 
 function renderLeaderboard(rows, myName){
@@ -413,7 +502,7 @@ function renderLeaderboard(rows, myName){
 
   document.getElementById("lb").innerHTML = `
     <div class="row1"><p class="vi">Bảng xếp hạng</p><div class="idx">TOP</div></div>
-    <div class="muted" style="margin-top:8px">0 điểm vẫn có trong BXH (miễn là đã nộp bài).</div>
+    <div class="muted" style="margin-top:8px">Điểm <b>&ge; 0</b> vẫn có trong BXH (miễn là đã nộp bài).</div>
     <div style="margin-top:10px; overflow:auto">
       <table class="table">
         <thead><tr><th>#</th><th>Tên</th><th>Điểm</th></tr></thead>
@@ -599,7 +688,6 @@ async function loadWrongFromAttempt(attemptId){
   const ids = Array.from(new Set(wrong.map(x=>Number(x.vocab_id)).filter(x=>Number.isFinite(x))));
   const map = new Map();
   if(ids.length){
-    // in.(1,2,3)
     const rows = await sbGet(`vocabs?id=in.(${ids.join(",")})&select=id,word&limit=2000`);
     (rows||[]).forEach(r=>map.set(Number(r.id), String(r.word||"")));
   }
@@ -615,8 +703,7 @@ async function loadWrongFromAttempt(attemptId){
 /** ===== Boot ===== */
 (async function boot(){
   if(!quizId){
-    renderSummary({ title:"Kết quả", sub:"Sai link (thiếu quiz)", username:"—", score10:0, correctCount:0, totalCount:0, when:"" });
-    renderWrong([]);
+    renderSummary({ title:"Kết quả", sub:"Sai link (thiếu quiz)", score10:0, correctCount:0, totalCount:0, wrongCount:0 });
     renderLeaderboard([], "");
     document.getElementById("discussion").innerHTML = `<div class="muted">Sai link (thiếu ?quiz=abcde).</div>`;
     return;
@@ -632,17 +719,18 @@ async function loadWrongFromAttempt(attemptId){
   let correctCount = cached?.result?.correctCount || 0;
   let totalCount = cached?.result?.totalCount || 0;
   let wrongList = cached?.result?.wrong || [];
-  let when = cached?.ts ? fmtTs(cached.ts) : "";
+  let when = cached?.ts ? fmtTs(cached.ts) : ""; // giữ lại nếu bạn cần chỗ khác, nhưng tổng kết đã bỏ hiển thị
 
-  // quick render
+  CURRENT_WRONG_LIST = Array.isArray(wrongList) ? wrongList : [];
+  renderWrongModal(CURRENT_WRONG_LIST);
+
+  // quick render (Tổng kết bỏ Tên + Thời gian; Câu sai chỉ hiện nút nếu có)
   renderSummary({
     title: cached?.title || "Kết quả",
     sub: cached?.sub || "",
-    username: username || "—",
     score10, correctCount, totalCount,
-    when
+    wrongCount: CURRENT_WRONG_LIST.length
   });
-  renderWrong(wrongList);
 
   // fetch quiz meta
   let qTitle="", qSub="";
@@ -672,16 +760,17 @@ async function loadWrongFromAttempt(attemptId){
     }catch(e){}
   }
 
+  CURRENT_WRONG_LIST = Array.isArray(wrongList) ? wrongList : [];
+  renderWrongModal(CURRENT_WRONG_LIST);
+
   renderSummary({
     title: qTitle || cached?.title || "Kết quả",
     sub: qSub || cached?.sub || "",
-    username: username || "—",
     score10, correctCount, totalCount,
-    when
+    wrongCount: CURRENT_WRONG_LIST.length
   });
-  renderWrong(wrongList);
 
-  // leaderboard (view v_leaderboard) - 0 điểm vẫn có nếu đã nộp
+  // leaderboard (view v_leaderboard) - điểm >=0 vẫn có nếu đã nộp
   try{
     const rows = await sbGet(`v_leaderboard?quiz_id=eq.${quizId}&select=name,is_admin,score10&order=score10.desc&limit=50`);
     renderLeaderboard(rows||[], username||"");
