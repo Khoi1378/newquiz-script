@@ -1,95 +1,51 @@
 <!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
-  <title>Quiz</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <title>Admin Panel</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
 
+  <!-- ✅ MathJax: render LaTeX 100% (preview) -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\\[','\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script','noscript','style','textarea','pre','code']
+      }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
   <style>
-    :root {
-      --bg1: #ffecd2; --bg2: #fcb69f;
-      --card: #fff; --text: #1f2937; --muted: #6b7280;
-      --primary: #7c3aed; --ok: #16a34a; --bad: #dc2626;
-      --border: #e5e7eb; --soft: #f8fafc;
-      --shadow: 0 14px 40px rgba(0,0,0,.10);
-      --radius: 18px;
-      --admin: #2563eb;
+    :root{
+      --bg1:#ffecd2; --bg2:#fcb69f;
+      --card:#fff; --text:#1f2937; --muted:#6b7280;
+      --primary:#7c3aed; --bad:#dc2626; --ok:#16a34a;
+      --border:#e5e7eb; --soft:#f8fafc;
+      --shadow:0 14px 40px rgba(0,0,0,.10);
+      --radius:18px; --admin:#2563eb;
     }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    html { -webkit-text-size-adjust: 100%; }
-    body {
-      margin: 0;
-      font-family: "Montserrat", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--text);
-      background: radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
-                  linear-gradient(120deg, var(--bg1) 0%, var(--bg2) 100%);
-      overflow: hidden;
-      touch-action: pan-x pan-y;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
+        linear-gradient(120deg,var(--bg1) 0%, var(--bg2) 100%);
+      overflow:hidden;
     }
-    .btn, .btn-x, .pinKey { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-    .hidden{ display:none !important; }
-
-    /* tăng padding bottom để không bị submitbar che */
-    #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 170px; touch-action: pan-y; }
-    .wrap { max-width: 980px; margin: 0 auto; padding: 0 14px; }
-
-    .userCorner{
-      position:fixed;top:10px;left:12px;z-index:10010;
-      display:none;align-items:center;gap:8px;
-      padding:8px 10px;border-radius:999px;
-      background:rgba(255,255,255,.55);
-      border:1px solid rgba(229,231,235,.65);
-      backdrop-filter:blur(6px);
-      box-shadow:0 10px 22px rgba(0,0,0,.06);
-      user-select:none;
-      max-width:calc(100vw - 24px);
-      cursor:pointer;
-    }
-    .userCorner .name{
-      font-weight:950;font-size:.88rem;color:rgba(31,41,55,.55);
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-      max-width:58vw;
-    }
-    .userCorner .adminBadge{
-      padding:4px 8px;border-radius:999px;
-      font-weight:950;font-size:.78rem;
-      background:rgba(37,99,235,.12);
-      border:1px solid rgba(37,99,235,.35);
-      color:var(--admin);
-      white-space:nowrap;
-    }
-
-    .actionbar {
-      position: sticky; top: 10px; z-index: 9999;
-      display: flex; justify-content: flex-end; gap: 10px; padding: 0 14px;
-      flex-wrap: wrap;
-    }
-
-    .btn{
-      border:0;cursor:pointer;border-radius:999px;padding:10px 14px;
-      font-weight:900;font-size:.9rem;
-      transition:transform .16s ease, filter .16s ease;
-      display:inline-flex;align-items:center;gap:8px;
-      user-select:none;white-space:nowrap;
-      box-shadow:0 12px 24px rgba(0,0,0,.12);
-      background:#fff;color:#111827;border:1px solid #e5e7eb;
-    }
-    .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
-    .btn:active{transform:translateY(0)}
-    .btn-reset { background: #111827; color: #fff; border: 0; }
-    .btn-primary{
-      background:linear-gradient(135deg,#7c3aed,#fb7185);
-      color:#fff;border:0;
-      box-shadow:0 12px 24px rgba(124,58,237,.18);
-    }
-    .btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
-    .btn-danger{background:var(--bad);color:#fff;border:0}
-    .btn[disabled]{opacity:.65;cursor:not-allowed;transform:none !important;filter:none !important}
+    #shell{height:100vh; overflow:auto; -webkit-overflow-scrolling:touch; padding:12px 0 130px}
+    .wrap{max-width:1180px; margin:0 auto; padding:0 14px}
 
     .topbar{
       margin-top:10px;
@@ -98,2131 +54,2115 @@
       border-radius:18px;
       box-shadow:0 10px 30px rgba(0,0,0,.06);
       padding:14px;
-      display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+      display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;
     }
-    .titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
+    .titlebox{display:flex; gap:10px; align-items:center; flex:1 1 420px; min-width:240px}
     .logo{
-      width:42px;height:42px;border-radius:16px;
+      width:42px; height:42px; border-radius:16px;
       background:linear-gradient(135deg,#a78bfa,#fb7185);
-      display:flex;align-items:center;justify-content:center;
-      color:#fff;font-weight:900;
+      display:flex; align-items:center; justify-content:center;
+      color:#fff; font-weight:900;
       box-shadow:0 10px 22px rgba(124,58,237,.18);
       user-select:none;
     }
-    .titles h1{font-size:1.02rem;margin:0;font-weight:800}
-    .titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
+    .titles h1{font-size:1.02rem; margin:0; font-weight:800}
+    .titles .tiny{margin-top:3px; font-size:.86rem; color:var(--muted); font-weight:650}
+    a{color:#4c1d95; text-decoration:none; font-weight:950}
+    a:hover{text-decoration:underline}
 
-    .stats { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .pill {
-      background: #f3f4f6; border: 1px solid #e5e7eb;
-      border-radius: 999px; padding: 8px 12px;
-      font-weight: 800; font-size: .9rem; color: #374151; white-space: nowrap;
+    .pill{
+      background:#f3f4f6; border:1px solid #e5e7eb;
+      border-radius:999px; padding:8px 12px;
+      font-weight:900; font-size:.9rem; color:#374151; white-space:nowrap;
+      display:flex; gap:8px; align-items:center;
     }
-    .pill strong { color: var(--primary); }
-    .progressline {
-      height: 10px; border-radius: 999px; background: #f3f4f6; overflow: hidden;
-      border: 1px solid #e5e7eb; width: 100%; max-width: 360px;
-    }
-    .progressfill {
-      height: 100%; width: 0%;
-      background: linear-gradient(90deg, #22c55e, #a78bfa);
-      transition: width .25s ease;
+    .badge-admin{
+      padding:4px 8px; border-radius:999px; font-weight:950; font-size:.78rem;
+      background:rgba(37,99,235,.12);
+      border:1px solid rgba(37,99,235,.35);
+      color:var(--admin); white-space:nowrap;
     }
 
-    .content { padding: 12px 0 0; }
     .card{
       background:var(--card);
       border:2px solid var(--border);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
-      padding:14px;margin:12px 0;
+      padding:14px;
+      margin:12px 0;
     }
-    .row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
-    .vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25}
-    .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .row1{display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap}
+    .vi{margin:0; font-weight:900; font-size:1.04rem; line-height:1.25}
+    .muted{color:var(--muted); font-weight:650}
     .idx{
-      font-size:.78rem;font-weight:900;
-      padding:6px 10px;border-radius:999px;
-      background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;
+      font-size:.78rem; font-weight:900;
+      padding:6px 10px; border-radius:999px;
+      background:#eff6ff; color:#1d4ed8; border:1px solid #dbeafe;
       white-space:nowrap;
     }
-    .muted{color:var(--muted);font-weight:650}
+    .idx.ok{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
+    .idx.warn{background:#fff7ed;color:#9a3412;border-color:#fed7aa}
+    .idx.bad{background:#fee2e2;color:#991b1b;border-color:#fecaca}
 
-    .input{
+    .btn{
+      border:0; cursor:pointer;
+      border-radius:999px; padding:10px 14px;
+      font-weight:900; font-size:.9rem;
+      transition:transform .16s ease, filter .16s ease;
+      display:inline-flex; align-items:center; gap:8px;
+      user-select:none; white-space:nowrap;
+      box-shadow:0 12px 24px rgba(0,0,0,.12);
+      background:#fff; color:#111827; border:1px solid #e5e7eb;
+    }
+    .btn:hover{transform:translateY(-1px); filter:brightness(.98)}
+    .btn:active{transform:translateY(0)}
+    .btn[disabled]{opacity:.6; cursor:not-allowed; transform:none !important; filter:none !important}
+    .btn-primary{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff; border:0;
+      box-shadow:0 12px 24px rgba(124,58,237,.18);
+    }
+    .btn-danger{background:var(--bad); color:#fff; border:0; box-shadow:0 12px 24px rgba(220,38,38,.18);}
+    .btn-ghost{background:#fff; color:#111827; border:1px solid #e5e7eb; box-shadow:none}
+
+    .input, textarea, select{
       width:100%;
-      border-radius:14px;border:2px solid #e5e7eb;
-      padding:11px 12px;font-size:.95rem;font-weight:700;
-      outline:none;background:var(--soft);
+      border-radius:14px; border:2px solid #e5e7eb;
+      padding:11px 12px; font-size:.95rem; font-weight:700;
+      outline:none; background:var(--soft);
       transition:border-color .15s ease, box-shadow .15s ease;
       font-family:inherit;
     }
-    .input:focus{
+    textarea{min-height:120px; font-family:ui-monospace,Consolas,monospace; font-weight:650}
+    .input:focus, textarea:focus, select:focus{
       border-color:rgba(124,58,237,.55);
       box-shadow:0 0 0 5px rgba(124,58,237,.10);
       background:#fff;
     }
+    label{display:block; margin-top:10px; font-weight:900}
 
-    .resultRow{
-      display:grid;
-      grid-template-columns: 140px 1fr;
-      gap:10px;
-      align-items:center;
-      margin-top:10px;
-      padding: 10px 12px;
-      border-radius: 16px;
-      border: 1px dashed #e5e7eb;
-      background: #fff;
-      font-weight: 800;
-      line-height: 1.35;
-    }
-    .oktxt { color: var(--ok); font-weight: 1000; }
-    .badtxt { color: var(--bad); font-weight: 1000; }
+    .tabs{display:flex; gap:10px; flex-wrap:wrap}
+    .tab{padding:10px 14px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; font-weight:950; cursor:pointer; box-shadow:none}
+    .tab.active{background:linear-gradient(135deg,#7c3aed,#fb7185); color:#fff; border:0}
 
-    .toast{
-      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
-      background:rgba(17,24,39,.92);color:#fff;
-      padding:10px 12px;border-radius:14px;
-      font-weight:800;font-size:.9rem;
-      opacity:0;pointer-events:none;
-      transition:opacity .18s ease, transform .18s ease;
-      max-width:calc(100% - 28px);
-      z-index:20050;text-align:center;
-    }
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+    .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+    @media(max-width:640px){ .grid2{grid-template-columns:1fr} }
 
-    .modal-backdrop{
-      position:fixed;inset:0;background:rgba(0,0,0,.35);
-      display:none;align-items:center;justify-content:center;
-      padding:16px;z-index:20000;
-    }
-    .modal-backdrop.show{display:flex}
-    #registerBackdrop{z-index:20015}
-    #pinBackdrop{z-index:20040}
-    #resetBackdrop{z-index:20025}
-    #profileBackdrop{z-index:20030}
-    #submitBackdrop{z-index:20035}
-    #imgBackdrop{z-index:20060}
+    code{background:#f6f6f6;padding:2px 6px;border-radius:8px;border:1px solid #eee}
+    .mono{font-family:ui-monospace,Consolas,monospace}
+    .hr{height:1px;background:#e5e7eb;margin:12px 0}
 
-    .modal{
-      width:100%;max-width:620px;
-      background:#fff;border-radius:18px;border:1px solid #e5e7eb;
-      box-shadow:0 20px 60px rgba(0,0,0,.18);
-      padding:14px;max-height:82vh;overflow:auto;
-      -webkit-overflow-scrolling:touch;
-    }
-    .modal h3{margin:4px 0 6px;font-size:1.02rem}
-    .modal p{margin:0 0 12px;color:var(--muted);font-weight:650;font-size:.92rem;line-height:1.35}
-    .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+    .topGrid{display:grid; grid-template-columns: 1fr 1fr; gap:10px; align-items:start;}
+    @media(max-width:980px){ .topGrid{grid-template-columns:1fr;} }
 
-    .xclose{position:sticky;top:0;display:flex;justify-content:flex-end;z-index:2;margin-bottom:4px}
-    .btn-x{
-      width:56px;height:56px;border-radius:16px;
-      border:1px solid #e5e7eb;background:#fff;cursor:pointer;
-      font-weight:1000;font-size:1.8rem;line-height:1;
-      box-shadow:0 12px 24px rgba(0,0,0,.10);
-    }
-
-    .pinWrap{display:grid;gap:12px}
-    .pinDots{
-      display:flex;justify-content:center;gap:10px;
-      padding:8px 0 2px;user-select:none;
-    }
-    .dot{
-      width:14px;height:14px;border-radius:999px;
-      border:2px solid #e5e7eb;background:#fff;
-      box-shadow:0 10px 22px rgba(0,0,0,.08);
-    }
-    .dot.filled{
-      background:linear-gradient(135deg,#7c3aed,#fb7185);
-      border-color:rgba(124,58,237,.25);
-    }
-    .pinKeypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .pinKey{
-      height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;
-      font-weight:1000;font-size:1.25rem;cursor:pointer;
-      box-shadow:0 10px 22px rgba(0,0,0,.08);
-      transition:transform .12s ease, filter .12s ease;
-      user-select:none;
-    }
-    .pinKey:hover{transform:translateY(-1px);filter:brightness(.99)}
-    .pinKey:active{transform:translateY(0)}
-    .pinKey.small{font-size:.95rem;font-weight:950;letter-spacing:.02em}
-    .pinNote{text-align:center;color:var(--muted);font-weight:750;font-size:.9rem;line-height:1.35}
-    @keyframes shakeX{0%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-4px)}90%{transform:translateX(4px)}100%{transform:translateX(0)}}
-    .pinWrap.shake{animation:shakeX .5s ease}
-    .pinDots.error .dot{border-color:rgba(220,38,38,.65)}
-    .pinDots.error .dot.filled{
-      background:linear-gradient(135deg,#fca5a5,#dc2626);
-      border-color:rgba(220,38,38,.55);
-    }
-    .pinNote.error{color:var(--bad)}
-
-    .divider{ height:1px; background: #e5e7eb; margin: 12px 0; }
-    .btn-red{
-      background: var(--bad);
-      color:#fff;
-      border:0;
-      box-shadow: 0 12px 24px rgba(220,38,38,.18);
-    }
-    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    @media (max-width: 520px){ .grid2{ grid-template-columns: 1fr; } }
-
-    .missList{ margin:10px 0 12px; padding-left:18px; color:#374151; font-weight:800; line-height:1.35; }
-    .missList li{ margin:6px 0; }
-
-    /* ===== Question UI ===== */
-    .qPrompt{
-      margin-top:10px;
-      white-space:pre-wrap;
-      font-weight:850;
-      line-height:1.35;
-    }
-    .qImgThumb{
-      margin-top:10px;
-      width:100%;
-      max-width:320px;
-      height:auto;
+    .qItem{
+      border:1px solid rgba(229,231,235,.95);
       border-radius:16px;
-      border:1px solid #e5e7eb;
+      padding:12px;
+      background:#fff;
+      box-shadow:none;
+      margin:10px 0;
+      cursor:pointer;
+    }
+    .qBadges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+    .qActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .mini{padding:8px 10px; border-radius:14px; border:1px solid #e5e7eb; background:#fff; font-weight:900; cursor:pointer}
+    .mini.danger{border:0;background:var(--bad);color:#fff}
+    .mini.primary{border:0;background:linear-gradient(135deg,#7c3aed,#fb7185);color:#fff}
+
+    .qbHead{display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap}
+    .qbTabs{
+      display:flex; gap:8px; flex-wrap:wrap;
+      background:rgba(243,244,246,.88);
+      border:1px solid rgba(229,231,235,.95);
+      padding:6px; border-radius:999px;
+    }
+    .qbTab{
+      border:0;background:transparent;cursor:pointer;border-radius:999px;
+      padding:9px 12px;font-weight:950;font-size:.86rem;color:#111827;
+      transition:transform .12s ease, filter .12s ease, background-color .12s ease;
+      user-select:none; white-space:nowrap;
+    }
+    .qbTab:hover{ transform:translateY(-1px); filter:brightness(.98); }
+    .qbTab:active{ transform:translateY(0); }
+    .qbTab.active{
+      background:#fff;border:1px solid rgba(229,231,235,.95);
       box-shadow:0 10px 24px rgba(0,0,0,.08);
-      cursor:pointer;
-      display:block;
     }
 
-    .optGrid{ display:grid; gap:10px; margin-top:10px; }
-    .optBtn{
-      text-align:left;
-      border-radius:16px;
-      border:2px solid #e5e7eb; /* dày hơn */
+    .qCard{
       background:#fff;
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:16px;
       padding:12px;
-      cursor:pointer;
-      font-weight:900;
       box-shadow:none;
-      transition:transform .12s ease, filter .12s ease;
+      margin:12px 0;
     }
-    .optBtn:hover{ transform:translateY(-1px); filter:brightness(.99); }
-    .optBtn.active{
-      border-color:rgba(124,58,237,.55);
-      border-width:3px; /* dày hơn khi chọn */
-      box-shadow:0 0 0 5px rgba(124,58,237,.10);
-      background:#fff;
+    .qHead{
+      display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      padding-bottom:10px; border-bottom:1px dashed rgba(229,231,235,.95);
+      margin-bottom:10px;
     }
-    .optKey{
-      display:inline-flex; align-items:center; justify-content:center;
-      width:28px; height:28px; border-radius:999px;
-      background:#f3f4f6; border:1px solid #e5e7eb;
-      font-weight:1000; margin-right:10px;
-    }
-
-    .boxes4{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-    .boxDigit{
-      width:58px;
-      text-align:center;
-      font-size:1.05rem;
-      font-weight:1000;
-      border-radius:16px;
-      padding:12px 8px;
-    }
-
-    /* keypad cho short4 */
-    .keypad4{
-      margin-top:10px;
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      user-select:none;
-    }
-    .kpBtn{
+    .qType{
       border-radius:999px;
-      border:2px solid #e5e7eb;
-      background:#fff;
       padding:9px 12px;
-      font-weight:1000;
-      cursor:pointer;
-      box-shadow:none;
-      min-width:54px;
-      text-align:center;
+      font-weight:950;
+      background:rgba(248,250,252,.95);
     }
-    .kpBtn:active{ transform: translateY(0); }
-    .kpBtn.small{ min-width:74px; }
+    .qPrompt{min-height:90px}
+    .hint{font-weight:650;color:var(--muted);line-height:1.35; font-size:.88rem}
+    .hidden{display:none !important;}
 
-    .tfList{ display:grid; gap:10px; margin-top:10px; }
-    .tfRow{
-      border:1px solid #e5e7eb;
-      border-radius:16px;
-      padding:12px;
-      background:#fff;
-    }
-    .tfTop{ display:flex; gap:10px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
-    .tfStmt{ font-weight:900; line-height:1.35; }
-    .tfBtns{ display:flex; gap:8px; flex-wrap:wrap; }
-    .tfBtn{
-      border-radius:999px;
-      border:2px solid #e5e7eb; /* dày hơn */
-      background:#fff;
-      padding:8px 12px;
-      font-weight:1000;
-      cursor:pointer;
-      box-shadow:none;
-    }
-    .tfBtn.active{
-      border-color:rgba(124,58,237,.55);
-      border-width:3px; /* dày hơn khi chọn */
-      box-shadow:0 0 0 5px rgba(124,58,237,.10);
-    }
-
-    /* Image viewer modal */
-    .imgModal{
-      width:100%;
-      max-width:min(980px, 100%);
-      background:transparent;
-      border:0;
-      box-shadow:none;
-      padding:0;
-      max-height:88vh;
-      overflow:hidden;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-    }
-    .imgFrame{
-      background:#fff;
-      border:1px solid rgba(229,231,235,.85);
-      border-radius:18px;
-      box-shadow:0 22px 70px rgba(0,0,0,.22);
-      max-width:100%;
-      max-height:88vh;
-      overflow:hidden;
-      position:relative;
-    }
-    .imgFrame img{
-      display:block;
-      max-width:90vw;
-      max-height:78vh;
-      width:auto;
-      height:auto;
-      object-fit:contain;
-    }
-    .imgClose{
-      position:absolute;
-      top:10px; right:10px;
-      width:50px; height:50px;
-      border-radius:16px;
-      border:1px solid #e5e7eb;
-      background:#fff;
-      cursor:pointer;
-      font-weight:1000;
-      font-size:1.6rem;
-      line-height:1;
-      box-shadow:0 12px 24px rgba(0,0,0,.10);
-    }
-
-    /* ===== Submit bar (fixed bottom) ===== */
-    .submitbar{
-      position:fixed;
-      left:0; right:0;
-      bottom:calc(env(safe-area-inset-bottom) + 0px);
+    .qFab{
+      position:fixed; left:0; right:0;
+      bottom:calc(env(safe-area-inset-bottom) + 18px);
       z-index:20010;
-      padding:10px 14px;
-      background:rgba(255,255,255,.86);
-      border-top:1px solid rgba(229,231,235,.9);
-      backdrop-filter:blur(8px);
-      box-shadow:0 -14px 40px rgba(0,0,0,.10);
-      display:none;
+      pointer-events:none;
+      padding:0 14px;
     }
-    .submitwrap{
-      max-width:980px;
-      margin:0 auto;
-      display:flex;
-      gap:12px;
-      align-items:center;
-      justify-content:space-between;
-      flex-wrap:wrap;
+    .qFabInner{
+      max-width:1180px; margin:0 auto;
+      pointer-events:auto;
+      display:flex; justify-content:flex-end;
     }
-    .btn-big{
+    .qFabBtn{
       width:min(520px, 100%);
       border-radius:18px;
       padding:14px 16px;
-      font-size:1.05rem;
+      font-size:1.04rem;
       font-weight:1000;
       letter-spacing:.02em;
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff;
+      border:0;
+      box-shadow:0 16px 42px rgba(124,58,237,.22);
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
       justify-content:center;
+      gap:10px;
+      transition:transform .12s ease, filter .12s ease;
+      user-select:none;
     }
-    .subhint{
-      font-weight:850;
-      color:var(--muted);
-      line-height:1.2;
-      white-space:nowrap;
+    .qFabBtn:hover{transform:translateY(-1px);filter:brightness(.98)}
+    .qFabBtn:active{transform:translateY(0)}
+    .qFab.hidden{display:none !important}
+
+    .toast{
+      position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+      background:rgba(17,24,39,.92); color:#fff;
+      padding:10px 12px; border-radius:14px;
+      font-weight:800; font-size:.9rem;
+      opacity:0; pointer-events:none;
+      transition:opacity .18s ease, transform .18s ease;
+      max-width:calc(100% - 28px);
+      z-index:20050; text-align:center;
+    }
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(-4px)}
+
+    /* ====== LaTeX palette ====== */
+    .mathBar{
+      display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-end;
+      margin-top:8px;
+    }
+    .mathBtn{
+      padding:8px 10px; border-radius:999px; border:1px solid #e5e7eb;
+      background:#fff; font-weight:950; cursor:pointer;
+      box-shadow:none;
     }
 
-    @media (max-width: 820px) {
-      .progressline { max-width: 100%; }
-      .btn { padding: 9px 12px; font-size: .85rem; }
-      .resultRow{ grid-template-columns: 120px 1fr; }
-      .userCorner .name { max-width: 66vw; }
-      .boxDigit{ width:56px; }
-      .subhint{ white-space:normal; }
+    .latexPanel{
+      position:fixed;
+      left:50%;
+      bottom:calc(env(safe-area-inset-bottom) + 18px);
+      transform:translateX(-50%);
+      width:min(980px, calc(100% - 28px));
+      background:rgba(255,255,255,.98);
+      border:1px solid rgba(229,231,235,.95);
+      box-shadow:0 18px 50px rgba(0,0,0,.18);
+      border-radius:18px;
+      padding:12px;
+      z-index:20080;
+      display:none;
+    }
+    .latexPanel.show{display:block;}
+    .latexHead{
+      display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .latexGrid{
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .latexChip{
+      border:1px solid #e5e7eb;
+      background:#fff;
+      border-radius:999px;
+      padding:9px 12px;
+      font-weight:950;
+      cursor:pointer;
+      user-select:none;
+      box-shadow:none;
+    }
+    .latexChip:hover{filter:brightness(.98)}
+    .latexTiny{font-size:.86rem; color:var(--muted); font-weight:750}
+
+    /* ✅ Prompt + image right-side + LaTeX preview */
+    .qPromptGrid{
+      display:grid;
+      grid-template-columns: 1fr 220px;
+      gap:10px;
+      align-items:start;
+      margin-top:8px;
+    }
+    @media(max-width:780px){
+      .qPromptGrid{ grid-template-columns: 1fr; }
+    }
+    .imgSide{
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:16px;
+      padding:10px;
+      background:rgba(248,250,252,.7);
+    }
+    .imgSideHead{
+      display:flex; align-items:center; justify-content:space-between; gap:8px;
+      margin-bottom:8px;
+    }
+    .imgPreviewSmall{
+      width:100%;
+      height:140px;
+      border-radius:14px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      object-fit:cover;
+      display:block;
+    }
+    .imgSideBtns{
+      margin-top:10px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .mathPreviewBox{
+      margin-top:8px;
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:14px;
+      padding:10px;
+      background:#fff;
+    }
+    .mathPreview{
+      font-weight:700;
+      line-height:1.5;
+      min-height:28px;
+      overflow:auto;
+    }
+
+    /* ✅ LaTeX panel preview */
+    .latexPreviewWrap{
+      margin-top:10px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      align-items:start;
+    }
+    @media(max-width:860px){
+      .latexPreviewWrap{ grid-template-columns: 1fr; }
+    }
+    .latexPreviewBox{
+      border:1px solid rgba(229,231,235,.95);
+      border-radius:14px;
+      padding:10px;
+      background:#fff;
+      min-height:64px;
+      overflow:auto;
     }
   </style>
-
-  <!-- ✅ KaTeX (LaTeX render) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 </head>
 
 <body>
-  <div class="userCorner" id="userCorner" title="Bấm để mở tài khoản">
-    <span class="name" id="userCornerName">—</span>
-    <span class="adminBadge" id="userCornerAdmin" style="display:none;">ADMIN</span>
-  </div>
-
   <div id="shell">
-    <div class="actionbar" id="actionbar">
-      <button class="btn btn-ghost" id="btnHome">Trang chủ</button>
-      <button class="btn" id="btnScrollTop">⬆️ Lên đầu</button>
-      <button class="btn btn-reset" id="btnReset">🔁 Làm lại</button>
-    </div>
-
     <div class="wrap">
       <div class="topbar">
         <div class="titlebox">
-          <div class="logo">Hi!</div>
+          <div class="logo">A</div>
           <div class="titles">
-            <h1 id="quizTitle">Quiz</h1>
-            <div class="tiny" id="quizSub"></div>
+            <h1>Admin Panel</h1>
+            <div class="tiny"><a href="/">← về kệ hàng</a></div>
+          </div>
+        </div>
+        <div class="pill" id="mePill">Checking…</div>
+      </div>
+
+      <div class="card" id="gate">Checking login...</div>
+
+      <div id="app" style="display:none">
+        <div class="card">
+          <div class="row1">
+            <p class="vi">Bảng điều khiển</p>
+            <div class="tabs">
+              <button class="tab active" id="tabQuizzes">Quizzes</button>
+              <button class="tab" id="tabUsers">Users</button>
+            </div>
           </div>
         </div>
 
-        <div class="stats">
-          <div class="pill">Đã làm: <strong id="answeredCount">0</strong>/<span id="totalCount">0</span></div>
-          <div class="progressline"><div class="progressfill" id="progressFill"></div></div>
-        </div>
-      </div>
+        <!-- QUIZZES -->
+        <div id="viewQuizzes">
+          <div class="topGrid">
+            <!-- settings -->
+            <div class="card">
+              <div class="row1">
+                <p class="vi">Quiz</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+                  <span class="idx" id="editModePill">NEW</span>
+                </div>
+              </div>
 
-      <div class="content" id="content"></div>
+              <div class="grid2" style="margin-top:10px">
+                <div>
+                  <label>Quiz ID (5 chữ)</label>
+                  <input class="input mono" id="quizId" placeholder="abcde" maxlength="5" />
+                </div>
+                <div>
+                  <label>Title</label>
+                  <input class="input" id="title" placeholder="Tên quiz" />
+                </div>
+              </div>
+
+              <label>Sub</label>
+              <input class="input" id="sub" placeholder="Mô tả ngắn" />
+
+              <div class="grid2" style="margin-top:10px">
+                <div>
+                  <label>Public</label>
+                  <select id="isPublic">
+                    <option value="true">Public</option>
+                    <option value="false">Private</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Ẩn quiz (is_hidden)</label>
+                  <select id="isHidden">
+                    <option value="false">Không ẩn</option>
+                    <option value="true">Ẩn</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid2" style="margin-top:10px">
+                <div>
+                  <label>Hiện trên store</label>
+                  <select id="showInStore">
+                    <option value="true">Hiện</option>
+                    <option value="false">Ẩn</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Yêu cầu login</label>
+                  <select id="requireLogin">
+                    <option value="true">Cần login</option>
+                    <option value="false">Không cần login</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid2" style="margin-top:10px">
+                <div>
+                  <label>Ghim</label>
+                  <select id="pinned">
+                    <option value="false">Không</option>
+                    <option value="true">Ghim</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Chia điểm</label>
+                  <select id="scoringMode">
+                    <option value="equal">Chia đều theo số câu</option>
+                    <option value="custom">Tự chia (mỗi câu có điểm)</option>
+                  </select>
+                </div>
+              </div>
+
+              <label>Trộn câu hỏi / đáp án</label>
+              <select id="shuffleMode">
+                <option value="none">Không đảo</option>
+                <option value="q">Đảo câu hỏi</option>
+                <option value="qa">Đảo câu hỏi + đáp án</option>
+              </select>
+
+              <div class="grid2" style="margin-top:10px">
+                <div>
+                  <label>Mã truy cập</label>
+                  <select id="requireCode">
+                    <option value="false">Không</option>
+                    <option value="true">Có</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Code</label>
+                  <input class="input mono" id="accessCode" placeholder="vd: 1234" />
+                </div>
+              </div>
+
+              <!-- ✅ NEW: totalScore wrap (ẩn khi custom) -->
+              <div id="totalScoreWrap">
+                <label>Tổng điểm</label>
+                <input class="input mono" id="totalScore" value="10" />
+              </div>
+
+              <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+                <button class="btn" id="btnNewQuiz" type="button">✨ Tạo mới</button>
+                <button class="btn btn-primary" id="btnSaveQuiz" type="button">💾 Lưu quiz</button>
+              </div>
+            </div>
+
+            <!-- list -->
+            <div class="card">
+              <div class="row1">
+                <p class="vi">Danh sách quiz</p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+                  <button class="btn" id="btnNewQuizOnList" type="button">✨ Tạo mới</button>
+                  <button class="btn" id="btnReloadQuizzes" type="button">Reload</button>
+                </div>
+              </div>
+              <div id="quizList" style="margin-top:10px"></div>
+            </div>
+          </div>
+
+          <!-- Question editor -->
+          <div class="card" style="margin-top:10px">
+            <div class="qbHead">
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <p class="vi" style="margin:0">Soạn câu hỏi</p>
+                <span class="idx" id="qCountPill">0</span>
+              </div>
+
+              <div class="qbTabs" aria-label="Chế độ">
+                <button class="qbTab active" id="qbTabManual" type="button">📝 Thủ công</button>
+                <button class="qbTab" id="qbTabImport" type="button">📥 Import</button>
+              </div>
+
+              <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+                <button class="btn" id="btnLatex" type="button">🧮 LaTeX</button>
+                <button class="btn btn-primary" id="btnPublishAll" type="button">🚀 Publish</button>
+              </div>
+            </div>
+
+            <div id="qbManualArea" style="margin-top:10px">
+              <div class="hint" style="margin-top:6px">
+                Dùng <code>$...$</code> hoặc <code>$$...$$</code>. Bấm nút <b>🧮 LaTeX</b> để chèn mẫu nhanh.<br>
+                Ảnh sẽ upload lên bucket <code>quiz</code> (không nhét base64 vào DB).
+              </div>
+
+              <div id="qList" style="margin-top:12px"></div>
+
+              <div class="hr"></div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+                <button class="btn btn-primary" id="btnPublishAllBottom" type="button">🚀 Publish</button>
+              </div>
+            </div>
+
+            <div id="qbImportArea" style="display:none; margin-top:10px">
+              <div class="hint" style="margin-top:0">
+                Import theo định dạng (mỗi block bắt đầu bằng tag). Hệ thống sẽ tự xoá <code>*...*</code> / <code>**...**</code> quanh đáp án:
+                <div class="mono" style="white-space:pre-wrap; margin-top:8px; background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:10px">
+&lt;tn&gt;@1: Câu trắc nghiệm
+A
+B
+**C**   (đáp án đúng)
+
+&lt;tl&gt;@2: Câu tự luận
+**Đáp án đúng**
+
+&lt;tln&gt;@3: Trả lời ngắn
+**0,02**
+                </div>
+              </div>
+
+              <label>Paste nội dung</label>
+              <textarea id="importBox" placeholder="Dán nội dung import vào đây..."></textarea>
+
+              <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+                <button class="btn" id="btnImportReplace" type="button">⬇️ Import (thay thế)</button>
+                <button class="btn btn-primary" id="btnImportAppend" type="button">➕ Import (thêm)</button>
+              </div>
+
+              <div class="hr"></div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+                <button class="btn btn-primary" id="btnPublishAll2" type="button">🚀 Publish</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- USERS -->
+        <div id="viewUsers" style="display:none">
+          <div class="card">
+            <div class="row1">
+              <p class="vi">Users</p>
+              <div style="display:flex; gap:10px; flex-wrap:wrap">
+                <input class="input" id="userSearch" placeholder="Search username..." style="max-width:320px"/>
+                <button class="btn" id="btnReloadUsers" type="button">Reload</button>
+              </div>
+            </div>
+            <div id="userList" style="margin-top:10px"></div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
+  <div class="qFab" id="qFab">
+    <div class="qFabInner">
+      <button class="qFabBtn" id="btnAddQFab" type="button">➕ THÊM CÂU HỎI</button>
+    </div>
+  </div>
+
+  <input id="qImgPick" type="file" accept="image/*" style="display:none" />
   <div class="toast" id="toast"></div>
 
-  <!-- ✅ Submit bar -->
-  <div class="submitbar" id="submitBar">
-    <div class="submitwrap">
-      <button class="btn btn-primary btn-big" id="btnSubmitBig" disabled>NỘP BÀI</button>
-      <div class="subhint" id="submitHint"></div>
-    </div>
-  </div>
-  
-
-  <!-- Register prompt -->
-  <div class="modal-backdrop" id="registerBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
-      <h3 id="registerTitle">Đăng ký tài khoản?</h3>
-      <p id="registerDesc">Username chưa đăng ký. Bạn có muốn đăng ký không?</p>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="btnRegisterNo">Nhập lại</button>
-        <button class="btn btn-primary" id="btnRegisterYes">Đăng ký</button>
+  <!-- LaTeX palette -->
+  <div class="latexPanel" id="latexPanel" aria-hidden="true">
+    <div class="latexHead">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div style="font-weight:1000">🧮 LaTeX</div>
+        <div class="latexTiny">Chèn vào ô đang gõ (click vào textarea trước). Có xem trước.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <button class="latexChip" data-latex-act="wrapInline" type="button">Bọc $...$</button>
+        <button class="latexChip" data-latex-act="wrapBlock" type="button">Bọc $$...$$</button>
+        <button class="latexChip" data-latex-act="close" type="button">Đóng</button>
       </div>
     </div>
-  </div>
 
-  <!-- PIN keypad -->
-  <div class="modal-backdrop" id="pinBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
-      <div class="xclose">
-        <button class="btn-x" id="btnClosePin" aria-label="Đóng">✕</button>
+    <div class="latexGrid" id="latexGrid"></div>
+
+    <!-- ✅ LaTeX preview -->
+    <div class="latexPreviewWrap">
+      <div>
+        <div class="latexTiny" style="margin-bottom:6px">Nội dung LaTeX (để xem trước)</div>
+        <textarea id="latexPreviewSrc" class="input mono" style="min-height:74px" placeholder="vd: $x^2 + \\frac{1}{2}$"></textarea>
       </div>
-      <h3 id="pinTitle">Mật khẩu</h3>
-      <p id="pinDesc">Nhập mật khẩu số.</p>
-
-      <div class="pinWrap" id="pinWrap">
-        <div class="pinDots" id="pinDots"></div>
-        <div class="pinKeypad" id="pinKeypad"></div>
-        <div class="pinNote" id="pinNote"></div>
+      <div>
+        <div class="latexTiny" style="margin-bottom:6px">Xem trước (render toán học)</div>
+        <div id="latexPreview" class="latexPreviewBox"></div>
       </div>
     </div>
   </div>
-
-  <!-- Reset confirm -->
-  <div class="modal-backdrop" id="resetBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true">
-      <h3>Làm lại bài?</h3>
-      <p>Xóa lần làm hiện tại (trên máy) và làm lại (nếu quiz có đảo thì sẽ đảo lại).</p>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="btnCancelReset">Hủy</button>
-        <button class="btn btn-danger" id="btnConfirmReset">Xóa & Làm lại</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Submit confirm -->
-  <div class="modal-backdrop" id="submitBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="submitTitle">
-      <h3 id="submitTitle">Xác nhận nộp bài</h3>
-      <div id="submitBody"></div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="btnCancelSubmit">Hủy</button>
-        <button class="btn btn-primary" id="btnConfirmSubmit">Nộp</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Profile modal -->
-  <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
-      <div class="xclose">
-        <button class="btn-x" id="btnCloseProfile" aria-label="Đóng">✕</button>
-      </div>
-      <h3 id="profileTitle">Tài khoản</h3>
-      <p id="profileSub">Thông tin user.</p>
-
-      <div class="card" style="margin:10px 0 0; box-shadow:none;">
-        <div class="row1">
-          <p class="vi" style="margin:0">Username: <b id="profileUsername">—</b></p>
-          <div class="meta"><span class="idx" id="profileRole">USER</span></div>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-      <div class="grid2">
-        <button class="btn btn-ghost" id="btnProfileHome" style="justify-content:center;">Trang chủ</button>
-        <button class="btn btn-red" id="btnLogout" style="justify-content:center;">🚪 Đăng xuất</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Image viewer -->
-  <div class="modal-backdrop" id="imgBackdrop" aria-hidden="true">
-    <div class="imgModal" role="dialog" aria-modal="true">
-      <div class="imgFrame">
-        <button class="imgClose" id="btnImgClose" aria-label="Đóng">✕</button>
-        <img id="imgViewer" alt="image" src="" />
-      </div>
-    </div>
-  </div>
-
-  <!-- ✅ KaTeX JS -->
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
 <script>
 /* ================== CONFIG ================== */
-const HOME_URL = "/";
-
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
+/* ✅ Admin panel KHÔNG login ở đây nữa. Nó chỉ dùng token của trang chủ.
+   Token "vĩnh viễn": localStorage + cookie (share subdomain) + sessionStorage + window.name */
+const TOKEN_KEY = "tk_token_v2";
+const TOKEN_COOKIE = "tk_token_v2";
+
+/* Storage */
+const STORAGE_BUCKET = "quiz";
+
+/* RPC names */
 const RPC = {
-  getQuiz: "api_get_quiz3",
-  checkUsername: "api_check_username",
-  login: "api_login",
-  register: "api_register",
-  me: "api_me"
+  me: "api_me",
+  logout: "api_logout",
+
+  adminUpsertQuiz: "admin_upsert_quiz",
+  adminListQuizzes: "admin_list_quizzes",
+  adminDeleteQuiz: "admin_delete_quiz",
+  adminGetQuestions: "admin_get_questions",
+  adminReplaceQuestions: "admin_replace_questions_v3",
+  adminImportQuestions: "admin_import_questions_v3",
+
+  adminListUsers: "admin_list_users",
+  adminDeleteUser: "admin_delete_user",
+  adminForceRename: "admin_force_rename",
+  adminForceSetPin: "admin_force_set_pin"
 };
 
-const TOKEN_KEY = "tk_token_v2";
-const ME_KEY = "tk_me_v2";
-const NAME_KEY = "tk_display_name_v1";
-
-/* ================== HARD DEBUG ================== */
-function renderFatal(err){
-  const msg = (err && (err.message || err)) ? (err.message || String(err)) : "Unknown error";
-  renderLoading("Lỗi JS: " + msg);
-}
-window.addEventListener("error", (e)=>{ renderFatal(e?.error || e?.message); });
-window.addEventListener("unhandledrejection", (e)=>{ renderFatal(e?.reason || e); });
-
-/* ================== HELPERS ================== */
+/* ================== UI HELPERS ================== */
 function toast(msg){
-  const t = document.getElementById("toast");
-  t.textContent = String(msg||"");
+  const t=document.getElementById("toast");
+  t.textContent=String(msg||"");
   t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"), 1300);
+  setTimeout(()=>t.classList.remove("show"),1300);
 }
-function escapeHtml(s){
-  return String(s ?? "")
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+function esc(s){
+  return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
-function normUsername(u){ return String(u||"").trim().toLowerCase(); }
-function validateUsername(u){
-  u = normUsername(u);
-  if(!u) return "Chưa nhập username.";
-  if(u.length>15) return "Username tối đa 15 ký tự.";
-  if(!/^[a-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z 0-9 và dấu _ (không viết hoa).";
-  return null;
-}
-function isAdminUser(me){
-  if(!me) return false;
-  const u = String(me.username||"").toLowerCase();
-  return me.role==="admin" || u==="tuankhoi";
-}
-function getToken(){ try{ return (localStorage.getItem(TOKEN_KEY)||"").trim(); }catch{ return ""; } }
-function setToken(t){ try{ if(!t) localStorage.removeItem(TOKEN_KEY); else localStorage.setItem(TOKEN_KEY, String(t)); }catch{} }
-function getMeCache(){ try{ return JSON.parse(localStorage.getItem(ME_KEY)||"null"); }catch{ return null; } }
-function setMeCache(me){ try{ if(!me) localStorage.removeItem(ME_KEY); else localStorage.setItem(ME_KEY, JSON.stringify(me)); }catch{} }
-function setNameCache(name){ try{ if(!name) localStorage.removeItem(NAME_KEY); else localStorage.setItem(NAME_KEY, String(name)); }catch{} }
-function clearAuthLocal(){ setToken(""); setMeCache(null); }
-function goHome(){ location.href = HOME_URL; }
 
-/* quizId: ?quiz=abcde, #abcde, /q/abcde */
-function parseQuizIdFromUrl(){
+/* ====== TOKEN PERSIST (localStorage + cookie + fallback) ====== */
+function cookieDomainHint(){
+  const host = String(location.hostname||"").trim();
+  if(!host || host==="localhost" || host.endsWith(".localhost")) return "";
+  if(/^\d+\.\d+\.\d+\.\d+$/.test(host)) return ""; // ipv4
+  const parts = host.split(".").filter(Boolean);
+  if(parts.length < 2) return "";
+  // naive base domain: last 2 parts (ok cho .com/.net/.vn...)
+  return "." + parts.slice(-2).join(".");
+}
+function setCookie(name, value){
+  const v = encodeURIComponent(String(value||""));
+  const maxAge = 60*60*24*365*20; // ~20 years
+  const base = cookieDomainHint();
+  const common = `${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
+  document.cookie = common; // host-only
+  if(base && base !== location.hostname){
+    document.cookie = `${common}; Domain=${base}`;
+  }
+}
+function getCookie(name){
+  const cs = document.cookie ? document.cookie.split(";") : [];
+  let found = "";
+  for(const raw of cs){
+    const s = raw.trim();
+    if(!s) continue;
+    const eq = s.indexOf("=");
+    const k = (eq>=0 ? s.slice(0,eq) : s).trim();
+    if(k === name){
+      found = (eq>=0 ? s.slice(eq+1) : "");
+    }
+  }
+  try{ return found ? decodeURIComponent(found) : ""; }catch{ return found || ""; }
+}
+function delCookie(name){
+  const base = cookieDomainHint();
+  document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
+  if(base && base !== location.hostname){
+    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax; Domain=${base}`;
+  }
+}
+function setToken(t){
+  t = String(t||"").trim();
+  if(!t) return;
+  try{ localStorage.setItem(TOKEN_KEY, t); }catch{}
+  try{ sessionStorage.setItem(TOKEN_KEY, t); }catch{}
+  try{ setCookie(TOKEN_COOKIE, t); }catch{}
+  try{ window.name = "tk:" + t; }catch{}
+}
+function clearToken(){
+  try{ localStorage.removeItem(TOKEN_KEY); }catch{}
+  try{ sessionStorage.removeItem(TOKEN_KEY); }catch{}
+  try{ delCookie(TOKEN_COOKIE); }catch{}
+  try{ if(String(window.name||"").startsWith("tk:")) window.name = ""; }catch{}
+}
+function getToken(){
+  let t = "";
+  try{ t = (localStorage.getItem(TOKEN_KEY) || "").trim(); }catch{}
+  if(!t) { try{ t = (sessionStorage.getItem(TOKEN_KEY) || "").trim(); }catch{} }
+  if(!t) t = (getCookie(TOKEN_COOKIE) || "").trim();
+  if(!t){
+    const wn = String(window.name||"");
+    if(wn.startsWith("tk:")) t = wn.slice(3).trim();
+  }
+
+  // hỗ trợ lấy token từ URL để "vào phát được luôn"
   try{
-    const qs = new URLSearchParams(location.search);
-    const q = (qs.get("quiz")||"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
-    if(q && q.length===5) return q;
+    const u = new URL(location.href);
+    if(!t){
+      const q = (u.searchParams.get("tk") || u.searchParams.get("token") || "").trim();
+      if(q) t = q;
+    }
+    if(!t && u.hash){
+      const hs = u.hash.replace(/^#/,"");
+      const p = new URLSearchParams(hs);
+      const q2 = (p.get("tk") || p.get("token") || "").trim();
+      if(q2) t = q2;
+    }
   }catch{}
-  const h = (location.hash||"").replace(/^#/,"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
-  if(h && h.length===5) return h;
-  const p = location.pathname;
-  const m = p.match(/\/q\/([a-z]{5})(?:\/|$)/i);
-  if(m && m[1]) return String(m[1]).toLowerCase();
-  return "";
+
+  if(t) setToken(t); // persist lại ngay
+  return t;
+}
+async function requestPersistentStorage(){
+  try{
+    if(navigator.storage && navigator.storage.persist){
+      await navigator.storage.persist();
+    }
+  }catch{}
 }
 
-/* ================== URL FLAGS ================== */
-const URLP = new URLSearchParams(location.search);
-const FLAG_START = (URLP.get("start")==="1");
-const FLAG_RESTART = (URLP.get("restart")==="1");
-function dropFlagsFromUrl(){
-  if(!FLAG_START && !FLAG_RESTART) return;
-  URLP.delete("start"); URLP.delete("restart");
-  const qs = URLP.toString();
-  const newUrl = location.pathname + (qs?("?"+qs):"") + (location.hash||"");
-  try{ history.replaceState(null,"",newUrl); }catch{}
+/* ================== UI: NEED LOGIN ================== */
+function renderNeedLogin(msg){
+  const gate = document.getElementById("gate");
+  const curTk = getToken();
+
+  gate.innerHTML = `
+    <div class="row1">
+      <p class="vi" style="margin:0">Chưa đăng nhập</p>
+      <span class="idx warn">${esc(msg || "Bạn cần đăng nhập ở trang chủ")}</span>
+    </div>
+
+    <div class="hint" style="margin-top:8px">
+      Admin panel <b>không</b> đăng nhập ở đây nữa.<br>
+      Vui lòng đăng nhập tài khoản <b>tuankhoi</b> ở trang chủ, rồi mở lại <code>/admin.html</code>.<br>
+      <span class="muted">Tip:</span> token được lưu <b>vĩnh viễn</b> bằng cookie+localStorage (nếu browser cho).
+    </div>
+
+    <label style="margin-top:12px">Token (tùy chọn – để dán thủ công nếu browser không share storage)</label>
+    <input class="input mono" id="manualToken" placeholder="dán token vào đây..." value="${esc(curTk||"")}"/>
+
+    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn" id="btnRetry" type="button">🔁 Thử lại</button>
+      <button class="btn btn-primary" id="btnSaveManual" type="button">💾 Lưu token</button>
+      <button class="btn btn-ghost" id="btnGoHome" type="button">🏠 Về trang chủ</button>
+      <button class="btn btn-ghost" id="btnClearToken" type="button">🧹 Xóa phiên</button>
+    </div>
+  `;
+
+  gate.querySelector("#btnGoHome").onclick = ()=> location.href = "/";
+  gate.querySelector("#btnRetry").onclick = ()=> location.reload();
+  gate.querySelector("#btnSaveManual").onclick = ()=>{
+    const v = (gate.querySelector("#manualToken")?.value || "").trim();
+    if(!v) return toast("Token trống");
+    setToken(v);
+    toast("Đã lưu token");
+    setTimeout(()=>location.reload(), 300);
+  };
+  gate.querySelector("#btnClearToken").onclick = ()=>{
+    clearToken();
+    toast("Đã xóa phiên");
+    renderNeedLogin("Đã xóa token");
+  };
 }
 
-/* ================== SUPABASE CALLS ================== */
-async function sbRpc(fn, args){
+function normalizeQuizId(x){
+  x = String(x||"").trim().toLowerCase();
+  x = x.replace(/[^a-z]/g,"").slice(0,5);
+  return x;
+}
+function genQuizId5(){
+  const letters="abcdefghijklmnopqrstuvwxyz";
+  let s="";
+  for(let i=0;i<5;i++) s += letters[Math.floor(Math.random()*letters.length)];
+  return s;
+}
+
+/* ================== MathJax helper ================== */
+function typesetElement(el){
+  try{
+    if(window.MathJax && MathJax.typesetPromise){
+      return MathJax.typesetPromise([el]).catch(()=>{});
+    }
+  }catch{}
+  setTimeout(()=>{
+    try{
+      if(window.MathJax && MathJax.typesetPromise){
+        MathJax.typesetPromise([el]).catch(()=>{});
+      }
+    }catch{}
+  }, 600);
+}
+
+/* ================== SUPABASE RPC ================== */
+async function rpc(fn, args){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
     method:"POST",
     headers:{
-      "apikey": String(SUPABASE_ANON_KEY).trim(),
-      "Authorization": "Bearer " + String(SUPABASE_ANON_KEY).trim(),
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization":"Bearer " + SUPABASE_ANON_KEY,
       "Content-Type":"application/json"
     },
     body: JSON.stringify(args||{})
   });
   const txt = await res.text();
-  let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
+  let data=null;
+  try{ data = txt ? JSON.parse(txt) : null; }catch{}
   if(!res.ok){
     const msg = (data && (data.message||data.error||data.hint||data.details))
       ? (data.message||data.error||data.hint||data.details)
       : txt;
-    throw new Error(msg || "RPC error");
+    throw new Error(msg || `RPC failed: ${fn}`);
   }
   return data;
 }
-async function sbPost(path, body, { preferReturn=false, upsert=false } = {}){
-  const headers = {
-    "apikey": String(SUPABASE_ANON_KEY).trim(),
-    "Authorization": "Bearer " + String(SUPABASE_ANON_KEY).trim(),
-    "Content-Type":"application/json"
-  };
-  if(preferReturn) headers["Prefer"] = "return=representation";
-  if(upsert){
-    headers["Prefer"] = (headers["Prefer"] ? headers["Prefer"] + "," : "") + "resolution=merge-duplicates";
-  }
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
-    method:"POST",
-    headers,
-    body: JSON.stringify(body)
+/* ================== STORAGE UPLOAD ================== */
+function publicObjectUrl(bucket, path){
+  const safe = path.split("/").map(encodeURIComponent).join("/");
+  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${safe}`;
+}
+async function uploadToBucket(bucket, path, blob, contentType){
+  const url = `${SUPABASE_URL}/storage/v1/object/${bucket}/${path.split("/").map(encodeURIComponent).join("/")}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+      "Content-Type": contentType || "application/octet-stream",
+      "x-upsert": "true"
+    },
+    body: blob
   });
-  const txt = await res.text();
-  let data=null; try{ data = txt ? JSON.parse(txt) : null; }catch{}
   if(!res.ok){
-    const msg = (data && (data.message||data.error||data.hint||data.details))
-      ? (data.message||data.error||data.hint||data.details)
-      : txt;
-    throw new Error(msg || "REST POST error");
+    const t = await res.text().catch(()=> "");
+    throw new Error(`Upload failed (${res.status}): ${t || "check bucket policy"}`);
   }
-  return data;
+  return publicObjectUrl(bucket, path);
 }
 
-/* ================== UI refs ================== */
-const actionbar = document.getElementById("actionbar");
-const btnHome = document.getElementById("btnHome");
-const btnScrollTop = document.getElementById("btnScrollTop");
-const btnReset = document.getElementById("btnReset");
+/* ================== DOM ================== */
+const mePill = document.getElementById("mePill");
+const gate = document.getElementById("gate");
+const app = document.getElementById("app");
 
-const submitBar = document.getElementById("submitBar");
-const btnSubmitBig = document.getElementById("btnSubmitBig");
-const submitHint = document.getElementById("submitHint");
-
-const content = document.getElementById("content");
-const quizTitleEl = document.getElementById("quizTitle");
-const quizSubEl   = document.getElementById("quizSub");
-const userCorner  = document.getElementById("userCorner");
-const userCornerName = document.getElementById("userCornerName");
-const userCornerAdmin= document.getElementById("userCornerAdmin");
-
-function setUserCorner(me){
-  if(!me || !me.username){ userCorner.style.display="none"; return; }
-  userCornerName.textContent = me.username;
-  userCornerAdmin.style.display = isAdminUser(me) ? "inline-flex" : "none";
-  userCorner.style.display = "inline-flex";
+const tabQuizzes = document.getElementById("tabQuizzes");
+const tabUsers = document.getElementById("tabUsers");
+const viewQuizzes = document.getElementById("viewQuizzes");
+const viewUsers = document.getElementById("viewUsers");
+function setTab(which){
+  const isQ = which==="q";
+  tabQuizzes.classList.toggle("active", isQ);
+  tabUsers.classList.toggle("active", !isQ);
+  viewQuizzes.style.display = isQ ? "" : "none";
+  viewUsers.style.display = isQ ? "none" : "";
 }
-function renderLoading(msg){
-  content.innerHTML = `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">${escapeHtml(msg||"Đang tải...")}</p>
-        <div class="meta"><span class="idx">LOADING</span></div>
-      </div>
-      <div class="muted" style="margin-top:8px">Vui lòng chờ...</div>
-    </div>`;
+tabQuizzes.onclick = ()=>setTab("q");
+tabUsers.onclick = ()=>setTab("u");
+
+/* ================== STATE ================== */
+let ME = null;
+let QUIZZES = [];
+let USERS = [];
+
+let CURRENT_QID = "";
+let CURRENT_MODE = "NEW";
+let QUESTIONS = [];
+
+let ACTIVE_TEXTAREA = null;
+
+/* ================== LOGOUT ================== */
+async function doLogout(){
+  const tk = getToken();
+  clearToken();
+  try{ if(tk) await rpc(RPC.logout, { p_token: tk }); }catch{}
+  toast("Đã logout");
+  setTimeout(()=>location.href="/", 350);
 }
 
-/* ================== KaTeX apply ================== */
-function applyMath(rootEl){
-  if(!rootEl) return;
-  if(typeof window.renderMathInElement !== "function") return;
+/* ================== AUTH GATE ================== */
+async function gateCheck(){
+  const token = getToken();
+  if(!token){
+    mePill.textContent = "No login";
+    renderNeedLogin("Chưa có phiên đăng nhập");
+    return false;
+  }
   try{
-    window.renderMathInElement(rootEl, {
-      delimiters: [
-        { left: "$$", right: "$$", display: true },
-        { left: "$", right: "$", display: false }
-      ],
-      throwOnError: false
-    });
-  }catch{}
-}
+    const meOut = await rpc(RPC.me,{p_token:token});
+    if(!meOut?.ok) throw new Error(meOut?.error || "not logged");
+    ME = meOut.me;
 
-/* ================== IMAGE VIEWER ================== */
-const imgBackdrop = document.getElementById("imgBackdrop");
-const imgViewer = document.getElementById("imgViewer");
-const btnImgClose = document.getElementById("btnImgClose");
-function openImg(url){
-  if(!url) return;
-  imgViewer.src = url;
-  imgBackdrop.classList.add("show");
-  imgBackdrop.setAttribute("aria-hidden","false");
-}
-function closeImg(){
-  imgBackdrop.classList.remove("show");
-  imgBackdrop.setAttribute("aria-hidden","true");
-  imgViewer.src = "";
-}
-btnImgClose.onclick = closeImg;
-imgBackdrop.addEventListener("click",(e)=>{ if(e.target===imgBackdrop) closeImg(); });
+    // nếu sau này SQL trả token mới thì update luôn (không bắt buộc)
+    if(meOut.token) setToken(meOut.token);
 
-/* ================== APP STATE ================== */
-const quizId = parseQuizIdFromUrl();
-const PROGRESS_KEY = quizId ? `tk_progress::${quizId}` : `tk_progress::unknown`;
+    const isAdmin =
+      (String(ME.role||"").toLowerCase()==="admin") ||
+      (String(ME.username||"").toLowerCase()==="tuankhoi");
 
-let me = null;
-let QUIZ = {
-  quiz_id: quizId, title:"Quiz", sub:"",
-  require_login:true,
-  shuffle_mode:"none",
-  items:[]
-};
-let view = { started:false };
-
-let state = {
-  quiz_id: quizId,
-  answers: {},
-  checked: {},      // chỉ dùng cho essay-check
-  finalized: false,
-  attempt_id: "",
-  ts: 0,
-
-  // ✅ shuffle state (persist để "tiếp tục làm" giữ đúng thứ tự)
-  order: [],
-  mcq_perm: {}
-};
-
-function syncActionbar(){
-  const started = !!view.started;
-  btnHome.classList.toggle("hidden", started);
-  btnScrollTop.classList.toggle("hidden", !started);
-  btnReset.classList.toggle("hidden", !started);
-
-  submitBar.style.display = started ? "block" : "none";
-}
-
-/* ================== LOCAL PROGRESS ================== */
-function saveLocalProgress(){
-  state.ts = Date.now();
-  try{ localStorage.setItem(PROGRESS_KEY, JSON.stringify(state)); }catch{}
-}
-function loadLocalProgress(){
-  try{
-    const raw = localStorage.getItem(PROGRESS_KEY);
-    if(!raw) return;
-    const s = JSON.parse(raw);
-    if(s && s.quiz_id === quizId){
-      state = { ...state, ...s };
-      if(!state.answers || typeof state.answers!=="object") state.answers = {};
-      if(!state.checked || typeof state.checked!=="object") state.checked = {};
-      if(!Array.isArray(state.order)) state.order = [];
-      if(!state.mcq_perm || typeof state.mcq_perm!=="object") state.mcq_perm = {};
-    }
-  }catch{}
-}
-function hasLocalWork(){
-  const vals = Object.values(state.answers || {});
-  for(const v of vals){
-    if(Array.isArray(v)){
-      if(v.some(x => x === true || x === false)) return true;
-      continue;
-    }
-    if(String(v||"").trim().length > 0) return true;
-  }
-  return false;
-}
-function clearLocalProgressOnly(){
-  try{ localStorage.removeItem(PROGRESS_KEY); }catch{}
-}
-
-/* ================== Result helper ================== */
-function bestAttemptIdForResult(){
-  const a1 = String(state.attempt_id||"").trim();
-  if(a1) return a1;
-  try{
-    const raw = sessionStorage.getItem(`tk_last_result::${quizId}`);
-    if(raw){
-      const x = JSON.parse(raw);
-      if(x && x.quiz_id===quizId && x.attempt_id) return String(x.attempt_id);
-    }
-  }catch{}
-  return "";
-}
-function goResult(){
-  const qs = new URLSearchParams();
-  qs.set("quiz", quizId);
-  const a = bestAttemptIdForResult();
-  if(a) qs.set("attempt", a);
-  location.href = `/result.html?${qs.toString()}`;
-}
-
-/* ================== Shuffle helpers ================== */
-function shuffleArray(arr){
-  const a = arr.slice();
-  for(let i=a.length-1;i>0;i--){
-    const j = Math.floor(Math.random()*(i+1));
-    [a[i],a[j]] = [a[j],a[i]];
-  }
-  return a;
-}
-function qTypeOf(q){
-  return String(q.q_type || "essay").toLowerCase();
-}
-function getMcqPerm(qid){
-  const p = state.mcq_perm && state.mcq_perm[qid];
-  if(Array.isArray(p) && p.length===4 && p.every(x=>Number.isInteger(x) && x>=0 && x<=3)) return p;
-  return [0,1,2,3];
-}
-function ensureShuffle({force=false} = {}){
-  const mode = String(QUIZ.shuffle_mode || "none");
-  const ids = QUIZ.items.map(x=>Number(x.id));
-
-  if(mode === "none"){
-    state.order = [];
-    state.mcq_perm = {};
-    saveLocalProgress();
-    return;
-  }
-
-  const needOrder =
-    force ||
-    !Array.isArray(state.order) ||
-    state.order.length !== ids.length ||
-    state.order.some(id => !ids.includes(Number(id)));
-
-  if(needOrder){
-    state.order = shuffleArray(ids);
-  }
-
-  if(mode === "qa"){
-    const next = (state.mcq_perm && typeof state.mcq_perm==="object") ? {...state.mcq_perm} : {};
-    for(const q of QUIZ.items){
-      const t = qTypeOf(q);
-      if(t === "mcq1" || t === "mcq"){
-        if(force || !Array.isArray(next[q.id]) || next[q.id].length!==4){
-          next[q.id] = shuffleArray([0,1,2,3]);
-        }
-      }
-    }
-    state.mcq_perm = next;
-  }else{
-    // q: chỉ đảo câu, không đảo đáp án
-    state.mcq_perm = {};
-  }
-
-  saveLocalProgress();
-}
-function getViewItems(){
-  const mode = String(QUIZ.shuffle_mode || "none");
-  if(mode === "none") return QUIZ.items;
-
-  const order = Array.isArray(state.order) ? state.order : [];
-  if(!order.length) return QUIZ.items;
-
-  const map = new Map(QUIZ.items.map(q => [Number(q.id), q]));
-  const out = [];
-  for(const id of order){
-    const qq = map.get(Number(id));
-    if(qq) out.push(qq);
-  }
-  // phòng hờ câu mới
-  for(const q of QUIZ.items){
-    if(!order.includes(Number(q.id))) out.push(q);
-  }
-  return out;
-}
-function resetForNewAttempt({reshuffle=true} = {}){
-  state.answers = {};
-  state.checked = {};
-  state.finalized = false;
-  state.attempt_id = "";
-
-  if(reshuffle){
-    state.order = [];
-    state.mcq_perm = {};
-    ensureShuffle({force:true});
-  }else{
-    saveLocalProgress();
-  }
-}
-
-/* ================== Grading helpers ================== */
-function normalizeForCompare(s) {
-  let t = String(s||"").trim().toLowerCase();
-  t = t.replace(/đ/g, "d");
-  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); } catch {}
-  t = t.replace(/[“”"']/g, " ");
-  t = t.replace(/[^a-z0-9\s\-,.]/g, " ");
-  t = t.replace(/\s+/g, " ").trim();
-  return t;
-}
-function looseEq(user, expected){
-  const u = normalizeForCompare(user);
-  const a = normalizeForCompare(expected);
-  if (!u || !a) return false;
-  if (u === a) return true;
-  if (u.replace(/\s/g,"") === a.replace(/\s/g,"")) return true;
-  return false;
-}
-function acceptedAnswersFromQuestion(q){
-  const out = [];
-  if(Array.isArray(q.answers)) out.push(...q.answers);
-  const seen = new Set();
-  const uniq = [];
-  for(const x of out){
-    const k = normalizeForCompare(x);
-    if(!k) continue;
-    if(seen.has(k)) continue;
-    seen.add(k);
-    uniq.push(String(x).trim());
-  }
-  return uniq;
-}
-function pointsOf(q){
-  const p = Number(q.points ?? 0);
-  return (isFinite(p) && p > 0) ? p : 1;
-}
-function isAnswered(q){
-  const t = qTypeOf(q);
-  const v = state.answers[q.id];
-
-  if(t === "mcq1" || t === "mcq"){
-    const n = Number(v);
-    return n>=1 && n<=4;
-  }
-  if(t === "tf4"){
-    return Array.isArray(v) && v.length===4 && v.every(x => x === true || x === false);
-  }
-  return String(v||"").trim().length > 0;
-}
-function gradeOne(q){
-  const t = qTypeOf(q);
-  const max = pointsOf(q);
-
-  if(t === "mcq1" || t === "mcq"){
-    const userOrig = Number(state.answers[q.id] || 0); // lưu theo ORIGINAL index 1..4
-    const correctOrig = Number(q.meta?.correct || 1) || 1;
-    const ok = (userOrig === correctOrig);
-
-    // expected theo "thứ tự hiển thị" (nếu QA shuffle)
-    const perm = getMcqPerm(q.id); // display -> origIdx(0..3)
-    const displayCorrect = Math.max(1, perm.indexOf(correctOrig-1) + 1);
-    const expected = `Đáp án: ${"ABCD"[displayCorrect-1] || "A"}`;
-    return { ok, expected, earned: ok ? max : 0, max };
-  }
-
-  if(t === "tf4"){
-    const keys = Array.isArray(q.meta?.keys) ? q.meta.keys : [true,false,false,false];
-    const user = Array.isArray(state.answers[q.id]) ? state.answers[q.id] : [null,null,null,null];
-
-    let correctCount = 0;
-    for(let i=0;i<4;i++){
-      if((user[i] === true || user[i] === false) && user[i] === Boolean(keys[i])) correctCount++;
+    if(!isAdmin){
+      mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="idx warn">NOT ADMIN</span>`;
+      gate.innerHTML = `Bạn không phải admin. <button class="btn btn-ghost" id="btnLogoutGate" type="button">Logout</button>`;
+      gate.querySelector("#btnLogoutGate").onclick = doLogout;
+      return false;
     }
 
-    const rule = q.meta?.rule?.byCorrectCount || { "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 };
-    const mult = Number(rule[String(correctCount)] ?? 0) || 0;
-
-    const earned = Math.round(max * mult * 100) / 100;
-    const ok = (correctCount === 4);
-    const expected = `Đúng ${correctCount}/4 (điểm: ${earned}/${max})`;
-    return { ok, expected, earned, max };
-  }
-
-  // essay / short4
-  const user = String(state.answers[q.id] || "").trim();
-  const acc = acceptedAnswersFromQuestion(q);
-  const expected = acc[0] ? `Đáp án: ${acc[0]}` : "Đáp án: (chưa set)";
-  if(!user) return { ok:false, expected, earned: 0, max };
-
-  let ok = false;
-  for(const a of acc){
-    if(looseEq(user, a)){ ok = true; break; }
-  }
-  return { ok, expected, earned: ok ? max : 0, max };
-}
-
-/* ================== Stats ================== */
-function updateStats(){
-  const items = getViewItems();
-  const total = items.length;
-  let answered = 0;
-  for(const q of items){
-    if(isAnswered(q)) answered++;
-  }
-  document.getElementById("answeredCount").textContent = String(answered);
-  document.getElementById("totalCount").textContent = String(total);
-  document.getElementById("progressFill").style.width = total ? Math.round(answered*100/total)+"%" : "0%";
-
-  const canSubmit =
-    !!view.started &&
-    !state.finalized &&
-    (QUIZ.require_login ? (!!me && !!me.user_id) : true);
-
-  btnSubmitBig.disabled = !canSubmit;
-  syncActionbar();
-}
-
-/* ================== Gate (login) ================== */
-function renderGate(){
-  view.started = false;
-  syncActionbar();
-
-  content.innerHTML = `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">Nhập USERNAME</p>
-        <div><span class="idx">BẮT BUỘC</span></div>
-      </div>
-      <div class="muted" style="margin-top:6px; line-height:1.35">
-        Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b>.
-      </div>
-
-      <div style="margin-top:10px; display:grid; gap:10px;">
-        <input id="nameInput" class="input" placeholder="vd: tuankhoi123" maxlength="15" autocomplete="off"/>
-        <button id="btnContinue" class="btn btn-primary" style="justify-content:center;">➡️ Tiếp tục</button>
-        <div class="muted" id="gateStatus">Sẵn sàng.</div>
-      </div>
-    </div>
-  `;
-
-  const nameInput = document.getElementById("nameInput");
-  const btnContinue = document.getElementById("btnContinue");
-  const gateStatus = document.getElementById("gateStatus");
-
-  nameInput.addEventListener("input",()=>{
-    const v = normUsername(nameInput.value);
-    if(nameInput.value!==v) nameInput.value=v;
-  },{passive:true});
-  try{ nameInput.focus(); }catch{}
-
-  const doFlow = async ()=>{
-    const u = normUsername(nameInput.value);
-    const err = validateUsername(u);
-    if(err){ toast(err); return; }
-
-    btnContinue.disabled=true; btnContinue.textContent="⏳";
-    gateStatus.textContent="Đang kiểm tra username…";
-    try{
-      const ck = await sbRpc(RPC.checkUsername, { p_username: u });
-      if(!ck || ck.ok === false) throw new Error(ck?.error || "check fail");
-
-      const exists = (typeof ck.exists === "boolean") ? ck.exists : null;
-      const pinLen = (u==="tuankhoi") ? 6 : (Number(ck.pinLen||ck.pin_len||4)||4);
-
-      if(exists === true){
-        gateStatus.textContent="Đăng nhập…";
-        await openPin({ username:u, mode:"login", pinLen });
-        return;
-      }
-
-      if(exists === false){
-        gateStatus.textContent=`Username "${u}" chưa đăng ký.`;
-        const ok = await openRegisterPrompt(u);
-        if(!ok){ gateStatus.textContent="Bạn có thể nhập username khác."; return; }
-
-        const regPinLen = (u==="tuankhoi") ? 6 : 4;
-        gateStatus.textContent="Tạo mật khẩu…";
-        const pin = await openPin({ username:u, mode:"set", pinLen: regPinLen });
-
-        gateStatus.textContent="Đang tạo tài khoản…";
-        const out = await sbRpc(RPC.register, { p_username: u, p_pin: String(pin||"") });
-        if(!out || !out.ok || !out.token) throw new Error(out?.error || "register fail");
-
-        toast("Đã đăng ký & đăng nhập");
-        await enterAfterAuth(out);
-        return;
-      }
-
-      gateStatus.textContent="Thử đăng nhập…";
-      await openPin({ username:u, mode:"login", pinLen: (u==="tuankhoi")?6:4 });
-
-    }catch(e){
-      if(!(e && e.message==="cancel")) toast(e.message||"Lỗi");
-      gateStatus.textContent="Sẵn sàng.";
-    }finally{
-      btnContinue.disabled=false; btnContinue.textContent="➡️ Tiếp tục";
-    }
-  };
-
-  btnContinue.onclick = doFlow;
-  nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); doFlow(); }});
-}
-
-/* ================== MODALS (register + pin) ================== */
-/* register */
-const registerBackdrop = document.getElementById("registerBackdrop");
-const registerDesc = document.getElementById("registerDesc");
-document.getElementById("btnRegisterNo").onclick = ()=>closeRegisterPrompt(false);
-document.getElementById("btnRegisterYes").onclick = ()=>closeRegisterPrompt(true);
-registerBackdrop.addEventListener("click",(e)=>{ if(e.target===registerBackdrop) closeRegisterPrompt(false); });
-
-let REG_PROMPT = { open:false, resolve:null, username:"" };
-function openRegisterPrompt(username){
-  return new Promise((resolve)=>{
-    REG_PROMPT.open=true;
-    REG_PROMPT.resolve=resolve;
-    REG_PROMPT.username=username;
-    registerDesc.textContent = `Username "${username}" chưa đăng ký, bạn có muốn đăng ký không?`;
-    registerBackdrop.classList.add("show");
-    registerBackdrop.setAttribute("aria-hidden","false");
-  });
-}
-function closeRegisterPrompt(ans){
-  if(!REG_PROMPT.open) return;
-  registerBackdrop.classList.remove("show");
-  registerBackdrop.setAttribute("aria-hidden","true");
-  const r = REG_PROMPT.resolve;
-  REG_PROMPT.open=false;
-  REG_PROMPT.resolve=null;
-  REG_PROMPT.username="";
-  if(r) r(!!ans);
-}
-
-/* PIN */
-const pinBackdrop = document.getElementById("pinBackdrop");
-const pinTitle = document.getElementById("pinTitle");
-const pinDesc = document.getElementById("pinDesc");
-const pinDots = document.getElementById("pinDots");
-const pinKeypad = document.getElementById("pinKeypad");
-const pinNote = document.getElementById("pinNote");
-const pinWrap = document.getElementById("pinWrap");
-document.getElementById("btnClosePin").onclick = ()=>closePin("cancel");
-pinBackdrop.addEventListener("click",(e)=>{ if(e.target===pinBackdrop) closePin("cancel"); });
-
-let PIN_KEYS_BUILT = false;
-let PIN = {
-  open:false, resolve:null, reject:null,
-  username:"", mode:"login", step:"one",
-  pinLen:4, value:"", first:"", submitting:false,
-  dotEls:[], payload:null
-};
-function buildPinKeypadOnce(){
-  if(PIN_KEYS_BUILT) return;
-  PIN_KEYS_BUILT=true;
-  pinKeypad.innerHTML="";
-  const keys=["1","2","3","4","5","6","7","8","9","CLEAR","0","⌫"];
-  keys.forEach(k=>{
-    const b=document.createElement("button");
-    b.type="button";
-    b.className="pinKey" + ((k==="CLEAR"||k==="⌫")?" small":"");
-    b.textContent=k;
-    b.onclick=()=>onPinKey(k);
-    pinKeypad.appendChild(b);
-  });
-}
-function buildDots(n){
-  pinDots.innerHTML="";
-  PIN.dotEls=[];
-  for(let i=0;i<n;i++){
-    const d=document.createElement("div");
-    d.className="dot";
-    pinDots.appendChild(d);
-    PIN.dotEls.push(d);
-  }
-}
-function updateDots(){
-  const len = PIN.value.length;
-  for(let i=0;i<PIN.dotEls.length;i++){
-    PIN.dotEls[i].classList.toggle("filled", i < len);
-  }
-}
-function setPinNote(msg,type=""){
-  if(type==="error") pinNote.classList.add("error");
-  else pinNote.classList.remove("error");
-  pinNote.textContent = String(msg||"");
-}
-function pinErrorPulse(msg){
-  PIN.value="";
-  updateDots();
-  pinDots.classList.add("error");
-  pinWrap.classList.remove("shake"); void pinWrap.offsetWidth; pinWrap.classList.add("shake");
-  setPinNote(msg||"Sai mật khẩu","error");
-  setTimeout(()=>{
-    pinDots.classList.remove("error");
-    pinWrap.classList.remove("shake");
-    updatePinHeader();
-  },520);
-}
-function updatePinHeader(){
-  const note = (normUsername(PIN.username)==="tuankhoi") ? "Tài khoản tuankhoi dùng mật khẩu 6 số." : "Mật khẩu chỉ gồm số.";
-  if(PIN.mode==="login"){
-    pinTitle.textContent="Đăng nhập";
-    pinDesc.textContent=`Username: ${PIN.username}`;
-  }else{
-    if(PIN.step==="one"){ pinTitle.textContent="Đăng ký"; pinDesc.textContent=`Tạo mật khẩu ${PIN.pinLen} số`; }
-    else { pinTitle.textContent="Xác nhận mật khẩu"; pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`; }
-  }
-  setPinNote(note);
-}
-function openPin({username, mode="login", pinLen=4}){
-  return new Promise((resolve,reject)=>{
-    PIN.open=true; PIN.resolve=resolve; PIN.reject=reject;
-    PIN.username=String(username||"");
-    PIN.mode=mode;
-    PIN.pinLen=Math.max(4, Number(pinLen)||4);
-    PIN.value=""; PIN.first=""; PIN.submitting=false; PIN.payload=null;
-    PIN.step = "one";
-    buildPinKeypadOnce();
-    buildDots(PIN.pinLen);
-    updatePinHeader();
-    updateDots();
-    pinBackdrop.classList.add("show");
-    pinBackdrop.setAttribute("aria-hidden","false");
-  });
-}
-function closePin(why){
-  if(!PIN.open) return;
-  pinBackdrop.classList.remove("show");
-  pinBackdrop.setAttribute("aria-hidden","true");
-  const rej = PIN.reject;
-  const res = PIN.resolve;
-  const payload = PIN.payload;
-  PIN.open=false; PIN.resolve=null; PIN.reject=null; PIN.payload=null;
-  if(why==="ok"){ if(res) res(payload); return; }
-  if(rej) rej(new Error("cancel"));
-}
-async function onPinKey(k){
-  if(!PIN.open || PIN.submitting) return;
-
-  if(k==="CLEAR"){ PIN.value=""; updateDots(); return; }
-  if(k==="⌫"){ PIN.value=PIN.value.slice(0,-1); updateDots(); return; }
-
-  if(PIN.value.length>=PIN.pinLen) return;
-  PIN.value += String(k);
-  updateDots();
-  if(PIN.value.length!==PIN.pinLen) return;
-
-  const val = PIN.value;
-  if(!/^[0-9]+$/.test(val)){ pinErrorPulse("Mật khẩu chỉ gồm số"); return; }
-
-  if(PIN.mode==="login"){
-    PIN.submitting=true;
-    try{
-      setPinNote("Đang kiểm tra…");
-      const out = await sbRpc(RPC.login, { p_username: normUsername(PIN.username), p_pin: val });
-      if(out && out.ok && out.token){
-        PIN.payload = val;
-        closePin("ok");
-        toast("Đăng nhập thành công");
-        await enterAfterAuth(out);
-        return;
-      }
-      pinErrorPulse(out?.error || "Sai mật khẩu");
-    }catch(e){
-      pinErrorPulse("Sai mật khẩu");
-    }finally{
-      PIN.submitting=false;
-    }
-    return;
-  }
-
-  if(PIN.mode==="set"){
-    if(PIN.step==="one"){
-      PIN.first = val;
-      PIN.value = "";
-      PIN.step="confirm";
-      updatePinHeader();
-      updateDots();
-      return;
-    }else{
-      if(PIN.first !== val){
-        pinErrorPulse("Mật khẩu không khớp");
-        PIN.first=""; PIN.step="one";
-        updatePinHeader(); updateDots();
-        return;
-      }
-      PIN.payload = val;
-      closePin("ok");
-      return;
-    }
-  }
-}
-
-/* ================== QUIZ RENDERING ================== */
-function renderStart(){
-  view.started = false;
-  syncActionbar();
-  setUserCorner(me);
-  updateStats();
-
-  const hasProgress = hasLocalWork();
-  const prevAttempt = bestAttemptIdForResult();
-  const hasResult = !!prevAttempt;
-
-  const loginNote = QUIZ.require_login
-    ? `<div class="muted" style="margin-top:8px;line-height:1.35">Bạn đang đăng nhập: <b>${escapeHtml(me?.username||"")}</b></div>`
-    : `<div class="muted" style="margin-top:8px;line-height:1.35">Quiz này <b>không yêu cầu đăng nhập</b>. Bạn có thể làm ngay.</div>`;
-
-  content.innerHTML = `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">Sẵn sàng làm bài</p>
-        <div class="meta"><span class="idx">${escapeHtml(QUIZ.quiz_id||quizId)}</span></div>
-      </div>
-
-      ${loginNote}
-
-      <div class="muted" style="margin-top:10px; line-height:1.35">
-        Tổng số câu: <b>${QUIZ.items.length}</b>
-      </div>
-
-      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-        ${hasResult ? `<button class="btn btn-ghost" id="btnViewResult" type="button">📄 Xem lại kết quả</button>` : ``}
-        <button class="btn btn-primary" id="btnGo" type="button">${hasProgress ? "▶️ Tiếp tục làm" : "🚀 Vào làm"}</button>
-      </div>
-    </div>
-  `;
-
-  document.getElementById("btnGo").onclick = ()=>{
-    // nếu đã submit trước đó mà còn state cũ => bắt đầu attempt mới
-    if(state.finalized){
-      resetForNewAttempt({reshuffle:true});
-    }
-    view.started = true;
-    renderQuiz();
-    scrollToHashIfAny();
-  };
-  if(hasResult){
-    document.getElementById("btnViewResult").onclick = ()=>goResult();
-  }
-}
-
-function renderQuiz(){
-  view.started = true;
-  syncActionbar();
-  setUserCorner(me);
-
-  if(!QUIZ.items.length){
-    content.innerHTML = `
-      <div class="card">
-        <div class="row1">
-          <p class="vi">Quiz trống</p>
-          <div class="meta"><span class="idx">EMPTY</span></div>
-        </div>
-        <div class="muted" style="margin-top:8px">Chưa có câu hỏi (hoặc quiz yêu cầu login).</div>
-      </div>`;
-    updateStats();
-    return;
-  }
-
-  // ✅ đảm bảo shuffle cho attempt hiện tại
-  ensureShuffle({force:false});
-
-  const items = getViewItems();
-  let html = "";
-
-  items.forEach((q, idx)=>{
-    const t = qTypeOf(q);
-    const img = String(q.meta?.image_url || q.meta?.image || q.meta?.img || "").trim();
-
-    const allowCheck = (t === "essay");      // ✅ chỉ essay có check
-    const ck = allowCheck ? state.checked[q.id] : null;
-    const locked = state.finalized || (allowCheck && ck && ck.locked);
-
-    html += `
-      <div class="card" id="q${q.id}">
-        <div class="row1">
-          <p class="vi">Câu ${idx+1}</p>
-          <div class="meta"><span class="idx">#${idx+1}</span></div>
-        </div>
-
-        <div class="qPrompt">${escapeHtml(q.prompt||"")}</div>
-
-        ${img ? `<img class="qImgThumb" data-img="${escapeHtml(img)}" src="${escapeHtml(img)}" alt="image">` : ``}
-
-        ${t==="mcq1" || t==="mcq" ? renderMcq(q, locked) : ``}
-        ${t==="essay" ? renderEssay(q, locked) : ``}
-        ${t==="short4" ? renderShort4(q, locked) : ``}
-        ${t==="tf4" ? renderTf4(q, locked) : ``}
-
-        ${allowCheck ? `
-          <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap">
-            <button class="btn btn-primary" data-check="${q.id}" ${locked ? "disabled":""} type="button">${locked?"Đã check":"Check"}</button>
-          </div>
-          <div class="essayResultHolder" data-essay-result="${q.id}">
-            ${locked && ck ? `
-              <div class="resultRow">
-                <div>${ck.ok ? `<span class="oktxt">ĐÚNG</span>` : `<span class="badtxt">SAI</span>`}</div>
-                <div><span class="muted">${escapeHtml(ck.expected||"")}</span></div>
-              </div>
-            ` : ``}
-          </div>
-        ` : ``}
-      </div>
+    mePill.innerHTML = `
+      Xin chào <b>${esc(ME.username)}</b>
+      <span class="badge-admin">ADMIN</span>
+      <button class="btn btn-ghost" id="btnLogoutTop" type="button" style="padding:8px 10px;box-shadow:none">Logout</button>
     `;
-  });
+    mePill.querySelector("#btnLogoutTop").onclick = doLogout;
 
-  content.innerHTML = html;
-
-  // ✅ render math 1 lần
-  applyMath(content);
-
-  updateStats();
+    gate.innerHTML = `<span class="idx ok">OK</span> Admin: <b>${esc(ME.username)}</b>`;
+    app.style.display = "";
+    return true;
+  }catch(e){
+    // ✅ KHÔNG tự xóa token nữa (vì một số browser/network lỗi -> mất token oan)
+    mePill.textContent = "Login required";
+    renderNeedLogin("Phiên lỗi / không check được: " + (e.message||""));
+    return false;
+  }
 }
 
-function renderMcq(q, locked){
-  const opts = Array.isArray(q.meta?.options) ? q.meta.options : ["","","",""];
-  const perm = getMcqPerm(q.id); // display -> origIdx
-  const userOrig = Number(state.answers[q.id] || 0);
+/* ================== QUIZ FORM ================== */
+const quizIdEl = document.getElementById("quizId");
+const titleEl = document.getElementById("title");
+const subEl = document.getElementById("sub");
+const isPublicEl = document.getElementById("isPublic");
+const isHiddenEl = document.getElementById("isHidden");
+const showInStoreEl = document.getElementById("showInStore");
+const requireLoginEl = document.getElementById("requireLogin");
+const pinnedEl = document.getElementById("pinned");
+const scoringModeEl = document.getElementById("scoringMode");
+const shuffleModeEl = document.getElementById("shuffleMode");
+const requireCodeEl = document.getElementById("requireCode");
+const accessCodeEl = document.getElementById("accessCode");
+const totalScoreEl = document.getElementById("totalScore");
+const totalScoreWrap = document.getElementById("totalScoreWrap");
+const editModePill = document.getElementById("editModePill");
 
-  return `
-    <div class="optGrid" role="group" aria-label="options">
-      ${[0,1,2,3].map(d=>{
-        const origIdx = perm[d] ?? d;
-        const origAns = origIdx + 1; // 1..4
-        const letter = "ABCD"[d];
-        const text = String(opts[origIdx] ?? "");
-        const active = (userOrig === origAns);
-        return `
-          <button class="optBtn ${active?"active":""}" data-mcq="${q.id}" data-orig="${origAns}" ${locked?"disabled":""} type="button">
-            <span class="optKey">${letter}</span>${escapeHtml(text)}
-          </button>
-        `;
-      }).join("")}
-    </div>
-  `;
-}
-function renderEssay(q, locked){
-  const v = String(state.answers[q.id] || "");
-  return `
-    <div style="margin-top:10px">
-      <input class="input ans" data-id="${q.id}" placeholder="Nhập đáp án" value="${escapeHtml(v)}" ${locked ? "disabled":""}/>
-    </div>
-  `;
-}
-function renderShort4(q, locked){
-  const raw = String(state.answers[q.id] || "");
-  const chars = [raw[0]||"", raw[1]||"", raw[2]||"", raw[3]||""];
-  return `
-    <div style="margin-top:10px">
-      <div class="muted">Nhập 4 ô (0-9, dấu -, dấu ,).</div>
-      <div class="boxes4">
-        ${chars.map((c,i)=>`
-          <input class="input boxDigit short4" data-id="${q.id}" data-k="${i}" maxlength="1" inputmode="text"
-            value="${escapeHtml(c)}" ${locked?"disabled":""}/>
-        `).join("")}
-      </div>
+quizIdEl.addEventListener("input", ()=>{
+  const v = normalizeQuizId(quizIdEl.value);
+  if(quizIdEl.value !== v) quizIdEl.value = v;
+},{passive:true});
 
-      <div class="keypad4" role="group" aria-label="short4 keypad">
-        <button class="kpBtn" data-kpid="${q.id}" data-kpkey="-" ${locked?"disabled":""} type="button">-</button>
-        <button class="kpBtn" data-kpid="${q.id}" data-kpkey="," ${locked?"disabled":""} type="button">,</button>
-        ${["0","1","2","3","4","5","6","7","8","9"].map(x=>`
-          <button class="kpBtn" data-kpid="${q.id}" data-kpkey="${x}" ${locked?"disabled":""} type="button">${x}</button>
-        `).join("")}
-        <button class="kpBtn small" data-kpid="${q.id}" data-kpkey="<" ${locked?"disabled":""} type="button">&lt;</button>
-        <button class="kpBtn small" data-kpid="${q.id}" data-kpkey="CLR" ${locked?"disabled":""} type="button">CLR</button>
-      </div>
-    </div>
-  `;
+function setMode(mode){
+  CURRENT_MODE = mode;
+  editModePill.textContent = mode;
+  editModePill.className = "idx " + (mode==="EDIT" ? "ok" : "");
+  if(mode==="EDIT") quizIdEl.setAttribute("disabled","disabled");
+  else quizIdEl.removeAttribute("disabled");
 }
-function renderTf4(q, locked){
-  const stmts = Array.isArray(q.meta?.statements) ? q.meta.statements : ["","","",""];
-  const user = Array.isArray(state.answers[q.id]) ? state.answers[q.id] : [null,null,null,null]; // ✅ mặc định TRỐNG
 
-  return `
-    <div class="tfList">
-      ${[0,1,2,3].map(i=>{
-        const s = String(stmts[i]||"").trim();
-        return `
-          <div class="tfRow">
-            <div class="tfTop">
-              <div class="tfStmt"><b>${"ABCD"[i]}.</b> ${escapeHtml(s || "(trống)")}</div>
-              <div class="tfBtns">
-                <button class="tfBtn ${user[i]===true?"active":""}" data-tf="${q.id}" data-k="${i}" data-v="1" ${locked?"disabled":""} type="button">Đúng</button>
-                <button class="tfBtn ${user[i]===false?"active":""}" data-tf="${q.id}" data-k="${i}" data-v="0" ${locked?"disabled":""} type="button">Sai</button>
-              </div>
+function calcCustomTotal(){
+  let sum = 0;
+  for(const q of (QUESTIONS||[])){
+    const p = Number(q?.points ?? 0);
+    if(Number.isFinite(p)) sum += p;
+  }
+  return Math.round(sum*100)/100;
+}
+function updateTotalScoreUI(){
+  const mode = String(scoringModeEl.value||"equal");
+  if(mode === "custom"){
+    if(totalScoreWrap) totalScoreWrap.classList.add("hidden");
+    if(totalScoreEl) totalScoreEl.value = String(calcCustomTotal());
+  }else{
+    if(totalScoreWrap) totalScoreWrap.classList.remove("hidden");
+    if(totalScoreEl && !String(totalScoreEl.value||"").trim()) totalScoreEl.value = "10";
+  }
+}
+
+function validateQuiz(){
+  const title = titleEl.value.trim();
+  if(!title) return "Thiếu title";
+  let qid = (CURRENT_MODE==="EDIT") ? CURRENT_QID : normalizeQuizId(quizIdEl.value);
+  if(CURRENT_MODE==="NEW" && !qid) return "Quiz ID trống (bấm Tạo mới hoặc nhập 5 chữ)";
+  if(qid && qid.length!==5) return "Quiz ID phải đúng 5 chữ a-z";
+  const sm = String(shuffleModeEl.value||"none");
+  if(!["none","q","qa"].includes(sm)) return "Shuffle mode không hợp lệ";
+
+  // chỉ bắt totalScore khi equal
+  if(String(scoringModeEl.value||"equal")==="equal"){
+    const total = Number(totalScoreEl.value || "");
+    if(!Number.isFinite(total) || total<=0) return "Tổng điểm không hợp lệ";
+  }
+  return null;
+}
+
+/* ================== QUESTION BUILDER ================== */
+const qList = document.getElementById("qList");
+const qCountPill = document.getElementById("qCountPill");
+
+const qbTabManual = document.getElementById("qbTabManual");
+const qbTabImport = document.getElementById("qbTabImport");
+const qbManualArea = document.getElementById("qbManualArea");
+const qbImportArea = document.getElementById("qbImportArea");
+const qFab = document.getElementById("qFab");
+
+const LS_QB_MODE = "admin_qb_mode_v2";
+const LS_QB_LASTTYPE = "admin_qb_lasttype_v2";
+
+function isAllowedQType(t){ return (t==="mcq1" || t==="essay" || t==="short4" || t==="tf4"); }
+
+let QB_MODE = (localStorage.getItem(LS_QB_MODE)||"manual").toLowerCase();
+if(QB_MODE!=="manual" && QB_MODE!=="import") QB_MODE="manual";
+
+let LAST_QTYPE = (localStorage.getItem(LS_QB_LASTTYPE)||"mcq1").toLowerCase();
+if(!isAllowedQType(LAST_QTYPE)) LAST_QTYPE="mcq1";
+
+function setLastType(t){
+  t = String(t||"").toLowerCase();
+  if(!isAllowedQType(t)) return;
+  LAST_QTYPE = t;
+  try{ localStorage.setItem(LS_QB_LASTTYPE, LAST_QTYPE); }catch{}
+}
+
+function setQBMode(mode){
+  mode = String(mode||"manual").toLowerCase();
+  if(mode!=="manual" && mode!=="import") mode="manual";
+  QB_MODE = mode;
+  try{ localStorage.setItem(LS_QB_MODE, QB_MODE); }catch{}
+
+  qbTabManual.classList.toggle("active", QB_MODE==="manual");
+  qbTabImport.classList.toggle("active", QB_MODE==="import");
+  qbManualArea.style.display = (QB_MODE==="manual") ? "" : "none";
+  qbImportArea.style.display = (QB_MODE==="import") ? "" : "none";
+  qFab.classList.toggle("hidden", QB_MODE!=="manual");
+}
+qbTabManual.addEventListener("click", ()=>setQBMode("manual"));
+qbTabImport.addEventListener("click", ()=>setQBMode("import"));
+
+function updateQCount(){ qCountPill.textContent = String(QUESTIONS.length || 0); }
+
+function defaultQuestion(){
+  const t = LAST_QTYPE || "mcq1";
+  if(t==="mcq1"){
+    return { type:"mcq1", prompt:"", answers:[], points:null, meta:{ options:["","","",""], correct:1, image_url:"", image_path:"" } };
+  }
+  if(t==="short4"){
+    return { type:"short4", prompt:"", answers:[""], points:null, meta:{ format:"4boxes", image_url:"", image_path:"" } };
+  }
+  if(t==="tf4"){
+    return { type:"tf4", prompt:"", answers:[], points:null, meta:{
+      statements:["","","",""], keys:[true,false,false,false],
+      rule:{ byCorrectCount:{ "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 } },
+      image_url:"", image_path:""
+    }};
+  }
+  return { type:"essay", prompt:"", answers:[""], points:null, meta:{ fuzzy:true, image_url:"", image_path:"" } };
+}
+function ensureMeta(q){
+  q.meta = q.meta || {};
+  if(typeof q.meta.image_url !== "string") q.meta.image_url = "";
+  if(typeof q.meta.image_path !== "string") q.meta.image_path = "";
+}
+
+function updateCardMathPreview(card){
+  const i = Number(card.getAttribute("data-i"));
+  const q = QUESTIONS[i];
+  if(!q) return;
+  const prev = card.querySelector("[data-math-prev]");
+  if(!prev) return;
+
+  prev.textContent = String(q.prompt || "").trim() || " ";
+  typesetElement(prev);
+}
+function refreshAllMathPreviews(){
+  qList.querySelectorAll(".qCard").forEach(card=> updateCardMathPreview(card));
+}
+
+function renderQuestions(){
+  updateQCount();
+  if(!QUESTIONS.length){
+    qList.innerHTML = `<div class="muted">Chưa có câu hỏi. Bấm “THÊM CÂU HỎI”.</div>`;
+    updateTotalScoreUI();
+    return;
+  }
+  const isCustom = (scoringModeEl.value === "custom");
+
+  qList.innerHTML = QUESTIONS.map((q, idx)=>{
+    ensureMeta(q);
+    const no = idx+1;
+    const img = q.meta.image_url || "";
+    return `
+      <div class="qCard" data-i="${idx}">
+        <div class="qHead">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <span class="idx">#${no}</span>
+            <select class="qType">
+              <option value="mcq1" ${q.type==="mcq1"?"selected":""}>Trắc nghiệm 1 đáp án</option>
+              <option value="essay" ${q.type==="essay"?"selected":""}>Tự luận</option>
+              <option value="short4" ${q.type==="short4"?"selected":""}>Trả lời ngắn (4 ô)</option>
+              <option value="tf4" ${q.type==="tf4"?"selected":""}>Đúng/Sai 4 ý</option>
+            </select>
+            ${isCustom ? `<input class="qPoints input mono" style="max-width:110px" placeholder="Điểm" value="${q.points??0}">` : ``}
+          </div>
+
+          <div class="qActions">
+            <button class="mini" data-act="up" type="button">⬆️</button>
+            <button class="mini" data-act="down" type="button">⬇️</button>
+            <button class="mini" data-act="dup" type="button">📄</button>
+            <button class="mini danger" data-act="del" type="button">🗑️</button>
+          </div>
+        </div>
+
+        <div class="mathBar">
+          <button class="mathBtn" data-act="latex" type="button">🧮 Chèn LaTeX</button>
+          <button class="mathBtn" data-act="wrapInline" type="button">$...$</button>
+          <button class="mathBtn" data-act="wrapBlock" type="button">$$...$$</button>
+        </div>
+
+        <div class="qPromptGrid">
+          <div>
+            <label>Câu hỏi</label>
+            <textarea class="qPrompt" placeholder="Click rồi dùng nút 🧮 để chèn mẫu...">${esc(q.prompt||"")}</textarea>
+
+            <div class="mathPreviewBox">
+              <div class="latexTiny" style="margin-bottom:6px">Xem trước (render toán học)</div>
+              <div class="mathPreview" data-math-prev="1"></div>
             </div>
           </div>
-        `;
-      }).join("")}
-    </div>
-  `;
+
+          <div class="imgSide" data-imgdrop="1">
+            <div class="imgSideHead">
+              <div style="font-weight:950">Ảnh câu hỏi</div>
+              <small style="color:var(--muted);font-weight:750">paste/drag/file</small>
+            </div>
+
+            <img class="imgPreviewSmall" alt="preview" src="${img ? esc(img) : ""}"/>
+
+            <div class="imgSideBtns">
+              <button class="btn" data-act="pickimg" type="button" style="box-shadow:none">📷 Chọn</button>
+              <button class="btn btn-ghost" data-act="removeimg" type="button" style="box-shadow:none">🗑️ Xóa</button>
+            </div>
+
+            ${q.meta.image_path ? `<div class="hint" style="margin-top:8px">path: <code>${esc(q.meta.image_path)}</code></div>` : ``}
+          </div>
+        </div>
+
+        <div class="qEssay ${q.type==="essay"?"":"hidden"}">
+          <label>Đáp án (nhiều đáp án dùng dấu |)</label>
+          <input class="qAnswers input mono" placeholder="vd: thích nghi|thich nghi" value="${esc((q.answers||[]).join("|"))}">
+        </div>
+
+        <div class="qMcq ${q.type==="mcq1"?"":"hidden"}">
+          <label>4 lựa chọn (thứ tự 1→4 sẽ tương ứng A→D khi làm bài)</label>
+          <div class="grid2">
+            <input class="qOpt input" data-k="0" placeholder="Lựa chọn 1 (A)" value="${esc(q.meta?.options?.[0]||"")}">
+            <input class="qOpt input" data-k="1" placeholder="Lựa chọn 2 (B)" value="${esc(q.meta?.options?.[1]||"")}">
+            <input class="qOpt input" data-k="2" placeholder="Lựa chọn 3 (C)" value="${esc(q.meta?.options?.[2]||"")}">
+            <input class="qOpt input" data-k="3" placeholder="Lựa chọn 4 (D)" value="${esc(q.meta?.options?.[3]||"")}">
+          </div>
+          <label>Đáp án đúng</label>
+          <select class="qCorrect">
+            <option value="1" ${(q.meta?.correct||1)==1?"selected":""}>A (Lựa chọn 1)</option>
+            <option value="2" ${(q.meta?.correct||1)==2?"selected":""}>B (Lựa chọn 2)</option>
+            <option value="3" ${(q.meta?.correct||1)==3?"selected":""}>C (Lựa chọn 3)</option>
+            <option value="4" ${(q.meta?.correct||1)==4?"selected":""}>D (Lựa chọn 4)</option>
+          </select>
+        </div>
+
+        <div class="qShort4 ${q.type==="short4"?"":"hidden"}">
+          <label>Đáp án (nhiều đáp án dùng dấu |)</label>
+          <input class="qAnswers input mono" placeholder='vd: -0,3|9999|0,02' value="${esc((q.answers||[]).join("|"))}">
+          <div class="hint" style="margin-top:6px">Khi làm quiz sẽ hiện 4 ô nhập (0-9, dấu phẩy, dấu trừ).</div>
+        </div>
+
+        <div class="qTf4 ${q.type==="tf4"?"":"hidden"}">
+          <label>4 ý (mỗi ý 1 dòng)</label>
+          <div style="display:grid;gap:8px">
+            <input class="qStmt input" data-k="0" placeholder="Ý A" value="${esc(q.meta?.statements?.[0]||"")}">
+            <input class="qStmt input" data-k="1" placeholder="Ý B" value="${esc(q.meta?.statements?.[1]||"")}">
+            <input class="qStmt input" data-k="2" placeholder="Ý C" value="${esc(q.meta?.statements?.[2]||"")}">
+            <input class="qStmt input" data-k="3" placeholder="Ý D" value="${esc(q.meta?.statements?.[3]||"")}">
+          </div>
+          <label>Đúng(1) / Sai(0)</label>
+          <div class="grid2">
+            <select class="qKey" data-k="0"><option value="1">A: Đúng</option><option value="0">A: Sai</option></select>
+            <select class="qKey" data-k="1"><option value="1">B: Đúng</option><option value="0">B: Sai</option></select>
+            <select class="qKey" data-k="2"><option value="1">C: Đúng</option><option value="0">C: Sai</option></select>
+            <select class="qKey" data-k="3"><option value="1">D: Đúng</option><option value="0">D: Sai</option></select>
+          </div>
+          <div class="hint" style="margin-top:6px">
+            Rule: đúng 1 ý=0.25, 2 ý=0.5, 3 ý=0.5, 4 ý=1 (nhân theo points nếu custom).
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  qList.querySelectorAll(".qCard").forEach(card=>{
+    const i = Number(card.getAttribute("data-i"));
+    const q = QUESTIONS[i];
+    if(q?.type==="tf4"){
+      ensureMeta(q);
+      const keys = q.meta?.keys || [true,false,false,false];
+      card.querySelectorAll(".qKey").forEach(sel=>{
+        const k = Number(sel.getAttribute("data-k"));
+        sel.value = keys[k] ? "1" : "0";
+      });
+    }
+  });
+
+  refreshAllMathPreviews();
+  updateTotalScoreUI();
 }
 
-function scrollToHashIfAny(){
-  const h = (location.hash||"").trim();
-  if(!h || h.length<2) return;
-  const el = document.querySelector(h);
-  if(!el) return;
-  setTimeout(()=>{
-    try{ el.scrollIntoView({ behavior:"smooth", block:"start" }); }catch{}
-  }, 80);
+function syncQuestionFromCard(card){
+  const i = Number(card.getAttribute("data-i"));
+  const q = QUESTIONS[i];
+  if(!q) return;
+  ensureMeta(q);
+
+  const type = card.querySelector(".qType")?.value || "mcq1";
+  q.type = type;
+  q.prompt = card.querySelector(".qPrompt")?.value || "";
+
+  if(scoringModeEl.value === "custom"){
+    q.points = Number(card.querySelector(".qPoints")?.value || "0") || 0;
+  }else{
+    q.points = null;
+  }
+
+  if(type==="essay"){
+    const raw = card.querySelector(".qAnswers")?.value || "";
+    q.answers = raw.split("|").map(s=>s.trim()).filter(Boolean);
+    q.meta = { ...(q.meta||{}), fuzzy:true };
+  }else if(type==="short4"){
+    const raw = card.querySelector(".qAnswers")?.value || "";
+    q.answers = raw.split("|").map(s=>s.trim()).filter(Boolean);
+    q.meta = { ...(q.meta||{}), format:"4boxes" };
+  }else if(type==="mcq1"){
+    const opts = Array.from(card.querySelectorAll(".qOpt")).map(x=>x.value.trim());
+    const correct = Number(card.querySelector(".qCorrect")?.value || "1") || 1;
+    q.answers = [];
+    q.meta = { ...(q.meta||{}), options: opts, correct };
+  }else if(type==="tf4"){
+    const stmts = Array.from(card.querySelectorAll(".qStmt")).map(x=>x.value.trim());
+    const keys = Array.from(card.querySelectorAll(".qKey")).map(x=>x.value==="1");
+    q.answers = [];
+    q.meta = { ...(q.meta||{}),
+      statements: stmts,
+      keys,
+      rule: { byCorrectCount: { "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 } }
+    };
+  }
+
+  updateCardMathPreview(card);
+  updateTotalScoreUI();
 }
 
-/* ================== EVENTS (NO JUMP) ================== */
-let SHORT4_FOCUS = { id: null, k: 0 };
+qList.addEventListener("focusin",(e)=>{
+  const ta = e.target.closest("textarea");
+  if(ta) ACTIVE_TEXTAREA = ta;
+},{passive:true});
 
-content.addEventListener("focusin",(e)=>{
-  const t = e.target;
-  if(t && t.classList && t.classList.contains("short4")){
-    SHORT4_FOCUS.id = Number(t.getAttribute("data-id"));
-    SHORT4_FOCUS.k = Number(t.getAttribute("data-k"));
+qList.addEventListener("input",(e)=>{
+  const card = e.target.closest(".qCard");
+  if(!card) return;
+  syncQuestionFromCard(card);
+},{passive:true});
+
+qList.addEventListener("change",(e)=>{
+  const card = e.target.closest(".qCard");
+  if(!card) return;
+  if(e.target.classList.contains("qType")){
+    setLastType(e.target.value);
+    syncQuestionFromCard(card);
+    renderQuestions();
+  }else{
+    syncQuestionFromCard(card);
   }
 },{passive:true});
 
-content.addEventListener("click", (e)=>{
-  const img = e.target.closest("[data-img]");
-  if(img){
-    openImg(img.getAttribute("data-img"));
-    return;
+qList.addEventListener("click",(e)=>{
+  const btn = e.target.closest("button");
+  if(!btn) return;
+  const card = btn.closest(".qCard");
+  if(!card) return;
+  const i = Number(card.getAttribute("data-i"));
+  const act = btn.getAttribute("data-act");
+  if(!act) return;
+
+  if(act==="del"){ QUESTIONS.splice(i,1); renderQuestions(); return; }
+  if(act==="dup"){
+    const clone = JSON.parse(JSON.stringify(QUESTIONS[i]));
+    QUESTIONS.splice(i+1,0,clone);
+    renderQuestions(); return;
+  }
+  if(act==="up" && i>0){
+    [QUESTIONS[i-1], QUESTIONS[i]] = [QUESTIONS[i], QUESTIONS[i-1]];
+    renderQuestions(); return;
+  }
+  if(act==="down" && i<QUESTIONS.length-1){
+    [QUESTIONS[i+1], QUESTIONS[i]] = [QUESTIONS[i], QUESTIONS[i+1]];
+    renderQuestions(); return;
   }
 
-  // ✅ MCQ: update DOM tại chỗ => không renderQuiz() => không nhảy
-  const mcq = e.target.closest("[data-mcq]");
-  if(mcq){
-    const id = Number(mcq.getAttribute("data-mcq"));
-    const orig = Number(mcq.getAttribute("data-orig")); // 1..4 theo ORIGINAL
-    state.answers[id] = orig;
-    saveLocalProgress();
-    updateStats();
+  if(act==="latex"){ showLatexPanel(); return; }
+  if(act==="wrapInline"){ wrapSelection("$","$"); return; }
+  if(act==="wrapBlock"){ wrapSelection("$$","$$"); return; }
 
-    const card = mcq.closest(".card");
-    if(card){
-      card.querySelectorAll(`[data-mcq="${id}"]`).forEach(btn=>{
-        const o = Number(btn.getAttribute("data-orig"));
-        btn.classList.toggle("active", o === orig);
-      });
+  if(act==="removeimg"){
+    ensureMeta(QUESTIONS[i]);
+    QUESTIONS[i].meta.image_url = "";
+    QUESTIONS[i].meta.image_path = "";
+    renderQuestions();
+    toast("Đã xóa ảnh (chỉ xóa link, file trên bucket không tự xóa)");
+    return;
+  }
+  if(act==="pickimg"){
+    IMG_PICK_FOR_INDEX = i;
+    qImgPick.click();
+    return;
+  }
+});
+
+function scrollToLastQuestionAndFocus(){
+  const cards = qList.querySelectorAll(".qCard");
+  const last = cards[cards.length-1];
+  if(!last) return;
+  last.scrollIntoView({behavior:"smooth", block:"center"});
+  setTimeout(()=> last.querySelector(".qPrompt")?.focus?.(), 250);
+}
+
+document.getElementById("btnAddQFab").onclick = ()=>{
+  QUESTIONS.push(defaultQuestion());
+  renderQuestions();
+  scrollToLastQuestionAndFocus();
+};
+
+scoringModeEl.addEventListener("change", ()=>{
+  renderQuestions();
+  updateTotalScoreUI();
+},{passive:true});
+
+/* ================== IMAGE upload ================== */
+const qImgPick = document.getElementById("qImgPick");
+let IMG_PICK_FOR_INDEX = -1;
+
+async function fileToDownscaledJpegBlob(file, maxW=1200, quality=0.86){
+  const dataUrl = await new Promise((resolve,reject)=>{
+    const fr = new FileReader();
+    fr.onload = ()=>resolve(String(fr.result||""));
+    fr.onerror = ()=>reject(new Error("read file error"));
+    fr.readAsDataURL(file);
+  });
+
+  const img = new Image();
+  img.src = dataUrl;
+  await new Promise((res,rej)=>{ img.onload=res; img.onerror=()=>rej(new Error("image load error")); });
+
+  const w = img.naturalWidth || img.width;
+  const h = img.naturalHeight || img.height;
+  if(!w || !h) throw new Error("invalid image");
+
+  const ratio = (w > maxW) ? (maxW / w) : 1;
+  const nw = Math.round(w * ratio);
+  const nh = Math.round(h * ratio);
+
+  const c = document.createElement("canvas");
+  c.width = nw; c.height = nh;
+  const ctx = c.getContext("2d");
+  ctx.drawImage(img, 0, 0, nw, nh);
+
+  const blob = await new Promise((resolve)=> c.toBlob(resolve, "image/jpeg", quality));
+  if(!blob) throw new Error("toBlob failed");
+  return blob;
+}
+
+async function ensureQuizIdSaved(){
+  if(CURRENT_MODE==="EDIT" && CURRENT_QID) return CURRENT_QID;
+
+  let qid = normalizeQuizId(quizIdEl.value);
+  if(!qid){
+    qid = genQuizId5();
+    quizIdEl.value = qid;
+  }
+  await saveQuizOnly();
+  return CURRENT_QID || qid;
+}
+
+async function setQuestionImage(i, file){
+  if(i<0 || i>=QUESTIONS.length) return;
+  if(!file || !/^image\//.test(file.type)) return toast("Chỉ nhận ảnh");
+
+  const qid = await ensureQuizIdSaved();
+  const blob = await fileToDownscaledJpegBlob(file, 1200, 0.86);
+
+  const ts = Date.now();
+  const path = `${qid}/q${String(i+1).padStart(3,"0")}_${ts}.jpg`;
+  const url = await uploadToBucket(STORAGE_BUCKET, path, blob, "image/jpeg");
+
+  ensureMeta(QUESTIONS[i]);
+  QUESTIONS[i].meta.image_path = path;
+  QUESTIONS[i].meta.image_url = url;
+
+  renderQuestions();
+  toast("Đã upload ảnh");
+}
+
+qImgPick.addEventListener("change", async ()=>{
+  const f = qImgPick.files?.[0];
+  if(!f) return;
+  const i = IMG_PICK_FOR_INDEX;
+  IMG_PICK_FOR_INDEX = -1;
+  qImgPick.value = "";
+  try{ await setQuestionImage(i, f); }catch(e){ toast(e.message || "Lỗi upload ảnh"); }
+});
+
+qList.addEventListener("dragover",(e)=>{
+  const card = e.target.closest(".qCard");
+  const drop = e.target.closest("[data-imgdrop]");
+  if(!card || !drop) return;
+  e.preventDefault();
+},{passive:false});
+
+qList.addEventListener("drop", async (e)=>{
+  const card = e.target.closest(".qCard");
+  const drop = e.target.closest("[data-imgdrop]");
+  if(!card || !drop) return;
+  e.preventDefault();
+  const i = Number(card.getAttribute("data-i"));
+  const f = e.dataTransfer?.files?.[0];
+  if(!f) return;
+  try{ await setQuestionImage(i, f); }catch(e){ toast(e.message || "Lỗi upload ảnh"); }
+},{passive:false});
+
+window.addEventListener("paste", async (e)=>{
+  const items = e.clipboardData?.items || [];
+  const imgItem = Array.from(items).find(it=>it.type && it.type.startsWith("image/"));
+  if(!imgItem) return;
+  const f = imgItem.getAsFile();
+  if(!f) return;
+
+  const active = document.activeElement;
+  const card = active ? active.closest?.(".qCard") : null;
+  if(!card) return;
+  const i = Number(card.getAttribute("data-i"));
+  try{ await setQuestionImage(i, f); }catch(e){ toast(e.message || "Lỗi upload ảnh"); }
+},{passive:true});
+
+/* ================== IMPORT PARSER ================== */
+const importBox = document.getElementById("importBox");
+document.getElementById("btnImportReplace").onclick = ()=>{
+  const parsed = parseImportText(importBox.value);
+  if(!parsed.length) return toast("Không parse được gì");
+  QUESTIONS = parsed;
+  renderQuestions();
+  setQBMode("manual");
+  toast("Đã import (thay thế)");
+};
+document.getElementById("btnImportAppend").onclick = ()=>{
+  const parsed = parseImportText(importBox.value);
+  if(!parsed.length) return toast("Không parse được gì");
+  QUESTIONS = QUESTIONS.concat(parsed);
+  renderQuestions();
+  setQBMode("manual");
+  toast("Đã import (thêm)");
+};
+
+function isHeaderLine(line){
+  const s = line.trim();
+  return /^<(tn|tl|tln|tf)>\s*@\d+\s*:/.test(s);
+}
+function stripStars(s){
+  let t = String(s||"").trim();
+  for(let k=0;k<3;k++){
+    t = t.trim();
+    if((t.startsWith("**") && t.includes("**", 2))){
+      const m = t.match(/^\*\*(.+?)\*\*/);
+      if(m){ t = m[1].trim(); continue; }
     }
-    return;
-  }
-
-  // ✅ TF4: mặc định null, chọn mới set true/false, update DOM tại chỗ
-  const tf = e.target.closest("[data-tf]");
-  if(tf){
-    const id = Number(tf.getAttribute("data-tf"));
-    const k = Number(tf.getAttribute("data-k"));
-    const v = (tf.getAttribute("data-v")==="1");
-
-    const cur = Array.isArray(state.answers[id]) ? state.answers[id].slice(0,4) : [null,null,null,null];
-    while(cur.length < 4) cur.push(null);
-    cur[k] = v;
-    state.answers[id] = cur;
-
-    saveLocalProgress();
-    updateStats();
-
-    const card = tf.closest(".card");
-    if(card){
-      card.querySelectorAll(`[data-tf="${id}"][data-k="${k}"]`).forEach(btn=>{
-        const bv = (btn.getAttribute("data-v")==="1");
-        btn.classList.toggle("active", bv === v);
-      });
+    if((t.startsWith("*") && t.includes("*", 1))){
+      const m = t.match(/^\*(.+?)\*/);
+      if(m){ t = m[1].trim(); continue; }
     }
-    return;
+    if((t.startsWith("**") && t.endsWith("**") && t.length>=4)){ t = t.slice(2,-2).trim(); continue; }
+    if((t.startsWith("*") && t.endsWith("*") && t.length>=2)){ t = t.slice(1,-1).trim(); continue; }
+    break;
   }
+  return t;
+}
+function cleanLine(s){ return stripStars(String(s||"").trim()); }
 
-  // ✅ short4 keypad
-  const kp = e.target.closest("[data-kpid][data-kpkey]");
-  if(kp){
-    const id = Number(kp.getAttribute("data-kpid"));
-    const key = String(kp.getAttribute("data-kpkey")||"");
-    const card = kp.closest(".card");
-    if(!card) return;
+function extractStarWrapped(line){
+  const s = String(line||"");
+  let m = s.match(/\*\*(.+?)\*\*/);
+  if(m) return String(m[1]||"").trim();
+  m = s.match(/\*(.+?)\*/);
+  if(m) return String(m[1]||"").trim();
+  return "";
+}
 
-    // locked?
-    if(state.finalized) return;
+function parseImportText(text){
+  const lines = String(text||"").replace(/\r/g,"").split("\n");
+  const blocks = [];
+  let cur = null;
 
-    const raw = String(state.answers[id] || "");
-    const arr = [raw[0]||"", raw[1]||"", raw[2]||"", raw[3]||""];
+  function pushCur(){ if(cur){ blocks.push(cur); cur=null; } }
 
-    let cursor = (SHORT4_FOCUS.id === id) ? Number(SHORT4_FOCUS.k||0) : arr.findIndex(x=>!x);
-    if(cursor < 0) cursor = 3;
+  for(let i=0;i<lines.length;i++){
+    const line = lines[i].trimEnd();
+    if(isHeaderLine(line)){
+      pushCur();
+      const m = line.trim().match(/^<(tn|tl|tln|tf)>\s*@(\d+)\s*:\s*(.*)$/);
+      if(!m) continue;
+      cur = { tag:m[1], n:Number(m[2]||0), head:(m[3]||"").trim(), body:[] };
+      continue;
+    }
+    if(!cur) continue;
+    if(line.trim().length===0) continue;
+    cur.body.push(line);
+  }
+  pushCur();
 
-    const clamp = (n)=>Math.max(0, Math.min(3, n));
+  const out = [];
+  for(const b of blocks){
+    const tag = b.tag;
+    const head = b.head || "";
+    const body = (b.body||[]).map(x=>x.trim()).filter(x=>x.length>0);
 
-    if(key === "CLR"){
-      arr[0]=arr[1]=arr[2]=arr[3]="";
-      cursor = 0;
-    }else if(key === "<"){
-      // backspace
-      cursor = clamp(cursor);
-      if(arr[cursor]){
-        arr[cursor] = "";
-      }else{
-        let j = cursor-1;
-        while(j>=0 && !arr[j]) j--;
-        if(j>=0){ arr[j]=""; cursor=j; }
-      }
-    }else{
-      // insert
-      let pos = clamp(cursor);
-      if(arr[pos]){ // tìm ô trống tiếp theo
-        let j = pos;
-        while(j<4 && arr[j]) j++;
-        if(j>=4) j = -1;
-        pos = j;
-      }
-      if(pos >= 0){
-        let ch = key;
+    if(tag==="tn"){
+      const opts = [];
+      let correctIdx = 1;
 
-        // rule: '-' chỉ ô 0
-        if(ch === "-" && pos !== 0) ch = "";
-        // rule: ô 0 không được ','
-        if(ch === "," && pos === 0) ch = "";
+      for(const ln0 of body){
+        let raw = ln0.trim();
+        let isCorrect = false;
 
-        if(ch){
-          // nếu '-' thì chỉ cho khi ô 0 đang trống
-          if(ch === "-" && arr[0]) ch = "";
-          if(ch){
-            arr[pos] = ch;
-            // move to next
-            let j = pos+1;
-            while(j<4 && arr[j]) j++;
-            cursor = (j<4) ? j : 3;
+        let m = raw.match(/^\s*\*\*(.+?)\*\*/);
+        if(m){
+          isCorrect = true;
+          raw = String(m[1]||"").trim();
+        }else{
+          m = raw.match(/^\s*\*(.+?)\*/);
+          if(m){
+            isCorrect = true;
+            raw = String(m[1]||"").trim();
+          }else{
+            raw = cleanLine(raw);
           }
         }
+
+        opts.push(raw);
+        if(isCorrect) correctIdx = opts.length;
       }
+
+      while(opts.length<4) opts.push("");
+      const options4 = opts.slice(0,4);
+      if(correctIdx<1 || correctIdx>4) correctIdx = 1;
+
+      out.push({ type:"mcq1", prompt: head, answers: [], points: null, meta: { options: options4, correct: correctIdx, image_url:"", image_path:"" }});
+      continue;
     }
 
-    state.answers[id] = arr.join("");
-    saveLocalProgress();
-    updateStats();
+    if(tag==="tl"){
+      let answers = body.map(extractStarWrapped).filter(Boolean).map(x=>cleanLine(x));
+      if(!answers.length && body.length) answers = [ cleanLine(body.join(" ")) ];
+      answers = answers.map(x=>x.trim()).filter(Boolean);
+      out.push({ type:"essay", prompt: head, answers, points: null, meta: { fuzzy:true, image_url:"", image_path:"" }});
+      continue;
+    }
 
-    // update DOM inputs
-    const inputs = card.querySelectorAll(`.short4[data-id="${id}"]`);
-    inputs.forEach(inp=>{
-      const k = Number(inp.getAttribute("data-k"));
-      inp.value = arr[k] || "";
+    if(tag==="tln"){
+      let answers = body.map(extractStarWrapped).filter(Boolean).map(x=>cleanLine(x));
+      if(!answers.length && body.length) answers = [ cleanLine(body.join(" ")) ];
+      answers = answers.map(x=>x.trim()).filter(Boolean);
+      out.push({ type:"short4", prompt: head, answers, points: null, meta: { format:"4boxes", image_url:"", image_path:"" }});
+      continue;
+    }
+
+    if(tag==="tf"){
+      const stmts = ["","","",""];
+      const keys = [false,false,false,false];
+
+      for(const ln of body){
+        const s = ln.trim();
+        const mm = s.match(/^\|?\s*([A-D])\s*:\s*(.*?)\s*\*([TF])\*\s*\|?\s*$/i);
+        if(!mm) continue;
+        const letter = mm[1].toUpperCase();
+        const textPart = cleanLine(mm[2]||"");
+        const tf = mm[3].toUpperCase();
+        const idx = "ABCD".indexOf(letter);
+        if(idx>=0){
+          stmts[idx] = textPart;
+          keys[idx] = (tf==="T");
+        }
+      }
+
+      out.push({
+        type:"tf4", prompt: head, answers: [], points: null,
+        meta: { statements: stmts, keys, rule:{ byCorrectCount:{ "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 } }, image_url:"", image_path:"" }
+      });
+      continue;
+    }
+  }
+
+  const last = out[out.length-1];
+  if(last && isAllowedQType(last.type)) setLastType(last.type);
+  return out;
+}
+
+/* ================== LaTeX ================== */
+const latexPanel = document.getElementById("latexPanel");
+const latexGrid = document.getElementById("latexGrid");
+const latexPreviewSrc = document.getElementById("latexPreviewSrc");
+const latexPreview = document.getElementById("latexPreview");
+
+document.getElementById("btnLatex").onclick = ()=>showLatexPanel();
+
+function showLatexPanel(){
+  latexPanel.classList.add("show");
+  latexPanel.setAttribute("aria-hidden","false");
+  updateLatexPreviewFromActive();
+}
+function hideLatexPanel(){
+  latexPanel.classList.remove("show");
+  latexPanel.setAttribute("aria-hidden","true");
+}
+
+latexPanel.addEventListener("click",(e)=>{
+  const b = e.target.closest("[data-latex-act]");
+  if(!b) return;
+  const act = b.getAttribute("data-latex-act");
+  if(act==="close") hideLatexPanel();
+  if(act==="wrapInline"){ wrapSelection("$","$"); updateLatexPreviewFromActive(); }
+  if(act==="wrapBlock"){ wrapSelection("$$","$$"); updateLatexPreviewFromActive(); }
+});
+
+function getActiveTextTarget(){
+  const el = ACTIVE_TEXTAREA && document.contains(ACTIVE_TEXTAREA) ? ACTIVE_TEXTAREA : qList.querySelector("textarea.qPrompt");
+  if(!el) toast("Click vào ô nhập trước");
+  return el;
+}
+
+function updateLatexPreviewFromActive(){
+  const el = getActiveTextTarget();
+  let s = "";
+  if(el){
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const sel = (end>start) ? el.value.slice(start,end) : "";
+    s = sel.trim() || el.value.trim();
+  }
+  if(!s) s = "$x^2 + \\frac{1}{2}$";
+  latexPreviewSrc.value = s;
+  updateLatexPreview();
+}
+function updateLatexPreview(){
+  latexPreview.textContent = latexPreviewSrc.value || " ";
+  typesetElement(latexPreview);
+}
+latexPreviewSrc.addEventListener("input", updateLatexPreview, {passive:true});
+
+function insertTemplate(tpl){
+  const el = getActiveTextTarget();
+  if(!el) return;
+
+  const start = el.selectionStart ?? el.value.length;
+  const end = el.selectionEnd ?? el.value.length;
+
+  const cursorAt = tpl.indexOf("|");
+  const real = tpl.replace("|","");
+
+  const before = el.value.slice(0,start);
+  const sel = el.value.slice(start,end);
+  const after = el.value.slice(end);
+
+  const real2 = real.includes("{SEL}") ? real.replace("{SEL}", sel || "") : real;
+  el.value = before + real2 + after;
+
+  let pos = before.length + real2.length;
+  if(cursorAt >= 0) pos = before.length + cursorAt;
+
+  el.focus();
+  el.setSelectionRange(pos,pos);
+
+  const card = el.closest(".qCard");
+  if(card) syncQuestionFromCard(card);
+
+  updateLatexPreviewFromActive();
+}
+function wrapSelection(left,right){
+  const el = getActiveTextTarget();
+  if(!el) return;
+
+  const start = el.selectionStart ?? el.value.length;
+  const end = el.selectionEnd ?? el.value.length;
+  const sel = el.value.slice(start,end) || "x";
+
+  const before = el.value.slice(0,start);
+  const after = el.value.slice(end);
+
+  el.value = before + `${left}${sel}${right}` + after;
+  el.focus();
+  el.setSelectionRange(before.length + left.length, before.length + left.length + sel.length);
+
+  const card = el.closest(".qCard");
+  if(card) syncQuestionFromCard(card);
+}
+
+const LATEX_TEMPLATES = [
+  { label: "x^2", tpl: "$x^{2}$|" },
+  { label: "x^n", tpl: "$x^{|}$" },
+  { label: "x_i", tpl: "$x_{|}$" },
+  { label: "phân số", tpl: "$\\frac{|}{}$" },
+  { label: "căn", tpl: "$\\sqrt{|}$" },
+  { label: "căn bậc n", tpl: "$\\sqrt[|]{}$" },
+  { label: "log", tpl: "$\\log_{|}( )$" },
+  { label: "ln", tpl: "$\\ln(|)$" },
+  { label: "mũ e", tpl: "$e^{|}$" },
+  { label: "π", tpl: "$\\pi$|" },
+  { label: "θ", tpl: "$\\theta$|" },
+  { label: "α", tpl: "$\\alpha$|" },
+  { label: "Σ", tpl: "$\\sum_{i=1}^{n} |$" },
+  { label: "∫", tpl: "$\\int_{a}^{b} f(x)\\,dx$|" },
+  { label: "lim", tpl: "$\\lim_{x\\to 0} |$" },
+  { label: "→", tpl: "$\\to$|" },
+  { label: "≥", tpl: "$\\ge$|" },
+  { label: "≤", tpl: "$\\le$|" },
+  { label: "≠", tpl: "$\\ne$|" },
+  { label: "≈", tpl: "$\\approx$|" },
+  { label: "vector", tpl: "$\\vec{|}$" },
+  { label: "block", tpl: "$$|$$" }
+];
+
+latexGrid.innerHTML = LATEX_TEMPLATES.map(x=>{
+  return `<button class="latexChip" type="button" data-tpl="${esc(x.tpl)}">${esc(x.label)}</button>`;
+}).join("");
+
+latexGrid.addEventListener("click",(e)=>{
+  const b = e.target.closest("[data-tpl]");
+  if(!b) return;
+  insertTemplate(b.getAttribute("data-tpl"));
+});
+
+/* ================== APPLY SCORING ================== */
+function applyScoring(items){
+  const mode = scoringModeEl.value;
+  const total = Number(totalScoreEl.value || "10") || 10;
+  if(!items.length) return items;
+
+  if(mode === "equal"){
+    const per = total / items.length;
+    let sum = 0;
+    return items.map((q,i)=>{
+      const p = (i === items.length-1) ? (total - sum) : Math.round(per*100)/100;
+      if(i !== items.length-1) sum += p;
+      return { ...q, points: Math.round(p*100)/100 };
+    });
+  }
+  return items.map(q=>({ ...q, points: (q.points==null?0:Number(q.points)||0) }));
+}
+
+/* ================== SAVE / PUBLISH ================== */
+document.getElementById("btnNewQuiz").onclick = ()=>{
+  CURRENT_QID = "";
+  setMode("NEW");
+
+  quizIdEl.value = "";
+  titleEl.value = "";
+  subEl.value = "";
+  isPublicEl.value = "true";
+  isHiddenEl.value = "false";
+  showInStoreEl.value = "true";
+  requireLoginEl.value = "true";
+  pinnedEl.value = "false";
+  scoringModeEl.value = "equal";
+  shuffleModeEl.value = "none";
+  requireCodeEl.value = "false";
+  accessCodeEl.value = "";
+  totalScoreEl.value = "10";
+
+  QUESTIONS = [];
+  renderQuestions();
+  setLastType("mcq1");
+  setQBMode("manual");
+  updateTotalScoreUI();
+  toast("Tạo mới: OK");
+};
+
+document.getElementById("btnNewQuizOnList").onclick = ()=> document.getElementById("btnNewQuiz").click();
+
+async function saveQuizOnly(){
+  const token = getToken();
+  if(!token) throw new Error("Chưa login");
+
+  let qid = (CURRENT_MODE==="EDIT") ? CURRENT_QID : normalizeQuizId(quizIdEl.value);
+  if(CURRENT_MODE==="NEW" && !qid){
+    qid = genQuizId5();
+    quizIdEl.value = qid;
+  }
+  if(!qid || qid.length!==5) throw new Error("Quiz ID phải đúng 5 chữ a-z");
+
+  // ✅ totalScore: equal dùng input, custom dùng sum(points)
+  let totalScore = Number(totalScoreEl.value || "10") || 10;
+  if(String(scoringModeEl.value||"equal")==="custom"){
+    totalScore = calcCustomTotal();
+    totalScoreEl.value = String(totalScore);
+  }
+
+  const payload = {
+    p_token: token,
+    p_quiz_id: qid,
+    p_title: titleEl.value.trim(),
+    p_sub: subEl.value.trim(),
+    p_is_public: (isPublicEl.value === "true"),
+    p_is_hidden: (isHiddenEl.value === "true"),
+    p_show_in_store: (showInStoreEl.value === "true"),
+    p_require_login: (requireLoginEl.value === "true"),
+    p_pinned: (pinnedEl.value === "true"),
+    p_scoring_mode: scoringModeEl.value,
+    p_total_score: totalScore,
+    p_shuffle_mode: String(shuffleModeEl.value || "none"),
+    p_require_access_code: (requireCodeEl.value === "true"),
+    p_access_code: accessCodeEl.value.trim()
+  };
+
+  const out = await rpc(RPC.adminUpsertQuiz, payload);
+  CURRENT_QID = out.quiz_id || qid;
+  quizIdEl.value = CURRENT_QID;
+  setMode("EDIT");
+  return CURRENT_QID;
+}
+
+document.getElementById("btnSaveQuiz").onclick = async ()=>{
+  try{
+    const err = validateQuiz();
+    if(err) return toast(err);
+    const qid = await saveQuizOnly();
+    toast("Saved: " + qid);
+    await reloadQuizzes();
+  }catch(e){
+    toast(e.message || "Save error");
+  }
+};
+
+async function publishAll(){
+  try{
+    const err = validateQuiz();
+    if(err) return toast(err);
+    if(!QUESTIONS.length) return toast("Chưa có câu hỏi");
+
+    const qid = await saveQuizOnly();
+    const token = getToken();
+
+    const items = applyScoring(QUESTIONS).map((q, idx)=>{
+      ensureMeta(q);
+      const meta = { ...(q.meta||{}) };
+      delete meta.image_data_url;
+
+      return {
+        no: idx+1,
+        q_type: q.type,
+        prompt: (q.prompt||"").trim(),
+        answers: Array.isArray(q.answers)?q.answers:[],
+        points: q.points ?? 0,
+        meta
+      };
     });
 
-    // focus next
-    const next = card.querySelector(`.short4[data-id="${id}"][data-k="${cursor}"]`);
-    if(next){
-      try{ next.focus(); }catch{}
-      SHORT4_FOCUS.id = id;
-      SHORT4_FOCUS.k = cursor;
-    }
+    await rpc(RPC.adminReplaceQuestions, { p_token: token, p_quiz_id: qid, p_items: items });
+
+    toast(`Published: ${qid}`);
+    await reloadQuizzes();
+    location.href = `/q/${qid}`;
+  }catch(e){
+    toast(e.message || "Publish error");
+  }
+}
+document.getElementById("btnPublishAll").onclick = publishAll;
+document.getElementById("btnPublishAllBottom").onclick = publishAll;
+document.getElementById("btnPublishAll2").onclick = publishAll;
+
+/* ================== QUIZ LIST ================== */
+const quizList = document.getElementById("quizList");
+
+function shuffleBadge(sm){
+  if(sm==="q") return `<span class="idx">SHUFFLE-Q</span>`;
+  if(sm==="qa") return `<span class="idx">SHUFFLE-QA</span>`;
+  return "";
+}
+
+function renderQuizList(){
+  if(!QUIZZES.length){
+    quizList.innerHTML = `<div class="muted">Chưa có quiz.</div>`;
     return;
   }
+  quizList.innerHTML = QUIZZES.map(q=>{
+    const badges = [
+      q.pinned ? `<span class="idx ok">PIN</span>` : "",
+      q.is_hidden ? `<span class="idx warn">HIDDEN</span>` : "",
+      q.is_public ? `<span class="idx ok">PUBLIC</span>` : `<span class="idx warn">PRIVATE</span>`,
+      q.show_in_store ? `<span class="idx ok">STORE</span>` : `<span class="idx warn">STORE-OFF</span>`,
+      q.require_login ? `<span class="idx">LOGIN</span>` : `<span class="idx ok">OPEN</span>`,
+      q.require_access_code ? `<span class="idx warn">CODE</span>` : "",
+      shuffleBadge(q.shuffle_mode)
+    ].filter(Boolean).join(" ");
 
-  // ✅ Essay check only
-  const b = e.target.closest("[data-check]");
-  if(!b) return;
+    return `
+      <div class="qItem" data-qid="${esc(q.quiz_id)}">
+        <div class="row1">
+          <div style="min-width:0">
+            <div class="vi" style="font-size:1rem"><b>${esc(q.title||q.quiz_id)}</b></div>
+            <div class="muted" style="margin-top:4px">${esc(q.sub||"")}</div>
+            <div class="qBadges">${badges}</div>
+          </div>
+          <div class="qActions">
+            <button class="mini" data-act="load" type="button">Sửa</button>
+            <button class="mini danger" data-act="del" type="button">Delete</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
 
-  const id = Number(b.dataset.check);
-  const q = QUIZ.items.find(x=>Number(x.id)===id);
+  quizList.querySelectorAll('[data-qid]').forEach(el=>{
+    el.addEventListener("click",(ev)=>{
+      const act = ev.target?.getAttribute?.("data-act");
+      const qid = el.getAttribute("data-qid");
+      if(act==="del"){ ev.stopPropagation(); delQuiz(qid); return; }
+      loadQuizToForm(qid);
+    });
+  });
+}
+
+async function reloadQuizzes(){
+  const token = getToken();
+  const out = await rpc(RPC.adminListQuizzes,{p_token: token});
+  QUIZZES = out.items || [];
+  renderQuizList();
+}
+document.getElementById("btnReloadQuizzes").onclick = ()=>reloadQuizzes().catch(e=>toast(e.message));
+
+async function delQuiz(qid){
+  const ok = confirm("Xóa quiz " + qid + " ?");
+  if(!ok) return;
+  const token = getToken();
+  await rpc(RPC.adminDeleteQuiz,{p_token:token, p_quiz_id:qid});
+  toast("Deleted " + qid);
+  await reloadQuizzes();
+}
+
+async function loadQuizToForm(qid){
+  const q = QUIZZES.find(x=>x.quiz_id===qid);
   if(!q) return;
 
-  if(qTypeOf(q)!=="essay") return; // safety
+  CURRENT_QID = qid;
+  setMode("EDIT");
 
-  if(!isAnswered(q)){
-    toast("Chưa làm câu này");
-    return;
-  }
+  quizIdEl.value = q.quiz_id;
+  titleEl.value = q.title || "";
+  subEl.value = q.sub || "";
+  isPublicEl.value = String(!!q.is_public);
+  isHiddenEl.value = String(!!q.is_hidden);
+  showInStoreEl.value = String(!!q.show_in_store);
+  requireLoginEl.value = String(!!q.require_login);
+  pinnedEl.value = String(!!q.pinned);
+  scoringModeEl.value = q.scoring_mode || "equal";
+  totalScoreEl.value = String(q.total_score ?? 10);
 
-  const g = gradeOne(q);
-  state.checked[id] = { ok: !!g.ok, expected: String(g.expected||""), locked:true };
-  saveLocalProgress();
-  toast(g.ok ? "ĐÚNG" : "SAI");
+  shuffleModeEl.value = (q.shuffle_mode || "none");
 
-  // update UI card only
-  const card = document.getElementById(`q${id}`);
-  if(card){
-    const input = card.querySelector(`.ans[data-id="${id}"]`);
-    if(input) input.setAttribute("disabled","disabled");
-    b.setAttribute("disabled","disabled");
-    b.textContent = "Đã check";
+  requireCodeEl.value = String(!!q.require_access_code);
+  accessCodeEl.value = "";
 
-    const holder = card.querySelector(`[data-essay-result="${id}"]`);
-    if(holder){
-      holder.innerHTML = `
-        <div class="resultRow">
-          <div>${g.ok ? `<span class="oktxt">ĐÚNG</span>` : `<span class="badtxt">SAI</span>`}</div>
-          <div><span class="muted">${escapeHtml(g.expected||"")}</span></div>
-        </div>`;
-      applyMath(holder);
-    }
-  }
-});
-
-content.addEventListener("input", (e)=>{
-  const t = e.target;
-  if(!t) return;
-
-  if(t.classList && t.classList.contains("ans")){
-    const id = Number(t.dataset.id);
-    const ck = state.checked[id];
-    if(ck && ck.locked){
-      t.value = String(state.answers[id]||"");
-      return;
-    }
-    state.answers[id] = String(t.value||"");
-    saveLocalProgress();
-    updateStats();
-    return;
-  }
-
-  if(t.classList && t.classList.contains("short4")){
-    const id = Number(t.getAttribute("data-id"));
-    const k = Number(t.getAttribute("data-k"));
-
-    // locked?
-    if(state.finalized) return;
-
-    SHORT4_FOCUS.id = id;
-    SHORT4_FOCUS.k = k;
-
-    let v = String(t.value||"");
-    v = v.replace(/[^0-9\-,]/g,"").slice(0,1);
-
-    // rule: '-' only at k=0
-    if(v === "-" && k !== 0) v = "";
-    // rule: first box cannot be comma
-    if(v === "," && k === 0) v = "";
-    // rule: '-' only if box0 empty
-    if(v === "-" && k === 0){
-      const raw0 = String(state.answers[id]||"");
-      if((raw0[0]||"") && raw0[0] !== "-") v = "";
-    }
-
-    if(t.value !== v) t.value = v;
-
-    const raw = String(state.answers[id] || "");
-    const arr = [raw[0]||"", raw[1]||"", raw[2]||"", raw[3]||""];
-    arr[k] = v || "";
-    state.answers[id] = arr.join("");
-
-    saveLocalProgress();
-    updateStats();
-
-    // auto move next if typed
-    if(v && k < 3){
-      const card = t.closest(".card");
-      const next = card && card.querySelector(`.short4[data-id="${id}"][data-k="${k+1}"]`);
-      if(next){
-        try{ next.focus(); }catch{}
-        SHORT4_FOCUS.k = k+1;
-      }
-    }
-    return;
-  }
-}, {passive:true});
-
-content.addEventListener("keydown",(e)=>{
-  const t = e.target;
-  if(!t || !t.classList || !t.classList.contains("short4")) return;
-  const id = Number(t.getAttribute("data-id"));
-  const k = Number(t.getAttribute("data-k"));
-  if(e.key === "Backspace"){
-    if(String(t.value||"") === "" && k > 0){
-      const card = t.closest(".card");
-      const prev = card && card.querySelector(`.short4[data-id="${id}"][data-k="${k-1}"]`);
-      if(prev){
-        try{ prev.focus(); }catch{}
-        SHORT4_FOCUS.id = id;
-        SHORT4_FOCUS.k = k-1;
-      }
-    }
-  }
-});
-
-btnScrollTop.onclick = ()=>{ document.getElementById("shell").scrollTo({ top:0, behavior:"smooth" }); };
-btnHome.onclick = ()=>goHome();
-
-/* reset modal */
-const resetBackdrop = document.getElementById("resetBackdrop");
-btnReset.onclick = ()=>{ resetBackdrop.classList.add("show"); resetBackdrop.setAttribute("aria-hidden","false"); };
-document.getElementById("btnCancelReset").onclick = ()=>{ resetBackdrop.classList.remove("show"); resetBackdrop.setAttribute("aria-hidden","true"); };
-resetBackdrop.addEventListener("click",(e)=>{ if(e.target===resetBackdrop){ resetBackdrop.classList.remove("show"); resetBackdrop.setAttribute("aria-hidden","true"); }});
-document.getElementById("btnConfirmReset").onclick = ()=>{
-  resetBackdrop.classList.remove("show");
-  resetBackdrop.setAttribute("aria-hidden","true");
-
-  // ✅ làm lại = clear answers + reshuffle nếu quiz yêu cầu
-  resetForNewAttempt({reshuffle:true});
-
-  toast("Đã làm lại");
-  if(view.started) renderQuiz(); else updateStats();
-};
-
-/* ================== SUBMIT CONFIRM MODAL ================== */
-const submitBackdrop = document.getElementById("submitBackdrop");
-const submitBody = document.getElementById("submitBody");
-document.getElementById("btnCancelSubmit").onclick = ()=>closeSubmitConfirm(false);
-document.getElementById("btnConfirmSubmit").onclick = ()=>closeSubmitConfirm(true);
-submitBackdrop.addEventListener("click",(e)=>{ if(e.target===submitBackdrop) closeSubmitConfirm(false); });
-
-let SUBMIT_PROMPT = { open:false, resolve:null };
-function openSubmitConfirm(htmlBody){
-  return new Promise((resolve)=>{
-    SUBMIT_PROMPT.open = true;
-    SUBMIT_PROMPT.resolve = resolve;
-    submitBody.innerHTML = htmlBody || `<p>Bạn có muốn nộp bài không?</p>`;
-    submitBackdrop.classList.add("show");
-    submitBackdrop.setAttribute("aria-hidden","false");
-  });
-}
-function closeSubmitConfirm(ans){
-  if(!SUBMIT_PROMPT.open) return;
-  submitBackdrop.classList.remove("show");
-  submitBackdrop.setAttribute("aria-hidden","true");
-  const r = SUBMIT_PROMPT.resolve;
-  SUBMIT_PROMPT.open=false;
-  SUBMIT_PROMPT.resolve=null;
-  if(r) r(!!ans);
-}
-function getMissingItems(){
-  const items = getViewItems();
-  const miss = [];
-  items.forEach((q, idx)=>{
-    if(!isAnswered(q)) miss.push({ idx: idx+1, id: q.id });
-  });
-  return miss;
-}
-
-function computeFinal(){
-  const items = getViewItems();
-  let earned = 0;
-  let max = 0;
-  let fullCorrectCount = 0;
-
-  const per = [];
-  for(const q of items){
-    const g = gradeOne(q);
-    max += g.max;
-    earned += g.earned;
-    if(g.ok) fullCorrectCount++;
-
-    per.push({ id:q.id, no:q.no, q_type:q.q_type, ok:!!g.ok, earned:g.earned, max:g.max });
-  }
-
-  const score10 = max > 0 ? Math.round((earned/max*10)*10)/10 : 0;
-  return { score10, earned, max, fullCorrectCount, totalCount: items.length, per };
-}
-
-/* attempts insert: nếu bị RLS chặn thì vẫn nhảy result bằng sessionStorage */
-async function submitToSupabase(result){
-  if(!me || !me.user_id) throw new Error("need login");
-
-  const attemptBody = {
-    quiz_id: quizId,
-    user_id: me.user_id,
-    score10: Number(result.score10||0),
-    correct_count: Number(result.fullCorrectCount||0),
-    total_count: Number(result.totalCount||0),
-    details_json: {
-      client: "q/index.html",
-      ts: Date.now(),
-      mode: "questions",
-      quiz_id: quizId,
-      shuffle_mode: QUIZ.shuffle_mode || "none",
-      order: state.order || [],
-      earned: result.earned,
-      max: result.max,
-      per: result.per,
-      answers: state.answers || {}
-    }
-  };
-
-  const inserted = await sbPost(`attempts?select=attempt_id,created_at`, attemptBody, { preferReturn:true });
-  const row = Array.isArray(inserted) ? inserted[0] : inserted;
-  const attemptId = row?.attempt_id;
-  if(!attemptId) throw new Error("Không lấy được attempt_id");
-  return attemptId;
-}
-
-async function doSubmitNow(){
-  if(state.finalized) return;
-  if(!view.started){ toast("Chưa vào làm"); return; }
-
-  if(QUIZ.require_login && (!me || !me.user_id)){
-    toast("Quiz này cần đăng nhập");
-    renderGate();
-    return;
-  }
-
-  state.finalized = true;
-  saveLocalProgress();
-
-  renderLoading("Đang tính điểm…");
-  const result = computeFinal();
-
-  let attemptId = "";
-  try{
-    attemptId = await submitToSupabase(result);
-    state.attempt_id = attemptId;
-    saveLocalProgress();
-  }catch(_e){
-    toast("Không lưu DB (xem kết quả vẫn OK)");
-  }
+  QUESTIONS = [];
+  renderQuestions();
 
   try{
-    sessionStorage.setItem(`tk_last_result::${quizId}`, JSON.stringify({
-      quiz_id: quizId,
-      title: QUIZ.title,
-      sub: QUIZ.sub,
-      me: me ? { username: me.username, role: me.role, user_id: me.user_id } : null,
-      attempt_id: attemptId || "",
-      result,
-      ts: Date.now()
-    }));
-  }catch{}
+    const token = getToken();
+    const out = await rpc(RPC.adminGetQuestions,{p_token: token, p_quiz_id: qid});
+    if(!out?.ok) throw new Error(out?.error || "admin_get_questions failed");
+    const items = out.items || [];
 
-  // ✅ sau khi nộp: vào lại là làm bài mới
-  // (giữ result trong sessionStorage để xem lại)
-  resetForNewAttempt({reshuffle:true});
-  clearLocalProgressOnly(); // xóa luôn tiến độ cũ cho chắc
+    QUESTIONS = items.map(x=>{
+      const meta = x.meta || {};
+      if(meta.image_data_url && !meta.image_url) meta.image_url = meta.image_data_url;
+      return {
+        type: x.q_type || x.type || "mcq1",
+        prompt: x.prompt || "",
+        answers: x.answers || [],
+        points: x.points ?? null,
+        meta
+      };
+    });
 
-  const qs = new URLSearchParams();
-  qs.set("quiz", quizId);
-  if(attemptId) qs.set("attempt", attemptId);
-  location.href = `/result.html?${qs.toString()}`;
+    renderQuestions();
+    const last = QUESTIONS[QUESTIONS.length-1];
+    setLastType(last?.type || "mcq1");
+    setQBMode(QB_MODE);
+    updateTotalScoreUI();
+    toast("Loaded " + qid);
+  }catch(e){
+    toast("Load câu hỏi lỗi: " + (e.message||""));
+  }
 }
 
-btnSubmitBig.onclick = async ()=>{
-  if(state.finalized) return;
-  if(!view.started){ toast("Chưa vào làm"); return; }
+/* ================== USERS ================== */
+const userList = document.getElementById("userList");
+const userSearch = document.getElementById("userSearch");
 
-  if(QUIZ.require_login && (!me || !me.user_id)){
-    toast("Quiz này cần đăng nhập");
-    renderGate();
+function renderUsers(){
+  const q = (userSearch.value||"").trim().toLowerCase();
+  const arr = q ? USERS.filter(u=>String(u.username||"").includes(q)) : USERS;
+
+  if(!arr.length){
+    userList.innerHTML = `<div class="muted">No users.</div>`;
     return;
   }
 
-  const miss = getMissingItems();
-  const missCount = miss.length;
+  userList.innerHTML = arr.map(u=>{
+    const role = (String(u.role||"").toLowerCase()==="admin") ? `<span class="idx ok">ADMIN</span>` : `<span class="idx">USER</span>`;
+    return `
+      <div class="card" style="box-shadow:none;border-width:1px;margin:10px 0">
+        <div class="row1">
+          <div style="min-width:0">
+            <div class="vi" style="font-size:1rem"><b>${esc(u.username)}</b> ${role}</div>
+            <div class="muted" style="margin-top:6px">id: <code>${esc(u.id)}</code></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn" data-act="rename" data-id="${esc(u.id)}" type="button">Rename</button>
+            <button class="btn" data-act="reset" data-id="${esc(u.id)}" type="button">Reset PIN</button>
+            <button class="btn btn-danger" data-act="del" data-id="${esc(u.id)}" type="button">Delete</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
 
-  let body = "";
-  if(missCount === 0){
-    body = `<p><b>Bạn có muốn nộp bài không?</b></p>`;
-  }else if(missCount < 5){
-    const lis = miss.map(x=>`<li><b>Câu ${x.idx}</b></li>`).join("");
-    body = `<p><b>Bạn chưa làm các câu sau:</b></p><ul class="missList">${lis}</ul><p>Không chọn là tính sai. Vẫn nộp chứ?</p>`;
-  }else{
-    body = `<p><b>Bạn chưa làm ${missCount} câu.</b></p><p>Không chọn là tính sai. Xác nhận nộp bài?</p>`;
-  }
+  userList.querySelectorAll("button[data-act]").forEach(b=>{
+    b.onclick = async ()=>{
+      const act = b.getAttribute("data-act");
+      const id = b.getAttribute("data-id");
+      if(act==="del") return delUser(id);
+      if(act==="rename") return renameUser(id);
+      if(act==="reset") return resetPin(id);
+    };
+  });
+}
 
-  const ok = await openSubmitConfirm(body);
-  if(!ok) return;
-  await doSubmitNow();
-};
-
-/* ================== AUTH + LOAD QUIZ ================== */
-async function loadMeIfAny(){
+async function reloadUsers(){
   const token = getToken();
-  if(!token) return null;
-  try{
-    const out = await sbRpc(RPC.me, { p_token: token });
-    if(!out || out.ok!==true) throw new Error(out?.error || "me fail");
-    const m = out.me || out.user || out.data || null;
-    if(m && m.id && !m.user_id) m.user_id = m.id;
-    return m;
-  }catch(_e){
-    clearAuthLocal();
-    return null;
-  }
+  const out = await rpc(RPC.adminListUsers,{p_token: token});
+  USERS = out.items || [];
+  renderUsers();
 }
+document.getElementById("btnReloadUsers").onclick = ()=>reloadUsers().catch(e=>toast(e.message));
+userSearch.addEventListener("input", ()=>renderUsers(), {passive:true});
 
-async function loadQuiz(){
-  const token = getToken() || "";
-  const out = await sbRpc(RPC.getQuiz, { p_quiz_id: quizId, p_token: token, p_access_code: "" });
-
-  if(!out || out.ok !== true) throw new Error(out?.error || "Không tải được quiz");
-
-  const q = out.quiz || {};
-  const items = Array.isArray(out.items) ? out.items : [];
-
-  return {
-    quiz_id: q.quiz_id || quizId,
-    title: q.title || "Quiz",
-    sub: q.sub || "",
-    require_login: (q.require_login !== false),
-    shuffle_mode: String(q.shuffle_mode || "none"), // ✅ lấy shuffle_mode từ DB
-    items: items.map(x=>({
-      id: Number(x.id),
-      no: x.no,
-      q_type: String(x.q_type || "essay"),
-      prompt: String(x.prompt || ""),
-      answers: Array.isArray(x.answers) ? x.answers : [],
-      points: x.points ?? 1,
-      meta: (x.meta && typeof x.meta === "object") ? x.meta : {}
-    }))
-  };
+async function delUser(id){
+  const ok = confirm("Xóa user này? (mất progress/attempts/comments)");
+  if(!ok) return;
+  const token = getToken();
+  await rpc(RPC.adminDeleteUser,{p_token:token, p_user_id:id});
+  toast("Deleted user");
+  await reloadUsers();
 }
-
-async function enterAfterAuth(out){
-  const token = out?.token || "";
-  if(token) setToken(token);
-
-  let m = out?.me || out?.user || out?.data || null;
-  if(m && m.id && !m.user_id) m.user_id = m.id;
-
-  if(!m || !m.user_id){
-    const m2 = await loadMeIfAny();
-    if(m2) m = m2;
-  }
-
-  if(m && m.user_id){
-    me = m;
-    setMeCache(m);
-    setNameCache(me.username || "");
-    setUserCorner(me);
-
-    try{
-      QUIZ = await loadQuiz();
-      quizTitleEl.textContent = QUIZ.title || "Quiz";
-      quizSubEl.textContent = QUIZ.sub || "";
-    }catch(e){
-      renderLoading("Lỗi tải đề: " + (e?.message || e));
-      return;
-    }
-
-    // nếu local progress đang finalized (do cache cũ) => attempt mới
-    if(state.finalized){
-      resetForNewAttempt({reshuffle:true});
-      clearLocalProgressOnly();
-    }
-
-    renderStart();
-    updateStats();
-  }else{
-    toast("Không lấy được user");
-    renderGate();
-  }
+async function renameUser(id){
+  const newU = prompt("New username (lowercase, a-z0-9_):");
+  if(!newU) return;
+  const token = getToken();
+  await rpc(RPC.adminForceRename,{p_token:token, p_user_id:id, p_new_username:newU});
+  toast("Renamed");
+  await reloadUsers();
 }
-
-/* ================== Profile modal ================== */
-const profileBackdrop = document.getElementById("profileBackdrop");
-document.getElementById("btnCloseProfile").onclick = ()=>closeProfileModal();
-profileBackdrop.addEventListener("click",(e)=>{ if(e.target===profileBackdrop) closeProfileModal(); });
-document.getElementById("btnProfileHome").onclick = ()=>goHome();
-document.getElementById("btnLogout").addEventListener("click", ()=>{
-  clearAuthLocal();
-  me = null;
-  view.started = false;
-  setUserCorner(null);
-  closeProfileModal();
-  toast("Đã đăng xuất");
-  if(QUIZ.require_login) renderGate(); else renderStart();
-  updateStats();
-});
-function openProfileModal(){
-  if(!me || !me.username) return;
-  document.getElementById("profileUsername").textContent = me.username;
-  document.getElementById("profileRole").textContent = isAdminUser(me) ? "ADMIN" : "USER";
-  profileBackdrop.classList.add("show");
-  profileBackdrop.setAttribute("aria-hidden","false");
+async function resetPin(id){
+  const pin = prompt("Set new PIN (6 digits, ví dụ 072008).");
+  if(!pin) return;
+  const token = getToken();
+  await rpc(RPC.adminForceSetPin,{p_token:token, p_user_id:id, p_new_pin:pin});
+  toast("PIN reset");
+  await reloadUsers();
 }
-function closeProfileModal(){
-  profileBackdrop.classList.remove("show");
-  profileBackdrop.setAttribute("aria-hidden","true");
-}
-userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
 
 /* ================== BOOT ================== */
-(async function boot(){
-  if(!quizId || quizId.length!==5){
-    renderLoading("Thiếu quiz_id. Mở đúng dạng: /q/index.html?quiz=abcde  (hoặc /q/abcde)");
-    return;
-  }
+async function boot(){
+  await requestPersistentStorage(); // ✅ cố xin browser cho lưu bền hơn (nếu support)
 
-  renderLoading("Đang tải quiz…");
+  const ok = await gateCheck();
+  if(!ok) return;
 
-  if(FLAG_RESTART){
-    loadLocalProgress();
-    resetForNewAttempt({reshuffle:true});
-    clearLocalProgressOnly();
-    dropFlagsFromUrl();
-  }else{
-    loadLocalProgress();
-  }
+  setQBMode(QB_MODE || "manual");
+  setLastType(LAST_QTYPE || "mcq1");
 
-  // restore me/token
-  me = getMeCache();
-  if(me && me.id && !me.user_id) me.user_id = me.id;
-  if(getToken() && (!me || !me.user_id)){
-    const m2 = await loadMeIfAny();
-    if(m2){ me = m2; setMeCache(me); }
-  }
+  setMode("NEW");
+  QUESTIONS = [];
+  renderQuestions();
+  updateTotalScoreUI();
 
-  // load quiz
-  try{
-    QUIZ = await loadQuiz();
-    quizTitleEl.textContent = QUIZ.title || "Quiz";
-    quizSubEl.textContent = QUIZ.sub || "";
-  }catch(e){
-    renderLoading("Lỗi tải đề: " + (e?.message || e));
-    return;
-  }
+  await reloadQuizzes();
+  await reloadUsers();
+  setTab("q");
 
-  // ✅ nếu cache cũ đã finalized -> vào lại là attempt mới
-  if(state.finalized){
-    resetForNewAttempt({reshuffle:true});
-    clearLocalProgressOnly();
-  }
-
-  // chuẩn bị shuffle nếu quiz có mode (giữ ổn định khi "tiếp tục làm")
-  ensureShuffle({force:false});
-
-  updateStats();
-
-  if(!QUIZ.require_login){
-    if(me && me.user_id) setUserCorner(me); else setUserCorner(null);
-
-    if(FLAG_START){
-      dropFlagsFromUrl();
-      view.started = true;
-      renderQuiz();
-      scrollToHashIfAny();
-    }else{
-      renderStart();
-    }
-    return;
-  }
-
-  if(me && me.user_id){
-    setUserCorner(me);
-    renderStart();
-  }else{
-    setUserCorner(null);
-    renderGate();
-  }
-})();
+  updateLatexPreview();
+}
+(async ()=>{ await boot(); })();
 </script>
-
 </body>
 </html>
