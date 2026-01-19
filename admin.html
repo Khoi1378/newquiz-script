@@ -80,6 +80,7 @@
       border-radius:999px; padding:8px 12px;
       font-weight:900; font-size:.9rem; color:#374151; white-space:nowrap;
       display:flex; gap:8px; align-items:center;
+      flex-wrap:wrap;
     }
     .badge-admin{
       padding:4px 8px; border-radius:999px; font-weight:950; font-size:.78rem;
@@ -737,68 +738,28 @@ B
 /* ================== CONFIG ================== */
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
-
 const STORAGE_BUCKET = "quiz";
 
-/* ===== TOKENLESS RPC (u/pin) ===== */
+/* ================== TOKEN STORAGE (match index.html) ================== */
+const TOKEN_KEYS = ["tk_token_v2","tk_token_v1","tk_token"];
+const TOKEN_COOKIES = ["tk_token_v2","tk_token_v1","tk_token"];
+
+/* ================== RPC NAMES (try multiple) ================== */
 const RPC = {
-  me: "api_me_v0",
-  logout: "api_logout_v0",
-  adminUpsertQuiz: "admin_upsert_quiz_v0",
-  adminListQuizzes: "admin_list_quizzes_v0",
-  adminDeleteQuiz: "admin_delete_quiz_v0",
-  adminGetQuestions: "admin_get_questions_v0",
-  adminReplaceQuestions: "admin_replace_questions_v3_v0",
-  adminListUsers: "admin_list_users_v0",
-  adminDeleteUser: "admin_delete_user_v0",
-  adminForceRename: "admin_force_rename_v0",
-  adminForceSetPin: "admin_force_set_pin_v0"
+  me: ["api_me","api_me_v0","api_me_v1","api_me_v2"],
+  logout: ["api_logout","api_logout_v0","api_logout_v1","api_logout_v2"],
+
+  // token-based admin (preferred)
+  adminUpsertQuiz: ["admin_upsert_quiz","admin_upsert_quiz_v1","admin_upsert_quiz_v0"],
+  adminListQuizzes: ["admin_list_quizzes","admin_list_quizzes_v1","admin_list_quizzes_v0"],
+  adminDeleteQuiz: ["admin_delete_quiz","admin_delete_quiz_v1","admin_delete_quiz_v0"],
+  adminGetQuestions: ["admin_get_questions","admin_get_questions_v1","admin_get_questions_v0"],
+  adminReplaceQuestions: ["admin_replace_questions_v3","admin_replace_questions_v3_v0","admin_replace_questions","admin_replace_questions_v1","admin_replace_questions_v0"],
+  adminListUsers: ["admin_list_users","admin_list_users_v1","admin_list_users_v0"],
+  adminDeleteUser: ["admin_delete_user","admin_delete_user_v1","admin_delete_user_v0"],
+  adminForceRename: ["admin_force_rename","admin_force_rename_v1","admin_force_rename_v0"],
+  adminForceSetPin: ["admin_force_set_pin","admin_force_set_pin_v1","admin_force_set_pin_v0"]
 };
-
-/* ================== AUTH (u/pin in URL) ================== */
-let AUTH = { u:"", pin:"" };
-
-function readAuthFromUrl(){
-  let u = "", pin = "";
-
-  try{
-    const url = new URL(location.href);
-
-    // query: ?u=...&pin=...
-    u = (url.searchParams.get("u") || url.searchParams.get("username") || "").trim().toLowerCase();
-    pin = (url.searchParams.get("pin") || url.searchParams.get("p") || "").trim();
-
-    // hash: #u=...&pin=...
-    if((!u || !pin) && url.hash){
-      const hs = String(url.hash||"").replace(/^#/,"");
-      const p = new URLSearchParams(hs);
-      u = (u || (p.get("u") || p.get("username") || "")).trim().toLowerCase();
-      pin = (pin || (p.get("pin") || p.get("p") || "")).trim();
-    }
-  }catch{}
-
-  AUTH.u = u;
-  AUTH.pin = pin;
-  return AUTH;
-}
-
-function setAuthToHash(u, pin){
-  const uu = String(u||"").trim().toLowerCase();
-  const pp = String(pin||"").trim();
-  if(!uu || !pp) return;
-  const hs = `u=${encodeURIComponent(uu)}&pin=${encodeURIComponent(pp)}`;
-  // replaceState để khỏi spam history
-  try{
-    history.replaceState(null, "", location.pathname + location.search + "#" + hs);
-  }catch{
-    location.hash = hs;
-  }
-  readAuthFromUrl();
-}
-
-function authArgs(extra){
-  return Object.assign({ p_username: AUTH.u, p_pin: AUTH.pin }, extra || {});
-}
 
 /* ================== UI HELPERS ================== */
 function toast(msg){
@@ -813,6 +774,115 @@ function esc(s){
 }
 function lockScroll(on){
   document.body.classList.toggle("noScroll", !!on);
+}
+
+/* ===== persistent storage (helps iOS/PWA) ===== */
+async function requestPersistentStorage(){
+  try{
+    if(navigator.storage && navigator.storage.persist){
+      await navigator.storage.persist();
+    }
+  }catch{}
+}
+
+/* ===== cookies helpers ===== */
+function cookieDomainHint(){
+  const host = String(location.hostname||"").trim();
+  if(!host || host==="localhost" || host.endsWith(".localhost")) return "";
+  if(/^\d+\.\d+\.\d+\.\d+$/.test(host)) return "";
+  const parts = host.split(".").filter(Boolean);
+  if(parts.length < 2) return "";
+  return "." + parts.slice(-2).join(".");
+}
+function setCookie(name, value){
+  const v = encodeURIComponent(String(value||""));
+  const maxAge = 60*60*24*365*20;
+  const base = cookieDomainHint();
+  const common = `${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
+  document.cookie = common;
+  if(base && base !== location.hostname){
+    document.cookie = `${common}; Domain=${base}`;
+  }
+}
+function getCookie(name){
+  const cs = document.cookie ? document.cookie.split(";") : [];
+  let found = "";
+  for(const raw of cs){
+    const s = raw.trim();
+    if(!s) continue;
+    const eq = s.indexOf("=");
+    const k = (eq>=0 ? s.slice(0,eq) : s).trim();
+    if(k === name) found = (eq>=0 ? s.slice(eq+1) : "");
+  }
+  try{ return found ? decodeURIComponent(found) : ""; }catch{ return found || ""; }
+}
+function delCookie(name){
+  const base = cookieDomainHint();
+  document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
+  if(base && base !== location.hostname){
+    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax; Domain=${base}`;
+  }
+}
+
+function setToken(t){
+  t = String(t||"").trim();
+  if(!t) return;
+  for(const k of TOKEN_KEYS){
+    try{ localStorage.setItem(k, t); }catch{}
+    try{ sessionStorage.setItem(k, t); }catch{}
+  }
+  for(const c of TOKEN_COOKIES){
+    try{ setCookie(c, t); }catch{}
+  }
+  try{ window.name = "tk:" + t; }catch{}
+}
+function clearToken(){
+  for(const k of TOKEN_KEYS){
+    try{ localStorage.removeItem(k); }catch{}
+    try{ sessionStorage.removeItem(k); }catch{}
+  }
+  for(const c of TOKEN_COOKIES){
+    try{ delCookie(c); }catch{}
+  }
+  try{ if(String(window.name||"").startsWith("tk:")) window.name = ""; }catch{}
+}
+function getToken(){
+  let t = "";
+
+  // localStorage
+  for(const k of TOKEN_KEYS){
+    try{
+      t = (localStorage.getItem(k) || "").trim();
+      if(t) break;
+    }catch{}
+  }
+
+  // sessionStorage
+  if(!t){
+    for(const k of TOKEN_KEYS){
+      try{
+        t = (sessionStorage.getItem(k) || "").trim();
+        if(t) break;
+      }catch{}
+    }
+  }
+
+  // cookies
+  if(!t){
+    for(const c of TOKEN_COOKIES){
+      t = (getCookie(c) || "").trim();
+      if(t) break;
+    }
+  }
+
+  // window.name
+  if(!t){
+    const wn = String(window.name||"");
+    if(wn.startsWith("tk:")) t = wn.slice(3).trim();
+  }
+
+  if(t) setToken(t); // sync/migrate all
+  return t;
 }
 
 /* ================== MathJax helper ================== */
@@ -859,76 +929,54 @@ async function rpc(fn, args){
   return data;
 }
 
-/* ================== STORAGE UPLOAD ================== */
-function publicObjectUrl(bucket, path){
-  const safe = path.split("/").map(encodeURIComponent).join("/");
-  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${safe}`;
-}
-async function uploadToBucket(bucket, path, blob, contentType){
-  const url = `${SUPABASE_URL}/storage/v1/object/${bucket}/${path.split("/").map(encodeURIComponent).join("/")}`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
-      "Content-Type": contentType || "application/octet-stream",
-      "x-upsert": "true"
-    },
-    body: blob
-  });
-  if(!res.ok){
-    const t = await res.text().catch(()=> "");
-    throw new Error(`Upload failed (${res.status}): ${t || "check bucket policy"}`);
+async function rpcTry(fns, argsList){
+  let lastErr = null;
+  const fnArr = Array.isArray(fns) ? fns : [String(fns||"")];
+  const argArr = (argsList && argsList.length) ? argsList : [{}];
+
+  for(const fn of fnArr){
+    if(!fn) continue;
+    for(const args of argArr){
+      try{
+        return await rpc(fn, args);
+      }catch(e){
+        lastErr = e;
+      }
+    }
   }
-  return publicObjectUrl(bucket, path);
+  throw (lastErr || new Error("RPC failed"));
 }
 
-/* ================== NEED LOGIN (TOKENLESS UI) ================== */
-function renderNeedLogin(msg){
-  const gate = document.getElementById("gate");
-  gate.innerHTML = `
-    <div class="row1">
-      <p class="vi" style="margin:0">Cần u/pin</p>
-      <span class="idx warn">${esc(msg || "Thiếu u/pin để vào admin")}</span>
-    </div>
+/* ================== AUTH (TOKEN ONLY) ================== */
+let TOKEN = "";
+let ME = null;
 
-    <div class="hint" style="margin-top:10px">
-      Admin panel bản tokenless: cần <b>username + PIN</b> (đúng user admin) để gọi RPC.<br>
-      Bạn có thể:
-      <div class="mono" style="margin-top:8px; background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:10px">
-        /admin#u=tuankhoi&pin=072008
-      </div>
-      Hoặc nhập nhanh ở đây:
-    </div>
+function isAdminMe(me){
+  if(!me) return false;
+  const u = String(me.username||"").toLowerCase();
+  const r = String(me.role||"").toLowerCase();
+  return r==="admin" || u==="tuankhoi";
+}
 
-    <div class="grid2" style="margin-top:10px">
-      <div>
-        <label style="margin-top:0">Username</label>
-        <input class="input mono" id="authU" placeholder="vd: tuankhoi" value="${esc(AUTH.u||"")}"/>
-      </div>
-      <div>
-        <label style="margin-top:0">PIN</label>
-        <input class="input mono" id="authP" placeholder="vd: 072008" value="${esc(AUTH.pin||"")}"/>
-      </div>
-    </div>
+function redirectHome(){
+  // đá user thường về trang chủ (đúng yêu cầu)
+  try{ location.replace("/"); }catch{ location.href="/"; }
+}
 
-    <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-      <button class="btn btn-primary" id="btnSetAuth" type="button">Vào Admin</button>
-      <button class="btn" id="btnRetry" type="button">Thử lại</button>
-      <button class="btn btn-ghost" id="btnGoHome" type="button">Về trang chủ</button>
-    </div>
-  `;
+function tokenArgsVariants(extra){
+  const ex = extra || {};
+  return [
+    Object.assign({ p_token: TOKEN }, ex),
+    Object.assign({ token: TOKEN }, ex),
+    Object.assign({ session_token: TOKEN }, ex),
+    Object.assign({ p_session_token: TOKEN }, ex),
+    Object.assign({ sessionToken: TOKEN }, ex)
+  ];
+}
 
-  gate.querySelector("#btnGoHome").onclick = ()=> location.href = "/";
-  gate.querySelector("#btnRetry").onclick = ()=> tryAutoLogin();
-
-  gate.querySelector("#btnSetAuth").onclick = ()=>{
-    const u = (gate.querySelector("#authU")?.value || "").trim();
-    const p = (gate.querySelector("#authP")?.value || "").trim();
-    if(!u || !p) return toast("Thiếu username hoặc PIN");
-    setAuthToHash(u, p);
-    tryAutoLogin();
-  };
+async function callRpc(key, extra){
+  const fns = RPC[key] || [key];
+  return await rpcTry(fns, tokenArgsVariants(extra));
 }
 
 /* ================== DOM ================== */
@@ -952,7 +1000,6 @@ tabQuizzes.onclick = ()=>setTab("q");
 tabUsers.onclick = ()=>setTab("u");
 
 /* ================== STATE ================== */
-let ME = null;
 let QUIZZES = [];
 let USERS = [];
 
@@ -963,7 +1010,6 @@ let ACTIVE_Q_INDEX = -1;
 let ACTIVE_TEXTAREA = null;
 
 let APP_STARTED = false;
-let AUTH_WATCHER_STARTED = false;
 
 /* ================== PAGES ================== */
 const quizListPage = document.getElementById("quizListPage");
@@ -983,40 +1029,39 @@ function setQuizPage(p){
 
 /* ================== LOGOUT ================== */
 async function doLogout(){
-  try{ await rpc(RPC.logout, {}); }catch{}
-  // clear auth in URL
-  try{ history.replaceState(null,"",location.pathname+location.search); }catch{ location.hash=""; }
-  AUTH.u = ""; AUTH.pin = "";
+  try{ if(TOKEN) await callRpc("logout", {}); }catch{}
+  clearToken();
   ME = null;
+  TOKEN = "";
   toast("Đã logout");
-  setTimeout(()=>location.href="/", 350);
+  setTimeout(()=>redirectHome(), 200);
 }
 
-/* ================== AUTH GATE ================== */
+/* ================== AUTH GATE (STRICT) ================== */
 async function gateCheck(){
   app.style.display = "none";
+  gate.innerHTML = `Đang kiểm tra đăng nhập...`;
+  mePill.textContent = "Checking…";
 
-  readAuthFromUrl();
-  if(!AUTH.u || !AUTH.pin){
-    ME = null;
-    mePill.textContent = "Need u/pin";
-    renderNeedLogin("Thiếu u/pin trên URL hoặc chưa nhập");
+  TOKEN = getToken();
+  if(!TOKEN){
+    // chưa login -> về trang chủ để login (admin login xong tự nhảy /admin từ index.html)
+    redirectHome();
     return false;
   }
 
   try{
-    const meOut = await rpc(RPC.me, authArgs());
-    if(!meOut?.ok) throw new Error(meOut?.error || "not logged");
+    const meOut = await callRpc("me", {});
+    if(!meOut?.ok || !meOut?.me) throw new Error(meOut?.error || "not logged");
     ME = meOut.me;
 
-    const isAdmin =
-      (String(ME.role||"").toLowerCase()==="admin") ||
-      (String(ME.username||"").toLowerCase()==="tuankhoi");
+    // refresh token if backend returns
+    const t2 = meOut.token || meOut.session_token || meOut.sessionToken;
+    if(t2) setToken(t2);
 
-    if(!isAdmin){
-      mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="idx warn">NOT ADMIN</span>`;
-      gate.innerHTML = `Bạn không phải admin. <button class="btn btn-ghost" id="btnLogoutGate" type="button">Logout</button>`;
-      gate.querySelector("#btnLogoutGate").onclick = doLogout;
+    if(!isAdminMe(ME)){
+      // user thường -> đá về trang chủ ngay
+      redirectHome();
       return false;
     }
 
@@ -1031,9 +1076,9 @@ async function gateCheck(){
     app.style.display = "";
     return true;
   }catch(e){
-    ME = null;
-    mePill.textContent = "Login failed";
-    renderNeedLogin("Sai PIN / không check được: " + (e.message||""));
+    // token lỗi/hết hạn -> về trang chủ
+    clearToken();
+    redirectHome();
     return false;
   }
 }
@@ -1054,29 +1099,28 @@ async function afterLoginInit(){
   await reloadUsers();
 }
 
-async function tryAutoLogin(){
-  const ok = await gateCheck();
-  if(ok) await afterLoginInit();
-  return ok;
+/* ================== STORAGE UPLOAD ================== */
+function publicObjectUrl(bucket, path){
+  const safe = path.split("/").map(encodeURIComponent).join("/");
+  return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${safe}`;
 }
-
-function startAuthWatcher(){
-  if(AUTH_WATCHER_STARTED) return;
-  AUTH_WATCHER_STARTED = true;
-
-  const onVis = ()=>{ if(!document.hidden) tryAutoLogin(); };
-  const onFocus = ()=> tryAutoLogin();
-  const onHash = ()=> tryAutoLogin();
-
-  window.addEventListener("visibilitychange", onVis, {passive:true});
-  window.addEventListener("focus", onFocus, {passive:true});
-  window.addEventListener("hashchange", onHash, {passive:true});
-
-  // interval nhẹ để bắt case iOS không bắn event ổn định
-  setInterval(()=>{
-    if(APP_STARTED) return;
-    tryAutoLogin();
-  }, 1800);
+async function uploadToBucket(bucket, path, blob, contentType){
+  const url = `${SUPABASE_URL}/storage/v1/object/${bucket}/${path.split("/").map(encodeURIComponent).join("/")}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+      "Content-Type": contentType || "application/octet-stream",
+      "x-upsert": "true"
+    },
+    body: blob
+  });
+  if(!res.ok){
+    const t = await res.text().catch(()=> "");
+    throw new Error(`Upload failed (${res.status}): ${t || "check bucket policy"}`);
+  }
+  return publicObjectUrl(bucket, path);
 }
 
 /* ================== QUIZ FORM (settings modal inputs) ================== */
@@ -1253,7 +1297,7 @@ function validateQuiz(){
 
 /* ================== QUIZ CRUD ================== */
 async function saveQuizOnly(){
-  if(!AUTH.u || !AUTH.pin) throw new Error("Thiếu u/pin");
+  if(!TOKEN) throw new Error("Thiếu token");
 
   if(CURRENT_MODE !== "EDIT"){
     if(!CURRENT_QID) CURRENT_QID = genUniqueQuizId5();
@@ -1267,7 +1311,7 @@ async function saveQuizOnly(){
     totalScoreEl.value = String(totalScore);
   }
 
-  const payload = authArgs({
+  const payload = {
     p_quiz_id: qid,
     p_title: titleEl.value.trim(),
     p_sub: subEl.value.trim(),
@@ -1281,11 +1325,11 @@ async function saveQuizOnly(){
     p_shuffle_mode: String(shuffleModeEl.value || "none"),
     p_require_access_code: (requireCodeEl.value === "true"),
     p_access_code: accessCodeEl.value.trim()
-  });
+  };
 
   for(let attempt=0; attempt<5; attempt++){
     try{
-      const out = await rpc(RPC.adminUpsertQuiz, payload);
+      const out = await callRpc("adminUpsertQuiz", payload);
       CURRENT_QID = out.quiz_id || payload.p_quiz_id;
       quizIdEl.value = CURRENT_QID;
       setMode("EDIT");
@@ -1374,7 +1418,7 @@ function renderQuizList(){
 }
 
 async function reloadQuizzes(){
-  const out = await rpc(RPC.adminListQuizzes, authArgs());
+  const out = await callRpc("adminListQuizzes", {});
   QUIZZES = out.items || [];
   renderQuizList();
 }
@@ -1383,7 +1427,7 @@ document.getElementById("btnReloadQuizzes").onclick = ()=>reloadQuizzes().catch(
 async function delQuiz(qid){
   const ok = confirm("Xóa quiz " + qid + " ?");
   if(!ok) return;
-  await rpc(RPC.adminDeleteQuiz, authArgs({ p_quiz_id:qid }));
+  await callRpc("adminDeleteQuiz", { p_quiz_id:qid });
   toast("Đã xóa " + qid);
   await reloadQuizzes();
 }
@@ -1498,7 +1542,7 @@ async function openEditorForQuiz(qid){
   renderAllQuestions();
 
   try{
-    const out = await rpc(RPC.adminGetQuestions, authArgs({ p_quiz_id: qid }));
+    const out = await callRpc("adminGetQuestions", { p_quiz_id: qid });
     if(!out?.ok) throw new Error(out?.error || "admin_get_questions failed");
     const items = out.items || [];
 
@@ -2215,7 +2259,7 @@ async function publishAll(){
       };
     });
 
-    await rpc(RPC.adminReplaceQuestions, authArgs({ p_quiz_id: qid, p_items: items }));
+    await callRpc("adminReplaceQuestions", { p_quiz_id: qid, p_items: items });
 
     toast(`Published: ${qid}`);
     await reloadQuizzes();
@@ -2281,7 +2325,7 @@ function renderUsers(){
 }
 
 async function reloadUsers(){
-  const out = await rpc(RPC.adminListUsers, authArgs());
+  const out = await callRpc("adminListUsers", {});
   USERS = out.items || [];
   renderUsers();
 }
@@ -2293,21 +2337,21 @@ async function delUser(id){
   if(u && isAdminUser(u)) return toast("Admin không xóa được");
   const ok = confirm("Xóa user này? (mất progress/attempts/comments)");
   if(!ok) return;
-  await rpc(RPC.adminDeleteUser, authArgs({ p_user_id:id }));
+  await callRpc("adminDeleteUser", { p_user_id:id });
   toast("Deleted user");
   await reloadUsers();
 }
 async function renameUser(id){
   const newU = prompt("New username (lowercase, a-z0-9_):");
   if(!newU) return;
-  await rpc(RPC.adminForceRename, authArgs({ p_user_id:id, p_new_username:newU }));
+  await callRpc("adminForceRename", { p_user_id:id, p_new_username:newU });
   toast("Renamed");
   await reloadUsers();
 }
 async function resetPin(id){
   const pin = prompt("Set new PIN (6 digits, ví dụ 072008).");
   if(!pin) return;
-  await rpc(RPC.adminForceSetPin, authArgs({ p_user_id:id, p_new_pin:pin }));
+  await callRpc("adminForceSetPin", { p_user_id:id, p_new_pin:pin });
   toast("PIN reset");
   await reloadUsers();
 }
@@ -2435,13 +2479,10 @@ updateLatexPreview();
 
 /* ================== BOOT ================== */
 async function boot(){
-  // đọc auth trước để render đúng gate
-  readAuthFromUrl();
+  await requestPersistentStorage();
 
-  const ok = await tryAutoLogin();
-  if(!ok){
-    startAuthWatcher();
-  }
+  const ok = await gateCheck();
+  if(ok) await afterLoginInit();
 }
 (async ()=>{ await boot(); })();
 </script>
