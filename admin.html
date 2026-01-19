@@ -213,26 +213,6 @@
     .hint{font-weight:650;color:var(--muted);line-height:1.35; font-size:.88rem}
     .hidden{display:none !important;}
 
-    .imgRow{display:flex; gap:10px; flex-wrap:wrap; align-items:stretch; margin-top:10px}
-    .imgDrop{
-      flex:1 1 320px;
-      border:2px dashed #e5e7eb;
-      border-radius:16px;
-      padding:12px;
-      background:rgba(248,250,252,.8);
-      display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;
-    }
-    .imgDrop small{color:var(--muted); font-weight:750}
-    .imgPreview{
-      width:220px; height:132px;
-      border-radius:14px;
-      border:1px solid #e5e7eb;
-      background:#fff;
-      object-fit:cover;
-      display:none;
-      flex:0 0 auto;
-    }
-
     .qFab{
       position:fixed; left:0; right:0;
       bottom:calc(env(safe-area-inset-bottom) + 18px);
@@ -326,7 +306,7 @@
     .latexChip:hover{filter:brightness(.98)}
     .latexTiny{font-size:.86rem; color:var(--muted); font-weight:750}
 
-    /* ✅ NEW: Prompt + image right-side + LaTeX preview */
+    /* ✅ Prompt + image right-side + LaTeX preview */
     .qPromptGrid{
       display:grid;
       grid-template-columns: 1fr 220px;
@@ -376,7 +356,7 @@
       overflow:auto;
     }
 
-    /* ✅ NEW: LaTeX panel preview */
+    /* ✅ LaTeX panel preview */
     .latexPreviewWrap{
       margin-top:10px;
       display:grid;
@@ -523,8 +503,11 @@
                 </div>
               </div>
 
-              <label>Tổng điểm</label>
-              <input class="input mono" id="totalScore" value="10" />
+              <!-- ✅ NEW: totalScore wrap (ẩn khi custom) -->
+              <div id="totalScoreWrap">
+                <label>Tổng điểm</label>
+                <input class="input mono" id="totalScore" value="10" />
+              </div>
 
               <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
                 <button class="btn" id="btnNewQuiz" type="button">✨ Tạo mới</button>
@@ -537,7 +520,6 @@
               <div class="row1">
                 <p class="vi">Danh sách quiz</p>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-                  <!-- ✅ NEW: tạo quiz mới ngay trên list -->
                   <button class="btn" id="btnNewQuizOnList" type="button">✨ Tạo mới</button>
                   <button class="btn" id="btnReloadQuizzes" type="button">Reload</button>
                 </div>
@@ -655,7 +637,7 @@ B
 
     <div class="latexGrid" id="latexGrid"></div>
 
-    <!-- ✅ NEW: LaTeX preview -->
+    <!-- ✅ LaTeX preview -->
     <div class="latexPreviewWrap">
       <div>
         <div class="latexTiny" style="margin-bottom:6px">Nội dung LaTeX (để xem trước)</div>
@@ -673,8 +655,10 @@ B
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
-/* ✅ Admin panel KHÔNG login ở đây nữa. Nó chỉ dùng token của trang chủ. */
+/* ✅ Admin panel KHÔNG login ở đây nữa. Nó chỉ dùng token của trang chủ.
+   Token "vĩnh viễn": localStorage + cookie (share subdomain) + sessionStorage + window.name */
 const TOKEN_KEY = "tk_token_v2";
+const TOKEN_COOKIE = "tk_token_v2";
 
 /* Storage */
 const STORAGE_BUCKET = "quiz";
@@ -708,12 +692,103 @@ function esc(s){
   return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
-function getToken(){ return (localStorage.getItem(TOKEN_KEY) || "").trim(); }
-function setToken(t){ localStorage.setItem(TOKEN_KEY, String(t||"").trim()); }
-function clearToken(){ localStorage.removeItem(TOKEN_KEY); }
 
+/* ====== TOKEN PERSIST (localStorage + cookie + fallback) ====== */
+function cookieDomainHint(){
+  const host = String(location.hostname||"").trim();
+  if(!host || host==="localhost" || host.endsWith(".localhost")) return "";
+  if(/^\d+\.\d+\.\d+\.\d+$/.test(host)) return ""; // ipv4
+  const parts = host.split(".").filter(Boolean);
+  if(parts.length < 2) return "";
+  // naive base domain: last 2 parts (ok cho .com/.net/.vn...)
+  return "." + parts.slice(-2).join(".");
+}
+function setCookie(name, value){
+  const v = encodeURIComponent(String(value||""));
+  const maxAge = 60*60*24*365*20; // ~20 years
+  const base = cookieDomainHint();
+  const common = `${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
+  document.cookie = common; // host-only
+  if(base && base !== location.hostname){
+    document.cookie = `${common}; Domain=${base}`;
+  }
+}
+function getCookie(name){
+  const cs = document.cookie ? document.cookie.split(";") : [];
+  let found = "";
+  for(const raw of cs){
+    const s = raw.trim();
+    if(!s) continue;
+    const eq = s.indexOf("=");
+    const k = (eq>=0 ? s.slice(0,eq) : s).trim();
+    if(k === name){
+      found = (eq>=0 ? s.slice(eq+1) : "");
+    }
+  }
+  try{ return found ? decodeURIComponent(found) : ""; }catch{ return found || ""; }
+}
+function delCookie(name){
+  const base = cookieDomainHint();
+  document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
+  if(base && base !== location.hostname){
+    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax; Domain=${base}`;
+  }
+}
+function setToken(t){
+  t = String(t||"").trim();
+  if(!t) return;
+  try{ localStorage.setItem(TOKEN_KEY, t); }catch{}
+  try{ sessionStorage.setItem(TOKEN_KEY, t); }catch{}
+  try{ setCookie(TOKEN_COOKIE, t); }catch{}
+  try{ window.name = "tk:" + t; }catch{}
+}
+function clearToken(){
+  try{ localStorage.removeItem(TOKEN_KEY); }catch{}
+  try{ sessionStorage.removeItem(TOKEN_KEY); }catch{}
+  try{ delCookie(TOKEN_COOKIE); }catch{}
+  try{ if(String(window.name||"").startsWith("tk:")) window.name = ""; }catch{}
+}
+function getToken(){
+  let t = "";
+  try{ t = (localStorage.getItem(TOKEN_KEY) || "").trim(); }catch{}
+  if(!t) { try{ t = (sessionStorage.getItem(TOKEN_KEY) || "").trim(); }catch{} }
+  if(!t) t = (getCookie(TOKEN_COOKIE) || "").trim();
+  if(!t){
+    const wn = String(window.name||"");
+    if(wn.startsWith("tk:")) t = wn.slice(3).trim();
+  }
+
+  // hỗ trợ lấy token từ URL để "vào phát được luôn"
+  try{
+    const u = new URL(location.href);
+    if(!t){
+      const q = (u.searchParams.get("tk") || u.searchParams.get("token") || "").trim();
+      if(q) t = q;
+    }
+    if(!t && u.hash){
+      const hs = u.hash.replace(/^#/,"");
+      const p = new URLSearchParams(hs);
+      const q2 = (p.get("tk") || p.get("token") || "").trim();
+      if(q2) t = q2;
+    }
+  }catch{}
+
+  if(t) setToken(t); // persist lại ngay
+  return t;
+}
+async function requestPersistentStorage(){
+  try{
+    if(navigator.storage && navigator.storage.persist){
+      await navigator.storage.persist();
+    }
+  }catch{}
+}
+
+/* ================== UI: NEED LOGIN ================== */
 function renderNeedLogin(msg){
   const gate = document.getElementById("gate");
+  const curTk = getToken();
+
   gate.innerHTML = `
     <div class="row1">
       <p class="vi" style="margin:0">Chưa đăng nhập</p>
@@ -722,15 +797,30 @@ function renderNeedLogin(msg){
 
     <div class="hint" style="margin-top:8px">
       Admin panel <b>không</b> đăng nhập ở đây nữa.<br>
-      Vui lòng đăng nhập tài khoản <b>tuankhoi</b> ở trang chủ, rồi mở lại <code>/admin.html</code>.
+      Vui lòng đăng nhập tài khoản <b>tuankhoi</b> ở trang chủ, rồi mở lại <code>/admin.html</code>.<br>
+      <span class="muted">Tip:</span> token được lưu <b>vĩnh viễn</b> bằng cookie+localStorage (nếu browser cho).
     </div>
 
+    <label style="margin-top:12px">Token (tùy chọn – để dán thủ công nếu browser không share storage)</label>
+    <input class="input mono" id="manualToken" placeholder="dán token vào đây..." value="${esc(curTk||"")}"/>
+
     <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-      <button class="btn btn-primary" id="btnGoHome" type="button">🏠 Về trang chủ</button>
+      <button class="btn" id="btnRetry" type="button">🔁 Thử lại</button>
+      <button class="btn btn-primary" id="btnSaveManual" type="button">💾 Lưu token</button>
+      <button class="btn btn-ghost" id="btnGoHome" type="button">🏠 Về trang chủ</button>
       <button class="btn btn-ghost" id="btnClearToken" type="button">🧹 Xóa phiên</button>
     </div>
   `;
+
   gate.querySelector("#btnGoHome").onclick = ()=> location.href = "/";
+  gate.querySelector("#btnRetry").onclick = ()=> location.reload();
+  gate.querySelector("#btnSaveManual").onclick = ()=>{
+    const v = (gate.querySelector("#manualToken")?.value || "").trim();
+    if(!v) return toast("Token trống");
+    setToken(v);
+    toast("Đã lưu token");
+    setTimeout(()=>location.reload(), 300);
+  };
   gate.querySelector("#btnClearToken").onclick = ()=>{
     clearToken();
     toast("Đã xóa phiên");
@@ -757,7 +847,6 @@ function typesetElement(el){
       return MathJax.typesetPromise([el]).catch(()=>{});
     }
   }catch{}
-  // MathJax chưa load -> thử lại 1 lần
   setTimeout(()=>{
     try{
       if(window.MathJax && MathJax.typesetPromise){
@@ -891,9 +980,9 @@ async function gateCheck(){
     app.style.display = "";
     return true;
   }catch(e){
-    clearToken();
+    // ✅ KHÔNG tự xóa token nữa (vì một số browser/network lỗi -> mất token oan)
     mePill.textContent = "Login required";
-    renderNeedLogin("Phiên hết hạn / token lỗi: " + (e.message||""));
+    renderNeedLogin("Phiên lỗi / không check được: " + (e.message||""));
     return false;
   }
 }
@@ -912,6 +1001,7 @@ const shuffleModeEl = document.getElementById("shuffleMode");
 const requireCodeEl = document.getElementById("requireCode");
 const accessCodeEl = document.getElementById("accessCode");
 const totalScoreEl = document.getElementById("totalScore");
+const totalScoreWrap = document.getElementById("totalScoreWrap");
 const editModePill = document.getElementById("editModePill");
 
 quizIdEl.addEventListener("input", ()=>{
@@ -927,6 +1017,25 @@ function setMode(mode){
   else quizIdEl.removeAttribute("disabled");
 }
 
+function calcCustomTotal(){
+  let sum = 0;
+  for(const q of (QUESTIONS||[])){
+    const p = Number(q?.points ?? 0);
+    if(Number.isFinite(p)) sum += p;
+  }
+  return Math.round(sum*100)/100;
+}
+function updateTotalScoreUI(){
+  const mode = String(scoringModeEl.value||"equal");
+  if(mode === "custom"){
+    if(totalScoreWrap) totalScoreWrap.classList.add("hidden");
+    if(totalScoreEl) totalScoreEl.value = String(calcCustomTotal());
+  }else{
+    if(totalScoreWrap) totalScoreWrap.classList.remove("hidden");
+    if(totalScoreEl && !String(totalScoreEl.value||"").trim()) totalScoreEl.value = "10";
+  }
+}
+
 function validateQuiz(){
   const title = titleEl.value.trim();
   if(!title) return "Thiếu title";
@@ -935,6 +1044,12 @@ function validateQuiz(){
   if(qid && qid.length!==5) return "Quiz ID phải đúng 5 chữ a-z";
   const sm = String(shuffleModeEl.value||"none");
   if(!["none","q","qa"].includes(sm)) return "Shuffle mode không hợp lệ";
+
+  // chỉ bắt totalScore khi equal
+  if(String(scoringModeEl.value||"equal")==="equal"){
+    const total = Number(totalScoreEl.value || "");
+    if(!Number.isFinite(total) || total<=0) return "Tổng điểm không hợp lệ";
+  }
   return null;
 }
 
@@ -1024,6 +1139,7 @@ function renderQuestions(){
   updateQCount();
   if(!QUESTIONS.length){
     qList.innerHTML = `<div class="muted">Chưa có câu hỏi. Bấm “THÊM CÂU HỎI”.</div>`;
+    updateTotalScoreUI();
     return;
   }
   const isCustom = (scoringModeEl.value === "custom");
@@ -1060,13 +1176,11 @@ function renderQuestions(){
           <button class="mathBtn" data-act="wrapBlock" type="button">$$...$$</button>
         </div>
 
-        <!-- ✅ Prompt + image on the RIGHT -->
         <div class="qPromptGrid">
           <div>
             <label>Câu hỏi</label>
             <textarea class="qPrompt" placeholder="Click rồi dùng nút 🧮 để chèn mẫu...">${esc(q.prompt||"")}</textarea>
 
-            <!-- ✅ LaTeX preview (render toán học) -->
             <div class="mathPreviewBox">
               <div class="latexTiny" style="margin-bottom:6px">Xem trước (render toán học)</div>
               <div class="mathPreview" data-math-prev="1"></div>
@@ -1154,8 +1268,8 @@ function renderQuestions(){
     }
   });
 
-  // ✅ render math previews
   refreshAllMathPreviews();
+  updateTotalScoreUI();
 }
 
 function syncQuestionFromCard(card){
@@ -1198,8 +1312,8 @@ function syncQuestionFromCard(card){
     };
   }
 
-  // ✅ live math preview per-card
   updateCardMathPreview(card);
+  updateTotalScoreUI();
 }
 
 qList.addEventListener("focusin",(e)=>{
@@ -1282,7 +1396,10 @@ document.getElementById("btnAddQFab").onclick = ()=>{
   scrollToLastQuestionAndFocus();
 };
 
-scoringModeEl.addEventListener("change", ()=>{ renderQuestions(); },{passive:true});
+scoringModeEl.addEventListener("change", ()=>{
+  renderQuestions();
+  updateTotalScoreUI();
+},{passive:true});
 
 /* ================== IMAGE upload ================== */
 const qImgPick = document.getElementById("qImgPick");
@@ -1417,7 +1534,7 @@ function stripStars(s){
   let t = String(s||"").trim();
   for(let k=0;k<3;k++){
     t = t.trim();
-    if((t.startsWith("**") && t.includes("**", 2))){ // ✅ robust: có thể có trailing text
+    if((t.startsWith("**") && t.includes("**", 2))){
       const m = t.match(/^\*\*(.+?)\*\*/);
       if(m){ t = m[1].trim(); continue; }
     }
@@ -1478,7 +1595,6 @@ function parseImportText(text){
         let raw = ln0.trim();
         let isCorrect = false;
 
-        // ✅ robust: **...** hoặc *...* kể cả có trailing "(đáp án đúng)"
         let m = raw.match(/^\s*\*\*(.+?)\*\*/);
         if(m){
           isCorrect = true;
@@ -1630,7 +1746,6 @@ function insertTemplate(tpl){
   const card = el.closest(".qCard");
   if(card) syncQuestionFromCard(card);
 
-  // ✅ update preview
   updateLatexPreviewFromActive();
 }
 function wrapSelection(left,right){
@@ -1728,10 +1843,10 @@ document.getElementById("btnNewQuiz").onclick = ()=>{
   renderQuestions();
   setLastType("mcq1");
   setQBMode("manual");
+  updateTotalScoreUI();
   toast("Tạo mới: OK");
 };
 
-// ✅ NEW: nút tạo mới ở quiz list (chỉ gọi lại y hệt)
 document.getElementById("btnNewQuizOnList").onclick = ()=> document.getElementById("btnNewQuiz").click();
 
 async function saveQuizOnly(){
@@ -1745,6 +1860,13 @@ async function saveQuizOnly(){
   }
   if(!qid || qid.length!==5) throw new Error("Quiz ID phải đúng 5 chữ a-z");
 
+  // ✅ totalScore: equal dùng input, custom dùng sum(points)
+  let totalScore = Number(totalScoreEl.value || "10") || 10;
+  if(String(scoringModeEl.value||"equal")==="custom"){
+    totalScore = calcCustomTotal();
+    totalScoreEl.value = String(totalScore);
+  }
+
   const payload = {
     p_token: token,
     p_quiz_id: qid,
@@ -1756,7 +1878,7 @@ async function saveQuizOnly(){
     p_require_login: (requireLoginEl.value === "true"),
     p_pinned: (pinnedEl.value === "true"),
     p_scoring_mode: scoringModeEl.value,
-    p_total_score: Number(totalScoreEl.value || "10") || 10,
+    p_total_score: totalScore,
     p_shuffle_mode: String(shuffleModeEl.value || "none"),
     p_require_access_code: (requireCodeEl.value === "true"),
     p_access_code: accessCodeEl.value.trim()
@@ -1935,6 +2057,7 @@ async function loadQuizToForm(qid){
     const last = QUESTIONS[QUESTIONS.length-1];
     setLastType(last?.type || "mcq1");
     setQBMode(QB_MODE);
+    updateTotalScoreUI();
     toast("Loaded " + qid);
   }catch(e){
     toast("Load câu hỏi lỗi: " + (e.message||""));
@@ -2020,6 +2143,8 @@ async function resetPin(id){
 
 /* ================== BOOT ================== */
 async function boot(){
+  await requestPersistentStorage(); // ✅ cố xin browser cho lưu bền hơn (nếu support)
+
   const ok = await gateCheck();
   if(!ok) return;
 
@@ -2029,12 +2154,12 @@ async function boot(){
   setMode("NEW");
   QUESTIONS = [];
   renderQuestions();
+  updateTotalScoreUI();
 
   await reloadQuizzes();
   await reloadUsers();
   setTab("q");
 
-  // ✅ ensure panel preview not empty
   updateLatexPreview();
 }
 (async ()=>{ await boot(); })();
