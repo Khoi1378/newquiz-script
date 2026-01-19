@@ -919,7 +919,7 @@ function openProfileModal(){
 
   const isAdmin = isAdminUser(ME);
   document.getElementById("profileHint").textContent =
-    isAdmin ? "Tài khoản admin (tuankhoi) dùng mật khẩu 6 số. Không đổi username/pin ở đây."
+    isAdmin ? "Admin ngoại lệ"
             : "Bạn có thể đổi username và đổi pin 4 số.";
 
   document.getElementById("newUsername").value = "";
@@ -1093,23 +1093,6 @@ async function enterAfterAuth({ token, me, redirectNext=true }){
     location.href = next;
     return;
   }
-
-  // ✅ nếu là admin -> tự chuyển sang admin panel
-  if(ME && isAdminUser(ME)){
-    location.href = "/admin";
-    return;
-  }
-
-  await loadStore();
-  renderStore();
-}
-
-function clearAuthLocal(){
-  clearToken();
-  setMeCache(null);
-  ME = null;
-  updateUserCorner();
-}
 
 /* === helper: normalize login/register output === */
 function normalizeAuthOut(out){
