@@ -1302,10 +1302,26 @@ function renderGate(){
       const o = firstObj(ck) || {};
       const reserved = !!(o.reserved === true || o.is_reserved === true || o.isReserved === true);
 
-      if(exists === true && reserved === true){
+      if(u === "tuankhoi"){
+        // bỏ qua cờ reserved nếu backend trả nhầm
+      } else {
+        // ✅ reserved chỉ nên chặn khi KHÔNG tồn tại user thật (thường là alias cũ)
+      if(reserved === true && exists !== true){
         toast("Username này đã bị giữ lại (đổi tên rồi).");
         gateStatus.textContent="Thử username khác.";
         return;
+       }
+      }
+
+      // Nếu exists=true thì luôn cho nhập PIN để login
+     if(exists === true){
+       if(reserved === true && u !== "tuankhoi"){
+         // optional: cảnh báo nhẹ nhưng vẫn cho login
+         toast("Username có thể là tên cũ, cứ thử đăng nhập…");
+       }
+       gateStatus.textContent="Đăng nhập: nhập mật khẩu…";
+       await openPin({username:u, mode:"login", pinLen});
+       return;
       }
 
       if(exists === true){
