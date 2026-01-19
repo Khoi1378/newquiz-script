@@ -570,15 +570,20 @@ function sortQuizzes(list){
   return arr;
 }
 
-/* ================== SUPABASE RPC ================== */
+/* ================== SUPABASE (RPC + REST fallback) ================== */
+function sbHeaders(){
+  return {
+    "apikey": SUPABASE_ANON_KEY,
+    "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+    "Content-Type":"application/json",
+    "Accept":"application/json"
+  };
+}
+
 async function rpc(fn, args){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
     method:"POST",
-    headers:{
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
-      "Content-Type":"application/json"
-    },
+    headers: sbHeaders(),
     body: JSON.stringify(args||{})
   });
   const txt = await res.text();
@@ -591,13 +596,16 @@ async function rpc(fn, args){
   return data;
 }
 
-/* === RPC fallback để “liên hệ SQL ok” khi tên/param RPC khác nhau === */
+/* === RPC try: thử nhiều function name + nhiều biến thể param === */
 async function rpcTry(fns, argsList){
   let lastErr = null;
-  for(const fn of (fns||[])){
-    for(const args of (argsList||[])){
+  const fList = Array.isArray(fns) ? fns : [String(fns||"")].filter(Boolean);
+  const aList = (Array.isArray(argsList) && argsList.length) ? argsList : [{}];
+
+  for(const fn of fList){
+    for(const args of aList){
       try{
-        return await rpc(fn, args);
+        return await rpc(fn, args || {});
       }catch(e){
         lastErr = e;
       }
@@ -606,38 +614,245 @@ async function rpcTry(fns, argsList){
   throw (lastErr || new Error("RPC failed"));
 }
 
+/* === REST SELECT fallback (khi RPC listStore không khớp) === */
+async function restSelect(pathWithQuery){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${pathWithQuery}`,{
+    method:"GET",
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+      "Accept":"application/json"
+    }
+  });
+  const txt = await res.text();
+  let data=null;
+  try{ data = txt ? JSON.parse(txt) : null; }catch{}
+  if(!res.ok){
+    const msg = (data && (data.message||data.error||data.hint)) ? (data.message||data.error||data.hint) : txt;
+    throw new Error(msg || `REST failed`);
+  }
+  return data;
+}
+
+/* ================== NORMALIZE OUTPUT ================== */
+function firstObj(x){
+  if(Array.isArray(x)) return x[0] || null;
+  if(x && typeof x === "object") return x;
+  return null;
+}
+function pickToken(out){
+  const o = firstObj(out) || {};
+  return (
+    o.token || o.session_token || o.sessionToken ||
+    o.access_token || o.accessToken ||
+    o.app_token || o.appToken ||
+    o.tk || o.jwt || o.bearer ||
+    ""
+  );
+}
+function pickMe(out){
+  const o = firstObj(out) || {};
+  let me = o.me || o.user || o.profile || o.data || null;
+  if(Array.isArray(me)) me = me[0] || null;
+  if(me && typeof me === "object"){
+    return {
+      username: me.username || me.name || me.user || me.handle || "",
+      role: me.role || me.user_role || me.userRole || "user"
+    };
+  }
+  // một số RPC trả thẳng {username, role}
+  if(o.username){
+    return { username: o.username, role: o.role || "user" };
+  }
+  return null;
+}
+function asOk(out){
+  const o = firstObj(out) || {};
+  if(o && typeof o.ok === "boolean") return o.ok;
+  // không có ok nhưng có token thì coi như ok
+  if(!!pickToken(o)) return true;
+  // hoặc có username/me
+  if(!!pickMe(o)) return true;
+  return false;
+}
+function pickExists(ck){
+  const o = firstObj(ck) || {};
+  if(typeof o.exists === "boolean") return o.exists;
+  if(typeof o.is_exists === "boolean") return o.is_exists;
+  if(typeof o.found === "boolean") return o.found;
+  if(typeof o.available === "boolean") return !o.available; // available=true => exists=false
+  if(o.userId || o.user_id || o.id) return true;
+  if(o.ok === true && typeof o.exists === "boolean") return o.exists;
+  return null;
+}
+function pickPinLen(ck, username){
+  const u = normUsername(username);
+  if(u === "tuankhoi") return 6;
+
+  const o = firstObj(ck) || {};
+  const raw = (
+    o.pinLen ?? o.pin_len ?? o.pin_length ??
+    (o.user && (o.user.pinLen ?? o.user.pin_len ?? o.user.pin_length)) ??
+    4
+  );
+
+  let n = Number(raw) || 4;
+  if(!isFinite(n) || n < 4) n = 4;
+  if(n > 12) n = 12;
+  return n;
+}
+
+/* ================== API (FIX COMPAT) ================== */
 const API = {
-  me: (token)=>rpc("api_me",{p_token:token}),
-  logout:(token)=>rpc("api_logout",{p_token:token}),
-  checkUsername:(username)=>rpc("api_check_username",{p_username:username}),
-  login:(username,pin)=>rpc("api_login",{p_username:username,p_pin:String(pin||"")}),
-  register:(username,pin)=>rpc("api_register",{p_username:username,p_pin:String(pin||"")}),
-  listStore:()=>rpc("api_list_public_quizzes",{}),
+  me: async (token)=>{
+    const t = String(token||"").trim();
+    const out = await rpcTry(
+      ["api_me","me","app_me","api_whoami","api_profile","whoami"],
+      [
+        {p_token:t},
+        {token:t},
+        {p_session:t},
+        {session:t},
+        {session_token:t},
+        {p_session_token:t}
+      ]
+    );
+    // normalize về {ok, me, token?}
+    return {
+      ok: asOk(out),
+      me: pickMe(out),
+      token: pickToken(out) || ""
+    };
+  },
+
+  logout: async (token)=>{
+    const t = String(token||"").trim();
+    const out = await rpcTry(
+      ["api_logout","logout","api_signout","signout","api_log_out"],
+      [
+        {p_token:t},
+        {token:t},
+        {p_session:t},
+        {session:t},
+        {session_token:t}
+      ]
+    );
+    return { ok: asOk(out) || true };
+  },
+
+  checkUsername: async (username)=>{
+    const u = normUsername(username);
+    const out = await rpcTry(
+      ["api_check_username","check_username","api_user_exists","api_check_user","api_check_username_v2"],
+      [
+        {p_username:u},
+        {username:u},
+        {p_user:u},
+        {user:u},
+        {p_username_norm:u},
+        {username_norm:u}
+      ]
+    );
+    // pass-through; caller sẽ pickExists/pickPinLen/reserved...
+    return out;
+  },
+
+  login: async (username, pin)=>{
+    const u = normUsername(username);
+    const p = String(pin||"");
+    const out = await rpcTry(
+      ["api_login","login","api_signin","signin","api_login_user","api_login_v2"],
+      [
+        {p_username:u, p_pin:p},
+        {username:u, pin:p},
+        {p_user:u, p_pin:p},
+        {user:u, pin:p},
+        {p_username:u, p_password:p},
+        {username:u, password:p}
+      ]
+    );
+    return out;
+  },
+
+  register: async (username, pin)=>{
+    const u = normUsername(username);
+    const p = String(pin||"");
+    const out = await rpcTry(
+      ["api_register","register","api_signup","signup","api_create_user","api_register_v2"],
+      [
+        {p_username:u, p_pin:p},
+        {username:u, pin:p},
+        {p_user:u, p_pin:p},
+        {user:u, pin:p},
+        {p_username:u, p_password:p},
+        {username:u, password:p}
+      ]
+    );
+    return out;
+  },
+
+  listStore: async ()=>{
+    // 1) thử RPC trước
+    try{
+      const out = await rpcTry(
+        ["api_list_public_quizzes","list_public_quizzes","api_store_list","api_list_store","api_public_store"],
+        [ {}, {p_only_public:true}, {only_public:true} ]
+      );
+      return out;
+    }catch(e){
+      // 2) fallback REST select trực tiếp bảng quizzes (nếu RLS cho phép)
+      // lấy các cột cần dùng (thêm created/updated/pinned_at để sort)
+      const cols = [
+        "quiz_id","title","sub",
+        "is_public","is_hidden","show_in_store",
+        "require_login","require_access_code",
+        "pinned","pinned_at",
+        "created_at","updated_at"
+      ].join(",");
+      const q = [
+        `select=${encodeURIComponent(cols)}`,
+        `is_public=eq.true`,
+        `show_in_store=eq.true`,
+        `is_hidden=eq.false`,
+        `order=pinned.desc,updated_at.desc,created_at.desc`
+      ].join("&");
+
+      const rows = await restSelect(`quizzes?${q}`);
+      return { ok:true, items: rows };
+    }
+  },
 
   // đổi username: thử nhiều biến thể args / function name (không sửa SQL)
   changeUsername: async (token,newU)=>{
+    const t = String(token||"").trim();
+    const u = normUsername(newU);
     return await rpcTry(
-      ["api_change_username","api_rename_username","api_update_username"],
+      ["api_change_username","api_rename_username","api_update_username","change_username","rename_username"],
       [
-        {p_token:token, p_new_username:newU},
-        {p_token:token, p_username:newU},
-        {token:token, new_username:newU},
-        {token:token, username:newU},
+        {p_token:t, p_new_username:u},
+        {p_token:t, p_username:u},
+        {token:t, new_username:u},
+        {token:t, username:u},
+        {session_token:t, new_username:u},
+        {p_session_token:t, p_new_username:u},
       ]
     );
   },
 
   // đổi pin: thử nhiều biến thể args / function name (không sửa SQL)
   changePin: async (token,oldPin,newPin)=>{
+    const t = String(token||"").trim();
     const o = String(oldPin||"");
     const n = String(newPin||"");
     return await rpcTry(
-      ["api_change_pin","api_update_pin","api_change_password","api_change_passcode"],
+      ["api_change_pin","api_update_pin","api_change_password","api_change_passcode","change_pin","change_password"],
       [
-        {p_token:token, p_old_pin:o, p_new_pin:n},
-        {p_token:token, p_old:o, p_new:n},
-        {token:token, old_pin:o, new_pin:n},
-        {token:token, old:o, new:n},
+        {p_token:t, p_old_pin:o, p_new_pin:n},
+        {p_token:t, p_old:o, p_new:n},
+        {token:t, old_pin:o, new_pin:n},
+        {token:t, old:o, new:n},
+        {session_token:t, old_pin:o, new_pin:n},
+        {p_session_token:t, p_old_pin:o, p_new_pin:n},
       ]
     );
   }
@@ -657,23 +872,16 @@ function requiresLogin(q){
   return true;
 }
 
-function pickPinLen(ck, username){
-  const u = normUsername(username);
-  if(u === "tuankhoi") return 6;
+function pickExistsCompat(ck){
+  const v = pickExists(ck);
+  if(v !== null) return v;
 
-  const raw =
-    (ck && (ck.pinLen ?? ck.pin_len ?? (ck.user && (ck.user.pinLen ?? ck.user.pin_len)) ?? ck.pin_length ?? 4));
+  const o = firstObj(ck) || {};
+  if(typeof o.ok === "boolean" && o.ok === false) return null;
 
-  let n = Number(raw) || 4;
-  if(!isFinite(n) || n < 4) n = 4;
-  if(n > 12) n = 12;
-  return n;
-}
+  // trường hợp trả về {available:true/false}
+  if(typeof o.available === "boolean") return !o.available;
 
-function pickExists(ck){
-  if(ck && typeof ck.exists === "boolean") return ck.exists;
-  if(ck && ck.ok === true && typeof ck.exists === "boolean") return ck.exists;
-  if(ck && ck.userId) return true;
   return null;
 }
 
@@ -886,7 +1094,7 @@ async function enterAfterAuth({ token, me, redirectNext=true }){
     return;
   }
 
-  // ✅ NEW: nếu là admin -> tự chuyển sang admin panel
+  // ✅ nếu là admin -> tự chuyển sang admin panel
   if(ME && isAdminUser(ME)){
     location.href = "/admin";
     return;
@@ -901,6 +1109,16 @@ function clearAuthLocal(){
   setMeCache(null);
   ME = null;
   updateUserCorner();
+}
+
+/* === helper: normalize login/register output === */
+function normalizeAuthOut(out){
+  const o = firstObj(out) || {};
+  const ok = asOk(out);
+  const token = pickToken(out);
+  const me = pickMe(out);
+  const err = o.error || o.message || o.msg || "";
+  return { ok, token, me, error: err };
 }
 
 async function onPinKey(k){
@@ -925,21 +1143,22 @@ async function onPinKey(k){
     PIN.submitting=true;
     try{
       setPinNote("Đang kiểm tra…");
-      const out = await API.login(PIN.username, val);
-      if(out && out.ok && (out.token || out.session_token || out.sessionToken)){
-        const token = out.token || out.session_token || out.sessionToken;
-        const me = out.me || out.user || out.profile || null;
+      const raw = await API.login(PIN.username, val);
+      const out = normalizeAuthOut(raw);
 
+      if(out.ok && out.token){
         PIN.payload = val;
         closePin("ok");
-
         toast("Đăng nhập thành công");
-        await enterAfterAuth({ token, me, redirectNext:true });
+        await enterAfterAuth({ token: out.token, me: out.me, redirectNext:true });
         return;
       }
-      pinErrorPulse(out?.error || "Sai mật khẩu");
+
+      pinErrorPulse(out.error || "Sai mật khẩu");
     }catch(e){
-      pinErrorPulse("Sai mật khẩu");
+      // nếu do mismatch RPC -> báo rõ hơn
+      const msg = String(e?.message||"Sai mật khẩu");
+      pinErrorPulse(msg.includes("function") ? "RPC login không khớp param/tên. Kiểm tra SQL function." : "Sai mật khẩu");
     }finally{
       PIN.submitting=false;
     }
@@ -1076,12 +1295,12 @@ function renderGate(){
     gateStatus.textContent="Đang kiểm tra username…";
     try{
       const ck = await API.checkUsername(u);
-      if(!ck || ck.ok === false) throw new Error((ck && ck.error) ? ck.error : "check fail");
 
-      const exists = pickExists(ck);
+      const exists = pickExistsCompat(ck);
       const pinLen = pickPinLen(ck, u);
 
-      const reserved = !!(ck && (ck.reserved === true || ck.is_reserved === true));
+      const o = firstObj(ck) || {};
+      const reserved = !!(o.reserved === true || o.is_reserved === true || o.isReserved === true);
 
       if(exists === true && reserved === true){
         toast("Username này đã bị giữ lại (đổi tên rồi).");
@@ -1105,12 +1324,13 @@ function renderGate(){
         const pin = await openPin({username:u, mode:"set", pinLen: regPinLen});
 
         gateStatus.textContent="Đang tạo tài khoản…";
-        const out = await API.register(u, pin);
-        const token = out?.token || out?.session_token || out?.sessionToken;
-        if(!out || !out.ok || !token) throw new Error(out?.error || "register fail");
+        const raw = await API.register(u, pin);
+        const out = normalizeAuthOut(raw);
+
+        if(!out.ok || !out.token) throw new Error(out.error || "register fail");
 
         toast("Đã đăng ký & đăng nhập");
-        await enterAfterAuth({ token, me: (out.me || out.user || null), redirectNext:true });
+        await enterAfterAuth({ token: out.token, me: out.me, redirectNext:true });
         return;
       }
 
@@ -1187,12 +1407,28 @@ function renderStore(){
 /* ================== STORE LOAD ================== */
 async function loadStore(){
   try{
-    const st = await API.listStore();
-    if(st && st.ok){
-      STORE = st.items || st.rows || st.data || [];
+    const raw = await API.listStore();
+    const o = firstObj(raw) || raw;
+
+    // nhiều dạng trả về:
+    // - {ok:true, items:[...]} / {ok:true, rows:[...]} / {ok:true, data:[...]}
+    // - hoặc trả thẳng array [...]
+    if(Array.isArray(raw)){
+      STORE = raw;
       return;
     }
-  }catch{}
+    if(o && o.ok){
+      STORE = o.items || o.rows || o.data || [];
+      return;
+    }
+    // nếu raw là object có key items/rows/data
+    if(o && (Array.isArray(o.items) || Array.isArray(o.rows) || Array.isArray(o.data))){
+      STORE = o.items || o.rows || o.data || [];
+      return;
+    }
+  }catch(e){
+    // im lặng để gate vẫn chạy
+  }
   STORE = [];
 }
 
@@ -1220,11 +1456,12 @@ document.getElementById("btnSaveNewUsername").onclick = async ()=>{
 
   try{
     const out = await API.changeUsername(getToken(), newU);
-    if(!out || out.ok === false) throw new Error(out?.error || out?.message || "rename fail");
+    const ok = asOk(out);
+    if(!ok) throw new Error((firstObj(out)?.error || firstObj(out)?.message) || "rename fail");
 
-    const me2 = out.me || out.user || out.profile || { username: newU, role: ME.role || "user" };
-    ME = me2;
-    setMeCache(me2);
+    const me2 = pickMe(out) || (firstObj(out)?.me || firstObj(out)?.user) || { username: newU, role: ME.role || "user" };
+    ME = { username: (me2.username || newU), role: (me2.role || ME.role || "user") };
+    setMeCache(ME);
 
     toast("Đã đổi username");
     closeProfileModal();
@@ -1242,7 +1479,8 @@ document.getElementById("btnChangePin").onclick = async ()=>{
   try{
     const payload = await openPin({username: ME.username, mode:"change", pinLen:4});
     const out = await API.changePin(getToken(), payload.oldPin, payload.newPin);
-    if(!out || out.ok === false) throw new Error(out?.error || out?.message || "change pin fail");
+    const ok = asOk(out);
+    if(!ok) throw new Error((firstObj(out)?.error || firstObj(out)?.message) || "change pin fail");
 
     toast("Đã đổi mật khẩu");
     closeProfileModal();
@@ -1265,11 +1503,13 @@ async function boot(){
   if(t && (!ME || !ME.username)){
     try{
       const meOut = await API.me(t);
-      if(meOut && meOut.ok && meOut.me){
+      if(meOut && meOut.ok && meOut.me && meOut.me.username){
         ME = meOut.me;
         setMeCache(ME);
-        if(meOut.token || meOut.session_token || meOut.sessionToken){
-          setToken(meOut.token || meOut.session_token || meOut.sessionToken);
+
+        // nếu me() trả token mới thì sync
+        if(meOut.token){
+          setToken(meOut.token);
         }else{
           setToken(t);
         }
@@ -1283,7 +1523,7 @@ async function boot(){
   updateUserCorner();
 
   // Không auto chuyển /admin khi chỉ mở trang chủ.
-  // Chỉ auto chuyển khi vừa login (enterAfterAuth) theo yêu cầu.
+  // Chỉ auto chuyển khi vừa login (enterAfterAuth).
   if(ME && ME.username) renderStore();
   else renderGate();
 }
