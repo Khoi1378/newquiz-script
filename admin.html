@@ -727,7 +727,7 @@ B
         </div>
 
         <div class="hint" style="margin-top:10px">
-          Tip: nếu muốn công thức inline thì dùng <code>$...$</code>, công thức khối thì <code>$$...$$</code>.
+          Tip: nếu muốn công thức inline thì dùng <code>$...$</code>, công thức khối thì dùng <code>$$...$$</code>.
         </div>
       </div>
     </div>
@@ -738,13 +738,19 @@ B
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
-/* ===== Token keys: accept old -> auto migrate -> keep compat ===== */
-const TOKEN_KEY_PRIMARY = "tk_token_v2";
-const TOKEN_KEYS = ["tk_token_v2","tk_token_v1","tk_token"];
-const TOKEN_COOKIE_PRIMARY = "tk_token_v2";
-const TOKEN_COOKIES = ["tk_token_v2","tk_token_v1","tk_token"];
-
 const STORAGE_BUCKET = "quiz";
+
+/* ===== AUTH (TOKENLESS): read from #hash ===== */
+let AUTH = { u:"", pin:"" };
+function readAuthFromHash(){
+  const hs = String(location.hash||"").replace(/^#/,"");
+  const p = new URLSearchParams(hs);
+  AUTH.u = (p.get("u") || p.get("username") || "").trim().toLowerCase();
+  AUTH.pin = (p.get("pin") || p.get("p") || "").trim();
+}
+function withAuth(args){
+  return { p_username: AUTH.u, p_pin: AUTH.pin, ...(args||{}) };
+}
 
 const RPC = {
   me: "api_me_v0",
@@ -773,132 +779,6 @@ function esc(s){
 }
 function lockScroll(on){
   document.body.classList.toggle("noScroll", !!on);
-}
-
-/* ====== TOKEN PERSIST ====== */
-function cookieDomainHint(){
-  const host = String(location.hostname||"").trim();
-  if(!host || host==="localhost" || host.endsWith(".localhost")) return "";
-  if(/^\d+\.\d+\.\d+\.\d+$/.test(host)) return "";
-  const parts = host.split(".").filter(Boolean);
-  if(parts.length < 2) return "";
-  return "." + parts.slice(-2).join(".");
-}
-function setCookie(name, value){
-  const v = encodeURIComponent(String(value||""));
-  const maxAge = 60*60*24*365*20;
-  const base = cookieDomainHint();
-  const common = `${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
-  document.cookie = common;
-  if(base && base !== location.hostname){
-    document.cookie = `${common}; Domain=${base}`;
-  }
-}
-function getCookie(name){
-  const cs = document.cookie ? document.cookie.split(";") : [];
-  let found = "";
-  for(const raw of cs){
-    const s = raw.trim();
-    if(!s) continue;
-    const eq = s.indexOf("=");
-    const k = (eq>=0 ? s.slice(0,eq) : s).trim();
-    if(k === name) found = (eq>=0 ? s.slice(eq+1) : "");
-  }
-  try{ return found ? decodeURIComponent(found) : ""; }catch{ return found || ""; }
-}
-function delCookie(name){
-  const base = cookieDomainHint();
-  document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
-  if(base && base !== location.hostname){
-    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax; Domain=${base}`;
-  }
-}
-
-function setToken(t){
-  t = String(t||"").trim();
-  if(!t) return;
-
-  // write to all known keys for compatibility (still 1 token string)
-  for(const k of TOKEN_KEYS){
-    try{ localStorage.setItem(k, t); }catch{}
-    try{ sessionStorage.setItem(k, t); }catch{}
-  }
-  for(const c of TOKEN_COOKIES){
-    try{ setCookie(c, t); }catch{}
-  }
-  try{ window.name = "tk:" + t; }catch{}
-}
-function clearToken(){
-  for(const k of TOKEN_KEYS){
-    try{ localStorage.removeItem(k); }catch{}
-    try{ sessionStorage.removeItem(k); }catch{}
-  }
-  for(const c of TOKEN_COOKIES){
-    try{ delCookie(c); }catch{}
-  }
-  try{ if(String(window.name||"").startsWith("tk:")) window.name = ""; }catch{}
-}
-
-function getToken(){
-  let t = "";
-
-  // localStorage (any known key)
-  for(const k of TOKEN_KEYS){
-    try{
-      t = (localStorage.getItem(k) || "").trim();
-      if(t) break;
-    }catch{}
-  }
-
-  // sessionStorage
-  if(!t){
-    for(const k of TOKEN_KEYS){
-      try{
-        t = (sessionStorage.getItem(k) || "").trim();
-        if(t) break;
-      }catch{}
-    }
-  }
-
-  // cookies
-  if(!t){
-    for(const c of TOKEN_COOKIES){
-      t = (getCookie(c) || "").trim();
-      if(t) break;
-    }
-  }
-
-  // window.name
-  if(!t){
-    const wn = String(window.name||"");
-    if(wn.startsWith("tk:")) t = wn.slice(3).trim();
-  }
-
-  // URL param / hash token
-  try{
-    const u = new URL(location.href);
-    if(!t){
-      const q = (u.searchParams.get("tk") || u.searchParams.get("token") || "").trim();
-      if(q) t = q;
-    }
-    if(!t && u.hash){
-      const hs = u.hash.replace(/^#/,"");
-      const p = new URLSearchParams(hs);
-      const q2 = (p.get("tk") || p.get("token") || "").trim();
-      if(q2) t = q2;
-    }
-  }catch{}
-
-  if(t) setToken(t); // migrate to primary + sync all
-  return t;
-}
-
-async function requestPersistentStorage(){
-  try{
-    if(navigator.storage && navigator.storage.persist){
-      await navigator.storage.persist();
-    }
-  }catch{}
 }
 
 /* ================== MathJax helper ================== */
@@ -969,7 +849,7 @@ async function uploadToBucket(bucket, path, blob, contentType){
   return publicObjectUrl(bucket, path);
 }
 
-/* ================== NEED LOGIN (NO TOKEN UI) ================== */
+/* ================== NEED LOGIN (AUTH VIA HASH) ================== */
 function renderNeedLogin(msg){
   const gate = document.getElementById("gate");
   gate.innerHTML = `
@@ -979,14 +859,14 @@ function renderNeedLogin(msg){
     </div>
 
     <div class="hint" style="margin-top:10px">
-      Admin panel <b>không nhập token thủ công</b> nữa.<br>
-      Hãy <b>đăng nhập ở trang chủ</b> rồi quay lại trang này — token sẽ tự nhận.<br>
-      <br>
-      <span class="muted">Tip mobile:</span> nhớ mở trang chủ và admin bằng <b>cùng 1 trình duyệt</b> (Safari/Chrome/In-app browser/PWA có thể tách storage).
+      Admin panel <b>không dùng token</b> nữa.<br>
+      Bạn cần mở admin bằng link dạng:<br>
+      <code>/admin#u=USERNAME&amp;pin=PIN</code><br><br>
+      Hãy đăng nhập ở trang chủ để nó tự chuyển qua admin đúng format.
     </div>
 
     <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-      <button class="btn btn-primary" id="btnGoHome" type="button">Về trang chủ để đăng nhập</button>
+      <button class="btn btn-primary" id="btnGoHome" type="button">Về trang chủ</button>
       <button class="btn" id="btnRetry" type="button">Thử lại</button>
     </div>
   `;
@@ -1047,29 +927,28 @@ function setQuizPage(p){
 
 /* ================== LOGOUT ================== */
 async function doLogout(){
-  const tk = getToken();
-  clearToken();
-  try{ if(tk) await rpc(RPC.logout, { p_token: tk }); }catch{}
+  try{ await rpc(RPC.logout, {}); }catch{}
+  try{ location.hash = ""; }catch{}
   toast("Đã logout");
   setTimeout(()=>location.href="/", 350);
 }
 
-/* ================== AUTH GATE ================== */
+/* ================== AUTH GATE (TOKENLESS) ================== */
 async function gateCheck(){
   app.style.display = "none";
 
-  const token = getToken();
-  if(!token){
+  readAuthFromHash();
+  if(!AUTH.u || !AUTH.pin){
     ME = null;
-    mePill.textContent = "No login";
-    renderNeedLogin("Chưa có phiên đăng nhập");
+    mePill.textContent = "Need login";
+    renderNeedLogin("Thiếu u/pin trên URL. Hãy login ở trang chủ.");
     return false;
   }
+
   try{
-    const meOut = await rpc(RPC.me,{p_token:token});
+    const meOut = await rpc(RPC.me, withAuth({}));
     if(!meOut?.ok) throw new Error(meOut?.error || "not logged");
     ME = meOut.me;
-    if(meOut.token) setToken(meOut.token);
 
     const isAdmin =
       (String(ME.role||"").toLowerCase()==="admin") ||
@@ -1126,20 +1005,15 @@ function startAuthWatcher(){
   if(AUTH_WATCHER_STARTED) return;
   AUTH_WATCHER_STARTED = true;
 
-  // nếu user login ở tab khác / quay lại app, tự check lại
   const onVis = ()=>{ if(!document.hidden) tryAutoLogin(); };
   const onFocus = ()=> tryAutoLogin();
+  const onHash = ()=>{ APP_STARTED = false; tryAutoLogin(); };
 
   window.addEventListener("visibilitychange", onVis, {passive:true});
   window.addEventListener("focus", onFocus, {passive:true});
+  window.addEventListener("hashchange", onHash, {passive:true});
 
-  // storage event (tab khác set token)
-  window.addEventListener("storage", (e)=>{
-    const key = String(e.key||"");
-    if(TOKEN_KEYS.includes(key)) tryAutoLogin();
-  }, {passive:true});
-
-  // interval nhẹ để bắt case iOS không bắn storage event
+  // interval nhẹ để bắt case iOS/tab restore
   setInterval(()=>{
     if(APP_STARTED) return;
     tryAutoLogin();
@@ -1320,8 +1194,8 @@ function validateQuiz(){
 
 /* ================== QUIZ CRUD ================== */
 async function saveQuizOnly(){
-  const token = getToken();
-  if(!token) throw new Error("Chưa login");
+  readAuthFromHash();
+  if(!AUTH.u || !AUTH.pin) throw new Error("Thiếu u/pin trên URL (#u=...&pin=...)");
 
   if(CURRENT_MODE !== "EDIT"){
     if(!CURRENT_QID) CURRENT_QID = genUniqueQuizId5();
@@ -1335,8 +1209,7 @@ async function saveQuizOnly(){
     totalScoreEl.value = String(totalScore);
   }
 
-  const payload = {
-    p_token: token,
+  const payload = withAuth({
     p_quiz_id: qid,
     p_title: titleEl.value.trim(),
     p_sub: subEl.value.trim(),
@@ -1350,7 +1223,7 @@ async function saveQuizOnly(){
     p_shuffle_mode: String(shuffleModeEl.value || "none"),
     p_require_access_code: (requireCodeEl.value === "true"),
     p_access_code: accessCodeEl.value.trim()
-  };
+  });
 
   for(let attempt=0; attempt<5; attempt++){
     try{
@@ -1443,8 +1316,8 @@ function renderQuizList(){
 }
 
 async function reloadQuizzes(){
-  const token = getToken();
-  const out = await rpc(RPC.adminListQuizzes,{p_token: token});
+  readAuthFromHash();
+  const out = await rpc(RPC.adminListQuizzes, withAuth({}));
   QUIZZES = out.items || [];
   renderQuizList();
 }
@@ -1453,8 +1326,8 @@ document.getElementById("btnReloadQuizzes").onclick = ()=>reloadQuizzes().catch(
 async function delQuiz(qid){
   const ok = confirm("Xóa quiz " + qid + " ?");
   if(!ok) return;
-  const token = getToken();
-  await rpc(RPC.adminDeleteQuiz,{p_token:token, p_quiz_id:qid});
+  readAuthFromHash();
+  await rpc(RPC.adminDeleteQuiz, withAuth({ p_quiz_id: qid }));
   toast("Đã xóa " + qid);
   await reloadQuizzes();
 }
@@ -1507,6 +1380,8 @@ document.getElementById("btnGoCreate").onclick = ()=>{
   setQuizPage("create");
   setTimeout(()=>createTitleEl.focus(), 50);
 };
+
+document.getElementById("btnCreateCancelTop").onclick = ()=> setQuizPage("list");
 
 document.getElementById("btnCreateSaveOnly").onclick = async ()=>{
   try{
@@ -1569,8 +1444,8 @@ async function openEditorForQuiz(qid){
   renderAllQuestions();
 
   try{
-    const token = getToken();
-    const out = await rpc(RPC.adminGetQuestions,{p_token: token, p_quiz_id: qid});
+    readAuthFromHash();
+    const out = await rpc(RPC.adminGetQuestions, withAuth({ p_quiz_id: qid }));
     if(!out?.ok) throw new Error(out?.error || "admin_get_questions failed");
     const items = out.items || [];
 
@@ -1975,12 +1850,8 @@ document.getElementById("fabAddQuestion").onclick = ()=>{
 };
 
 /* Editor top buttons */
-document.getElementById("btnOpenSettings").onclick = ()=>{
-  openSettingsModal();
-};
-document.getElementById("btnOpenImport").onclick = ()=>{
-  openImportModal();
-};
+document.getElementById("btnOpenSettings").onclick = ()=>{ openSettingsModal(); };
+document.getElementById("btnOpenImport").onclick = ()=>{ openImportModal(); };
 
 /* ================== IMAGE upload ================== */
 const qImgPick = document.getElementById("qImgPick");
@@ -2276,7 +2147,6 @@ async function publishAll(){
     if(!QUESTIONS.length) return toast("Chưa có câu hỏi");
 
     const qid = await saveQuizOnly();
-    const token = getToken();
 
     const items = applyScoring(QUESTIONS).map((q, idx)=>{
       ensureMeta(q);
@@ -2292,7 +2162,8 @@ async function publishAll(){
       };
     });
 
-    await rpc(RPC.adminReplaceQuestions, { p_token: token, p_quiz_id: qid, p_items: items });
+    readAuthFromHash();
+    await rpc(RPC.adminReplaceQuestions, withAuth({ p_quiz_id: qid, p_items: items }));
 
     toast(`Published: ${qid}`);
     await reloadQuizzes();
@@ -2358,8 +2229,8 @@ function renderUsers(){
 }
 
 async function reloadUsers(){
-  const token = getToken();
-  const out = await rpc(RPC.adminListUsers,{p_token: token});
+  readAuthFromHash();
+  const out = await rpc(RPC.adminListUsers, withAuth({}));
   USERS = out.items || [];
   renderUsers();
 }
@@ -2371,24 +2242,24 @@ async function delUser(id){
   if(u && isAdminUser(u)) return toast("Admin không xóa được");
   const ok = confirm("Xóa user này? (mất progress/attempts/comments)");
   if(!ok) return;
-  const token = getToken();
-  await rpc(RPC.adminDeleteUser,{p_token:token, p_user_id:id});
+  readAuthFromHash();
+  await rpc(RPC.adminDeleteUser, withAuth({ p_user_id: id }));
   toast("Deleted user");
   await reloadUsers();
 }
 async function renameUser(id){
   const newU = prompt("New username (lowercase, a-z0-9_):");
   if(!newU) return;
-  const token = getToken();
-  await rpc(RPC.adminForceRename,{p_token:token, p_user_id:id, p_new_username:newU});
+  readAuthFromHash();
+  await rpc(RPC.adminForceRename, withAuth({ p_user_id: id, p_new_username: newU }));
   toast("Renamed");
   await reloadUsers();
 }
 async function resetPin(id){
   const pin = prompt("Set new PIN (6 digits, ví dụ 072008).");
   if(!pin) return;
-  const token = getToken();
-  await rpc(RPC.adminForceSetPin,{p_token:token, p_user_id:id, p_new_pin:pin});
+  readAuthFromHash();
+  await rpc(RPC.adminForceSetPin, withAuth({ p_user_id: id, p_new_pin: pin }));
   toast("PIN reset");
   await reloadUsers();
 }
@@ -2516,8 +2387,6 @@ updateLatexPreview();
 
 /* ================== BOOT ================== */
 async function boot(){
-  await requestPersistentStorage();
-
   const ok = await tryAutoLogin();
   if(!ok){
     startAuthWatcher();
