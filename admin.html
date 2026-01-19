@@ -1027,6 +1027,15 @@ function setQuizPage(p){
   document.getElementById("fabAddQuestion").classList.toggle("show", p==="editor");
 }
 
+/* ================== LOGOUT ================== */
+async function doLogout(){
+  try{ if(TOKEN) await callRpc("logout", {}); }catch{}
+  clearToken();
+  ME = null;
+  TOKEN = "";
+  toast("Đã logout");
+  setTimeout(()=>redirectHome(), 200);
+}
 
 /* ================== AUTH GATE (STRICT) ================== */
 async function gateCheck(){
