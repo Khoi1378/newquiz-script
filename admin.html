@@ -2390,7 +2390,6 @@ document.getElementById("btnLatexInsert").onclick = ()=>{
 };
 
 const LATEX_TEMPLATES = [
-  { label: "x²", tpl: "$x^{2}$" },
   { label: "xⁿ", tpl: "$x^{n}$" },
   { label: "xᵢ", tpl: "$x_{i}$" },
   { label: "phân số", tpl: "$\\frac{a}{b}$" },
@@ -2398,19 +2397,26 @@ const LATEX_TEMPLATES = [
   { label: "căn bậc n", tpl: "$\\sqrt[n]{x}$" },
   { label: "logₐ(x)", tpl: "$\\log_{a}(x)$" },
   { label: "ln(x)", tpl: "$\\ln(x)$" },
-  { label: "mũ e", tpl: "$e^{x}$" },
   { label: "π", tpl: "$\\pi$" },
   { label: "θ", tpl: "$\\theta$" },
-  { label: "Σ", tpl: "$\\sum_{i=1}^{n} x_i$" },
   { label: "∫", tpl: "$\\int_{a}^{b} f(x)\\,dx$" },
   { label: "d/dx", tpl: "$\\frac{d}{dx} f(x)$" },
   { label: "lim", tpl: "$\\lim_{x\\to 0} f(x)$" },
   { label: "≥", tpl: "$\\ge$" },
   { label: "≤", tpl: "$\\le$" },
-  { label: "≠", tpl: "$\\ne$" },
-  { label: "≈", tpl: "$\\approx$" },
   { label: "vector", tpl: "$\\vec{v}$" },
-  { label: "công thức khối", tpl: "$$x^2 + y^2 = z^2$$" }
+  { label: "HS bậc 1", tpl: "$ax + b$" },
+  { label: "HS bậc 2", tpl: "$ax^2 + bx + c$" },
+  { label: "HS bậc 3", tpl: "$ax^3 + bx^2 + cx + d$" },
+  // Hàm số cơ bản
+  { label: "Hàm nhất biến bậc 1", tpl: "$y = ax + b$" },
+  { label: "Hàm nhất biến bậc 2", tpl: "$y = ax^2 + bx + c$" },
+
+  // Hàm phân thức
+  { label: "Hàm phân thức bậc 1 / bậc 1", tpl: "$y = \\dfrac{ax + b}{cx + d}$" },
+  { label: "Hàm bậc 2 / bậc 1", tpl: "$y = \\dfrac{ax^2 + bx + c}{ex + f}$" },
+  { label: "Hàm bậc 3 / bậc 1", tpl: "$y = \\dfrac{ax^3 + bx^2 + cx + d}{ex + f}$" },
+
 ];
 
 latexGrid.innerHTML = LATEX_TEMPLATES.map(x=>{
