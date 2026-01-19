@@ -383,7 +383,7 @@ function validateUsername(u){
   u = normUsername(u);
   if(!u) return "Chưa nhập username.";
   if(u.length>15) return "Username tối đa 15 ký tự.";
-  if(!/^[a-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z 0-9 và dấu _ (không viết hoa).";
+  if(!/^[a-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z 0-9 và dấu _";
   return null;
 }
 
@@ -1261,10 +1261,8 @@ function renderGate(){
       </div>
       <div class="muted" style="margin-top:6px; line-height:1.35">
         Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b>.<br/>
-        - Username <b>đã có</b> → hiện keypad <b>đăng nhập</b> (4 số, riêng <b>tuankhoi</b> là <b>6 số</b>).<br/>
-        - Username <b>chưa có</b> → hỏi và cho <b>đăng ký</b>.<br/>
-        <span class="muted">Tip:</span> nếu login admin (<b>tuankhoi</b>) sẽ tự chuyển sang <b>/admin</b>.
-      </div>
+        - Username <b>đã có.</b> <b>Đăng nhập</b>.<br/>
+        - Username <b>chưa có.</b> <b>Đăng ký</b>.<br/>
 
       <div style="margin-top:10px; display:grid; gap:10px;">
         <input id="nameInput" class="input" placeholder="vd: tuankhoi123" maxlength="15" autocomplete="off"/>
@@ -1317,7 +1315,7 @@ function renderGate(){
      if(exists === true){
        if(reserved === true && u !== "tuankhoi"){
          // optional: cảnh báo nhẹ nhưng vẫn cho login
-         toast("Username có thể là tên cũ, cứ thử đăng nhập…");
+         toast("Username đã đăng ký, bạn muốn đăng nhập…");
        }
        gateStatus.textContent="Đăng nhập: nhập mật khẩu…";
        await openPin({username:u, mode:"login", pinLen});
