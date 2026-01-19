@@ -276,7 +276,7 @@
         <div class="actions">
           <div class="statusPill" id="statusPill">—</div>
           <a href="/admin" id="adminLinkTop" style="display:none;">
-            <button class="btn btn-admin">🛠️ Admin panel</button>
+            <button class="btn btn-admin">Panel</button>
           </a>
         </div>
       </div>
@@ -1000,7 +1000,7 @@ function renderStore(){
 
   const isAdmin = isAdminUser(ME);
   const adminBtn = (ME && isAdmin) ? `
-    <a href="/admin"><button class="btn btn-admin">🛠️ Admin panel</button></a>
+    <a href="/admin"><button class="btn btn-admin">Panel</button></a>
   ` : ``;
 
   content.innerHTML = `
