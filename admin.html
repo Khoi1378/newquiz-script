@@ -738,8 +738,12 @@ B
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
-const TOKEN_KEY = "tk_token_v2";
-const TOKEN_COOKIE = "tk_token_v2";
+/* ===== Token keys: accept old -> auto migrate -> keep compat ===== */
+const TOKEN_KEY_PRIMARY = "tk_token_v2";
+const TOKEN_KEYS = ["tk_token_v2","tk_token_v1","tk_token"];
+const TOKEN_COOKIE_PRIMARY = "tk_token_v2";
+const TOKEN_COOKIES = ["tk_token_v2","tk_token_v1","tk_token"];
+
 const STORAGE_BUCKET = "quiz";
 
 const RPC = {
@@ -810,29 +814,68 @@ function delCookie(name){
     document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax; Domain=${base}`;
   }
 }
+
 function setToken(t){
   t = String(t||"").trim();
   if(!t) return;
-  try{ localStorage.setItem(TOKEN_KEY, t); }catch{}
-  try{ sessionStorage.setItem(TOKEN_KEY, t); }catch{}
-  try{ setCookie(TOKEN_COOKIE, t); }catch{}
+
+  // write to all known keys for compatibility (still 1 token string)
+  for(const k of TOKEN_KEYS){
+    try{ localStorage.setItem(k, t); }catch{}
+    try{ sessionStorage.setItem(k, t); }catch{}
+  }
+  for(const c of TOKEN_COOKIES){
+    try{ setCookie(c, t); }catch{}
+  }
   try{ window.name = "tk:" + t; }catch{}
 }
 function clearToken(){
-  try{ localStorage.removeItem(TOKEN_KEY); }catch{}
-  try{ sessionStorage.removeItem(TOKEN_KEY); }catch{}
-  try{ delCookie(TOKEN_COOKIE); }catch{}
+  for(const k of TOKEN_KEYS){
+    try{ localStorage.removeItem(k); }catch{}
+    try{ sessionStorage.removeItem(k); }catch{}
+  }
+  for(const c of TOKEN_COOKIES){
+    try{ delCookie(c); }catch{}
+  }
   try{ if(String(window.name||"").startsWith("tk:")) window.name = ""; }catch{}
 }
+
 function getToken(){
   let t = "";
-  try{ t = (localStorage.getItem(TOKEN_KEY) || "").trim(); }catch{}
-  if(!t){ try{ t = (sessionStorage.getItem(TOKEN_KEY) || "").trim(); }catch{} }
-  if(!t) t = (getCookie(TOKEN_COOKIE) || "").trim();
+
+  // localStorage (any known key)
+  for(const k of TOKEN_KEYS){
+    try{
+      t = (localStorage.getItem(k) || "").trim();
+      if(t) break;
+    }catch{}
+  }
+
+  // sessionStorage
+  if(!t){
+    for(const k of TOKEN_KEYS){
+      try{
+        t = (sessionStorage.getItem(k) || "").trim();
+        if(t) break;
+      }catch{}
+    }
+  }
+
+  // cookies
+  if(!t){
+    for(const c of TOKEN_COOKIES){
+      t = (getCookie(c) || "").trim();
+      if(t) break;
+    }
+  }
+
+  // window.name
   if(!t){
     const wn = String(window.name||"");
     if(wn.startsWith("tk:")) t = wn.slice(3).trim();
   }
+
+  // URL param / hash token
   try{
     const u = new URL(location.href);
     if(!t){
@@ -846,9 +889,11 @@ function getToken(){
       if(q2) t = q2;
     }
   }catch{}
-  if(t) setToken(t);
+
+  if(t) setToken(t); // migrate to primary + sync all
   return t;
 }
+
 async function requestPersistentStorage(){
   try{
     if(navigator.storage && navigator.storage.persist){
@@ -875,7 +920,6 @@ function typesetElement(el){
 function hasLatex(s){
   const t = String(s||"");
   if(!t.trim()) return false;
-  // heuristic: show preview only if likely latex
   return (t.includes("$") || t.includes("\\(") || t.includes("\\[") || t.includes("\\frac") || t.includes("\\sqrt") || t.includes("\\int") || t.includes("\\log") || t.includes("\\sum") || t.includes("\\lim"));
 }
 
@@ -926,47 +970,30 @@ async function uploadToBucket(bucket, path, blob, contentType){
   return publicObjectUrl(bucket, path);
 }
 
-/* ================== NEED LOGIN ================== */
+/* ================== NEED LOGIN (NO TOKEN UI) ================== */
 function renderNeedLogin(msg){
   const gate = document.getElementById("gate");
-  const curTk = getToken();
-
   gate.innerHTML = `
     <div class="row1">
       <p class="vi" style="margin:0">Chưa đăng nhập</p>
       <span class="idx warn">${esc(msg || "Bạn cần đăng nhập ở trang chủ")}</span>
     </div>
 
-    <div class="hint" style="margin-top:8px">
-      Admin panel không đăng nhập ở đây nữa.<br>
-      Vui lòng đăng nhập tài khoản tuankhoi ở trang chủ, rồi mở lại <code>/admin.html</code>.
+    <div class="hint" style="margin-top:10px">
+      Admin panel <b>không nhập token thủ công</b> nữa.<br>
+      Hãy <b>đăng nhập ở trang chủ</b> rồi quay lại trang này — token sẽ tự nhận.<br>
+      <br>
+      <span class="muted">Tip mobile:</span> nhớ mở trang chủ và admin bằng <b>cùng 1 trình duyệt</b> (Safari/Chrome/In-app browser/PWA có thể tách storage).
     </div>
 
-    <label style="margin-top:12px">Token (tùy chọn – dán thủ công nếu browser không share storage)</label>
-    <input class="input mono" id="manualToken" placeholder="dán token vào đây..." value="${esc(curTk||"")}"/>
-
     <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn btn-primary" id="btnGoHome" type="button">Về trang chủ để đăng nhập</button>
       <button class="btn" id="btnRetry" type="button">Thử lại</button>
-      <button class="btn btn-primary" id="btnSaveManual" type="button">Lưu token</button>
-      <button class="btn btn-ghost" id="btnGoHome" type="button">Về trang chủ</button>
-      <button class="btn btn-ghost" id="btnClearToken" type="button">Xóa phiên</button>
     </div>
   `;
 
   gate.querySelector("#btnGoHome").onclick = ()=> location.href = "/";
-  gate.querySelector("#btnRetry").onclick = ()=> location.reload();
-  gate.querySelector("#btnSaveManual").onclick = ()=>{
-    const v = (gate.querySelector("#manualToken")?.value || "").trim();
-    if(!v) return toast("Token trống");
-    setToken(v);
-    toast("Đã lưu token");
-    setTimeout(()=>location.reload(), 300);
-  };
-  gate.querySelector("#btnClearToken").onclick = ()=>{
-    clearToken();
-    toast("Đã xóa phiên");
-    renderNeedLogin("Đã xóa token");
-  };
+  gate.querySelector("#btnRetry").onclick = ()=> tryAutoLogin();
 }
 
 /* ================== DOM ================== */
@@ -1000,6 +1027,9 @@ let QUESTIONS = [];
 let ACTIVE_Q_INDEX = -1;
 let ACTIVE_TEXTAREA = null;
 
+let APP_STARTED = false;
+let AUTH_WATCHER_STARTED = false;
+
 /* ================== PAGES ================== */
 const quizListPage = document.getElementById("quizListPage");
 const quizCreatePage = document.getElementById("quizCreatePage");
@@ -1013,7 +1043,6 @@ function setQuizPage(p){
   if(p==="create") quizCreatePage.classList.add("show");
   if(p==="editor") quizEditorPage.classList.add("show");
 
-  // floating add shows only in editor
   document.getElementById("fabAddQuestion").classList.toggle("show", p==="editor");
 }
 
@@ -1028,8 +1057,11 @@ async function doLogout(){
 
 /* ================== AUTH GATE ================== */
 async function gateCheck(){
+  app.style.display = "none";
+
   const token = getToken();
   if(!token){
+    ME = null;
     mePill.textContent = "No login";
     renderNeedLogin("Chưa có phiên đăng nhập");
     return false;
@@ -1062,10 +1094,57 @@ async function gateCheck(){
     app.style.display = "";
     return true;
   }catch(e){
+    ME = null;
     mePill.textContent = "Login required";
     renderNeedLogin("Phiên lỗi / không check được: " + (e.message||""));
     return false;
   }
+}
+
+async function afterLoginInit(){
+  if(APP_STARTED) return;
+  APP_STARTED = true;
+
+  setTab("q");
+  setQuizPage("list");
+  resetSettingsToDefaults();
+  setMode("NEW");
+  QUESTIONS = [];
+  ACTIVE_Q_INDEX = -1;
+  renderAllQuestions();
+
+  await reloadQuizzes();
+  await reloadUsers();
+}
+
+async function tryAutoLogin(){
+  const ok = await gateCheck();
+  if(ok) await afterLoginInit();
+  return ok;
+}
+
+function startAuthWatcher(){
+  if(AUTH_WATCHER_STARTED) return;
+  AUTH_WATCHER_STARTED = true;
+
+  // nếu user login ở tab khác / quay lại app, tự check lại
+  const onVis = ()=>{ if(!document.hidden) tryAutoLogin(); };
+  const onFocus = ()=> tryAutoLogin();
+
+  window.addEventListener("visibilitychange", onVis, {passive:true});
+  window.addEventListener("focus", onFocus, {passive:true});
+
+  // storage event (tab khác set token)
+  window.addEventListener("storage", (e)=>{
+    const key = String(e.key||"");
+    if(TOKEN_KEYS.includes(key)) tryAutoLogin();
+  }, {passive:true});
+
+  // interval nhẹ để bắt case iOS không bắn storage event
+  setInterval(()=>{
+    if(APP_STARTED) return;
+    tryAutoLogin();
+  }, 1800);
 }
 
 /* ================== QUIZ FORM (settings modal inputs) ================== */
@@ -1226,7 +1305,6 @@ function resetSettingsToDefaults(){
 }
 function setMode(mode){
   CURRENT_MODE = mode;
-  // quiz id always readonly UI
   quizIdEl.setAttribute("disabled","disabled");
 }
 function validateQuiz(){
@@ -1246,14 +1324,12 @@ async function saveQuizOnly(){
   const token = getToken();
   if(!token) throw new Error("Chưa login");
 
-  // quiz id: auto random (NEW) and must not duplicate
   if(CURRENT_MODE !== "EDIT"){
     if(!CURRENT_QID) CURRENT_QID = genUniqueQuizId5();
     quizIdEl.value = CURRENT_QID;
   }
   let qid = (CURRENT_MODE==="EDIT") ? CURRENT_QID : CURRENT_QID;
 
-  // totalScore: equal dùng input, custom dùng sum(points)
   let totalScore = Number(totalScoreEl.value || "10") || 10;
   if(String(scoringModeEl.value||"equal")==="custom"){
     totalScore = calcCustomTotal();
@@ -1266,7 +1342,7 @@ async function saveQuizOnly(){
     p_title: titleEl.value.trim(),
     p_sub: subEl.value.trim(),
     p_is_public: (isPublicEl.value === "true"),
-    p_is_hidden: false, // removed UI
+    p_is_hidden: false,
     p_show_in_store: (showInStoreEl.value === "true"),
     p_require_login: (requireLoginEl.value === "true"),
     p_pinned: (pinnedEl.value === "true"),
@@ -1277,7 +1353,6 @@ async function saveQuizOnly(){
     p_access_code: accessCodeEl.value.trim()
   };
 
-  // if collision happens, retry a few times
   for(let attempt=0; attempt<5; attempt++){
     try{
       const out = await rpc(RPC.adminUpsertQuiz, payload);
@@ -1436,8 +1511,7 @@ document.getElementById("btnGoCreate").onclick = ()=>{
 
 document.getElementById("btnCreateSaveOnly").onclick = async ()=>{
   try{
-    // map basic fields to settings modal fields
-    CURRENT_QID = ""; // force regen
+    CURRENT_QID = "";
     quizIdEl.value = "";
     titleEl.value = (createTitleEl.value || "").trim();
     subEl.value = (createSubEl.value || "").trim();
@@ -1457,7 +1531,7 @@ document.getElementById("btnCreateSaveOnly").onclick = async ()=>{
 
 document.getElementById("btnCreateNext").onclick = async ()=>{
   try{
-    CURRENT_QID = ""; // force regen
+    CURRENT_QID = "";
     quizIdEl.value = "";
     titleEl.value = (createTitleEl.value || "").trim();
     subEl.value = (createSubEl.value || "").trim();
@@ -1538,7 +1612,6 @@ function ensureMeta(q){
   if(q.type==="tf4"){
     q.meta.statements = Array.isArray(q.meta.statements) ? q.meta.statements : ["","","",""];
     q.meta.keys = Array.isArray(q.meta.keys) ? q.meta.keys : [false,false,false,false];
-    // NEW RULE
     q.meta.rule = q.meta.rule || { byCorrectCount:{ "0":0,"1":0.1,"2":0.25,"3":0.5,"4":1 } };
   }
 }
@@ -1688,7 +1761,6 @@ function renderAllQuestions(){
     `;
   }).join("");
 
-  // set tf keys selects + typeset previews
   qAllHost.querySelectorAll(".qCard").forEach(card=>{
     const i = Number(card.getAttribute("data-i"));
     const q = QUESTIONS[i];
@@ -1727,7 +1799,6 @@ function syncQuestionFromCard(card){
   q.type = type;
   q.prompt = card.querySelector(".qPrompt")?.value || "";
 
-  // points
   if(String(scoringModeEl.value||"equal")==="custom"){
     q.points = Number(card.querySelector(".qPoints")?.value || "0") || 0;
   }else{
@@ -1760,7 +1831,6 @@ function syncQuestionFromCard(card){
     };
   }
 
-  // preview: only show if has latex
   const prevBox = card.querySelector('[data-role="mathPrevBox"]');
   const prev = card.querySelector('[data-role="mathPrev"]');
   if(prevBox && prev){
@@ -1797,7 +1867,6 @@ qAllHost.addEventListener("change",(e)=>{
   if(!card) return;
 
   if(e.target.classList.contains("qTypeSel")){
-    // rerender to show correct section UI
     syncQuestionFromCard(card);
     renderAllQuestions();
     return;
@@ -1805,7 +1874,7 @@ qAllHost.addEventListener("change",(e)=>{
   syncQuestionFromCard(card);
 },{passive:true});
 
-qAllHost.addEventListener("click",(e)=>{
+qAllHost.addEventListener("click", async (e)=>{
   const b = e.target.closest("button");
   if(!b) return;
   const act = b.getAttribute("data-act");
@@ -1818,7 +1887,6 @@ qAllHost.addEventListener("click",(e)=>{
   if(act==="up" && i>0){
     [QUESTIONS[i-1], QUESTIONS[i]] = [QUESTIONS[i], QUESTIONS[i-1]];
     renderAllQuestions();
-    // keep focus near moved card
     setTimeout(()=> scrollToQuestion(i-1), 40);
     return;
   }
@@ -1850,49 +1918,43 @@ qAllHost.addEventListener("click",(e)=>{
     document.getElementById("qImgPick").click();
     return;
   }
+
   if(act==="removeimg"){
-  if(ACTIVE_Q_INDEX<0) return;
+    const ok = confirm("Xóa ảnh này khỏi storage luôn?");
+    if(!ok) return;
 
-  const ok = confirm("Xóa ảnh này khỏi storage luôn?");
-  if(!ok) return;
+    ensureMeta(QUESTIONS[i]);
+    const path = String(QUESTIONS[i].meta.image_path || "").trim();
 
-  ensureMeta(QUESTIONS[ACTIVE_Q_INDEX]);
-  const path = String(QUESTIONS[ACTIVE_Q_INDEX].meta.image_path || "").trim();
-
-  // nếu có path thì xóa thật trong bucket
-  if(path){
-    try{
-      const delUrl = `${SUPABASE_URL}/storage/v1/object/${encodeURIComponent(STORAGE_BUCKET)}/${path.split("/").map(encodeURIComponent).join("/")}`;
-      const res = await fetch(delUrl,{
-        method:"DELETE",
-        headers:{
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization":"Bearer " + SUPABASE_ANON_KEY
+    if(path){
+      try{
+        const delUrl = `${SUPABASE_URL}/storage/v1/object/${encodeURIComponent(STORAGE_BUCKET)}/${path.split("/").map(encodeURIComponent).join("/")}`;
+        const res = await fetch(delUrl,{
+          method:"DELETE",
+          headers:{
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization":"Bearer " + SUPABASE_ANON_KEY
+          }
+        });
+        if(!res.ok){
+          const t = await res.text().catch(()=> "");
+          throw new Error(`Xóa ảnh thất bại (${res.status}): ${t || "check storage policy"}`);
         }
-      });
-      if(!res.ok){
-        const t = await res.text().catch(()=> "");
-        throw new Error(`Xóa ảnh thất bại (${res.status}): ${t || "check storage policy"}`);
+      }catch(err){
+        toast(err.message || "Lỗi xóa ảnh");
+        return;
       }
-    }catch(e){
-      toast(e.message || "Lỗi xóa ảnh");
-      return;
     }
+
+    QUESTIONS[i].meta.image_url = "";
+    QUESTIONS[i].meta.image_path = "";
+    renderAllQuestions();
+    toast("Đã xóa ảnh");
+    return;
   }
-
-  // xóa link/meta sau khi xóa storage ok (hoặc không có path)
-  QUESTIONS[ACTIVE_Q_INDEX].meta.image_url = "";
-  QUESTIONS[ACTIVE_Q_INDEX].meta.image_path = "";
-  renderActiveEditor();
-  renderSidebar();
-  toast("Đã xóa ảnh");
-  return;
-}
-
 
   if(act==="openLatex"){
     ACTIVE_Q_INDEX = i;
-    // prefer prompt textarea
     const prompt = card.querySelector("textarea.qPrompt");
     if(prompt){ prompt.focus(); ACTIVE_TEXTAREA = prompt; }
     openLatexModal();
@@ -2012,10 +2074,7 @@ window.addEventListener("paste", async (e)=>{
   const f = imgItem.getAsFile();
   if(!f) return;
 
-  // only in editor page
   if(!quizEditorPage.classList.contains("show")) return;
-
-  // paste goes to last focused question index
   if(ACTIVE_Q_INDEX<0) return;
   try{ await setQuestionImage(ACTIVE_Q_INDEX, f); }catch(err){ toast(err.message || "Lỗi upload ảnh"); }
 },{passive:true});
@@ -2350,7 +2409,6 @@ function openLatexModal(){
   latexModalBack.setAttribute("aria-hidden","false");
   lockScroll(true);
 
-  // load selection or keep current
   const start = LATEX_TARGET_EL.selectionStart ?? 0;
   const end = LATEX_TARGET_EL.selectionEnd ?? 0;
   const sel = (end>start) ? LATEX_TARGET_EL.value.slice(start,end) : "";
@@ -2364,7 +2422,7 @@ function closeLatexModal(){
 }
 document.getElementById("btnCloseLatex").onclick = closeLatexModal;
 latexModalBack.addEventListener("click",(e)=>{
-  if(e.target === latexModalBack) closeLatexModal(); // click outside => close
+  if(e.target === latexModalBack) closeLatexModal();
 });
 
 function getActiveTextTarget(){
@@ -2412,7 +2470,6 @@ document.getElementById("btnLatexInsert").onclick = ()=>{
 
   insertAtCursor(el, s);
 
-  // sync question data after insert
   const card = el.closest(".qCard");
   if(card) syncQuestionFromCard(card);
 
@@ -2439,15 +2496,11 @@ const LATEX_TEMPLATES = [
   { label: "HS bậc 1", tpl: "$ax + b$" },
   { label: "HS bậc 2", tpl: "$ax^2 + bx + c$" },
   { label: "HS bậc 3", tpl: "$ax^3 + bx^2 + cx + d$" },
-  // Hàm số cơ bản
   { label: "Hàm nhất biến bậc 1", tpl: "$y = ax + b$" },
   { label: "Hàm nhất biến bậc 2", tpl: "$y = ax^2 + bx + c$" },
-
-  // Hàm phân thức
   { label: "Hàm phân thức bậc 1 / bậc 1", tpl: "$y = \\dfrac{ax + b}{cx + d}$" },
   { label: "Hàm bậc 2 / bậc 1", tpl: "$y = \\dfrac{ax^2 + bx + c}{ex + f}$" },
   { label: "Hàm bậc 3 / bậc 1", tpl: "$y = \\dfrac{ax^3 + bx^2 + cx + d}{ex + f}$" },
-
 ];
 
 latexGrid.innerHTML = LATEX_TEMPLATES.map(x=>{
@@ -2466,19 +2519,10 @@ updateLatexPreview();
 async function boot(){
   await requestPersistentStorage();
 
-  const ok = await gateCheck();
-  if(!ok) return;
-
-  setTab("q");
-  setQuizPage("list");
-  resetSettingsToDefaults();
-  setMode("NEW");
-  QUESTIONS = [];
-  ACTIVE_Q_INDEX = -1;
-  renderAllQuestions();
-
-  await reloadQuizzes();
-  await reloadUsers();
+  const ok = await tryAutoLogin();
+  if(!ok){
+    startAuthWatcher();
+  }
 }
 (async ()=>{ await boot(); })();
 </script>
