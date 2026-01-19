@@ -3,25 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
-  <title>tuankhoi.site - Quiz Store</title>
+  <title>tuankhoi.site - Admin</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
 
   <style>
-    :root {
-      --bg1:#ffecd2; --bg2:#fcb69f;
-      --card:#fff; --text:#1f2937; --muted:#6b7280;
-      --primary:#7c3aed; --ok:#16a34a; --bad:#dc2626;
+    :root{
+      --bg1:#dbeafe; --bg2:#fce7f3;
+      --card:#fff; --text:#111827; --muted:#6b7280;
       --border:#e5e7eb; --soft:#f8fafc;
       --shadow:0 14px 40px rgba(0,0,0,.10);
       --radius:18px;
-      --admin:#2563eb;
+      --primary:#2563eb;
+      --danger:#dc2626;
+      --ok:#16a34a;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    html{-webkit-text-size-adjust:100%}
     body{
       margin:0;
       font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
@@ -30,43 +30,52 @@
         radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
         linear-gradient(120deg,var(--bg1) 0%, var(--bg2) 100%);
       overflow:hidden;
-      touch-action: pan-x pan-y;
     }
-
-    /* remove underline globally */
     a{color:inherit;text-decoration:none}
-    a:hover,a:active,a:visited{text-decoration:none}
-    a:focus-visible{outline:3px solid rgba(124,58,237,.25); outline-offset:3px; border-radius:14px}
+    #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px}
+    .wrap{max-width:1100px;margin:0 auto;padding:0 14px}
 
-    .btn,.pinKey,.btn-x{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-
-    #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px;touch-action:pan-y}
-    .wrap{max-width:980px;margin:0 auto;padding:0 14px}
-
-    .userCorner{
-      position:fixed;top:10px;left:12px;z-index:10010;
-      display:none;align-items:center;gap:8px;
-      padding:8px 10px;border-radius:999px;
-      background:rgba(255,255,255,.55);
-      border:1px solid rgba(229,231,235,.65);
-      backdrop-filter:blur(6px);
-      box-shadow:0 10px 22px rgba(0,0,0,.06);
+    .topbar{
+      margin-top:10px;
+      background:rgba(255,255,255,.88);
+      border:1px solid rgba(229,231,235,.9);
+      border-radius:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,.06);
+      padding:14px;
+      display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+    }
+    .titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
+    .logo{
+      width:42px;height:42px;border-radius:16px;
+      background:linear-gradient(135deg,#2563eb,#22c55e);
+      display:flex;align-items:center;justify-content:center;
+      color:#fff;font-weight:900;
+      box-shadow:0 10px 22px rgba(37,99,235,.18);
       user-select:none;
-      max-width:calc(100vw - 24px);
-      cursor:pointer;
     }
-    .userCorner .name{
-      font-weight:950;font-size:.88rem;color:rgba(31,41,55,.55);
+    .titles h1{font-size:1.02rem;margin:0;font-weight:800}
+    .titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
+
+    .actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex:1 1 320px}
+    .pill{
+      display:inline-flex;align-items:center;gap:10px;
+      padding:9px 12px;border-radius:999px;
+      background:rgba(255,255,255,.78);
+      border:1px solid rgba(229,231,235,.9);
+      color:rgba(17,24,39,.85);
+      font-weight:800;font-size:.9rem;
+      box-shadow:0 10px 22px rgba(0,0,0,.05);
+      user-select:none;
+      max-width:78vw;
       white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-      max-width:58vw;
     }
-    .userCorner .adminBadge{
+    .badge-admin{
       padding:4px 8px;border-radius:999px;
-      font-weight:950;font-size:.78rem;
       background:rgba(37,99,235,.12);
       border:1px solid rgba(37,99,235,.35);
-      color:var(--admin);
-      white-space:nowrap;
+      color:#2563eb;
+      font-weight:950;
+      font-size:.78rem;
     }
 
     .btn{
@@ -77,60 +86,19 @@
       user-select:none;white-space:nowrap;
       box-shadow:0 12px 24px rgba(0,0,0,.12);
       background:#fff;color:#111827;border:1px solid #e5e7eb;
+      touch-action:manipulation;-webkit-tap-highlight-color:transparent;
     }
     .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
     .btn:active{transform:translateY(0)}
     .btn-primary{
-      background:linear-gradient(135deg,#7c3aed,#fb7185);
-      color:#fff;border:0;
-      box-shadow:0 12px 24px rgba(124,58,237,.18);
-    }
-    .btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
-    .btn-danger{background:var(--bad);color:#fff;border:0}
-    .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none !important;filter:none !important}
-
-    .btn-admin{
       background:linear-gradient(135deg,#2563eb,#22c55e);
       color:#fff;border:0;
       box-shadow:0 12px 24px rgba(37,99,235,.16);
     }
+    .btn-danger{background:var(--danger);color:#fff;border:0}
+    .btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
+    .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none !important;filter:none !important}
 
-    .topbar{
-      margin-top:10px;
-      background:rgba(255,255,255,.86);
-      border:1px solid rgba(229,231,235,.9);
-      border-radius:18px;
-      box-shadow:0 10px 30px rgba(0,0,0,.06);
-      padding:14px;
-      display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
-    }
-    .titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
-    .logo{
-      width:42px;height:42px;border-radius:16px;
-      background:linear-gradient(135deg,#a78bfa,#fb7185);
-      display:flex;align-items:center;justify-content:center;
-      color:#fff;font-weight:900;
-      box-shadow:0 10px 22px rgba(124,58,237,.18);
-      user-select:none;
-    }
-    .titles h1{font-size:1.02rem;margin:0;font-weight:800}
-    .titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
-
-    .actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex:1 1 320px}
-    .statusPill{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:9px 12px;border-radius:999px;
-      background:rgba(255,255,255,.75);
-      border:1px solid rgba(229,231,235,.9);
-      color:rgba(31,41,55,.8);
-      font-weight:800;font-size:.9rem;
-      box-shadow:0 10px 22px rgba(0,0,0,.05);
-      user-select:none;
-      max-width:72vw;
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    }
-
-    .content{padding:12px 0 0}
     .card{
       background:var(--card);
       border:2px solid var(--border);
@@ -141,22 +109,6 @@
     .row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
     .vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25}
     .muted{color:var(--muted);font-weight:650}
-    .idx{
-      font-size:.78rem;font-weight:900;
-      padding:6px 10px;border-radius:999px;
-      background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;
-      white-space:nowrap;
-    }
-    .badge-open{
-      background:#ecfdf5;color:#065f46;border-color:#a7f3d0;
-    }
-    .badge-code{
-      background:#fff7ed;color:#9a3412;border-color:#fed7aa;
-    }
-    .badge-pin{
-      background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe;
-    }
-
     .input{
       width:100%;
       border-radius:14px;border:2px solid #e5e7eb;
@@ -164,11 +116,28 @@
       outline:none;background:var(--soft);
       transition:border-color .15s ease, box-shadow .15s ease;
     }
-    .input:focus{
-      border-color:rgba(124,58,237,.55);
-      box-shadow:0 0 0 5px rgba(124,58,237,.10);
-      background:#fff;
+    .input:focus{border-color:rgba(37,99,235,.55);box-shadow:0 0 0 5px rgba(37,99,235,.10);background:#fff}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+
+    .tabs{display:flex;gap:10px;flex-wrap:wrap}
+    .tab{padding:9px 12px;border-radius:999px;border:1px solid #e5e7eb;background:#fff;font-weight:900;cursor:pointer}
+    .tab.active{background:linear-gradient(135deg,#2563eb,#22c55e);color:#fff;border:0}
+
+    .list{display:grid;gap:10px}
+    .item{
+      border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:#fff;
+      box-shadow:0 10px 22px rgba(0,0,0,.05);
     }
+    .item .meta{margin-top:6px;color:var(--muted);font-weight:650;font-size:.86rem}
+    .idx{
+      font-size:.78rem;font-weight:900;
+      padding:6px 10px;border-radius:999px;
+      background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;
+      white-space:nowrap;
+    }
+    .idx.ok{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
+    .idx.bad{background:#fef2f2;color:#991b1b;border-color:#fecaca}
 
     .modal-backdrop{
       position:fixed;inset:0;background:rgba(0,0,0,.35);
@@ -176,29 +145,20 @@
       padding:16px;z-index:20000;
     }
     .modal-backdrop.show{display:flex}
-    #registerBackdrop{z-index:20015}
-    #profileBackdrop{z-index:20030}
-    #pinBackdrop{z-index:20040}
-
     .modal{
-      width:100%;max-width:620px;
+      width:100%;max-width:860px;
       background:#fff;border-radius:18px;border:1px solid #e5e7eb;
       box-shadow:0 20px 60px rgba(0,0,0,.18);
       padding:14px;max-height:82vh;overflow:auto;
       -webkit-overflow-scrolling:touch;
     }
-    .modal h3{margin:4px 0 6px;font-size:1.02rem}
-    .modal p{margin:0 0 12px;color:var(--muted);font-weight:650;font-size:.92rem;line-height:1.35}
-    .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
-
-    .xclose{position:sticky;top:0;display:flex;justify-content:flex-end;z-index:2;margin-bottom:4px}
+    .xclose{position:sticky;top:0;display:flex;justify-content:flex-end;z-index:2;margin-bottom:6px}
     .btn-x{
       width:56px;height:56px;border-radius:16px;
       border:1px solid #e5e7eb;background:#fff;cursor:pointer;
       font-weight:1000;font-size:1.8rem;line-height:1;
       box-shadow:0 12px 24px rgba(0,0,0,.10);
     }
-
     .toast{
       position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
       background:rgba(17,24,39,.92);color:#fff;
@@ -210,145 +170,190 @@
       z-index:20050;text-align:center;
     }
     .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
-
-    /* PIN keypad */
-    .pinWrap{display:grid;gap:12px}
-    .pinDots{
-      display:flex;justify-content:center;gap:10px;
-      padding:8px 0 2px;user-select:none;
-    }
-    .dot{
-      width:14px;height:14px;border-radius:999px;
-      border:2px solid #e5e7eb;background:#fff;
-      box-shadow:0 10px 22px rgba(0,0,0,.08);
-    }
-    .dot.filled{
-      background:linear-gradient(135deg,#7c3aed,#fb7185);
-      border-color:rgba(124,58,237,.25);
-    }
-    .pinKeypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .pinKey{
-      height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;
-      font-weight:1000;font-size:1.25rem;cursor:pointer;
-      box-shadow:0 10px 22px rgba(0,0,0,.08);
-      transition:transform .12s ease, filter .12s ease;
-      user-select:none;
-    }
-    .pinKey:hover{transform:translateY(-1px);filter:brightness(.99)}
-    .pinKey:active{transform:translateY(0)}
-    .pinKey.small{font-size:.95rem;font-weight:950;letter-spacing:.02em}
-    .pinNote{text-align:center;color:var(--muted);font-weight:750;font-size:.9rem;line-height:1.35}
-    @keyframes shakeX{0%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-4px)}90%{transform:translateX(4px)}100%{transform:translateX(0)}}
-    .pinWrap.shake{animation:shakeX .5s ease}
-    .pinDots.error .dot{border-color:rgba(220,38,38,.65)}
-    .pinDots.error .dot.filled{
-      background:linear-gradient(135deg,#fca5a5,#dc2626);
-      border-color:rgba(220,38,38,.55);
-    }
-    .pinNote.error{color:var(--bad)}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    @media(max-width:520px){.grid2{grid-template-columns:1fr}}
-    .adminBadgeInline{
-      padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
-      background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);
-      color:var(--admin);white-space:nowrap;
-    }
+    textarea.input{min-height:260px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.85rem}
   </style>
 </head>
 
 <body>
-  <div class="userCorner" id="userCorner" title="Bấm để mở tài khoản">
-    <span class="name" id="userCornerName">—</span>
-    <span class="adminBadge" id="userCornerAdmin" style="display:none;">ADMIN</span>
-  </div>
-
   <div id="shell">
     <div class="wrap">
       <div class="topbar">
         <div class="titlebox">
-          <div class="logo">Hi!</div>
+          <div class="logo">A</div>
           <div class="titles">
-            <h1>Quiz Store</h1>
-            <div class="tiny">Chọn quiz để làm</div>
+            <h1>Admin Panel</h1>
+            <div class="tiny">Chỉ dành cho tuankhoi</div>
           </div>
         </div>
 
         <div class="actions">
-          <div class="statusPill" id="statusPill">—</div>
-          <a href="/admin" id="adminLinkTop" style="display:none;">
-            <button class="btn btn-admin">Panel</button>
-          </a>
+          <div class="pill" id="mePill">—</div>
+          <a href="/" class="btn btn-ghost">Trang chủ</a>
+          <button class="btn btn-danger" id="btnLogout" type="button">Logout</button>
         </div>
       </div>
 
-      <div class="content" id="content"></div>
+      <div class="card" id="gateCard">
+        <div class="row1">
+          <p class="vi">Kiểm tra phiên đăng nhập…</p>
+          <span class="idx" id="gateIdx">…</span>
+        </div>
+        <p class="muted" style="margin:8px 0 0;line-height:1.4" id="gateMsg">Đang xác thực token admin.</p>
+      </div>
+
+      <div id="app" style="display:none">
+        <div class="card">
+          <div class="row1">
+            <p class="vi">Quản trị</p>
+            <div class="tabs">
+              <button class="tab active" id="tabQuizzes" type="button">Quizzes</button>
+              <button class="tab" id="tabUsers" type="button">Users</button>
+            </div>
+          </div>
+
+          <div style="margin-top:10px" id="panelQuizzes">
+            <div class="grid2">
+              <input class="input" id="quizSearch" placeholder="Tìm quiz theo id/title…" />
+              <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+                <button class="btn btn-primary" id="btnReloadQuizzes" type="button">↻ Reload</button>
+                <button class="btn btn-primary" id="btnNewQuiz" type="button">＋ New quiz</button>
+              </div>
+            </div>
+            <div class="list" id="quizList" style="margin-top:12px"></div>
+          </div>
+
+          <div style="margin-top:10px; display:none" id="panelUsers">
+            <div class="grid2">
+              <input class="input" id="userSearch" placeholder="Tìm user theo username…" />
+              <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+                <button class="btn btn-primary" id="btnReloadUsers" type="button">↻ Reload</button>
+              </div>
+            </div>
+            <div class="list" id="userList" style="margin-top:12px"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
-  <!-- Register prompt -->
-  <div class="modal-backdrop" id="registerBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
-      <h3 id="registerTitle">Đăng ký tài khoản?</h3>
-      <p id="registerDesc">Username chưa đăng ký. Bạn có muốn đăng ký không?</p>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="btnRegisterNo">Nhập lại</button>
-        <button class="btn btn-primary" id="btnRegisterYes">Đăng ký</button>
-      </div>
-    </div>
-  </div>
+  <!-- Quiz modal -->
+  <div class="modal-backdrop" id="quizBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="xclose"><button class="btn-x" id="btnCloseQuiz" type="button" aria-label="Đóng">✕</button></div>
 
-  <!-- PIN keypad -->
-  <div class="modal-backdrop" id="pinBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
-      <div class="xclose">
-        <button class="btn-x" id="btnClosePin" aria-label="Đóng">✕</button>
+      <div class="row1">
+        <p class="vi" style="margin:0">Quiz</p>
+        <span class="idx" id="quizModalIdx">—</span>
       </div>
-      <h3 id="pinTitle">Mật khẩu</h3>
-      <p id="pinDesc">Nhập mật khẩu số.</p>
 
-      <div class="pinWrap" id="pinWrap">
-        <div class="pinDots" id="pinDots"></div>
-        <div class="pinKeypad" id="pinKeypad"></div>
-        <div class="pinNote" id="pinNote"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Profile modal -->
-  <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
-      <div class="xclose">
-        <button class="btn-x" id="btnCloseProfile" aria-label="Đóng">✕</button>
-      </div>
-      <h3 id="profileTitle">Tài khoản</h3>
-      <p id="profileSub">Quản lý username & mật khẩu.</p>
-
-      <div class="card" style="margin:10px 0 0; box-shadow:none;">
-        <div class="row1">
-          <p class="vi" style="margin:0">Username: <b id="profileUsername">—</b></p>
-          <div><span class="idx" id="profileRole">USER</span></div>
+      <div class="grid2" style="margin-top:10px">
+        <div>
+          <div class="muted">quiz_id (5 chữ)</div>
+          <input class="input" id="q_quiz_id" placeholder="vd: abcde" maxlength="5" />
         </div>
-        <div class="muted" id="profileHint" style="margin-top:8px; line-height:1.35"></div>
+        <div>
+          <div class="muted">title</div>
+          <input class="input" id="q_title" placeholder="Tiêu đề" />
+        </div>
       </div>
 
-      <div style="height:1px;background:#e5e7eb;margin:12px 0;"></div>
-
-      <div class="vi" style="font-size:.98rem;margin:0 0 6px;">Mật khẩu</div>
-      <button class="btn btn-primary" id="btnChangePin" style="justify-content:center; width:100%;">🔒 Đổi mật khẩu</button>
-
-      <div style="height:1px;background:#e5e7eb;margin:12px 0;"></div>
-
-      <div class="vi" style="font-size:.98rem;margin:0 0 6px;">Đổi username</div>
-      <div class="grid2">
-        <input class="input" id="newUsername" placeholder="Username mới" maxlength="15" autocomplete="off"/>
-        <button class="btn btn-primary" id="btnSaveNewUsername" style="justify-content:center;">💾 Lưu</button>
+      <div style="margin-top:10px">
+        <div class="muted">sub</div>
+        <input class="input" id="q_sub" placeholder="Mô tả ngắn" />
       </div>
 
-      <div style="height:1px;background:#e5e7eb;margin:12px 0;"></div>
+      <div class="grid2" style="margin-top:10px">
+        <label class="item" style="display:flex;gap:10px;align-items:center">
+          <input type="checkbox" id="q_is_public" />
+          <div>
+            <div style="font-weight:900">is_public</div>
+            <div class="muted">Hiện public</div>
+          </div>
+        </label>
 
-      <button class="btn btn-danger" id="btnLogout" style="justify-content:center; width:100%;">🚪 Đăng xuất</button>
+        <label class="item" style="display:flex;gap:10px;align-items:center">
+          <input type="checkbox" id="q_is_hidden" />
+          <div>
+            <div style="font-weight:900">is_hidden</div>
+            <div class="muted">Ẩn khỏi store</div>
+          </div>
+        </label>
+
+        <label class="item" style="display:flex;gap:10px;align-items:center">
+          <input type="checkbox" id="q_show_in_store" />
+          <div>
+            <div style="font-weight:900">show_in_store</div>
+            <div class="muted">Cho hiện trong store</div>
+          </div>
+        </label>
+
+        <label class="item" style="display:flex;gap:10px;align-items:center">
+          <input type="checkbox" id="q_require_login" />
+          <div>
+            <div style="font-weight:900">require_login</div>
+            <div class="muted">Bắt đăng nhập mới làm</div>
+          </div>
+        </label>
+
+        <label class="item" style="display:flex;gap:10px;align-items:center">
+          <input type="checkbox" id="q_pinned" />
+          <div>
+            <div style="font-weight:900">pinned</div>
+            <div class="muted">Đưa lên đầu</div>
+          </div>
+        </label>
+
+        <label class="item" style="display:flex;gap:10px;align-items:center">
+          <input type="checkbox" id="q_require_access_code" />
+          <div>
+            <div style="font-weight:900">require_access_code</div>
+            <div class="muted">Bắt mã truy cập</div>
+          </div>
+        </label>
+      </div>
+
+      <div class="grid2" style="margin-top:10px">
+        <div>
+          <div class="muted">scoring_mode</div>
+          <input class="input" id="q_scoring_mode" placeholder="equal / custom" />
+        </div>
+        <div>
+          <div class="muted">total_score</div>
+          <input class="input" id="q_total_score" type="number" step="0.1" />
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:10px">
+        <div>
+          <div class="muted">shuffle_mode</div>
+          <input class="input" id="q_shuffle_mode" placeholder="none / q / qa" />
+        </div>
+        <div>
+          <div class="muted">access_code (nếu require_access_code)</div>
+          <input class="input" id="q_access_code" placeholder="vd: 1234" />
+        </div>
+      </div>
+
+      <div style="height:1px;background:#e5e7eb;margin:14px 0;"></div>
+
+      <div class="row1">
+        <p class="vi" style="margin:0">Questions JSON</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn btn-primary" id="btnLoadQuestions" type="button">Load</button>
+          <button class="btn btn-primary" id="btnSaveQuestions" type="button">Save questions</button>
+        </div>
+      </div>
+      <p class="muted" style="margin:6px 0 10px;line-height:1.35">
+        Dạng: mảng JSON. Mỗi item: { "q_type": "...", "prompt": "...", "answers": [...], "points": 0, "meta": {} }
+      </p>
+      <textarea class="input" id="q_questions_json" placeholder="[]"></textarea>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px">
+        <button class="btn btn-danger" id="btnDeleteQuiz" type="button">🗑 Delete quiz</button>
+        <button class="btn btn-primary" id="btnSaveQuiz" type="button">💾 Save quiz</button>
+      </div>
     </div>
   </div>
 
@@ -357,77 +362,17 @@
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
-/* ================== STORAGE (match admin.html) ================== */
-const TOKEN_KEY_PRIMARY = "tk_token_v2";
+/* ================== SECURITY: kill old dangerous hash ================== */
+try{
+  if(location.hash && /u=|pin=|username=|pass=|pwd=/i.test(location.hash)){
+    history.replaceState(null,"", location.pathname + location.search);
+  }
+}catch{}
+
+/* ================== TOKEN STORAGE (same keys as index) ================== */
 const TOKEN_KEYS = ["tk_token_v2","tk_token_v1","tk_token"];
-const TOKEN_COOKIE_PRIMARY = "tk_token_v2";
 const TOKEN_COOKIES = ["tk_token_v2","tk_token_v1","tk_token"];
 
-const ME_KEY = "tk_me_v2"; // cache để khỏi bị vòng lặp “login xong lại bắt login”
-
-/* ================== HELPERS ================== */
-function toast(msg){
-  const t=document.getElementById("toast");
-  t.textContent=String(msg||"");
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),1200);
-}
-function escapeHtml(s){
-  return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
-}
-function normUsername(u){
-  return String(u||"").trim().toLowerCase();
-}
-function validateUsername(u){
-  u = normUsername(u);
-  if(!u) return "Chưa nhập username.";
-  if(u.length>15) return "Username tối đa 15 ký tự.";
-  if(!/^[a-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z 0-9 và dấu _ (không viết hoa).";
-  return null;
-}
-
-function getMeCache(){
-  try{
-    const raw = localStorage.getItem(ME_KEY);
-    if(!raw) return null;
-    const obj = JSON.parse(raw);
-    if(obj && obj.username) return obj;
-  }catch{}
-  return null;
-}
-function setMeCache(me){
-  try{
-    if(!me) localStorage.removeItem(ME_KEY);
-    else localStorage.setItem(ME_KEY, JSON.stringify(me));
-  }catch{}
-}
-
-function safeNextPath(){
-  try{
-    const u = new URL(location.href);
-    const n = (u.searchParams.get("next")||"").trim();
-    if(n.startsWith("/")) return n;
-  }catch{}
-  return "";
-}
-
-function isAdminUser(me){
-  if(!me) return false;
-  const u = String(me.username||"").toLowerCase();
-  return me.role==="admin" || u==="tuankhoi";
-}
-
-/* ===== persistent storage (optional, helps iOS/PWA) ===== */
-async function requestPersistentStorage(){
-  try{
-    if(navigator.storage && navigator.storage.persist){
-      await navigator.storage.persist();
-    }
-  }catch{}
-}
-
-/* ===== token persist (same idea as admin.html) ===== */
 function cookieDomainHint(){
   const host = String(location.hostname||"").trim();
   if(!host || host==="localhost" || host.endsWith(".localhost")) return "";
@@ -436,11 +381,12 @@ function cookieDomainHint(){
   if(parts.length < 2) return "";
   return "." + parts.slice(-2).join(".");
 }
+function cookieSecureFlag(){ return (location.protocol === "https:") ? "; Secure" : ""; }
 function setCookie(name, value){
   const v = encodeURIComponent(String(value||""));
-  const maxAge = 60*60*24*365*20;
+  const maxAge = 60*60*24*365*2;
   const base = cookieDomainHint();
-  const common = `${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
+  const common = `${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax${cookieSecureFlag()}`;
   document.cookie = common;
   if(base && base !== location.hostname){
     document.cookie = `${common}; Domain=${base}`;
@@ -448,36 +394,55 @@ function setCookie(name, value){
 }
 function getCookie(name){
   const cs = document.cookie ? document.cookie.split(";") : [];
-  let found = "";
   for(const raw of cs){
     const s = raw.trim();
     if(!s) continue;
     const eq = s.indexOf("=");
     const k = (eq>=0 ? s.slice(0,eq) : s).trim();
-    if(k === name) found = (eq>=0 ? s.slice(eq+1) : "");
+    if(k === name){
+      const v = (eq>=0 ? s.slice(eq+1) : "");
+      try{ return v ? decodeURIComponent(v) : ""; }catch{ return v || ""; }
+    }
   }
-  try{ return found ? decodeURIComponent(found) : ""; }catch{ return found || ""; }
+  return "";
 }
 function delCookie(name){
   const base = cookieDomainHint();
-  document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
+  const common = `${name}=; Max-Age=0; Path=/; SameSite=Lax${cookieSecureFlag()}`;
+  document.cookie = common;
   if(base && base !== location.hostname){
-    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax; Domain=${base}`;
+    document.cookie = `${common}; Domain=${base}`;
   }
 }
-
 function setToken(t){
   t = String(t||"").trim();
   if(!t) return;
-
   for(const k of TOKEN_KEYS){
-    try{ localStorage.setItem(k, t); }catch{}
-    try{ sessionStorage.setItem(k, t); }catch{}
+    try{ localStorage.setItem(k,t); }catch{}
+    try{ sessionStorage.setItem(k,t); }catch{}
   }
   for(const c of TOKEN_COOKIES){
-    try{ setCookie(c, t); }catch{}
+    try{ setCookie(c,t); }catch{}
   }
-  try{ window.name = "tk:" + t; }catch{}
+}
+function getToken(){
+  let t = "";
+  for(const k of TOKEN_KEYS){
+    try{ t = (localStorage.getItem(k)||"").trim(); if(t) break; }catch{}
+  }
+  if(!t){
+    for(const k of TOKEN_KEYS){
+      try{ t = (sessionStorage.getItem(k)||"").trim(); if(t) break; }catch{}
+    }
+  }
+  if(!t){
+    for(const c of TOKEN_COOKIES){
+      t = (getCookie(c)||"").trim();
+      if(t) break;
+    }
+  }
+  if(t) setToken(t);
+  return t;
 }
 function clearToken(){
   for(const k of TOKEN_KEYS){
@@ -487,90 +452,21 @@ function clearToken(){
   for(const c of TOKEN_COOKIES){
     try{ delCookie(c); }catch{}
   }
-  try{ if(String(window.name||"").startsWith("tk:")) window.name = ""; }catch{}
-}
-function getToken(){
-  let t = "";
-
-  // localStorage
-  for(const k of TOKEN_KEYS){
-    try{
-      t = (localStorage.getItem(k) || "").trim();
-      if(t) break;
-    }catch{}
-  }
-
-  // sessionStorage
-  if(!t){
-    for(const k of TOKEN_KEYS){
-      try{
-        t = (sessionStorage.getItem(k) || "").trim();
-        if(t) break;
-      }catch{}
-    }
-  }
-
-  // cookies
-  if(!t){
-    for(const c of TOKEN_COOKIES){
-      t = (getCookie(c) || "").trim();
-      if(t) break;
-    }
-  }
-
-  // window.name
-  if(!t){
-    const wn = String(window.name||"");
-    if(wn.startsWith("tk:")) t = wn.slice(3).trim();
-  }
-
-  // URL param / hash token (optional compat)
-  try{
-    const u = new URL(location.href);
-    if(!t){
-      const q = (u.searchParams.get("tk") || u.searchParams.get("token") || "").trim();
-      if(q) t = q;
-    }
-    if(!t && u.hash){
-      const hs = u.hash.replace(/^#/,"");
-      const p = new URLSearchParams(hs);
-      const q2 = (p.get("tk") || p.get("token") || "").trim();
-      if(q2) t = q2;
-    }
-  }catch{}
-
-  if(t) setToken(t); // migrate/sync all
-  return t;
 }
 
-/* ================== SORTING HELPERS ================== */
-function toTime(v){
-  const t = Date.parse(String(v||""));
-  return Number.isFinite(t) ? t : 0;
+/* ================== UI HELPERS ================== */
+const toastEl = document.getElementById("toast");
+function toast(msg){
+  toastEl.textContent = String(msg||"");
+  toastEl.classList.add("show");
+  setTimeout(()=>toastEl.classList.remove("show"),1200);
 }
-function sortQuizzes(list){
-  const arr = [...(list||[])];
-  arr.sort((a,b)=>{
-    const ap = a && a.pinned === true;
-    const bp = b && b.pinned === true;
-    if(ap !== bp) return bp ? 1 : -1; // pinned lên đầu
-    const at = Math.max(
-      toTime(a?.pinned_at || a?.pinnedAt),
-      toTime(a?.updated_at || a?.updatedAt),
-      toTime(a?.created_at || a?.createdAt)
-    );
-    const bt = Math.max(
-      toTime(b?.pinned_at || b?.pinnedAt),
-      toTime(b?.updated_at || b?.updatedAt),
-      toTime(b?.created_at || b?.createdAt)
-    );
-    if(at !== bt) return bt - at; // mới lên trên
-    return String(a?.quiz_id||"").localeCompare(String(b?.quiz_id||""));
-  });
-  return arr;
+function esc(s){
+  return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
 
-/* ================== SUPABASE RPC ================== */
+/* ================== RPC ================== */
 async function rpc(fn, args){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
     method:"POST",
@@ -591,705 +487,423 @@ async function rpc(fn, args){
   return data;
 }
 
-/* === RPC fallback để “liên hệ SQL ok” khi tên/param RPC khác nhau === */
-async function rpcTry(fns, argsList){
-  let lastErr = null;
-  for(const fn of (fns||[])){
-    for(const args of (argsList||[])){
-      try{
-        return await rpc(fn, args);
-      }catch(e){
-        lastErr = e;
-      }
-    }
-  }
-  throw (lastErr || new Error("RPC failed"));
-}
-
 const API = {
-  me: (token)=>rpc("api_me",{p_token:token}),
-  logout:(token)=>rpc("api_logout",{p_token:token}),
-  checkUsername:(username)=>rpc("api_check_username",{p_username:username}),
-  login:(username,pin)=>rpc("api_login",{p_username:username,p_pin:String(pin||"")}),
-  register:(username,pin)=>rpc("api_register",{p_username:username,p_pin:String(pin||"")}),
-  listStore:()=>rpc("api_list_public_quizzes",{}),
+  adminMe: (t)=>rpc("api_admin_me", { p_token: t }),
+  logout:  (t)=>rpc("api_logout",   { p_token: t }),
 
-  // đổi username: thử nhiều biến thể args / function name (không sửa SQL)
-  changeUsername: async (token,newU)=>{
-    return await rpcTry(
-      ["api_change_username","api_rename_username","api_update_username"],
-      [
-        {p_token:token, p_new_username:newU},
-        {p_token:token, p_username:newU},
-        {token:token, new_username:newU},
-        {token:token, username:newU},
-      ]
-    );
-  },
+  listQuizzes: (t)=>rpc("admin_list_quizzes_v0", { p_token: t }),
+  upsertQuiz:  (t, payload)=>rpc("admin_upsert_quiz_v0", Object.assign({ p_token: t }, payload)),
+  deleteQuiz:  (t, quiz_id)=>rpc("admin_delete_quiz_v0", { p_token: t, p_quiz_id: quiz_id }),
 
-  // đổi pin: thử nhiều biến thể args / function name (không sửa SQL)
-  changePin: async (token,oldPin,newPin)=>{
-    const o = String(oldPin||"");
-    const n = String(newPin||"");
-    return await rpcTry(
-      ["api_change_pin","api_update_pin","api_change_password","api_change_passcode"],
-      [
-        {p_token:token, p_old_pin:o, p_new_pin:n},
-        {p_token:token, p_old:o, p_new:n},
-        {token:token, old_pin:o, new_pin:n},
-        {token:token, old:o, new:n},
-      ]
-    );
-  }
+  getQuestions:(t, quiz_id)=>rpc("admin_get_questions_v0", { p_token: t, p_quiz_id: quiz_id }),
+  replaceQuestions:(t, quiz_id, items)=>rpc("admin_replace_questions_v3_v0", { p_token: t, p_quiz_id: quiz_id, p_items: items }),
+
+  listUsers: (t)=>rpc("admin_list_users_v0", { p_token: t }),
+  deleteUser:(t, user_id)=>rpc("admin_delete_user_v0", { p_token: t, p_user_id: user_id }),
+  forceRename:(t, user_id, newU)=>rpc("admin_force_rename_v0", { p_token: t, p_user_id: user_id, p_new_username: newU }),
+  forceSetPin:(t, user_id, newPin)=>rpc("admin_force_set_pin_v0", { p_token: t, p_user_id: user_id, p_new_pin: newPin }),
 };
 
 /* ================== STATE ================== */
-let ME = null;     // { username, role }
-let STORE = [];    // list quiz
+let TOKEN = "";
+let ME = null;
+let QUIZZES = [];
+let USERS = [];
+let CURRENT_QUIZ_ID = "";
 
-function requiresLogin(q){
-  const v = (q && (q.require_login ?? q.requireLogin ?? q.login_required ?? q.loginRequired ?? q.require_auth ?? q.requireAuth ?? q.requires_login ?? q.requiresLogin));
-  if(typeof v === "boolean") return v;
+/* ================== GATE ================== */
+const gateCard = document.getElementById("gateCard");
+const gateIdx = document.getElementById("gateIdx");
+const gateMsg = document.getElementById("gateMsg");
+const app = document.getElementById("app");
+const mePill = document.getElementById("mePill");
+const btnLogout = document.getElementById("btnLogout");
 
-  const open = (q && (q.allow_anonymous ?? q.allowAnonymous ?? q.public_open ?? q.publicOpen ?? q.open_access ?? q.openAccess ?? q.is_open ?? q.isOpen));
-  if(open === true) return false;
-
-  return true;
-}
-
-function pickPinLen(ck, username){
-  const u = normUsername(username);
-  if(u === "tuankhoi") return 6;
-
-  const raw =
-    (ck && (ck.pinLen ?? ck.pin_len ?? (ck.user && (ck.user.pinLen ?? ck.user.pin_len)) ?? ck.pin_length ?? 4));
-
-  let n = Number(raw) || 4;
-  if(!isFinite(n) || n < 4) n = 4;
-  if(n > 12) n = 12;
-  return n;
-}
-
-function pickExists(ck){
-  if(ck && typeof ck.exists === "boolean") return ck.exists;
-  if(ck && ck.ok === true && typeof ck.exists === "boolean") return ck.exists;
-  if(ck && ck.userId) return true;
-  return null;
-}
-
-/* ================== USER CORNER + PROFILE ================== */
-const userCorner = document.getElementById("userCorner");
-const userCornerName = document.getElementById("userCornerName");
-const userCornerAdmin = document.getElementById("userCornerAdmin");
-const statusPill = document.getElementById("statusPill");
-const adminLinkTop = document.getElementById("adminLinkTop");
-
-const profileBackdrop = document.getElementById("profileBackdrop");
-document.getElementById("btnCloseProfile").onclick = closeProfileModal;
-profileBackdrop.addEventListener("click",(e)=>{ if(e.target===profileBackdrop) closeProfileModal(); });
-
-function updateUserCorner(){
-  const isAdmin = isAdminUser(ME);
-  adminLinkTop.style.display = (ME && ME.username && isAdmin) ? "inline-flex" : "none";
-
-  if(!ME || !ME.username){
-    userCorner.style.display="none";
-    statusPill.textContent="Chưa đăng nhập";
-    return;
-  }
-  userCorner.style.display="inline-flex";
-  userCornerName.textContent = ME.username;
-  userCornerAdmin.style.display = isAdmin ? "inline-flex" : "none";
-
-  statusPill.innerHTML = `Xin chào <b>${escapeHtml(ME.username)}</b> ${isAdmin ? `<span class="adminBadgeInline">ADMIN</span>`:""}`;
-}
-userCorner.addEventListener("click", ()=>{ if(ME) openProfileModal(); });
-
-function openProfileModal(){
-  document.getElementById("profileUsername").textContent = ME.username;
-  document.getElementById("profileRole").textContent = isAdminUser(ME) ? "ADMIN" : "USER";
-
-  const isAdmin = isAdminUser(ME);
-  document.getElementById("profileHint").textContent =
-    isAdmin ? "Tài khoản admin (tuankhoi) dùng mật khẩu 6 số. Không đổi username/pin ở đây."
-            : "Bạn có thể đổi username và đổi pin 4 số.";
-
-  document.getElementById("newUsername").value = "";
-
-  document.getElementById("btnChangePin").disabled = isAdmin;
-  document.getElementById("btnSaveNewUsername").disabled = isAdmin;
-  document.getElementById("newUsername").disabled = isAdmin;
-
-  profileBackdrop.classList.add("show");
-  profileBackdrop.setAttribute("aria-hidden","false");
-}
-function closeProfileModal(){
-  profileBackdrop.classList.remove("show");
-  profileBackdrop.setAttribute("aria-hidden","true");
-}
-
-/* ================== REGISTER PROMPT ================== */
-const registerBackdrop = document.getElementById("registerBackdrop");
-const registerDesc = document.getElementById("registerDesc");
-document.getElementById("btnRegisterNo").onclick = ()=>closeRegisterPrompt(false);
-document.getElementById("btnRegisterYes").onclick = ()=>closeRegisterPrompt(true);
-registerBackdrop.addEventListener("click",(e)=>{ if(e.target===registerBackdrop) closeRegisterPrompt(false); });
-
-let REG_PROMPT = { open:false, resolve:null, username:"" };
-function openRegisterPrompt(username){
-  return new Promise((resolve)=>{
-    REG_PROMPT.open=true;
-    REG_PROMPT.resolve=resolve;
-    REG_PROMPT.username=username;
-    registerDesc.textContent = `Username "${username}" chưa đăng ký, bạn có muốn đăng ký không?`;
-    registerBackdrop.classList.add("show");
-    registerBackdrop.setAttribute("aria-hidden","false");
-  });
-}
-function closeRegisterPrompt(ans){
-  if(!REG_PROMPT.open) return;
-  registerBackdrop.classList.remove("show");
-  registerBackdrop.setAttribute("aria-hidden","true");
-  const r = REG_PROMPT.resolve;
-  REG_PROMPT.open=false;
-  REG_PROMPT.resolve=null;
-  REG_PROMPT.username="";
-  if(r) r(!!ans);
-}
-
-/* ================== PIN MODAL (keypad) ================== */
-const pinBackdrop = document.getElementById("pinBackdrop");
-const pinTitle = document.getElementById("pinTitle");
-const pinDesc = document.getElementById("pinDesc");
-const pinDots = document.getElementById("pinDots");
-const pinKeypad = document.getElementById("pinKeypad");
-const pinNote = document.getElementById("pinNote");
-const pinWrap = document.getElementById("pinWrap");
-document.getElementById("btnClosePin").onclick = ()=>closePin("cancel");
-pinBackdrop.addEventListener("click",(e)=>{ if(e.target===pinBackdrop) closePin("cancel"); });
-
-let PIN_KEYS_BUILT = false;
-let PIN = {
-  open:false, resolve:null, reject:null,
-  username:"", mode:"login", step:"one",
-  pinLen:4, value:"", first:"", old:"", submitting:false,
-  dotEls:[], payload:null
-};
-
-function buildPinKeypadOnce(){
-  if(PIN_KEYS_BUILT) return;
-  PIN_KEYS_BUILT=true;
-  pinKeypad.innerHTML="";
-  const keys=["1","2","3","4","5","6","7","8","9","CLEAR","0","⌫"];
-  keys.forEach(k=>{
-    const b=document.createElement("button");
-    b.type="button";
-    b.className="pinKey" + ((k==="CLEAR"||k==="⌫")?" small":"");
-    b.textContent=k;
-    b.onclick=()=>onPinKey(k);
-    pinKeypad.appendChild(b);
-  });
-}
-function buildDots(n){
-  pinDots.innerHTML="";
-  PIN.dotEls=[];
-  for(let i=0;i<n;i++){
-    const d=document.createElement("div");
-    d.className="dot";
-    pinDots.appendChild(d);
-    PIN.dotEls.push(d);
-  }
-}
-function updateDots(){
-  const len = PIN.value.length;
-  for(let i=0;i<PIN.dotEls.length;i++){
-    PIN.dotEls[i].classList.toggle("filled", i < len);
-  }
-}
-function setPinNote(msg,type=""){
-  if(type==="error") pinNote.classList.add("error");
-  else pinNote.classList.remove("error");
-  pinNote.textContent = String(msg||"");
-}
-function pinErrorPulse(msg){
-  PIN.value="";
-  updateDots();
-  pinDots.classList.add("error");
-  pinWrap.classList.remove("shake"); void pinWrap.offsetWidth; pinWrap.classList.add("shake");
-  setPinNote(msg||"Sai mật khẩu","error");
-  setTimeout(()=>{
-    pinDots.classList.remove("error");
-    pinWrap.classList.remove("shake");
-    updatePinHeader();
-  },520);
-}
-
-function updatePinHeader(){
-  const u = normUsername(PIN.username);
-  const note = (u==="tuankhoi") ? "Tài khoản tuankhoi dùng mật khẩu 6 số."
-                               : "Mật khẩu chỉ gồm số.";
-  if(PIN.mode==="login"){
-    pinTitle.textContent="Đăng nhập";
-    pinDesc.textContent=`Username: ${PIN.username}`;
-  }else if(PIN.mode==="set"){
-    if(PIN.step==="one"){ pinTitle.textContent="Đăng ký"; pinDesc.textContent=`Tạo mật khẩu ${PIN.pinLen} số`; }
-    else { pinTitle.textContent="Xác nhận mật khẩu"; pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`; }
-  }else if(PIN.mode==="change"){
-    if(PIN.step==="old"){ pinTitle.textContent="Đổi mật khẩu"; pinDesc.textContent="Nhập mật khẩu hiện tại"; }
-    else if(PIN.step==="new1"){ pinTitle.textContent="Mật khẩu mới"; pinDesc.textContent=`Nhập ${PIN.pinLen} số`; }
-    else { pinTitle.textContent="Xác nhận mật khẩu mới"; pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`; }
-  }
-  setPinNote(note);
-}
-
-function openPin({username, mode="login", pinLen=4}){
-  return new Promise((resolve,reject)=>{
-    PIN.open=true; PIN.resolve=resolve; PIN.reject=reject;
-    PIN.username=String(username||"");
-    PIN.mode=mode;
-    PIN.pinLen=Math.max(4, Number(pinLen)||4);
-    PIN.value=""; PIN.first=""; PIN.old=""; PIN.submitting=false; PIN.payload=null;
-    PIN.step = (mode==="set") ? "one" : (mode==="change" ? "old" : "one");
-    buildPinKeypadOnce();
-    buildDots(PIN.pinLen);
-    updatePinHeader();
-    updateDots();
-    pinBackdrop.classList.add("show");
-    pinBackdrop.setAttribute("aria-hidden","false");
-  });
-}
-
-function closePin(why){
-  if(!PIN.open) return;
-  pinBackdrop.classList.remove("show");
-  pinBackdrop.setAttribute("aria-hidden","true");
-  const rej = PIN.reject;
-  const res = PIN.resolve;
-  const payload = PIN.payload;
-  PIN.open=false; PIN.resolve=null; PIN.reject=null; PIN.payload=null;
-  if(why==="ok"){ if(res) res(payload); return; }
-  if(rej) rej(new Error("cancel"));
-}
-
-/* ================== AUTH FLOW (AUTO ADMIN PANEL) ================== */
-async function enterAfterAuth({ token, me, redirectNext=true }){
-  if(token) setToken(token);
-  if(me && me.username){
-    ME = me;
-    setMeCache(me);
-  }
-  updateUserCorner();
-
-  const next = redirectNext ? safeNextPath() : "";
-  if(next){
-    location.href = next;
-    return;
-  }
-
-  // ✅ NEW: nếu là admin -> tự chuyển sang admin panel
-  if(ME && isAdminUser(ME)){
-    location.href = "/admin";
-    return;
-  }
-
-  await loadStore();
-  renderStore();
-}
-
-function clearAuthLocal(){
+async function doLogout(){
+  const t = getToken();
+  try{ if(t) await API.logout(t); }catch{}
   clearToken();
-  setMeCache(null);
-  ME = null;
-  updateUserCorner();
+  toast("Đã logout");
+  setTimeout(()=>location.href="/", 250);
 }
 
-async function onPinKey(k){
-  if(!PIN.open || PIN.submitting) return;
+btnLogout.onclick = doLogout;
 
-  if(k==="CLEAR"){ PIN.value=""; updateDots(); return; }
-  if(k==="⌫"){ PIN.value=PIN.value.slice(0,-1); updateDots(); return; }
-
-  if(PIN.value.length>=PIN.pinLen) return;
-  PIN.value += String(k);
-  updateDots();
-  if(PIN.value.length!==PIN.pinLen) return;
-
-  const val = PIN.value;
-
-  if(!/^[0-9]+$/.test(val)){
-    pinErrorPulse("Mật khẩu chỉ gồm số");
-    return;
+async function gate(){
+  TOKEN = getToken();
+  if(!TOKEN){
+    gateIdx.className = "idx bad";
+    gateIdx.textContent = "NO SESSION";
+    gateMsg.innerHTML = `Bạn chưa đăng nhập. Hãy về <b>Trang chủ</b> để login bằng <b>tuankhoi</b>.`;
+    mePill.textContent = "Need login";
+    app.style.display = "none";
+    return false;
   }
 
-  if(PIN.mode==="login"){
-    PIN.submitting=true;
-    try{
-      setPinNote("Đang kiểm tra…");
-      const out = await API.login(PIN.username, val);
-      if(out && out.ok && (out.token || out.session_token || out.sessionToken)){
-        const token = out.token || out.session_token || out.sessionToken;
-        const me = out.me || out.user || out.profile || null;
+  try{
+    const out = await API.adminMe(TOKEN);
+    if(!out?.ok || !out.me) throw new Error("not authorized");
+    ME = out.me;
 
-        PIN.payload = val;
-        closePin("ok");
+    gateIdx.className = "idx ok";
+    gateIdx.textContent = "OK";
+    gateMsg.innerHTML = `Xin chào <b>${esc(ME.username)}</b>.`;
 
-        toast("Đăng nhập thành công");
-        await enterAfterAuth({ token, me, redirectNext:true });
-        return;
-      }
-      pinErrorPulse(out?.error || "Sai mật khẩu");
-    }catch(e){
-      pinErrorPulse("Sai mật khẩu");
-    }finally{
-      PIN.submitting=false;
-    }
-    return;
-  }
-
-  if(PIN.mode==="set"){
-    if(PIN.step==="one"){
-      PIN.first = val;
-      PIN.value = "";
-      PIN.step="confirm";
-      updatePinHeader();
-      updateDots();
-      return;
-    }else{
-      if(PIN.first !== val){
-        pinErrorPulse("Mật khẩu không khớp");
-        PIN.first=""; PIN.step="one";
-        updatePinHeader(); updateDots();
-        return;
-      }
-      PIN.payload = val;
-      closePin("ok");
-      return;
-    }
-  }
-
-  if(PIN.mode==="change"){
-    if(PIN.step==="old"){
-      PIN.old = val;
-      PIN.value="";
-      PIN.step="new1";
-      updatePinHeader(); updateDots();
-      return;
-    }
-    if(PIN.step==="new1"){
-      PIN.first = val;
-      PIN.value="";
-      PIN.step="confirm";
-      updatePinHeader(); updateDots();
-      return;
-    }
-    if(PIN.first !== val){
-      pinErrorPulse("Mật khẩu mới không khớp");
-      PIN.first=""; PIN.step="new1";
-      updatePinHeader(); updateDots();
-      return;
-    }
-    PIN.payload = { oldPin: PIN.old, newPin: val };
-    closePin("ok");
-    return;
+    mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="badge-admin">ADMIN</span>`;
+    app.style.display = "";
+    return true;
+  }catch(e){
+    // token invalid / not admin
+    gateIdx.className = "idx bad";
+    gateIdx.textContent = "DENY";
+    gateMsg.innerHTML = `Không có quyền / phiên hết hạn. Hãy login ở trang chủ bằng <b>tuankhoi</b>.`;
+    mePill.textContent = "Not authorized";
+    app.style.display = "none";
+    return false;
   }
 }
 
-/* ================== RENDER ================== */
-const content = document.getElementById("content");
+/* ================== TABS ================== */
+const tabQuizzes = document.getElementById("tabQuizzes");
+const tabUsers = document.getElementById("tabUsers");
+const panelQuizzes = document.getElementById("panelQuizzes");
+const panelUsers = document.getElementById("panelUsers");
 
-function renderGate(){
-  const openQuizzes = sortQuizzes((STORE||[]).filter(q => !requiresLogin(q)));
-
-  const openSection = openQuizzes.length ? `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">Quiz mở (không cần đăng nhập)</p>
-        <div><span class="idx badge-open">OPEN</span></div>
-      </div>
-      <div style="margin-top:10px; display:grid; gap:10px;">
-        ${openQuizzes.map(q => {
-          const pinBadge = q.pinned ? `<span class="idx badge-pin">📌 PINNED</span>` : ``;
-          const codeBadge = q.require_access_code ? `<span class="idx badge-code">CÓ MÃ</span>` : ``;
-          const href = `/q/${encodeURIComponent(q.quiz_id)}`;
-          return `
-            <div class="card" style="box-shadow:none;border-width:1px;margin:0">
-              <div class="row1">
-                <div style="min-width:0">
-                  <div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div>
-                  <div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div>
-                  <div class="muted" style="margin-top:6px">
-                    <span class="idx">${escapeHtml(q.quiz_id)}</span>
-                    <span class="idx badge-open">OPEN</span>
-                    ${pinBadge} ${codeBadge}
-                  </div>
-                </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-                  <a href="${href}"><button class="btn btn-primary">Vào</button></a>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join("")}
-      </div>
-    </div>
-  ` : "";
-
-  content.innerHTML = `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">Nhập USERNAME</p>
-        <div><span class="idx">BẮT BUỘC</span></div>
-      </div>
-      <div class="muted" style="margin-top:6px; line-height:1.35">
-        Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b>.<br/>
-        - Username <b>đã có</b> → hiện keypad <b>đăng nhập</b> (4 số, riêng <b>tuankhoi</b> là <b>6 số</b>).<br/>
-        - Username <b>chưa có</b> → hỏi và cho <b>đăng ký</b>.<br/>
-        <span class="muted">Tip:</span> nếu login admin (<b>tuankhoi</b>) sẽ tự chuyển sang <b>/admin</b>.
-      </div>
-
-      <div style="margin-top:10px; display:grid; gap:10px;">
-        <input id="nameInput" class="input" placeholder="vd: tuankhoi123" maxlength="15" autocomplete="off"/>
-        <button id="btnContinue" class="btn btn-primary" style="justify-content:center;">➡️ Tiếp tục</button>
-        <div class="muted" id="gateStatus">Sẵn sàng.</div>
-      </div>
-    </div>
-
-    ${openSection}
-  `;
-
-  const nameInput = document.getElementById("nameInput");
-  const btnContinue = document.getElementById("btnContinue");
-  const gateStatus = document.getElementById("gateStatus");
-
-  nameInput.addEventListener("input",()=>{
-    const v = normUsername(nameInput.value);
-    if(nameInput.value!==v) nameInput.value=v;
-  },{passive:true});
-  try{ nameInput.focus(); }catch{}
-
-  const doFlow = async ()=>{
-    const u = normUsername(nameInput.value);
-    const err = validateUsername(u);
-    if(err){ toast(err); return; }
-
-    btnContinue.disabled=true; btnContinue.textContent="⏳";
-    gateStatus.textContent="Đang kiểm tra username…";
-    try{
-      const ck = await API.checkUsername(u);
-      if(!ck || ck.ok === false) throw new Error((ck && ck.error) ? ck.error : "check fail");
-
-      const exists = pickExists(ck);
-      const pinLen = pickPinLen(ck, u);
-
-      const reserved = !!(ck && (ck.reserved === true || ck.is_reserved === true));
-
-      if(exists === true && reserved === true){
-        toast("Username này đã bị giữ lại (đổi tên rồi).");
-        gateStatus.textContent="Thử username khác.";
-        return;
-      }
-
-      if(exists === true){
-        gateStatus.textContent="Đăng nhập: nhập mật khẩu…";
-        await openPin({username:u, mode:"login", pinLen});
-        return;
-      }
-
-      if(exists === false){
-        gateStatus.textContent=`Username "${u}" chưa đăng ký.`;
-        const ok = await openRegisterPrompt(u);
-        if(!ok){ gateStatus.textContent="Bạn có thể nhập username khác."; return; }
-
-        const regPinLen = (u==="tuankhoi") ? 6 : 4;
-        gateStatus.textContent="Đăng ký: tạo mật khẩu…";
-        const pin = await openPin({username:u, mode:"set", pinLen: regPinLen});
-
-        gateStatus.textContent="Đang tạo tài khoản…";
-        const out = await API.register(u, pin);
-        const token = out?.token || out?.session_token || out?.sessionToken;
-        if(!out || !out.ok || !token) throw new Error(out?.error || "register fail");
-
-        toast("Đã đăng ký & đăng nhập");
-        await enterAfterAuth({ token, me: (out.me || out.user || null), redirectNext:true });
-        return;
-      }
-
-      gateStatus.textContent="Không rõ trạng thái. Thử đăng nhập…";
-      const forcedLen = (u==="tuankhoi") ? 6 : 4;
-      await openPin({username:u, mode:"login", pinLen: forcedLen});
-
-    }catch(e){
-      if(!(e && e.message==="cancel")) toast(e.message||"Lỗi");
-      gateStatus.textContent="Sẵn sàng.";
-    }finally{
-      btnContinue.disabled=false; btnContinue.textContent="➡️ Tiếp tục";
-    }
-  };
-
-  btnContinue.onclick = doFlow;
-  nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); doFlow(); }});
+function setTab(name){
+  const isQ = name === "quizzes";
+  tabQuizzes.classList.toggle("active", isQ);
+  tabUsers.classList.toggle("active", !isQ);
+  panelQuizzes.style.display = isQ ? "" : "none";
+  panelUsers.style.display = isQ ? "none" : "";
 }
 
-function renderStore(){
-  updateUserCorner();
+tabQuizzes.onclick = ()=>setTab("quizzes");
+tabUsers.onclick = ()=>setTab("users");
 
-  const isAdmin = isAdminUser(ME);
-  const adminBtn = (ME && isAdmin) ? `
-    <a href="/admin"><button class="btn btn-admin">Panel</button></a>
-  ` : ``;
+/* ================== QUIZZES UI ================== */
+const quizList = document.getElementById("quizList");
+const quizSearch = document.getElementById("quizSearch");
+document.getElementById("btnReloadQuizzes").onclick = ()=>loadQuizzes();
+document.getElementById("btnNewQuiz").onclick = ()=>openQuizModal(null);
 
-  content.innerHTML = `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">Danh sách quiz</p>
-        <div style="display:flex;gap:10px;align-items:center">${adminBtn}</div>
-      </div>
-      <div id="storeList" style="margin-top:10px"></div>
-    </div>
-  `;
+quizSearch.addEventListener("input", ()=>renderQuizzes(), {passive:true});
 
-  const list = document.getElementById("storeList");
-  const sorted = sortQuizzes(STORE);
+async function loadQuizzes(){
+  try{
+    const out = await API.listQuizzes(TOKEN);
+    QUIZZES = out?.items || out?.rows || out?.data || [];
+    renderQuizzes();
+  }catch(e){
+    toast(e.message || "Load quizzes lỗi");
+  }
+}
 
-  if(!sorted.length){
-    list.innerHTML = `<div class="muted">Chưa có quiz public.</div>`;
+function renderQuizzes(){
+  const q = (quizSearch.value||"").trim().toLowerCase();
+  const arr = (QUIZZES||[]).filter(x=>{
+    if(!q) return true;
+    return String(x.quiz_id||"").toLowerCase().includes(q) || String(x.title||"").toLowerCase().includes(q);
+  });
+
+  if(!arr.length){
+    quizList.innerHTML = `<div class="muted">Không có quiz.</div>`;
     return;
   }
 
-  list.innerHTML = sorted.map(q=>{
-    const needLogin = requiresLogin(q);
-    const openBadge = !needLogin ? `<span class="idx badge-open">OPEN</span>` : ``;
-    const codeBadge = q.require_access_code ? `<span class="idx badge-code">CÓ MÃ</span>` : ``;
-    const pinBadge = q.pinned ? `<span class="idx badge-pin">📌 PINNED</span>` : ``;
-
-    const href = `/q/${encodeURIComponent(q.quiz_id)}`;
+  quizList.innerHTML = arr.map(x=>{
+    const badges = [
+      x.pinned ? `<span class="idx">📌 PINNED</span>` : "",
+      x.is_public ? `<span class="idx ok">PUBLIC</span>` : `<span class="idx bad">PRIVATE</span>`,
+      x.require_login ? `<span class="idx">LOGIN</span>` : `<span class="idx ok">OPEN</span>`,
+      x.require_access_code ? `<span class="idx">CODE</span>` : ""
+    ].filter(Boolean).join(" ");
 
     return `
-      <div class="card" style="box-shadow:none;border-width:1px;margin:10px 0">
+      <div class="item">
         <div class="row1">
           <div style="min-width:0">
-            <div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div>
-            <div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div>
-            <div class="muted" style="margin-top:6px">
-              <span class="idx">${escapeHtml(q.quiz_id)}</span>
-              ${openBadge} ${pinBadge} ${codeBadge}
+            <div style="font-weight:950;font-size:1rem"><b>${esc(x.title||"(no title)")}</b></div>
+            <div class="meta">
+              <span class="idx">${esc(x.quiz_id||"")}</span>
+              ${badges}
             </div>
+            <div class="muted" style="margin-top:6px">${esc(x.sub||"")}</div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-            <a href="${href}"><button class="btn btn-primary">Vào</button></a>
+            <button class="btn btn-primary" type="button" data-edit="${esc(x.quiz_id||"")}">Edit</button>
+            <button class="btn btn-danger" type="button" data-del="${esc(x.quiz_id||"")}">Delete</button>
           </div>
         </div>
       </div>
     `;
   }).join("");
+
+  for(const b of quizList.querySelectorAll("[data-edit]")){
+    b.onclick = ()=>{
+      const id = b.getAttribute("data-edit");
+      const obj = (QUIZZES||[]).find(z=>String(z.quiz_id||"")===String(id||""));
+      openQuizModal(obj || null);
+    };
+  }
+  for(const b of quizList.querySelectorAll("[data-del]")){
+    b.onclick = async ()=>{
+      const id = b.getAttribute("data-del");
+      if(!id) return;
+      const ok = confirm(`Xóa quiz ${id}? (xóa data liên quan)`);
+      if(!ok) return;
+      try{
+        await API.deleteQuiz(TOKEN, id);
+        toast("Đã xóa");
+        await loadQuizzes();
+      }catch(e){
+        toast(e.message || "Xóa lỗi");
+      }
+    };
+  }
 }
 
-/* ================== STORE LOAD ================== */
-async function loadStore(){
+/* ================== USERS UI ================== */
+const userList = document.getElementById("userList");
+const userSearch = document.getElementById("userSearch");
+document.getElementById("btnReloadUsers").onclick = ()=>loadUsers();
+userSearch.addEventListener("input", ()=>renderUsers(), {passive:true});
+
+async function loadUsers(){
   try{
-    const st = await API.listStore();
-    if(st && st.ok){
-      STORE = st.items || st.rows || st.data || [];
-      return;
-    }
-  }catch{}
-  STORE = [];
+    const out = await API.listUsers(TOKEN);
+    USERS = out?.items || out?.rows || out?.data || [];
+    renderUsers();
+  }catch(e){
+    toast(e.message || "Load users lỗi");
+  }
 }
 
-/* ================== PROFILE ACTIONS ================== */
-document.getElementById("btnLogout").onclick = async ()=>{
-  const ok = confirm("Đăng xuất?");
+function renderUsers(){
+  const q = (userSearch.value||"").trim().toLowerCase();
+  const arr = (USERS||[]).filter(x=>{
+    if(!q) return true;
+    return String(x.username||"").toLowerCase().includes(q);
+  });
+
+  if(!arr.length){
+    userList.innerHTML = `<div class="muted">Không có user.</div>`;
+    return;
+  }
+
+  userList.innerHTML = arr.map(x=>{
+    const isAdmin = String(x.role||"").toLowerCase()==="admin" || String(x.username||"").toLowerCase()==="tuankhoi";
+    return `
+      <div class="item">
+        <div class="row1">
+          <div style="min-width:0">
+            <div style="font-weight:950;font-size:1rem">
+              <b>${esc(x.username||"")}</b> ${isAdmin ? `<span class="badge-admin">ADMIN</span>` : ""}
+            </div>
+            <div class="meta"><span class="idx">${esc(x.id||"")}</span> <span class="idx">${esc(x.role||"user")}</span></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn" type="button" data-rename="${esc(x.id||"")}">Rename</button>
+            <button class="btn" type="button" data-setpin="${esc(x.id||"")}">Set PIN</button>
+            <button class="btn btn-danger" type="button" data-deluser="${esc(x.id||"")}">Delete</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  for(const b of userList.querySelectorAll("[data-rename]")){
+    b.onclick = async ()=>{
+      const id = b.getAttribute("data-rename");
+      const nu = prompt("Username mới (a-z0-9_ 3-15):");
+      if(!nu) return;
+      try{
+        await API.forceRename(TOKEN, id, String(nu||"").trim().toLowerCase());
+        toast("Đã rename");
+        await loadUsers();
+      }catch(e){
+        toast(e.message || "Rename lỗi");
+      }
+    };
+  }
+  for(const b of userList.querySelectorAll("[data-setpin]")){
+    b.onclick = async ()=>{
+      const id = b.getAttribute("data-setpin");
+      const np = prompt("PIN mới (tuankhoi=6 số, user=4 số):");
+      if(!np) return;
+      try{
+        await API.forceSetPin(TOKEN, id, String(np||"").trim());
+        toast("Đã set PIN");
+      }catch(e){
+        toast(e.message || "Set PIN lỗi");
+      }
+    };
+  }
+  for(const b of userList.querySelectorAll("[data-deluser]")){
+    b.onclick = async ()=>{
+      const id = b.getAttribute("data-deluser");
+      const ok = confirm("Xóa user? (xóa attempts/progress/tokens)");
+      if(!ok) return;
+      try{
+        await API.deleteUser(TOKEN, id);
+        toast("Đã xóa user");
+        await loadUsers();
+      }catch(e){
+        toast(e.message || "Xóa user lỗi");
+      }
+    };
+  }
+}
+
+/* ================== QUIZ MODAL ================== */
+const quizBackdrop = document.getElementById("quizBackdrop");
+document.getElementById("btnCloseQuiz").onclick = ()=>closeQuizModal();
+quizBackdrop.addEventListener("click",(e)=>{ if(e.target===quizBackdrop) closeQuizModal(); });
+
+const quizModalIdx = document.getElementById("quizModalIdx");
+const q_quiz_id = document.getElementById("q_quiz_id");
+const q_title = document.getElementById("q_title");
+const q_sub = document.getElementById("q_sub");
+const q_is_public = document.getElementById("q_is_public");
+const q_is_hidden = document.getElementById("q_is_hidden");
+const q_show_in_store = document.getElementById("q_show_in_store");
+const q_require_login = document.getElementById("q_require_login");
+const q_pinned = document.getElementById("q_pinned");
+const q_scoring_mode = document.getElementById("q_scoring_mode");
+const q_total_score = document.getElementById("q_total_score");
+const q_shuffle_mode = document.getElementById("q_shuffle_mode");
+const q_require_access_code = document.getElementById("q_require_access_code");
+const q_access_code = document.getElementById("q_access_code");
+const q_questions_json = document.getElementById("q_questions_json");
+
+document.getElementById("btnSaveQuiz").onclick = saveQuiz;
+document.getElementById("btnDeleteQuiz").onclick = deleteQuizFromModal;
+document.getElementById("btnLoadQuestions").onclick = loadQuestions;
+document.getElementById("btnSaveQuestions").onclick = saveQuestions;
+
+function openQuizModal(obj){
+  CURRENT_QUIZ_ID = obj?.quiz_id ? String(obj.quiz_id) : "";
+  quizModalIdx.textContent = CURRENT_QUIZ_ID ? CURRENT_QUIZ_ID : "NEW";
+
+  q_quiz_id.value = CURRENT_QUIZ_ID || "";
+  q_quiz_id.disabled = !!CURRENT_QUIZ_ID;
+
+  q_title.value = obj?.title || "";
+  q_sub.value = obj?.sub || "";
+  q_is_public.checked = obj?.is_public ?? true;
+  q_is_hidden.checked = obj?.is_hidden ?? false;
+  q_show_in_store.checked = obj?.show_in_store ?? true;
+  q_require_login.checked = obj?.require_login ?? true;
+  q_pinned.checked = obj?.pinned ?? false;
+  q_scoring_mode.value = obj?.scoring_mode || "equal";
+  q_total_score.value = String(obj?.total_score ?? 10);
+  q_shuffle_mode.value = obj?.shuffle_mode || "none";
+  q_require_access_code.checked = obj?.require_access_code ?? false;
+  q_access_code.value = "";
+
+  q_questions_json.value = "[]";
+
+  quizBackdrop.classList.add("show");
+  quizBackdrop.setAttribute("aria-hidden","false");
+}
+
+function closeQuizModal(){
+  quizBackdrop.classList.remove("show");
+  quizBackdrop.setAttribute("aria-hidden","true");
+}
+
+async function saveQuiz(){
+  const quiz_id = String(q_quiz_id.value||"").trim().toLowerCase();
+  if(!/^[a-z]{5}$/.test(quiz_id)){
+    toast("quiz_id phải đúng 5 chữ a-z");
+    return;
+  }
+
+  const payload = {
+    p_quiz_id: quiz_id,
+    p_title: String(q_title.value||""),
+    p_sub: String(q_sub.value||""),
+    p_is_public: !!q_is_public.checked,
+    p_is_hidden: !!q_is_hidden.checked,
+    p_show_in_store: !!q_show_in_store.checked,
+    p_require_login: !!q_require_login.checked,
+    p_pinned: !!q_pinned.checked,
+    p_scoring_mode: String(q_scoring_mode.value||"equal"),
+    p_total_score: Number(q_total_score.value||10),
+    p_shuffle_mode: String(q_shuffle_mode.value||"none"),
+    p_require_access_code: !!q_require_access_code.checked,
+    p_access_code: String(q_access_code.value||"")
+  };
+
+  try{
+    await API.upsertQuiz(TOKEN, payload);
+    toast("Đã lưu quiz");
+    closeQuizModal();
+    await loadQuizzes();
+  }catch(e){
+    toast(e.message || "Lưu quiz lỗi");
+  }
+}
+
+async function deleteQuizFromModal(){
+  const quiz_id = String(q_quiz_id.value||"").trim().toLowerCase();
+  if(!quiz_id) return;
+  const ok = confirm(`Xóa quiz ${quiz_id}?`);
   if(!ok) return;
+  try{
+    await API.deleteQuiz(TOKEN, quiz_id);
+    toast("Đã xóa quiz");
+    closeQuizModal();
+    await loadQuizzes();
+  }catch(e){
+    toast(e.message || "Xóa quiz lỗi");
+  }
+}
 
-  const t = getToken();
-  try{ if(t) await API.logout(t); }catch{}
-  clearAuthLocal();
+async function loadQuestions(){
+  const quiz_id = String(q_quiz_id.value||"").trim().toLowerCase();
+  if(!quiz_id) return;
+  try{
+    const out = await API.getQuestions(TOKEN, quiz_id);
+    const items = out?.items || out?.rows || out?.data || [];
+    q_questions_json.value = JSON.stringify(items, null, 2);
+    toast("Đã load questions");
+  }catch(e){
+    toast(e.message || "Load questions lỗi");
+  }
+}
 
-  closeProfileModal();
-  toast("Đã đăng xuất");
-  await boot();
-};
+async function saveQuestions(){
+  const quiz_id = String(q_quiz_id.value||"").trim().toLowerCase();
+  if(!quiz_id) return;
 
-document.getElementById("btnSaveNewUsername").onclick = async ()=>{
-  if(!ME) return;
-  if(isAdminUser(ME)){ toast("Admin không đổi username."); return; }
-
-  const newU = normUsername(document.getElementById("newUsername").value);
-  const err = validateUsername(newU);
-  if(err){ toast(err); return; }
+  let items = null;
+  try{
+    items = JSON.parse(String(q_questions_json.value||"[]"));
+  }catch{
+    toast("JSON không hợp lệ");
+    return;
+  }
+  if(!Array.isArray(items)){
+    toast("Questions phải là mảng JSON []");
+    return;
+  }
 
   try{
-    const out = await API.changeUsername(getToken(), newU);
-    if(!out || out.ok === false) throw new Error(out?.error || out?.message || "rename fail");
-
-    const me2 = out.me || out.user || out.profile || { username: newU, role: ME.role || "user" };
-    ME = me2;
-    setMeCache(me2);
-
-    toast("Đã đổi username");
-    closeProfileModal();
-    updateUserCorner();
-    renderStore();
+    await API.replaceQuestions(TOKEN, quiz_id, items);
+    toast("Đã save questions");
   }catch(e){
-    toast(e.message||"Không đổi được");
+    toast(e.message || "Save questions lỗi");
   }
-};
-
-document.getElementById("btnChangePin").onclick = async ()=>{
-  if(!ME) return;
-  if(isAdminUser(ME)){ toast("Admin không đổi pin."); return; }
-
-  try{
-    const payload = await openPin({username: ME.username, mode:"change", pinLen:4});
-    const out = await API.changePin(getToken(), payload.oldPin, payload.newPin);
-    if(!out || out.ok === false) throw new Error(out?.error || out?.message || "change pin fail");
-
-    toast("Đã đổi mật khẩu");
-    closeProfileModal();
-  }catch(e){
-    if(!(e && e.message==="cancel")) toast(e.message || "Đổi mật khẩu lỗi");
-  }
-};
+}
 
 /* ================== BOOT ================== */
 async function boot(){
-  await requestPersistentStorage();
+  const ok = await gate();
+  if(!ok) return;
 
-  await loadStore();
-
-  ME = getMeCache();
-  updateUserCorner();
-
-  const t = getToken();
-
-  if(t && (!ME || !ME.username)){
-    try{
-      const meOut = await API.me(t);
-      if(meOut && meOut.ok && meOut.me){
-        ME = meOut.me;
-        setMeCache(ME);
-        if(meOut.token || meOut.session_token || meOut.sessionToken){
-          setToken(meOut.token || meOut.session_token || meOut.sessionToken);
-        }else{
-          setToken(t);
-        }
-      }
-    }catch{}
-  }else if(t){
-    // sync token to cookies/window.name for admin.html to pick up reliably
-    setToken(t);
-  }
-
-  updateUserCorner();
-
-  // Không auto chuyển /admin khi chỉ mở trang chủ.
-  // Chỉ auto chuyển khi vừa login (enterAfterAuth) theo yêu cầu.
-  if(ME && ME.username) renderStore();
-  else renderGate();
-}
-
-if(SUPABASE_URL.includes("PASTE_") || SUPABASE_ANON_KEY.includes("PASTE_")){
-  toast("Chưa dán SUPABASE_URL / ANON_KEY trong index.html");
+  setTab("quizzes");
+  await loadQuizzes();
+  await loadUsers();
 }
 
 boot();
