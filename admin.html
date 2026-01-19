@@ -326,7 +326,7 @@
       z-index:20100;
       display:none;
       padding:16px;
-      overflow:auto; /* IMPORTANT: scroll inside overlay */
+      overflow:auto;
     }
     .modalBack.show{display:flex; align-items:center; justify-content:center;}
     .modal{
@@ -357,7 +357,7 @@
     }
     .modalBody{
       padding:14px;
-      overflow:auto; /* IMPORTANT: scroll inside modal body */
+      overflow:auto;
       -webkit-overflow-scrolling:touch;
     }
     .modalBackBtn{
@@ -425,7 +425,12 @@
             <div class="tiny"><a href="/">← về kệ hàng</a></div>
           </div>
         </div>
-        <div class="pill" id="mePill">Checking…</div>
+
+        <!-- ✅ FIX: luôn có chỗ đặt nút logout (hiện khi đã auth ok) -->
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+          <div class="pill" id="mePill">Checking…</div>
+          <button class="btn btn-ghost" id="btnLogoutFixed" type="button" style="display:none;box-shadow:none">Logout</button>
+        </div>
       </div>
 
       <div class="card" id="gate">Checking login...</div>
@@ -698,7 +703,7 @@ B
     </div>
   </div>
 
-  <!-- MODAL: LaTeX (click outside to close, insert must press button) -->
+  <!-- MODAL: LaTeX -->
   <div class="modalBack" id="latexModalBack" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <div class="modalHead">
@@ -743,13 +748,13 @@ const STORAGE_BUCKET = "quiz";
 /* ================== TOKEN STORAGE (match index.html) ================== */
 const TOKEN_KEYS = ["tk_token_v2","tk_token_v1","tk_token"];
 const TOKEN_COOKIES = ["tk_token_v2","tk_token_v1","tk_token"];
+const ME_CACHE_KEY = "tk_me_v2"; // ✅ match index.html cache
 
 /* ================== RPC NAMES (try multiple) ================== */
 const RPC = {
   me: ["api_me","api_me_v0","api_me_v1","api_me_v2"],
   logout: ["api_logout","api_logout_v0","api_logout_v1","api_logout_v2"],
 
-  // token-based admin (preferred)
   adminUpsertQuiz: ["admin_upsert_quiz","admin_upsert_quiz_v1","admin_upsert_quiz_v0"],
   adminListQuizzes: ["admin_list_quizzes","admin_list_quizzes_v1","admin_list_quizzes_v0"],
   adminDeleteQuiz: ["admin_delete_quiz","admin_delete_quiz_v1","admin_delete_quiz_v0"],
@@ -849,7 +854,6 @@ function clearToken(){
 function getToken(){
   let t = "";
 
-  // localStorage
   for(const k of TOKEN_KEYS){
     try{
       t = (localStorage.getItem(k) || "").trim();
@@ -857,7 +861,6 @@ function getToken(){
     }catch{}
   }
 
-  // sessionStorage
   if(!t){
     for(const k of TOKEN_KEYS){
       try{
@@ -867,7 +870,6 @@ function getToken(){
     }
   }
 
-  // cookies
   if(!t){
     for(const c of TOKEN_COOKIES){
       t = (getCookie(c) || "").trim();
@@ -875,14 +877,30 @@ function getToken(){
     }
   }
 
-  // window.name
   if(!t){
     const wn = String(window.name||"");
     if(wn.startsWith("tk:")) t = wn.slice(3).trim();
   }
 
-  if(t) setToken(t); // sync/migrate all
+  if(t) setToken(t);
   return t;
+}
+
+/* ===== me cache ===== */
+function getMeCache(){
+  try{
+    const raw = localStorage.getItem(ME_CACHE_KEY);
+    if(!raw) return null;
+    const obj = JSON.parse(raw);
+    if(obj && obj.username) return obj;
+  }catch{}
+  return null;
+}
+function setMeCache(me){
+  try{
+    if(!me) localStorage.removeItem(ME_CACHE_KEY);
+    else localStorage.setItem(ME_CACHE_KEY, JSON.stringify(me));
+  }catch{}
 }
 
 /* ================== MathJax helper ================== */
@@ -908,7 +926,8 @@ function hasLatex(s){
 
 /* ================== SUPABASE RPC ================== */
 async function rpc(fn, args){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
+  const url = `${SUPABASE_URL}/rest/v1/rpc/${fn}`;
+  const res = await fetch(url,{
     method:"POST",
     headers:{
       "apikey": SUPABASE_ANON_KEY,
@@ -924,7 +943,10 @@ async function rpc(fn, args){
     const msg = (data && (data.message||data.error||data.hint||data.details))
       ? (data.message||data.error||data.hint||data.details)
       : txt;
-    throw new Error(msg || `RPC failed: ${fn}`);
+    const err = new Error(msg || `RPC failed: ${fn}`);
+    err.status = res.status;
+    err.fn = fn;
+    throw err;
   }
   return data;
 }
@@ -958,9 +980,9 @@ function isAdminMe(me){
   return r==="admin" || u==="tuankhoi";
 }
 
-function redirectHome(){
-  // đá user thường về trang chủ (đúng yêu cầu)
-  try{ location.replace("/"); }catch{ location.href="/"; }
+/* ✅ về trang chủ có next để login xong quay lại /admin */
+function redirectToLogin(){
+  try{ location.replace("/?next=/admin"); }catch{ location.href="/?next=/admin"; }
 }
 
 function tokenArgsVariants(extra){
@@ -983,7 +1005,66 @@ async function callRpc(key, extra){
 const mePill = document.getElementById("mePill");
 const gate = document.getElementById("gate");
 const app = document.getElementById("app");
+const btnLogoutFixed = document.getElementById("btnLogoutFixed");
 
+btnLogoutFixed.onclick = ()=>doLogout().catch(()=>{});
+
+function showLogoutBtn(show){
+  btnLogoutFixed.style.display = show ? "inline-flex" : "none";
+}
+
+/* ================== GATE UI RENDER ================== */
+function renderGateNoToken(){
+  const cached = getMeCache();
+  const who = cached?.username ? ` (cache: <b>${esc(cached.username)}</b>)` : "";
+  gate.innerHTML = `
+    <div class="row1">
+      <p class="vi">Chưa có phiên đăng nhập${who}</p>
+      <div><span class="idx bad">NO TOKEN</span></div>
+    </div>
+    <div class="muted" style="margin-top:8px;line-height:1.35">
+      Bạn cần đăng nhập ở trang chủ bằng username <b>tuankhoi</b>.
+      Sau khi login, hệ thống sẽ tự chuyển về <code>/admin</code>.
+    </div>
+    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn btn-primary" type="button" id="btnGoLogin">Về trang chủ để đăng nhập</button>
+    </div>
+  `;
+  gate.querySelector("#btnGoLogin").onclick = redirectToLogin;
+}
+
+function renderGateError(err){
+  const cached = getMeCache();
+  const who = cached?.username ? `Bạn đang có cache user: <b>${esc(cached.username)}</b>.<br/>` : "";
+  const status = (err && typeof err.status === "number") ? err.status : "";
+  const msg = esc(String(err?.message || "RPC error"));
+  const fn = esc(String(err?.fn || ""));
+  gate.innerHTML = `
+    <div class="row1">
+      <p class="vi">Không xác thực được phiên</p>
+      <div><span class="idx warn">ERROR${status?(" "+status):""}</span></div>
+    </div>
+    <div class="muted" style="margin-top:8px;line-height:1.35">
+      ${who}
+      Lỗi khi gọi <code>${fn || "api_me"}</code>: <code>${msg}</code><br/>
+      <span class="muted">Quan trọng:</span> Admin panel <b>không tự xóa token</b> nữa. Bạn có thể bấm Retry khi backend ổn lại.
+    </div>
+    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn" type="button" id="btnRetryGate">Retry</button>
+      <button class="btn btn-ghost" type="button" id="btnGoLogin2">Về trang chủ</button>
+      <button class="btn btn-danger" type="button" id="btnClearToken">Clear token</button>
+    </div>
+  `;
+  gate.querySelector("#btnRetryGate").onclick = ()=>boot().catch(()=>{});
+  gate.querySelector("#btnGoLogin2").onclick = redirectToLogin;
+  gate.querySelector("#btnClearToken").onclick = ()=>{
+    clearToken();
+    toast("Đã xóa token local");
+    renderGateNoToken();
+  };
+}
+
+/* ================== STATE ================== */
 const tabQuizzes = document.getElementById("tabQuizzes");
 const tabUsers = document.getElementById("tabUsers");
 const viewQuizzes = document.getElementById("viewQuizzes");
@@ -999,7 +1080,6 @@ function setTab(which){
 tabQuizzes.onclick = ()=>setTab("q");
 tabUsers.onclick = ()=>setTab("u");
 
-/* ================== STATE ================== */
 let QUIZZES = [];
 let USERS = [];
 
@@ -1031,22 +1111,29 @@ function setQuizPage(p){
 async function doLogout(){
   try{ if(TOKEN) await callRpc("logout", {}); }catch{}
   clearToken();
+  setMeCache(null);
   ME = null;
   TOKEN = "";
   toast("Đã logout");
-  setTimeout(()=>redirectHome(), 200);
+  setTimeout(()=>redirectToLogin(), 200);
 }
 
-/* ================== AUTH GATE (STRICT) ================== */
+/* ================== AUTH GATE (STRICT, but NO AUTO CLEAR TOKEN) ================== */
 async function gateCheck(){
   app.style.display = "none";
+  showLogoutBtn(false);
   gate.innerHTML = `Đang kiểm tra đăng nhập...`;
   mePill.textContent = "Checking…";
 
   TOKEN = getToken();
+  const cached = getMeCache();
+
+  if(cached?.username){
+    mePill.innerHTML = `Cache: <b>${esc(cached.username)}</b>`;
+  }
+
   if(!TOKEN){
-    // chưa login -> về trang chủ để login (admin login xong tự nhảy /admin từ index.html)
-    redirectHome();
+    renderGateNoToken();
     return false;
   }
 
@@ -1054,31 +1141,30 @@ async function gateCheck(){
     const meOut = await callRpc("me", {});
     if(!meOut?.ok || !meOut?.me) throw new Error(meOut?.error || "not logged");
     ME = meOut.me;
+    setMeCache(ME);
 
-    // refresh token if backend returns
     const t2 = meOut.token || meOut.session_token || meOut.sessionToken;
     if(t2) setToken(t2);
 
     if(!isAdminMe(ME)){
-      // user thường -> đá về trang chủ ngay
-      redirectHome();
+      toast("Không phải admin");
+      redirectToLogin();
       return false;
     }
 
     mePill.innerHTML = `
       Xin chào <b>${esc(ME.username)}</b>
       <span class="badge-admin">ADMIN</span>
-      <button class="btn btn-ghost" id="btnLogoutTop" type="button" style="padding:8px 10px;box-shadow:none">Logout</button>
     `;
-    mePill.querySelector("#btnLogoutTop").onclick = doLogout;
+    showLogoutBtn(true);
 
     gate.innerHTML = `<span class="idx ok">OK</span> Admin: <b>${esc(ME.username)}</b>`;
     app.style.display = "";
     return true;
   }catch(e){
-    // token lỗi/hết hạn -> về trang chủ
-    clearToken();
-    redirectHome();
+    // ✅ FIX: KHÔNG xóa token tự động nữa
+    mePill.innerHTML = `Token có thể lỗi / backend đang lỗi`;
+    renderGateError(e);
     return false;
   }
 }
@@ -1097,6 +1183,34 @@ async function afterLoginInit(){
 
   await reloadQuizzes();
   await reloadUsers();
+}
+
+/* ================== KEEPALIVE (refresh me, but never auto clear token) ================== */
+let KEEPALIVE_TIMER = null;
+async function refreshMeSilent(){
+  if(!TOKEN) return;
+  try{
+    const out = await callRpc("me", {});
+    if(out?.ok && out?.me){
+      ME = out.me;
+      setMeCache(ME);
+      const t2 = out.token || out.session_token || out.sessionToken;
+      if(t2) setToken(t2);
+      if(isAdminMe(ME)){
+        mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="badge-admin">ADMIN</span>`;
+        showLogoutBtn(true);
+      }
+    }
+  }catch{
+    // không làm gì: tránh “văng” chỉ vì lỗi tạm thời
+  }
+}
+function startKeepalive(){
+  if(KEEPALIVE_TIMER) clearInterval(KEEPALIVE_TIMER);
+  KEEPALIVE_TIMER = setInterval(()=>refreshMeSilent(), 4*60*1000);
+  document.addEventListener("visibilitychange", ()=>{
+    if(!document.hidden) refreshMeSilent();
+  });
 }
 
 /* ================== STORAGE UPLOAD ================== */
@@ -1934,7 +2048,7 @@ qAllHost.addEventListener("click", async (e)=>{
 },{passive:true});
 
 function scrollToQuestion(i){
-  const el = qAllHost.querySelector(`.qCard[data-i="${i}"]`);
+  const el = qAllHost.querySelector(\`.qCard[data-i="\${i}"]\`);
   if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
 }
 
@@ -2356,7 +2470,7 @@ async function resetPin(id){
   await reloadUsers();
 }
 
-/* ================== LaTeX modal (must press insert) ================== */
+/* ================== LaTeX modal ================== */
 const latexModalBack = document.getElementById("latexModalBack");
 const latexGrid = document.getElementById("latexGrid");
 const latexPreviewSrc = document.getElementById("latexPreviewSrc");
@@ -2482,7 +2596,10 @@ async function boot(){
   await requestPersistentStorage();
 
   const ok = await gateCheck();
-  if(ok) await afterLoginInit();
+  if(ok){
+    startKeepalive();
+    await afterLoginInit();
+  }
 }
 (async ()=>{ await boot(); })();
 </script>
