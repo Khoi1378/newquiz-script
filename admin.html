@@ -740,18 +740,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const STORAGE_BUCKET = "quiz";
 
-/* ===== AUTH (TOKENLESS): read from #hash ===== */
-let AUTH = { u:"", pin:"" };
-function readAuthFromHash(){
-  const hs = String(location.hash||"").replace(/^#/,"");
-  const p = new URLSearchParams(hs);
-  AUTH.u = (p.get("u") || p.get("username") || "").trim().toLowerCase();
-  AUTH.pin = (p.get("pin") || p.get("p") || "").trim();
-}
-function withAuth(args){
-  return { p_username: AUTH.u, p_pin: AUTH.pin, ...(args||{}) };
-}
-
+/* ===== TOKENLESS RPC (u/pin) ===== */
 const RPC = {
   me: "api_me_v0",
   logout: "api_logout_v0",
@@ -765,6 +754,51 @@ const RPC = {
   adminForceRename: "admin_force_rename_v0",
   adminForceSetPin: "admin_force_set_pin_v0"
 };
+
+/* ================== AUTH (u/pin in URL) ================== */
+let AUTH = { u:"", pin:"" };
+
+function readAuthFromUrl(){
+  let u = "", pin = "";
+
+  try{
+    const url = new URL(location.href);
+
+    // query: ?u=...&pin=...
+    u = (url.searchParams.get("u") || url.searchParams.get("username") || "").trim().toLowerCase();
+    pin = (url.searchParams.get("pin") || url.searchParams.get("p") || "").trim();
+
+    // hash: #u=...&pin=...
+    if((!u || !pin) && url.hash){
+      const hs = String(url.hash||"").replace(/^#/,"");
+      const p = new URLSearchParams(hs);
+      u = (u || (p.get("u") || p.get("username") || "")).trim().toLowerCase();
+      pin = (pin || (p.get("pin") || p.get("p") || "")).trim();
+    }
+  }catch{}
+
+  AUTH.u = u;
+  AUTH.pin = pin;
+  return AUTH;
+}
+
+function setAuthToHash(u, pin){
+  const uu = String(u||"").trim().toLowerCase();
+  const pp = String(pin||"").trim();
+  if(!uu || !pp) return;
+  const hs = `u=${encodeURIComponent(uu)}&pin=${encodeURIComponent(pp)}`;
+  // replaceState để khỏi spam history
+  try{
+    history.replaceState(null, "", location.pathname + location.search + "#" + hs);
+  }catch{
+    location.hash = hs;
+  }
+  readAuthFromUrl();
+}
+
+function authArgs(extra){
+  return Object.assign({ p_username: AUTH.u, p_pin: AUTH.pin }, extra || {});
+}
 
 /* ================== UI HELPERS ================== */
 function toast(msg){
@@ -849,30 +883,52 @@ async function uploadToBucket(bucket, path, blob, contentType){
   return publicObjectUrl(bucket, path);
 }
 
-/* ================== NEED LOGIN (AUTH VIA HASH) ================== */
+/* ================== NEED LOGIN (TOKENLESS UI) ================== */
 function renderNeedLogin(msg){
   const gate = document.getElementById("gate");
   gate.innerHTML = `
     <div class="row1">
-      <p class="vi" style="margin:0">Chưa đăng nhập</p>
-      <span class="idx warn">${esc(msg || "Bạn cần đăng nhập ở trang chủ")}</span>
+      <p class="vi" style="margin:0">Cần u/pin</p>
+      <span class="idx warn">${esc(msg || "Thiếu u/pin để vào admin")}</span>
     </div>
 
     <div class="hint" style="margin-top:10px">
-      Admin panel <b>không dùng token</b> nữa.<br>
-      Bạn cần mở admin bằng link dạng:<br>
-      <code>/admin#u=USERNAME&amp;pin=PIN</code><br><br>
-      Hãy đăng nhập ở trang chủ để nó tự chuyển qua admin đúng format.
+      Admin panel bản tokenless: cần <b>username + PIN</b> (đúng user admin) để gọi RPC.<br>
+      Bạn có thể:
+      <div class="mono" style="margin-top:8px; background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:10px">
+        /admin#u=tuankhoi&pin=072008
+      </div>
+      Hoặc nhập nhanh ở đây:
+    </div>
+
+    <div class="grid2" style="margin-top:10px">
+      <div>
+        <label style="margin-top:0">Username</label>
+        <input class="input mono" id="authU" placeholder="vd: tuankhoi" value="${esc(AUTH.u||"")}"/>
+      </div>
+      <div>
+        <label style="margin-top:0">PIN</label>
+        <input class="input mono" id="authP" placeholder="vd: 072008" value="${esc(AUTH.pin||"")}"/>
+      </div>
     </div>
 
     <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-      <button class="btn btn-primary" id="btnGoHome" type="button">Về trang chủ</button>
+      <button class="btn btn-primary" id="btnSetAuth" type="button">Vào Admin</button>
       <button class="btn" id="btnRetry" type="button">Thử lại</button>
+      <button class="btn btn-ghost" id="btnGoHome" type="button">Về trang chủ</button>
     </div>
   `;
 
   gate.querySelector("#btnGoHome").onclick = ()=> location.href = "/";
   gate.querySelector("#btnRetry").onclick = ()=> tryAutoLogin();
+
+  gate.querySelector("#btnSetAuth").onclick = ()=>{
+    const u = (gate.querySelector("#authU")?.value || "").trim();
+    const p = (gate.querySelector("#authP")?.value || "").trim();
+    if(!u || !p) return toast("Thiếu username hoặc PIN");
+    setAuthToHash(u, p);
+    tryAutoLogin();
+  };
 }
 
 /* ================== DOM ================== */
@@ -928,25 +984,28 @@ function setQuizPage(p){
 /* ================== LOGOUT ================== */
 async function doLogout(){
   try{ await rpc(RPC.logout, {}); }catch{}
-  try{ location.hash = ""; }catch{}
+  // clear auth in URL
+  try{ history.replaceState(null,"",location.pathname+location.search); }catch{ location.hash=""; }
+  AUTH.u = ""; AUTH.pin = "";
+  ME = null;
   toast("Đã logout");
   setTimeout(()=>location.href="/", 350);
 }
 
-/* ================== AUTH GATE (TOKENLESS) ================== */
+/* ================== AUTH GATE ================== */
 async function gateCheck(){
   app.style.display = "none";
 
-  readAuthFromHash();
+  readAuthFromUrl();
   if(!AUTH.u || !AUTH.pin){
     ME = null;
-    mePill.textContent = "Need login";
-    renderNeedLogin("Thiếu u/pin trên URL. Hãy login ở trang chủ.");
+    mePill.textContent = "Need u/pin";
+    renderNeedLogin("Thiếu u/pin trên URL hoặc chưa nhập");
     return false;
   }
 
   try{
-    const meOut = await rpc(RPC.me, withAuth({}));
+    const meOut = await rpc(RPC.me, authArgs());
     if(!meOut?.ok) throw new Error(meOut?.error || "not logged");
     ME = meOut.me;
 
@@ -973,8 +1032,8 @@ async function gateCheck(){
     return true;
   }catch(e){
     ME = null;
-    mePill.textContent = "Login required";
-    renderNeedLogin("Phiên lỗi / không check được: " + (e.message||""));
+    mePill.textContent = "Login failed";
+    renderNeedLogin("Sai PIN / không check được: " + (e.message||""));
     return false;
   }
 }
@@ -1007,13 +1066,13 @@ function startAuthWatcher(){
 
   const onVis = ()=>{ if(!document.hidden) tryAutoLogin(); };
   const onFocus = ()=> tryAutoLogin();
-  const onHash = ()=>{ APP_STARTED = false; tryAutoLogin(); };
+  const onHash = ()=> tryAutoLogin();
 
   window.addEventListener("visibilitychange", onVis, {passive:true});
   window.addEventListener("focus", onFocus, {passive:true});
   window.addEventListener("hashchange", onHash, {passive:true});
 
-  // interval nhẹ để bắt case iOS/tab restore
+  // interval nhẹ để bắt case iOS không bắn event ổn định
   setInterval(()=>{
     if(APP_STARTED) return;
     tryAutoLogin();
@@ -1194,8 +1253,7 @@ function validateQuiz(){
 
 /* ================== QUIZ CRUD ================== */
 async function saveQuizOnly(){
-  readAuthFromHash();
-  if(!AUTH.u || !AUTH.pin) throw new Error("Thiếu u/pin trên URL (#u=...&pin=...)");
+  if(!AUTH.u || !AUTH.pin) throw new Error("Thiếu u/pin");
 
   if(CURRENT_MODE !== "EDIT"){
     if(!CURRENT_QID) CURRENT_QID = genUniqueQuizId5();
@@ -1209,7 +1267,7 @@ async function saveQuizOnly(){
     totalScoreEl.value = String(totalScore);
   }
 
-  const payload = withAuth({
+  const payload = authArgs({
     p_quiz_id: qid,
     p_title: titleEl.value.trim(),
     p_sub: subEl.value.trim(),
@@ -1316,8 +1374,7 @@ function renderQuizList(){
 }
 
 async function reloadQuizzes(){
-  readAuthFromHash();
-  const out = await rpc(RPC.adminListQuizzes, withAuth({}));
+  const out = await rpc(RPC.adminListQuizzes, authArgs());
   QUIZZES = out.items || [];
   renderQuizList();
 }
@@ -1326,8 +1383,7 @@ document.getElementById("btnReloadQuizzes").onclick = ()=>reloadQuizzes().catch(
 async function delQuiz(qid){
   const ok = confirm("Xóa quiz " + qid + " ?");
   if(!ok) return;
-  readAuthFromHash();
-  await rpc(RPC.adminDeleteQuiz, withAuth({ p_quiz_id: qid }));
+  await rpc(RPC.adminDeleteQuiz, authArgs({ p_quiz_id:qid }));
   toast("Đã xóa " + qid);
   await reloadQuizzes();
 }
@@ -1380,8 +1436,6 @@ document.getElementById("btnGoCreate").onclick = ()=>{
   setQuizPage("create");
   setTimeout(()=>createTitleEl.focus(), 50);
 };
-
-document.getElementById("btnCreateCancelTop").onclick = ()=> setQuizPage("list");
 
 document.getElementById("btnCreateSaveOnly").onclick = async ()=>{
   try{
@@ -1444,8 +1498,7 @@ async function openEditorForQuiz(qid){
   renderAllQuestions();
 
   try{
-    readAuthFromHash();
-    const out = await rpc(RPC.adminGetQuestions, withAuth({ p_quiz_id: qid }));
+    const out = await rpc(RPC.adminGetQuestions, authArgs({ p_quiz_id: qid }));
     if(!out?.ok) throw new Error(out?.error || "admin_get_questions failed");
     const items = out.items || [];
 
@@ -2162,8 +2215,7 @@ async function publishAll(){
       };
     });
 
-    readAuthFromHash();
-    await rpc(RPC.adminReplaceQuestions, withAuth({ p_quiz_id: qid, p_items: items }));
+    await rpc(RPC.adminReplaceQuestions, authArgs({ p_quiz_id: qid, p_items: items }));
 
     toast(`Published: ${qid}`);
     await reloadQuizzes();
@@ -2229,8 +2281,7 @@ function renderUsers(){
 }
 
 async function reloadUsers(){
-  readAuthFromHash();
-  const out = await rpc(RPC.adminListUsers, withAuth({}));
+  const out = await rpc(RPC.adminListUsers, authArgs());
   USERS = out.items || [];
   renderUsers();
 }
@@ -2242,24 +2293,21 @@ async function delUser(id){
   if(u && isAdminUser(u)) return toast("Admin không xóa được");
   const ok = confirm("Xóa user này? (mất progress/attempts/comments)");
   if(!ok) return;
-  readAuthFromHash();
-  await rpc(RPC.adminDeleteUser, withAuth({ p_user_id: id }));
+  await rpc(RPC.adminDeleteUser, authArgs({ p_user_id:id }));
   toast("Deleted user");
   await reloadUsers();
 }
 async function renameUser(id){
   const newU = prompt("New username (lowercase, a-z0-9_):");
   if(!newU) return;
-  readAuthFromHash();
-  await rpc(RPC.adminForceRename, withAuth({ p_user_id: id, p_new_username: newU }));
+  await rpc(RPC.adminForceRename, authArgs({ p_user_id:id, p_new_username:newU }));
   toast("Renamed");
   await reloadUsers();
 }
 async function resetPin(id){
   const pin = prompt("Set new PIN (6 digits, ví dụ 072008).");
   if(!pin) return;
-  readAuthFromHash();
-  await rpc(RPC.adminForceSetPin, withAuth({ p_user_id: id, p_new_pin: pin }));
+  await rpc(RPC.adminForceSetPin, authArgs({ p_user_id:id, p_new_pin:pin }));
   toast("PIN reset");
   await reloadUsers();
 }
@@ -2387,6 +2435,9 @@ updateLatexPreview();
 
 /* ================== BOOT ================== */
 async function boot(){
+  // đọc auth trước để render đúng gate
+  readAuthFromUrl();
+
   const ok = await tryAutoLogin();
   if(!ok){
     startAuthWatcher();
