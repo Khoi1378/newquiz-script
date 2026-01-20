@@ -668,17 +668,59 @@ function clearAuthLocal(){ setToken(""); setMeCache(null); }
 function goHome(){ location.href = HOME_URL; }
 
 /* quizId: ?quiz=abcde, #abcde, /q/abcde */
+function _pickQuizId(x){
+  const q = String(x||"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
+  return (q.length===5) ? q : "";
+}
+
+/* quizId: ?quiz=abcde, ?quiz_id=abcde, ?quizId=abcde, ?id=abcde, #abcde, #quiz=abcde, /q/abcde, /q/index.html/abcde */
 function parseQuizIdFromUrl(){
+  // 1) query string
   try{
     const qs = new URLSearchParams(location.search);
-    const q = (qs.get("quiz")||"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
-    if(q && q.length===5) return q;
+    const keys = ["quiz","quiz_id","quizId","qid","id","q","code"];
+    for(const k of keys){
+      const v = _pickQuizId(qs.get(k));
+      if(v) return v;
+    }
   }catch{}
-  const h = (location.hash||"").replace(/^#/,"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
-  if(h && h.length===5) return h;
-  const p = location.pathname;
-  const m = p.match(/\/q\/([a-z]{5})(?:\/|$)/i);
-  if(m && m[1]) return String(m[1]).toLowerCase();
+
+  // 2) hash (#abcde | #quiz=abcde | #?quiz=abcde)
+  const rawHash = String(location.hash||"").replace(/^#/,"").trim();
+  if(rawHash){
+    const direct = _pickQuizId(rawHash);
+    if(direct) return direct;
+
+    try{
+      const h = rawHash.startsWith("?") ? rawHash.slice(1) : rawHash;
+      const hqs = new URLSearchParams(h);
+      const keys = ["quiz","quiz_id","quizId","qid","id","q","code"];
+      for(const k of keys){
+        const v = _pickQuizId(hqs.get(k));
+        if(v) return v;
+      }
+    }catch{}
+
+    // dạng #/q/abcde hoặc #/abcde
+    const mH = rawHash.match(/([a-z]{5})/i);
+    if(mH && mH[1]){
+      const v = _pickQuizId(mH[1]);
+      if(v) return v;
+    }
+  }
+
+  // 3) pathname
+  const p = String(location.pathname||"");
+  // /q/abcde  |  /q/index.html/abcde
+  const m1 = p.match(/\/q\/(?:index\.html\/)?([a-z]{5})(?:\/|$)/i);
+  if(m1 && m1[1]) return _pickQuizId(m1[1]);
+
+  // fallback: nếu đang nằm trong folder /q/ thì lấy segment 5 chữ cuối
+  if(/\/q\//i.test(p)){
+    const m2 = p.match(/\/([a-z]{5})(?:\/|$)/i);
+    if(m2 && m2[1]) return _pickQuizId(m2[1]);
+  }
+
   return "";
 }
 
