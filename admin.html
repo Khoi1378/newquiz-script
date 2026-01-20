@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="vi">
 <head>
@@ -745,7 +744,6 @@ const STORAGE_BUCKET = "quiz";
 
 const RPC = {
   me: "api_me",
-  logout: "api_logout",
   adminUpsertQuiz: "admin_upsert_quiz",
   adminListQuizzes: "admin_list_quizzes",
   adminDeleteQuiz: "admin_delete_quiz",
@@ -876,7 +874,6 @@ function typesetElement(el){
 function hasLatex(s){
   const t = String(s||"");
   if(!t.trim()) return false;
-  // heuristic: show preview only if likely latex
   return (t.includes("$") || t.includes("\\(") || t.includes("\\[") || t.includes("\\frac") || t.includes("\\sqrt") || t.includes("\\int") || t.includes("\\log") || t.includes("\\sum") || t.includes("\\lim"));
 }
 
@@ -903,7 +900,7 @@ async function rpc(fn, args){
   return data;
 }
 
-/* ================== STORAGE UPLOAD ================== */
+/* ================== STORAGE UPLOAD/DELETE ================== */
 function publicObjectUrl(bucket, path){
   const safe = path.split("/").map(encodeURIComponent).join("/");
   return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${safe}`;
@@ -925,6 +922,39 @@ async function uploadToBucket(bucket, path, blob, contentType){
     throw new Error(`Upload failed (${res.status}): ${t || "check bucket policy"}`);
   }
   return publicObjectUrl(bucket, path);
+}
+function pathFromPublicObjectUrl(url, bucket){
+  const u = String(url||"").trim();
+  if(!u) return "";
+  const needle = `/storage/v1/object/public/${bucket}/`;
+  const idx = u.indexOf(needle);
+  if(idx < 0) return "";
+  const tail = u.slice(idx + needle.length);
+  if(!tail) return "";
+  // decode each segment safely
+  try{
+    return tail.split("/").map(s=>{
+      try{ return decodeURIComponent(s); }catch{ return s; }
+    }).join("/");
+  }catch{
+    return tail;
+  }
+}
+async function deleteFromBucket(bucket, path){
+  const p = String(path||"").trim();
+  if(!p) return;
+  const url = `${SUPABASE_URL}/storage/v1/object/${bucket}/${p.split("/").map(encodeURIComponent).join("/")}`;
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY
+    }
+  });
+  if(!res.ok){
+    const t = await res.text().catch(()=> "");
+    throw new Error(`Delete failed (${res.status}): ${t || "check policy"}`);
+  }
 }
 
 /* ================== NEED LOGIN ================== */
@@ -1014,17 +1044,7 @@ function setQuizPage(p){
   if(p==="create") quizCreatePage.classList.add("show");
   if(p==="editor") quizEditorPage.classList.add("show");
 
-  // floating add shows only in editor
   document.getElementById("fabAddQuestion").classList.toggle("show", p==="editor");
-}
-
-/* ================== LOGOUT ================== */
-async function doLogout(){
-  const tk = getToken();
-  clearToken();
-  try{ if(tk) await rpc(RPC.logout, { p_token: tk }); }catch{}
-  toast("Đã logout");
-  setTimeout(()=>location.href="/", 350);
 }
 
 /* ================== AUTH GATE ================== */
@@ -1047,17 +1067,14 @@ async function gateCheck(){
 
     if(!isAdmin){
       mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="idx warn">NOT ADMIN</span>`;
-      gate.innerHTML = `Bạn không phải admin. <button class="btn btn-ghost" id="btnLogoutGate" type="button">Logout</button>`;
-      gate.querySelector("#btnLogoutGate").onclick = doLogout;
+      gate.innerHTML = `Bạn không phải admin.`;
       return false;
     }
 
     mePill.innerHTML = `
       Xin chào <b>${esc(ME.username)}</b>
       <span class="badge-admin">ADMIN</span>
-      <button class="btn btn-ghost" id="btnLogoutTop" type="button" style="padding:8px 10px;box-shadow:none">Logout</button>
     `;
-    mePill.querySelector("#btnLogoutTop").onclick = doLogout;
 
     gate.innerHTML = `<span class="idx ok">OK</span> Admin: <b>${esc(ME.username)}</b>`;
     app.style.display = "";
@@ -1227,7 +1244,6 @@ function resetSettingsToDefaults(){
 }
 function setMode(mode){
   CURRENT_MODE = mode;
-  // quiz id always readonly UI
   quizIdEl.setAttribute("disabled","disabled");
 }
 function validateQuiz(){
@@ -1247,14 +1263,12 @@ async function saveQuizOnly(){
   const token = getToken();
   if(!token) throw new Error("Chưa login");
 
-  // quiz id: auto random (NEW) and must not duplicate
   if(CURRENT_MODE !== "EDIT"){
     if(!CURRENT_QID) CURRENT_QID = genUniqueQuizId5();
     quizIdEl.value = CURRENT_QID;
   }
   let qid = (CURRENT_MODE==="EDIT") ? CURRENT_QID : CURRENT_QID;
 
-  // totalScore: equal dùng input, custom dùng sum(points)
   let totalScore = Number(totalScoreEl.value || "10") || 10;
   if(String(scoringModeEl.value||"equal")==="custom"){
     totalScore = calcCustomTotal();
@@ -1267,7 +1281,7 @@ async function saveQuizOnly(){
     p_title: titleEl.value.trim(),
     p_sub: subEl.value.trim(),
     p_is_public: (isPublicEl.value === "true"),
-    p_is_hidden: false, // removed UI
+    p_is_hidden: false,
     p_show_in_store: (showInStoreEl.value === "true"),
     p_require_login: (requireLoginEl.value === "true"),
     p_pinned: (pinnedEl.value === "true"),
@@ -1278,7 +1292,6 @@ async function saveQuizOnly(){
     p_access_code: accessCodeEl.value.trim()
   };
 
-  // if collision happens, retry a few times
   for(let attempt=0; attempt<5; attempt++){
     try{
       const out = await rpc(RPC.adminUpsertQuiz, payload);
@@ -1437,8 +1450,7 @@ document.getElementById("btnGoCreate").onclick = ()=>{
 
 document.getElementById("btnCreateSaveOnly").onclick = async ()=>{
   try{
-    // map basic fields to settings modal fields
-    CURRENT_QID = ""; // force regen
+    CURRENT_QID = "";
     quizIdEl.value = "";
     titleEl.value = (createTitleEl.value || "").trim();
     subEl.value = (createSubEl.value || "").trim();
@@ -1458,7 +1470,7 @@ document.getElementById("btnCreateSaveOnly").onclick = async ()=>{
 
 document.getElementById("btnCreateNext").onclick = async ()=>{
   try{
-    CURRENT_QID = ""; // force regen
+    CURRENT_QID = "";
     quizIdEl.value = "";
     titleEl.value = (createTitleEl.value || "").trim();
     subEl.value = (createSubEl.value || "").trim();
@@ -1539,7 +1551,6 @@ function ensureMeta(q){
   if(q.type==="tf4"){
     q.meta.statements = Array.isArray(q.meta.statements) ? q.meta.statements : ["","","",""];
     q.meta.keys = Array.isArray(q.meta.keys) ? q.meta.keys : [false,false,false,false];
-    // NEW RULE
     q.meta.rule = q.meta.rule || { byCorrectCount:{ "0":0,"1":0.1,"2":0.25,"3":0.5,"4":1 } };
   }
 }
@@ -1689,7 +1700,6 @@ function renderAllQuestions(){
     `;
   }).join("");
 
-  // set tf keys selects + typeset previews
   qAllHost.querySelectorAll(".qCard").forEach(card=>{
     const i = Number(card.getAttribute("data-i"));
     const q = QUESTIONS[i];
@@ -1728,7 +1738,6 @@ function syncQuestionFromCard(card){
   q.type = type;
   q.prompt = card.querySelector(".qPrompt")?.value || "";
 
-  // points
   if(String(scoringModeEl.value||"equal")==="custom"){
     q.points = Number(card.querySelector(".qPoints")?.value || "0") || 0;
   }else{
@@ -1761,7 +1770,6 @@ function syncQuestionFromCard(card){
     };
   }
 
-  // preview: only show if has latex
   const prevBox = card.querySelector('[data-role="mathPrevBox"]');
   const prev = card.querySelector('[data-role="mathPrev"]');
   if(prevBox && prev){
@@ -1798,7 +1806,6 @@ qAllHost.addEventListener("change",(e)=>{
   if(!card) return;
 
   if(e.target.classList.contains("qTypeSel")){
-    // rerender to show correct section UI
     syncQuestionFromCard(card);
     renderAllQuestions();
     return;
@@ -1819,7 +1826,6 @@ qAllHost.addEventListener("click",(e)=>{
   if(act==="up" && i>0){
     [QUESTIONS[i-1], QUESTIONS[i]] = [QUESTIONS[i], QUESTIONS[i-1]];
     renderAllQuestions();
-    // keep focus near moved card
     setTimeout(()=> scrollToQuestion(i-1), 40);
     return;
   }
@@ -1851,18 +1857,38 @@ qAllHost.addEventListener("click",(e)=>{
     document.getElementById("qImgPick").click();
     return;
   }
+
   if(act==="removeimg"){
     ensureMeta(QUESTIONS[i]);
+    const oldPath = String(QUESTIONS[i].meta.image_path || "").trim();
+    const oldUrl = String(QUESTIONS[i].meta.image_url || "").trim();
+
+    const delPath = oldPath || pathFromPublicObjectUrl(oldUrl, STORAGE_BUCKET);
+
+    // Clear UI immediately, then delete in bucket
     QUESTIONS[i].meta.image_url = "";
     QUESTIONS[i].meta.image_path = "";
     renderAllQuestions();
-    toast("Đã xóa ảnh (chỉ xóa link)");
+
+    if(!delPath){
+      toast("Đã xóa ảnh (không tìm thấy path)");
+      return;
+    }
+
+    toast("Đang xóa ảnh...");
+    deleteFromBucket(STORAGE_BUCKET, delPath)
+      .then(()=>{
+        toast("Đã xóa ảnh trong bucket");
+      })
+      .catch(err=>{
+        toast(err?.message || "Lỗi xóa ảnh (check policy)");
+      });
+
     return;
   }
 
   if(act==="openLatex"){
     ACTIVE_Q_INDEX = i;
-    // prefer prompt textarea
     const prompt = card.querySelector("textarea.qPrompt");
     if(prompt){ prompt.focus(); ACTIVE_TEXTAREA = prompt; }
     openLatexModal();
@@ -1982,10 +2008,7 @@ window.addEventListener("paste", async (e)=>{
   const f = imgItem.getAsFile();
   if(!f) return;
 
-  // only in editor page
   if(!quizEditorPage.classList.contains("show")) return;
-
-  // paste goes to last focused question index
   if(ACTIVE_Q_INDEX<0) return;
   try{ await setQuestionImage(ACTIVE_Q_INDEX, f); }catch(err){ toast(err.message || "Lỗi upload ảnh"); }
 },{passive:true});
@@ -2320,7 +2343,6 @@ function openLatexModal(){
   latexModalBack.setAttribute("aria-hidden","false");
   lockScroll(true);
 
-  // load selection or keep current
   const start = LATEX_TARGET_EL.selectionStart ?? 0;
   const end = LATEX_TARGET_EL.selectionEnd ?? 0;
   const sel = (end>start) ? LATEX_TARGET_EL.value.slice(start,end) : "";
@@ -2334,7 +2356,7 @@ function closeLatexModal(){
 }
 document.getElementById("btnCloseLatex").onclick = closeLatexModal;
 latexModalBack.addEventListener("click",(e)=>{
-  if(e.target === latexModalBack) closeLatexModal(); // click outside => close
+  if(e.target === latexModalBack) closeLatexModal();
 });
 
 function getActiveTextTarget(){
@@ -2382,7 +2404,6 @@ document.getElementById("btnLatexInsert").onclick = ()=>{
 
   insertAtCursor(el, s);
 
-  // sync question data after insert
   const card = el.closest(".qCard");
   if(card) syncQuestionFromCard(card);
 
@@ -2409,15 +2430,11 @@ const LATEX_TEMPLATES = [
   { label: "HS bậc 1", tpl: "$ax + b$" },
   { label: "HS bậc 2", tpl: "$ax^2 + bx + c$" },
   { label: "HS bậc 3", tpl: "$ax^3 + bx^2 + cx + d$" },
-  // Hàm số cơ bản
   { label: "Hàm nhất biến bậc 1", tpl: "$y = ax + b$" },
   { label: "Hàm nhất biến bậc 2", tpl: "$y = ax^2 + bx + c$" },
-
-  // Hàm phân thức
   { label: "Hàm phân thức bậc 1 / bậc 1", tpl: "$y = \\dfrac{ax + b}{cx + d}$" },
   { label: "Hàm bậc 2 / bậc 1", tpl: "$y = \\dfrac{ax^2 + bx + c}{ex + f}$" },
   { label: "Hàm bậc 3 / bậc 1", tpl: "$y = \\dfrac{ax^3 + bx^2 + cx + d}{ex + f}$" },
-
 ];
 
 latexGrid.innerHTML = LATEX_TEMPLATES.map(x=>{
