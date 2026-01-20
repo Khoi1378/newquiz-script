@@ -34,7 +34,6 @@
     .btn, .btn-x, .pinKey { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     .hidden{ display:none !important; }
 
-    /* tăng padding bottom để không bị submitbar che */
     #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 170px; touch-action: pan-y; }
     .wrap { max-width: 980px; margin: 0 auto; padding: 0 14px; }
 
@@ -270,7 +269,6 @@
     .missList{ margin:10px 0 12px; padding-left:18px; color:#374151; font-weight:800; line-height:1.35; }
     .missList li{ margin:6px 0; }
 
-    /* ===== Question UI ===== */
     .qPrompt{
       margin-top:10px;
       white-space:pre-wrap;
@@ -293,7 +291,7 @@
     .optBtn{
       text-align:left;
       border-radius:16px;
-      border:2px solid #e5e7eb; /* dày hơn */
+      border:2px solid #e5e7eb;
       background:#fff;
       padding:12px;
       cursor:pointer;
@@ -304,7 +302,7 @@
     .optBtn:hover{ transform:translateY(-1px); filter:brightness(.99); }
     .optBtn.active{
       border-color:rgba(124,58,237,.55);
-      border-width:3px; /* dày hơn khi chọn */
+      border-width:3px;
       box-shadow:0 0 0 5px rgba(124,58,237,.10);
       background:#fff;
     }
@@ -347,6 +345,21 @@
     .kpBtn:active{ transform: translateY(0); }
     .kpBtn.small{ min-width:74px; }
 
+    /* ✅ Mobile layout đúng như bạn muốn (2 hàng, 7 cột) */
+    @media (max-width: 520px){
+      .keypad4{
+        display:grid;
+        grid-template-columns:repeat(7, 1fr);
+        gap:8px;
+      }
+      .kpBtn, .kpBtn.small{
+        min-width:0;
+        width:100%;
+        padding:10px 0;
+        border-radius:16px;
+      }
+    }
+
     .tfList{ display:grid; gap:10px; margin-top:10px; }
     .tfRow{
       border:1px solid #e5e7eb;
@@ -359,7 +372,7 @@
     .tfBtns{ display:flex; gap:8px; flex-wrap:wrap; }
     .tfBtn{
       border-radius:999px;
-      border:2px solid #e5e7eb; /* dày hơn */
+      border:2px solid #e5e7eb;
       background:#fff;
       padding:8px 12px;
       font-weight:1000;
@@ -368,11 +381,10 @@
     }
     .tfBtn.active{
       border-color:rgba(124,58,237,.55);
-      border-width:3px; /* dày hơn khi chọn */
+      border-width:3px;
       box-shadow:0 0 0 5px rgba(124,58,237,.10);
     }
 
-    /* Image viewer modal */
     .imgModal{
       width:100%;
       max-width:min(980px, 100%);
@@ -420,7 +432,6 @@
       box-shadow:0 12px 24px rgba(0,0,0,.10);
     }
 
-    /* ===== Submit bar (fixed bottom) ===== */
     .submitbar{
       position:fixed;
       left:0; right:0;
@@ -470,7 +481,6 @@
     }
   </style>
 
-  <!-- ✅ KaTeX (LaTeX render) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 </head>
 
@@ -509,14 +519,12 @@
 
   <div class="toast" id="toast"></div>
 
-  <!-- ✅ Submit bar -->
   <div class="submitbar" id="submitBar">
     <div class="submitwrap">
       <button class="btn btn-primary btn-big" id="btnSubmitBig" disabled>NỘP BÀI</button>
       <div class="subhint" id="submitHint"></div>
     </div>
   </div>
-  
 
   <!-- Register prompt -->
   <div class="modal-backdrop" id="registerBackdrop" aria-hidden="true">
@@ -605,7 +613,6 @@
     </div>
   </div>
 
-  <!-- ✅ KaTeX JS -->
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
@@ -677,7 +684,6 @@ function _pickQuizId(x){
 
 /* quizId: ?quiz=abcde, ?quiz_id=abcde, ?quizId=abcde, ?id=abcde, #abcde, #quiz=abcde, /q/abcde, /q/index.html/abcde */
 function parseQuizIdFromUrl(){
-  // 1) query string
   try{
     const qs = new URLSearchParams(location.search);
     const keys = ["quiz","quiz_id","quizId","qid","id","q","code"];
@@ -687,7 +693,6 @@ function parseQuizIdFromUrl(){
     }
   }catch{}
 
-  // 2) hash (#abcde | #quiz=abcde | #?quiz=abcde)
   const rawHash = String(location.hash||"").replace(/^#/,"").trim();
   if(rawHash){
     const direct = _pickQuizId(rawHash);
@@ -703,7 +708,6 @@ function parseQuizIdFromUrl(){
       }
     }catch{}
 
-    // dạng #/q/abcde hoặc #/abcde
     const mH = rawHash.match(/([a-z]{5})/i);
     if(mH && mH[1]){
       const v = _pickQuizId(mH[1]);
@@ -711,13 +715,10 @@ function parseQuizIdFromUrl(){
     }
   }
 
-  // 3) pathname
   const p = String(location.pathname||"");
-  // /q/abcde  |  /q/index.html/abcde
   const m1 = p.match(/\/q\/(?:index\.html\/)?([a-z]{5})(?:\/|$)/i);
   if(m1 && m1[1]) return _pickQuizId(m1[1]);
 
-  // fallback: nếu đang nằm trong folder /q/ thì lấy segment 5 chữ cuối
   if(/\/q\//i.test(p)){
     const m2 = p.match(/\/([a-z]{5})(?:\/|$)/i);
     if(m2 && m2[1]) return _pickQuizId(m2[1]);
@@ -739,14 +740,18 @@ function dropFlagsFromUrl(){
 }
 
 /* ================== SUPABASE CALLS ================== */
+function sbHeaders(){
+  const anon = String(SUPABASE_ANON_KEY).trim();
+  return {
+    "apikey": anon,
+    "Authorization": "Bearer " + anon,
+    "Content-Type": "application/json"
+  };
+}
 async function sbRpc(fn, args){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
     method:"POST",
-    headers:{
-      "apikey": String(SUPABASE_ANON_KEY).trim(),
-      "Authorization": "Bearer " + String(SUPABASE_ANON_KEY).trim(),
-      "Content-Type":"application/json"
-    },
+    headers: sbHeaders(),
     body: JSON.stringify(args||{})
   });
   const txt = await res.text();
@@ -760,11 +765,7 @@ async function sbRpc(fn, args){
   return data;
 }
 async function sbPost(path, body, { preferReturn=false, upsert=false } = {}){
-  const headers = {
-    "apikey": String(SUPABASE_ANON_KEY).trim(),
-    "Authorization": "Bearer " + String(SUPABASE_ANON_KEY).trim(),
-    "Content-Type":"application/json"
-  };
+  const headers = sbHeaders();
   if(preferReturn) headers["Prefer"] = "return=representation";
   if(upsert){
     headers["Prefer"] = (headers["Prefer"] ? headers["Prefer"] + "," : "") + "resolution=merge-duplicates";
@@ -869,12 +870,10 @@ let view = { started:false };
 let state = {
   quiz_id: quizId,
   answers: {},
-  checked: {},      // chỉ dùng cho essay-check
+  checked: {},
   finalized: false,
   attempt_id: "",
   ts: 0,
-
-  // ✅ shuffle state (persist để "tiếp tục làm" giữ đúng thứ tự)
   order: [],
   mcq_perm: {}
 };
@@ -993,7 +992,6 @@ function ensureShuffle({force=false} = {}){
     }
     state.mcq_perm = next;
   }else{
-    // q: chỉ đảo câu, không đảo đáp án
     state.mcq_perm = {};
   }
 
@@ -1012,7 +1010,6 @@ function getViewItems(){
     const qq = map.get(Number(id));
     if(qq) out.push(qq);
   }
-  // phòng hờ câu mới
   for(const q of QUIZ.items){
     if(!order.includes(Number(q.id))) out.push(q);
   }
@@ -1043,6 +1040,13 @@ function normalizeForCompare(s) {
   t = t.replace(/\s+/g, " ").trim();
   return t;
 }
+function normalizeShort4(s){
+  // chỉ giữ 0-9 , -
+  return String(s||"")
+    .replace(/\s+/g,"")
+    .replace(/[^0-9\-,]/g,"")
+    .trim();
+}
 function looseEq(user, expected){
   const u = normalizeForCompare(user);
   const a = normalizeForCompare(expected);
@@ -1052,12 +1056,27 @@ function looseEq(user, expected){
   return false;
 }
 function acceptedAnswersFromQuestion(q){
+  const t = qTypeOf(q);
   const out = [];
+
+  // short4: nếu admin nhập dạng 4 ô ["1","2","3","4"] thì join thành "1234"
+  if(t === "short4" && Array.isArray(q.answers) && q.answers.length === 4){
+    const cells = q.answers.map(x => String(x||"").trim()).slice(0,4);
+    if(cells.every(x => x.length<=1)){
+      out.push(cells.join(""));
+    }
+  }
+
   if(Array.isArray(q.answers)) out.push(...q.answers);
+
+  // cho phép set đáp án trong meta
+  const metaAns = q?.meta?.answer || q?.meta?.correct || q?.meta?.expected;
+  if(metaAns) out.push(String(metaAns));
+
   const seen = new Set();
   const uniq = [];
   for(const x of out){
-    const k = normalizeForCompare(x);
+    const k = (t==="short4") ? normalizeShort4(x) : normalizeForCompare(x);
     if(!k) continue;
     if(seen.has(k)) continue;
     seen.add(k);
@@ -1078,21 +1097,22 @@ function isAnswered(q){
     return n>=1 && n<=4;
   }
   if(t === "tf4"){
-    return Array.isArray(v) && v.length===4 && v.every(x => x === true || x === false);
+    // ✅ chỉ cần chọn được 1 ý là coi như đã làm (không bắt buộc đủ 4)
+    return Array.isArray(v) && v.some(x => x === true || x === false);
   }
   return String(v||"").trim().length > 0;
 }
+
 function gradeOne(q){
   const t = qTypeOf(q);
   const max = pointsOf(q);
 
   if(t === "mcq1" || t === "mcq"){
-    const userOrig = Number(state.answers[q.id] || 0); // lưu theo ORIGINAL index 1..4
+    const userOrig = Number(state.answers[q.id] || 0);
     const correctOrig = Number(q.meta?.correct || 1) || 1;
     const ok = (userOrig === correctOrig);
 
-    // expected theo "thứ tự hiển thị" (nếu QA shuffle)
-    const perm = getMcqPerm(q.id); // display -> origIdx(0..3)
+    const perm = getMcqPerm(q.id);
     const displayCorrect = Math.max(1, perm.indexOf(correctOrig-1) + 1);
     const expected = `Đáp án: ${"ABCD"[displayCorrect-1] || "A"}`;
     return { ok, expected, earned: ok ? max : 0, max };
@@ -1103,20 +1123,38 @@ function gradeOne(q){
     const user = Array.isArray(state.answers[q.id]) ? state.answers[q.id] : [null,null,null,null];
 
     let correctCount = 0;
+    const wrongLetters = [];
     for(let i=0;i<4;i++){
-      if((user[i] === true || user[i] === false) && user[i] === Boolean(keys[i])) correctCount++;
+      const u = user[i];
+      const k = Boolean(keys[i]);
+      const okPart = (u === true || u === false) && (u === k);
+      if(okPart) correctCount++;
+      else wrongLetters.push("ABCD"[i]);
     }
 
-    const rule = q.meta?.rule?.byCorrectCount || { "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 };
-    const mult = Number(rule[String(correctCount)] ?? 0) || 0;
-
-    const earned = Math.round(max * mult * 100) / 100;
+    // ✅ điểm theo từng ý: đúng N/4 => N/4 * điểm câu
+    const earned = Math.round((max * (correctCount/4)) * 100) / 100;
     const ok = (correctCount === 4);
-    const expected = `Đúng ${correctCount}/4 (điểm: ${earned}/${max})`;
-    return { ok, expected, earned, max };
+    const expected = ok
+      ? `Đúng 4/4 (điểm: ${earned}/${max})`
+      : `Đúng ${correctCount}/4 • Sai/Trống: ${wrongLetters.join(", ")} (điểm: ${earned}/${max})`;
+
+    return { ok, expected, earned, max, correctCount };
   }
 
-  // essay / short4
+  if(t === "short4"){
+    const userRaw = String(state.answers[q.id] || "");
+    const user = normalizeShort4(userRaw);
+    const acc = acceptedAnswersFromQuestion(q).map(a => normalizeShort4(a));
+    const expected = acc[0] ? `Đáp án: ${acc[0]}` : "Đáp án: (chưa set)";
+
+    if(!user) return { ok:false, expected, earned: 0, max };
+
+    const ok = acc.some(a => a && user === a);
+    return { ok, expected, earned: ok ? max : 0, max };
+  }
+
+  // essay
   const user = String(state.answers[q.id] || "").trim();
   const acc = acceptedAnswersFromQuestion(q);
   const expected = acc[0] ? `Đáp án: ${acc[0]}` : "Đáp án: (chưa set)";
@@ -1462,7 +1500,6 @@ function renderStart(){
   `;
 
   document.getElementById("btnGo").onclick = ()=>{
-    // nếu đã submit trước đó mà còn state cũ => bắt đầu attempt mới
     if(state.finalized){
       resetForNewAttempt({reshuffle:true});
     }
@@ -1493,7 +1530,6 @@ function renderQuiz(){
     return;
   }
 
-  // ✅ đảm bảo shuffle cho attempt hiện tại
   ensureShuffle({force:false});
 
   const items = getViewItems();
@@ -1503,7 +1539,7 @@ function renderQuiz(){
     const t = qTypeOf(q);
     const img = String(q.meta?.image_url || q.meta?.image || q.meta?.img || "").trim();
 
-    const allowCheck = (t === "essay");      // ✅ chỉ essay có check
+    const allowCheck = (t === "essay");
     const ck = allowCheck ? state.checked[q.id] : null;
     const locked = state.finalized || (allowCheck && ck && ck.locked);
 
@@ -1541,23 +1577,20 @@ function renderQuiz(){
   });
 
   content.innerHTML = html;
-
-  // ✅ render math 1 lần
   applyMath(content);
-
   updateStats();
 }
 
 function renderMcq(q, locked){
   const opts = Array.isArray(q.meta?.options) ? q.meta.options : ["","","",""];
-  const perm = getMcqPerm(q.id); // display -> origIdx
+  const perm = getMcqPerm(q.id);
   const userOrig = Number(state.answers[q.id] || 0);
 
   return `
     <div class="optGrid" role="group" aria-label="options">
       ${[0,1,2,3].map(d=>{
         const origIdx = perm[d] ?? d;
-        const origAns = origIdx + 1; // 1..4
+        const origAns = origIdx + 1;
         const letter = "ABCD"[d];
         const text = String(opts[origIdx] ?? "");
         const active = (userOrig === origAns);
@@ -1581,6 +1614,12 @@ function renderEssay(q, locked){
 function renderShort4(q, locked){
   const raw = String(state.answers[q.id] || "");
   const chars = [raw[0]||"", raw[1]||"", raw[2]||"", raw[3]||""];
+
+  // ✅ đúng layout mobile bạn yêu cầu:
+  // 1 2 3 4 5 , -
+  // 6 7 8 9 0 < CLR
+  const keys = ["1","2","3","4","5",",","-","6","7","8","9","0","<","CLR"];
+
   return `
     <div style="margin-top:10px">
       <div class="muted">Nhập 4 ô (0-9, dấu -, dấu ,).</div>
@@ -1592,20 +1631,18 @@ function renderShort4(q, locked){
       </div>
 
       <div class="keypad4" role="group" aria-label="short4 keypad">
-        <button class="kpBtn" data-kpid="${q.id}" data-kpkey="-" ${locked?"disabled":""} type="button">-</button>
-        <button class="kpBtn" data-kpid="${q.id}" data-kpkey="," ${locked?"disabled":""} type="button">,</button>
-        ${["0","1","2","3","4","5","6","7","8","9"].map(x=>`
-          <button class="kpBtn" data-kpid="${q.id}" data-kpkey="${x}" ${locked?"disabled":""} type="button">${x}</button>
-        `).join("")}
-        <button class="kpBtn small" data-kpid="${q.id}" data-kpkey="<" ${locked?"disabled":""} type="button">&lt;</button>
-        <button class="kpBtn small" data-kpid="${q.id}" data-kpkey="CLR" ${locked?"disabled":""} type="button">CLR</button>
+        ${keys.map(x=>{
+          const label = (x === "<") ? "&lt;" : escapeHtml(x);
+          const cls = (x==="CLR" || x==="<") ? "kpBtn small" : "kpBtn";
+          return `<button class="${cls}" data-kpid="${q.id}" data-kpkey="${escapeHtml(x)}" ${locked?"disabled":""} type="button">${label}</button>`;
+        }).join("")}
       </div>
     </div>
   `;
 }
 function renderTf4(q, locked){
   const stmts = Array.isArray(q.meta?.statements) ? q.meta.statements : ["","","",""];
-  const user = Array.isArray(state.answers[q.id]) ? state.answers[q.id] : [null,null,null,null]; // ✅ mặc định TRỐNG
+  const user = Array.isArray(state.answers[q.id]) ? state.answers[q.id] : [null,null,null,null];
 
   return `
     <div class="tfList">
@@ -1655,11 +1692,10 @@ content.addEventListener("click", (e)=>{
     return;
   }
 
-  // ✅ MCQ: update DOM tại chỗ => không renderQuiz() => không nhảy
   const mcq = e.target.closest("[data-mcq]");
   if(mcq){
     const id = Number(mcq.getAttribute("data-mcq"));
-    const orig = Number(mcq.getAttribute("data-orig")); // 1..4 theo ORIGINAL
+    const orig = Number(mcq.getAttribute("data-orig"));
     state.answers[id] = orig;
     saveLocalProgress();
     updateStats();
@@ -1674,7 +1710,6 @@ content.addEventListener("click", (e)=>{
     return;
   }
 
-  // ✅ TF4: mặc định null, chọn mới set true/false, update DOM tại chỗ
   const tf = e.target.closest("[data-tf]");
   if(tf){
     const id = Number(tf.getAttribute("data-tf"));
@@ -1699,15 +1734,12 @@ content.addEventListener("click", (e)=>{
     return;
   }
 
-  // ✅ short4 keypad
   const kp = e.target.closest("[data-kpid][data-kpkey]");
   if(kp){
     const id = Number(kp.getAttribute("data-kpid"));
     const key = String(kp.getAttribute("data-kpkey")||"");
     const card = kp.closest(".card");
     if(!card) return;
-
-    // locked?
     if(state.finalized) return;
 
     const raw = String(state.answers[id] || "");
@@ -1722,7 +1754,6 @@ content.addEventListener("click", (e)=>{
       arr[0]=arr[1]=arr[2]=arr[3]="";
       cursor = 0;
     }else if(key === "<"){
-      // backspace
       cursor = clamp(cursor);
       if(arr[cursor]){
         arr[cursor] = "";
@@ -1732,9 +1763,8 @@ content.addEventListener("click", (e)=>{
         if(j>=0){ arr[j]=""; cursor=j; }
       }
     }else{
-      // insert
       let pos = clamp(cursor);
-      if(arr[pos]){ // tìm ô trống tiếp theo
+      if(arr[pos]){
         let j = pos;
         while(j<4 && arr[j]) j++;
         if(j>=4) j = -1;
@@ -1743,17 +1773,13 @@ content.addEventListener("click", (e)=>{
       if(pos >= 0){
         let ch = key;
 
-        // rule: '-' chỉ ô 0
         if(ch === "-" && pos !== 0) ch = "";
-        // rule: ô 0 không được ','
         if(ch === "," && pos === 0) ch = "";
 
         if(ch){
-          // nếu '-' thì chỉ cho khi ô 0 đang trống
           if(ch === "-" && arr[0]) ch = "";
           if(ch){
             arr[pos] = ch;
-            // move to next
             let j = pos+1;
             while(j<4 && arr[j]) j++;
             cursor = (j<4) ? j : 3;
@@ -1766,14 +1792,12 @@ content.addEventListener("click", (e)=>{
     saveLocalProgress();
     updateStats();
 
-    // update DOM inputs
     const inputs = card.querySelectorAll(`.short4[data-id="${id}"]`);
     inputs.forEach(inp=>{
       const k = Number(inp.getAttribute("data-k"));
       inp.value = arr[k] || "";
     });
 
-    // focus next
     const next = card.querySelector(`.short4[data-id="${id}"][data-k="${cursor}"]`);
     if(next){
       try{ next.focus(); }catch{}
@@ -1783,7 +1807,6 @@ content.addEventListener("click", (e)=>{
     return;
   }
 
-  // ✅ Essay check only
   const b = e.target.closest("[data-check]");
   if(!b) return;
 
@@ -1791,7 +1814,7 @@ content.addEventListener("click", (e)=>{
   const q = QUIZ.items.find(x=>Number(x.id)===id);
   if(!q) return;
 
-  if(qTypeOf(q)!=="essay") return; // safety
+  if(qTypeOf(q)!=="essay") return;
 
   if(!isAnswered(q)){
     toast("Chưa làm câu này");
@@ -1803,7 +1826,6 @@ content.addEventListener("click", (e)=>{
   saveLocalProgress();
   toast(g.ok ? "ĐÚNG" : "SAI");
 
-  // update UI card only
   const card = document.getElementById(`q${id}`);
   if(card){
     const input = card.querySelector(`.ans[data-id="${id}"]`);
@@ -1843,8 +1865,6 @@ content.addEventListener("input", (e)=>{
   if(t.classList && t.classList.contains("short4")){
     const id = Number(t.getAttribute("data-id"));
     const k = Number(t.getAttribute("data-k"));
-
-    // locked?
     if(state.finalized) return;
 
     SHORT4_FOCUS.id = id;
@@ -1853,15 +1873,8 @@ content.addEventListener("input", (e)=>{
     let v = String(t.value||"");
     v = v.replace(/[^0-9\-,]/g,"").slice(0,1);
 
-    // rule: '-' only at k=0
     if(v === "-" && k !== 0) v = "";
-    // rule: first box cannot be comma
     if(v === "," && k === 0) v = "";
-    // rule: '-' only if box0 empty
-    if(v === "-" && k === 0){
-      const raw0 = String(state.answers[id]||"");
-      if((raw0[0]||"") && raw0[0] !== "-") v = "";
-    }
 
     if(t.value !== v) t.value = v;
 
@@ -1873,7 +1886,6 @@ content.addEventListener("input", (e)=>{
     saveLocalProgress();
     updateStats();
 
-    // auto move next if typed
     if(v && k < 3){
       const card = t.closest(".card");
       const next = card && card.querySelector(`.short4[data-id="${id}"][data-k="${k+1}"]`);
@@ -1915,10 +1927,7 @@ resetBackdrop.addEventListener("click",(e)=>{ if(e.target===resetBackdrop){ rese
 document.getElementById("btnConfirmReset").onclick = ()=>{
   resetBackdrop.classList.remove("show");
   resetBackdrop.setAttribute("aria-hidden","true");
-
-  // ✅ làm lại = clear answers + reshuffle nếu quiz yêu cầu
   resetForNewAttempt({reshuffle:true});
-
   toast("Đã làm lại");
   if(view.started) renderQuiz(); else updateStats();
 };
@@ -1958,6 +1967,76 @@ function getMissingItems(){
   return miss;
 }
 
+/* ===== build wrong list (để result.html hiển thị đúng) ===== */
+function buildWrongList(items){
+  const wrong = [];
+
+  const push = (x)=>{
+    if(!x) return;
+    if(wrong.length >= 200) return;
+    wrong.push(x);
+  };
+
+  for(const q of items){
+    const t = qTypeOf(q);
+
+    if(t === "tf4"){
+      const stmts = Array.isArray(q.meta?.statements) ? q.meta.statements : ["","","",""];
+      const keys = Array.isArray(q.meta?.keys) ? q.meta.keys : [true,false,false,false];
+      const user = Array.isArray(state.answers[q.id]) ? state.answers[q.id] : [null,null,null,null];
+
+      for(let i=0;i<4;i++){
+        const u = user[i];
+        const k = Boolean(keys[i]);
+        const okPart = (u === true || u === false) && (u === k);
+        if(okPart) continue;
+
+        const label = "ABCD"[i];
+        const stmt = String(stmts[i]||"").trim();
+        const uText = (u === true) ? "Đúng" : (u === false) ? "Sai" : "(trống)";
+        const kText = k ? "Đúng" : "Sai";
+
+        push({
+          id: q.id,
+          word: `${label}. ${stmt || q.prompt || ""}`,
+          user_answer: uText,
+          expected: kText
+        });
+      }
+      continue;
+    }
+
+    if(t === "mcq1" || t === "mcq"){
+      const g = gradeOne(q);
+      if(g.ok) continue;
+
+      const userOrig = Number(state.answers[q.id] || 0);
+      const uLetter = (userOrig>=1 && userOrig<=4) ? "ABCD"[userOrig-1] : "(trống)";
+      push({
+        id: q.id,
+        word: q.prompt || "",
+        user_answer: uLetter,
+        expected: g.expected || ""
+      });
+      continue;
+    }
+
+    // short4 / essay
+    const g = gradeOne(q);
+    if(g.ok) continue;
+
+    const ua = String(state.answers[q.id]||"").trim();
+    push({
+      id: q.id,
+      word: q.prompt || "",
+      user_answer: ua ? ua : "(trống)",
+      expected: g.expected || ""
+    });
+  }
+
+  return wrong;
+}
+
 function computeFinal(){
   const items = getViewItems();
   let earned = 0;
@@ -1974,11 +2053,13 @@ function computeFinal(){
     per.push({ id:q.id, no:q.no, q_type:q.q_type, ok:!!g.ok, earned:g.earned, max:g.max });
   }
 
+  const wrong = buildWrongList(items);
   const score10 = max > 0 ? Math.round((earned/max*10)*10)/10 : 0;
-  return { score10, earned, max, fullCorrectCount, totalCount: items.length, per };
+
+  return { score10, earned, max, fullCorrectCount, totalCount: items.length, per, wrong };
 }
 
-/* attempts insert: nếu bị RLS chặn thì vẫn nhảy result bằng sessionStorage */
+/* attempts insert */
 async function submitToSupabase(result){
   if(!me || !me.user_id) throw new Error("need login");
 
@@ -1991,13 +2072,14 @@ async function submitToSupabase(result){
     details_json: {
       client: "q/index.html",
       ts: Date.now(),
-      mode: "questions",
+      username: me.username || "",
       quiz_id: quizId,
       shuffle_mode: QUIZ.shuffle_mode || "none",
       order: state.order || [],
       earned: result.earned,
       max: result.max,
       per: result.per,
+      wrong: result.wrong,
       answers: state.answers || {}
     }
   };
@@ -2030,8 +2112,9 @@ async function doSubmitNow(){
     attemptId = await submitToSupabase(result);
     state.attempt_id = attemptId;
     saveLocalProgress();
-  }catch(_e){
-    toast("Không lưu DB (xem kết quả vẫn OK)");
+  }catch(e){
+    // ✅ show lỗi thật để biết RLS/GRANT đang chặn gì
+    toast("Không lưu DB: " + (e?.message || "unknown"));
   }
 
   try{
@@ -2046,10 +2129,8 @@ async function doSubmitNow(){
     }));
   }catch{}
 
-  // ✅ sau khi nộp: vào lại là làm bài mới
-  // (giữ result trong sessionStorage để xem lại)
   resetForNewAttempt({reshuffle:true});
-  clearLocalProgressOnly(); // xóa luôn tiến độ cũ cho chắc
+  clearLocalProgressOnly();
 
   const qs = new URLSearchParams();
   qs.set("quiz", quizId);
@@ -2115,7 +2196,7 @@ async function loadQuiz(){
     title: q.title || "Quiz",
     sub: q.sub || "",
     require_login: (q.require_login !== false),
-    shuffle_mode: String(q.shuffle_mode || "none"), // ✅ lấy shuffle_mode từ DB
+    shuffle_mode: String(q.shuffle_mode || "none"),
     items: items.map(x=>({
       id: Number(x.id),
       no: x.no,
@@ -2155,7 +2236,6 @@ async function enterAfterAuth(out){
       return;
     }
 
-    // nếu local progress đang finalized (do cache cũ) => attempt mới
     if(state.finalized){
       resetForNewAttempt({reshuffle:true});
       clearLocalProgressOnly();
@@ -2215,7 +2295,6 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
     loadLocalProgress();
   }
 
-  // restore me/token
   me = getMeCache();
   if(me && me.id && !me.user_id) me.user_id = me.id;
   if(getToken() && (!me || !me.user_id)){
@@ -2223,7 +2302,6 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
     if(m2){ me = m2; setMeCache(me); }
   }
 
-  // load quiz
   try{
     QUIZ = await loadQuiz();
     quizTitleEl.textContent = QUIZ.title || "Quiz";
@@ -2233,15 +2311,12 @@ userCorner.addEventListener("click", ()=>{ if(me) openProfileModal(); });
     return;
   }
 
-  // ✅ nếu cache cũ đã finalized -> vào lại là attempt mới
   if(state.finalized){
     resetForNewAttempt({reshuffle:true});
     clearLocalProgressOnly();
   }
 
-  // chuẩn bị shuffle nếu quiz có mode (giữ ổn định khi "tiếp tục làm")
   ensureShuffle({force:false});
-
   updateStats();
 
   if(!QUIZ.require_login){
