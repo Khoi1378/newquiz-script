@@ -1745,11 +1745,11 @@ function syncQuestionFromCard(card){
   }
 
   if(type==="essay"){
-    const raw = card.querySelector(".qAnswers")?.value || "";
+    const raw = card.querySelector(".qEssay .qAnswers")?.value || "";
     q.answers = raw.split("|").map(s=>s.trim()).filter(Boolean);
     q.meta = { ...(q.meta||{}), fuzzy:true, image_url:q.meta.image_url||"", image_path:q.meta.image_path||"" };
   }else if(type==="short4"){
-    const raw = card.querySelector(".qAnswers")?.value || "";
+    const raw = card.querySelector(".qShort4 .qAnswers")?.value || "";
     q.answers = parseShort4Answers(raw);
     q.meta = { ...(q.meta||{}), format:"4boxes", image_url:q.meta.image_url||"", image_path:q.meta.image_path||"" };
   }else if(type==="mcq1"){
