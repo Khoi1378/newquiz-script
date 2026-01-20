@@ -1081,17 +1081,14 @@ async function gateCheck(){
 
     if(!isAdmin){
       mePill.innerHTML = `Xin chào <b>${esc(ME.username)}</b> <span class="idx warn">NOT ADMIN</span>`;
-      gate.innerHTML = `Bạn không phải admin. <button class="btn btn-ghost" id="btnLogoutGate" type="button">Logout</button>`;
-      gate.querySelector("#btnLogoutGate").onclick = doLogout;
+      gate.innerHTML = `Bạn không phải admin.`;
       return false;
     }
 
     mePill.innerHTML = `
       Xin chào <b>${esc(ME.username)}</b>
       <span class="badge-admin">ADMIN</span>
-      <button class="btn btn-ghost" id="btnLogoutTop" type="button" style="padding:8px 10px;box-shadow:none">Logout</button>
     `;
-    mePill.querySelector("#btnLogoutTop").onclick = doLogout;
 
     gate.innerHTML = `<span class="idx ok">OK</span> Admin: <b>${esc(ME.username)}</b>`;
     app.style.display = "";
