@@ -745,26 +745,25 @@ const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 const STORAGE_BUCKET = "quiz";
 
-/* ================== TOKEN STORAGE (match index.html) ================== */
+/* ================== TOKEN STORAGE (HARDENED) ================== */
+/*
+  Không bỏ token/auth.
+  Mục tiêu bản sửa này: token đỡ “lụm” (đặc biệt Safari/iOS/PWA),
+  có ô dán token thủ công + debug nguồn token.
+*/
 const TOKEN_KEYS = ["tk_token_v2","tk_token_v1","tk_token"];
 const TOKEN_COOKIES = ["tk_token_v2","tk_token_v1","tk_token"];
+const TOKEN_META_KEY = "tk_token_meta_v1"; // {token, at}
 const ME_CACHE_KEY = "tk_me_v2"; // match cache
 
-/* ================== RPC NAMES (PREFER v2 FIRST) ================== */
-const RPC = {
-  me: ["api_me_v2","api_me_v1","api_me","api_me_v0"],
-  logout: ["api_logout_v2","api_logout_v1","api_logout","api_logout_v0"],
-
-  adminUpsertQuiz: ["admin_upsert_quiz_v2","admin_upsert_quiz_v1","admin_upsert_quiz","admin_upsert_quiz_v0"],
-  adminListQuizzes: ["admin_list_quizzes_v2","admin_list_quizzes_v1","admin_list_quizzes","admin_list_quizzes_v0"],
-  adminDeleteQuiz: ["admin_delete_quiz_v2","admin_delete_quiz_v1","admin_delete_quiz","admin_delete_quiz_v0"],
-  adminGetQuestions: ["admin_get_questions_v2","admin_get_questions_v1","admin_get_questions","admin_get_questions_v0"],
-  adminReplaceQuestions: ["admin_replace_questions_v3_v2","admin_replace_questions_v3","admin_replace_questions_v3_v0","admin_replace_questions","admin_replace_questions_v1","admin_replace_questions_v0"],
-  adminListUsers: ["admin_list_users_v2","admin_list_users_v1","admin_list_users","admin_list_users_v0"],
-  adminDeleteUser: ["admin_delete_user_v2","admin_delete_user_v1","admin_delete_user","admin_delete_user_v0"],
-  adminForceRename: ["admin_force_rename_v2","admin_force_rename_v1","admin_force_rename","admin_force_rename_v0"],
-  adminForceSetPin: ["admin_force_set_pin_v2","admin_force_set_pin_v1","admin_force_set_pin","admin_force_set_pin_v0"]
-};
+function normalizeTokenRaw(t){
+  let s = String(t ?? "").trim();
+  if(!s) return "";
+  if((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))){
+    s = s.slice(1,-1).trim();
+  }
+  return s;
+}
 
 /* ================== UI HELPERS ================== */
 function toast(msg){
@@ -794,21 +793,45 @@ async function requestPersistentStorage(){
 function captureTokenFromUrl(){
   try{
     const u = new URL(location.href);
-    const t = String(u.searchParams.get("token") || u.searchParams.get("tk") || "").trim();
-    if(t){
-      setToken(t);
+
+    // query: ?token=... hoặc ?tk=...
+    const tQ = normalizeTokenRaw(u.searchParams.get("token") || u.searchParams.get("tk") || "");
+    if(tQ){
+      setToken(tQ);
       u.searchParams.delete("token");
       u.searchParams.delete("tk");
       history.replaceState({}, "", u.pathname + (u.search ? u.search : "") + u.hash);
+      return;
+    }
+
+    // hash: #token=... hoặc #tk=...
+    const h = String(u.hash||"").replace(/^#/,"");
+    if(h && (h.includes("token=") || h.includes("tk="))){
+      const p = new URLSearchParams(h);
+      const tH = normalizeTokenRaw(p.get("token") || p.get("tk") || "");
+      if(tH){
+        setToken(tH);
+        p.delete("token"); p.delete("tk");
+        const newHash = p.toString();
+        history.replaceState({}, "", u.pathname + (u.search ? u.search : "") + (newHash ? ("#"+newHash) : ""));
+      }
     }
   }catch{}
 }
 
 /* ===== cookies helpers ===== */
 function cookieDomainHint(){
-  const host = String(location.hostname||"").trim();
+  // Tránh lỗi public-suffix kiểu .vercel.app / .github.io / .netlify.app...
+  const host = String(location.hostname||"").trim().toLowerCase();
   if(!host || host==="localhost" || host.endsWith(".localhost")) return "";
   if(/^\d+\.\d+\.\d+\.\d+$/.test(host)) return "";
+
+  const blocked = [
+    "vercel.app","github.io","netlify.app","pages.dev","web.app","firebaseapp.com",
+    "onrender.com","railway.app","fly.dev"
+  ];
+  if(blocked.some(s => host===s || host.endsWith("."+s))) return "";
+
   const parts = host.split(".").filter(Boolean);
   if(parts.length < 2) return "";
   return "." + parts.slice(-2).join(".");
@@ -821,7 +844,7 @@ function setCookie(name, value){
   const common = `${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax${secure}`;
   document.cookie = common;
   if(base && base !== location.hostname){
-    document.cookie = `${common}; Domain=${base}`;
+    try{ document.cookie = `${common}; Domain=${base}`; }catch{}
   }
 }
 function getCookie(name){
@@ -841,13 +864,40 @@ function delCookie(name){
   const secure = (location.protocol === "https:") ? "; Secure" : "";
   document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax${secure}`;
   if(base && base !== location.hostname){
-    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax${secure}; Domain=${base}`;
+    try{ document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax${secure}; Domain=${base}`; }catch{}
   }
 }
 
-function setToken(t){
-  t = String(t||"").trim();
+/* ===== token meta (fix “token lạc” giữa nhiều storage) ===== */
+function readTokenMeta(){
+  try{
+    const raw = localStorage.getItem(TOKEN_META_KEY);
+    if(!raw) return null;
+    const obj = JSON.parse(raw);
+    if(obj && typeof obj.token==="string" && obj.token.trim()){
+      return { token: obj.token.trim(), at: Number(obj.at)||0 };
+    }
+  }catch{}
+  return null;
+}
+function writeTokenMeta(token){
+  const t = normalizeTokenRaw(token);
   if(!t) return;
+  try{
+    localStorage.setItem(TOKEN_META_KEY, JSON.stringify({ token:t, at: Date.now() }));
+  }catch{}
+}
+function clearTokenMeta(){
+  try{ localStorage.removeItem(TOKEN_META_KEY); }catch{}
+}
+
+function setToken(t){
+  t = normalizeTokenRaw(t);
+  if(!t) return;
+
+  // meta luôn update
+  writeTokenMeta(t);
+
   for(const k of TOKEN_KEYS){
     try{ localStorage.setItem(k, t); }catch{}
     try{ sessionStorage.setItem(k, t); }catch{}
@@ -858,6 +908,7 @@ function setToken(t){
   try{ window.name = "tk:" + t; }catch{}
 }
 function clearToken(){
+  clearTokenMeta();
   for(const k of TOKEN_KEYS){
     try{ localStorage.removeItem(k); }catch{}
     try{ sessionStorage.removeItem(k); }catch{}
@@ -867,39 +918,97 @@ function clearToken(){
   }
   try{ if(String(window.name||"").startsWith("tk:")) window.name = ""; }catch{}
 }
-function getToken(){
-  let t = "";
+
+function getAllTokenCandidates(){
+  const out = [];
+  const push = (src, tok)=>{
+    const t = normalizeTokenRaw(tok);
+    if(!t) return;
+    out.push({ src, token:t });
+  };
+
+  const meta = readTokenMeta();
+  if(meta?.token) push("meta", meta.token);
 
   for(const k of TOKEN_KEYS){
-    try{
-      t = (localStorage.getItem(k) || "").trim();
-      if(t) break;
-    }catch{}
+    try{ push("localStorage:"+k, localStorage.getItem(k)); }catch{}
   }
-
-  if(!t){
-    for(const k of TOKEN_KEYS){
-      try{
-        t = (sessionStorage.getItem(k) || "").trim();
-        if(t) break;
-      }catch{}
-    }
+  for(const k of TOKEN_KEYS){
+    try{ push("sessionStorage:"+k, sessionStorage.getItem(k)); }catch{}
   }
-
-  if(!t){
-    for(const c of TOKEN_COOKIES){
-      t = (getCookie(c) || "").trim();
-      if(t) break;
-    }
+  for(const c of TOKEN_COOKIES){
+    try{ push("cookie:"+c, getCookie(c)); }catch{}
   }
-
-  if(!t){
+  try{
     const wn = String(window.name||"");
-    if(wn.startsWith("tk:")) t = wn.slice(3).trim();
+    if(wn.startsWith("tk:")) push("window.name", wn.slice(3));
+  }catch{}
+
+  // dedupe by token
+  const seen = new Set();
+  const uniq = [];
+  for(const x of out){
+    if(seen.has(x.token)) continue;
+    seen.add(x.token);
+    uniq.push(x);
+  }
+  return uniq;
+}
+function pickBestToken(cands){
+  if(!cands || !cands.length) return "";
+
+  const meta = readTokenMeta();
+  if(meta?.token){
+    const found = cands.find(x=>x.token===meta.token);
+    if(found) return found.token;
   }
 
-  if(t) setToken(t);
+  // prefer localStorage order
+  for(const k of TOKEN_KEYS){
+    const hit = cands.find(x=>x.src === ("localStorage:"+k));
+    if(hit) return hit.token;
+  }
+
+  return cands[0].token;
+}
+function getToken(){
+  const cands = getAllTokenCandidates();
+  const t = pickBestToken(cands);
+  if(t) setToken(t); // re-sync all storage
   return t;
+}
+
+/* ===== small debug helpers ===== */
+function maskToken(t){
+  const s = String(t||"");
+  if(s.length <= 14) return s;
+  return s.slice(0,6) + "…" + s.slice(-4) + ` (${s.length})`;
+}
+function tokenDebugHtml(){
+  const cands = getAllTokenCandidates();
+  if(!cands.length){
+    return `<div class="muted">Không thấy token ở local/session/cookie/window.name.</div>`;
+  }
+  const lines = cands.map(x=>`${x.src}: ${maskToken(x.token)}`).join("\n");
+  return `
+    <div class="mono" style="margin-top:10px;font-size:.88rem;line-height:1.45;background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:10px;white-space:pre-wrap">
+${esc(lines)}
+    </div>
+  `;
+}
+async function pasteClipboardTo(el){
+  try{
+    if(!navigator.clipboard || !navigator.clipboard.readText){
+      toast("Clipboard API không có");
+      return;
+    }
+    const t = normalizeTokenRaw(await navigator.clipboard.readText());
+    if(!t) return toast("Clipboard trống");
+    el.value = t;
+    el.focus();
+  }catch{
+    toast("Không đọc được clipboard (bị chặn)");
+  }
 }
 
 /* ===== me cache ===== */
@@ -949,7 +1058,8 @@ async function rpc(fn, args){
     headers:{
       "apikey": SUPABASE_ANON_KEY,
       "Authorization":"Bearer " + SUPABASE_ANON_KEY,
-      "Content-Type":"application/json"
+      "Content-Type":"application/json",
+      "Accept":"application/json"
     },
     body: JSON.stringify(args||{})
   });
@@ -967,7 +1077,6 @@ async function rpc(fn, args){
   }
   return data;
 }
-
 async function rpcTry(fns, argsList){
   let lastErr = null;
   const fnArr = Array.isArray(fns) ? fns : [String(fns||"")];
@@ -990,18 +1099,31 @@ async function rpcTry(fns, argsList){
 let TOKEN = "";
 let ME = null;
 
+/* ================== RPC NAMES (PREFER v2 FIRST) ================== */
+const RPC = {
+  me: ["api_me_v2","api_me_v1","api_me","api_me_v0"],
+  logout: ["api_logout_v2","api_logout_v1","api_logout","api_logout_v0"],
+
+  adminUpsertQuiz: ["admin_upsert_quiz_v2","admin_upsert_quiz_v1","admin_upsert_quiz","admin_upsert_quiz_v0"],
+  adminListQuizzes: ["admin_list_quizzes_v2","admin_list_quizzes_v1","admin_list_quizzes","admin_list_quizzes_v0"],
+  adminDeleteQuiz: ["admin_delete_quiz_v2","admin_delete_quiz_v1","admin_delete_quiz","admin_delete_quiz_v0"],
+  adminGetQuestions: ["admin_get_questions_v2","admin_get_questions_v1","admin_get_questions","admin_get_questions_v0"],
+  adminReplaceQuestions: ["admin_replace_questions_v3_v2","admin_replace_questions_v3","admin_replace_questions_v3_v0","admin_replace_questions","admin_replace_questions_v1","admin_replace_questions_v0"],
+  adminListUsers: ["admin_list_users_v2","admin_list_users_v1","admin_list_users","admin_list_users_v0"],
+  adminDeleteUser: ["admin_delete_user_v2","admin_delete_user_v1","admin_delete_user","admin_delete_user_v0"],
+  adminForceRename: ["admin_force_rename_v2","admin_force_rename_v1","admin_force_rename","admin_force_rename_v0"],
+  adminForceSetPin: ["admin_force_set_pin_v2","admin_force_set_pin_v1","admin_force_set_pin","admin_force_set_pin_v0"]
+};
+
 function isAdminMe(me){
   if(!me) return false;
   const u = String(me.username||"").toLowerCase();
   const r = String(me.role||"").toLowerCase();
   return r==="admin" || u==="tuankhoi";
 }
-
-/* ✅ về trang chủ có next để login xong quay lại /admin */
 function redirectToLogin(){
   try{ location.replace("/?next=/admin"); }catch{ location.href="/?next=/admin"; }
 }
-
 function tokenArgsVariants(extra){
   const ex = extra || {};
   return [
@@ -1012,7 +1134,6 @@ function tokenArgsVariants(extra){
     Object.assign({ sessionToken: TOKEN }, ex)
   ];
 }
-
 async function callRpc(key, extra){
   const fns = RPC[key] || [key];
   const out = await rpcTry(fns, tokenArgsVariants(extra));
@@ -1033,18 +1154,37 @@ const app = document.getElementById("app");
 const btnLogoutFixed = document.getElementById("btnLogoutFixed");
 
 btnLogoutFixed.onclick = ()=>doLogout().catch(()=>{});
-
 function showLogoutBtn(show){
   btnLogoutFixed.style.display = show ? "inline-flex" : "none";
 }
 
 /* ================== GATE UI RENDER ================== */
-function renderGateNoToken(){
+function gateManualTokenBlock(){
   const cached = getMeCache();
-  const who = cached?.username ? ` (cache: <b>${esc(cached.username)}</b>)` : "";
+  const who = cached?.username ? `Đang cache user: <b>${esc(cached.username)}</b>` : `Chưa có cache user`;
+  return `
+    <div class="hr"></div>
+    <div class="muted" style="line-height:1.35">${who}</div>
+
+    <label style="margin-top:10px">Dán token thủ công (để khỏi kẹt token)</label>
+    <input class="input mono" id="manualToken" placeholder="Paste token vào đây..." />
+
+    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn" type="button" id="btnPasteTok">Paste clipboard</button>
+      <button class="btn btn-primary" type="button" id="btnUseTok">Dùng token này</button>
+    </div>
+
+    <div class="hint" style="margin-top:10px">
+      Debug token đang nằm ở đâu:
+      ${tokenDebugHtml()}
+    </div>
+  `;
+}
+
+function renderGateNoToken(){
   gate.innerHTML = `
     <div class="row1">
-      <p class="vi">Chưa có phiên đăng nhập${who}</p>
+      <p class="vi">Chưa có phiên đăng nhập</p>
       <div><span class="idx bad">NO TOKEN</span></div>
     </div>
     <div class="muted" style="margin-top:8px;line-height:1.35">
@@ -1053,14 +1193,29 @@ function renderGateNoToken(){
     </div>
     <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
       <button class="btn btn-primary" type="button" id="btnGoLogin">Về trang chủ để đăng nhập</button>
+      <button class="btn btn-ghost" type="button" id="btnClearAll">Clear token</button>
     </div>
+    ${gateManualTokenBlock()}
   `;
   gate.querySelector("#btnGoLogin").onclick = redirectToLogin;
+  gate.querySelector("#btnClearAll").onclick = ()=>{
+    clearToken();
+    toast("Đã xóa token local");
+    renderGateNoToken();
+  };
+
+  const input = gate.querySelector("#manualToken");
+  gate.querySelector("#btnPasteTok").onclick = ()=>pasteClipboardTo(input);
+  gate.querySelector("#btnUseTok").onclick = ()=>{
+    const t = normalizeTokenRaw(input.value);
+    if(!t) return toast("Chưa có token");
+    setToken(t);
+    toast("Đã set token, đang thử lại...");
+    boot().catch(()=>{});
+  };
 }
 
 function renderGateError(err){
-  const cached = getMeCache();
-  const who = cached?.username ? `Bạn đang có cache user: <b>${esc(cached.username)}</b>.<br/>` : "";
   const status = (err && typeof err.status === "number") ? err.status : "";
   const msg = esc(String(err?.message || "RPC error"));
   const fn = esc(String(err?.fn || ""));
@@ -1070,15 +1225,15 @@ function renderGateError(err){
       <div><span class="idx warn">ERROR${status?(" "+status):""}</span></div>
     </div>
     <div class="muted" style="margin-top:8px;line-height:1.35">
-      ${who}
       Lỗi khi gọi <code>${fn || "api_me_v2"}</code>: <code>${msg}</code><br/>
-      <span class="muted">Quan trọng:</span> Admin panel <b>không tự xóa token</b>. Bạn có thể bấm Retry khi backend ổn lại.
+      <span class="muted">Gợi ý nhanh:</span> bấm Retry hoặc dán token thủ công bên dưới.
     </div>
     <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
       <button class="btn" type="button" id="btnRetryGate">Retry</button>
       <button class="btn btn-ghost" type="button" id="btnGoLogin2">Về trang chủ</button>
       <button class="btn btn-danger" type="button" id="btnClearToken">Clear token</button>
     </div>
+    ${gateManualTokenBlock()}
   `;
   gate.querySelector("#btnRetryGate").onclick = ()=>boot().catch(()=>{});
   gate.querySelector("#btnGoLogin2").onclick = redirectToLogin;
@@ -1086,6 +1241,16 @@ function renderGateError(err){
     clearToken();
     toast("Đã xóa token local");
     renderGateNoToken();
+  };
+
+  const input = gate.querySelector("#manualToken");
+  gate.querySelector("#btnPasteTok").onclick = ()=>pasteClipboardTo(input);
+  gate.querySelector("#btnUseTok").onclick = ()=>{
+    const t = normalizeTokenRaw(input.value);
+    if(!t) return toast("Chưa có token");
+    setToken(t);
+    toast("Đã set token, đang thử lại...");
+    boot().catch(()=>{});
   };
 }
 
@@ -1143,7 +1308,7 @@ async function doLogout(){
   setTimeout(()=>redirectToLogin(), 200);
 }
 
-/* ================== AUTH GATE (STRICT, but NO AUTO CLEAR TOKEN) ================== */
+/* ================== AUTH GATE (NO AUTO CLEAR TOKEN) ================== */
 async function gateCheck(){
   app.style.display = "none";
   showLogoutBtn(false);
@@ -2074,7 +2239,7 @@ qAllHost.addEventListener("click", async (e)=>{
 },{passive:true});
 
 function scrollToQuestion(i){
-  const el = qAllHost.querySelector(`.qCard[data-i="${i}"]`);
+  const el = qAllHost.querySelector(\`.qCard[data-i="\${i}"]\`);
   if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
 }
 
@@ -2422,7 +2587,7 @@ function isAdminUser(u){
 
 function renderUsers(){
   const q = (userSearch.value||"").trim().toLowerCase();
-  const arr = q ? USERS.filter(u=>String(u.username||"").includes(q)) : USERS;
+  const arr = q ? USERS.filter(u=>String(u.username||"").toLowerCase().includes(q)) : USERS;
 
   if(!arr.length){
     userList.innerHTML = `<div class="muted">No users.</div>`;
@@ -2494,15 +2659,6 @@ async function resetPin(id){
   await callRpc("adminForceSetPin", { p_user_id:id, p_new_pin:pin });
   toast("PIN reset");
   await reloadUsers();
-}
-
-/* ================== Tabs / Views ================== */
-function setTab(which){
-  const isQ = which==="q";
-  tabQuizzes.classList.toggle("active", isQ);
-  tabUsers.classList.toggle("active", !isQ);
-  viewQuizzes.style.display = isQ ? "" : "none";
-  viewUsers.style.display = isQ ? "none" : "";
 }
 
 /* ================== LaTeX modal ================== */
