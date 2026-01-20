@@ -276,7 +276,7 @@
         <div class="actions">
           <div class="statusPill" id="statusPill">—</div>
           <a href="/admin" id="adminLinkTop" style="display:none;">
-            <button class="btn btn-admin" type="button">Panel</button>
+            <button class="btn btn-admin">Panel</button>
           </a>
         </div>
       </div>
@@ -293,8 +293,8 @@
       <h3 id="registerTitle">Đăng ký tài khoản?</h3>
       <p id="registerDesc">Username chưa đăng ký. Bạn có muốn đăng ký không?</p>
       <div class="modal-actions">
-        <button class="btn btn-ghost" id="btnRegisterNo" type="button">Nhập lại</button>
-        <button class="btn btn-primary" id="btnRegisterYes" type="button">Đăng ký</button>
+        <button class="btn btn-ghost" id="btnRegisterNo">Nhập lại</button>
+        <button class="btn btn-primary" id="btnRegisterYes">Đăng ký</button>
       </div>
     </div>
   </div>
@@ -303,7 +303,7 @@
   <div class="modal-backdrop" id="pinBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
       <div class="xclose">
-        <button class="btn-x" id="btnClosePin" aria-label="Đóng" type="button">✕</button>
+        <button class="btn-x" id="btnClosePin" aria-label="Đóng">✕</button>
       </div>
       <h3 id="pinTitle">Mật khẩu</h3>
       <p id="pinDesc">Nhập mật khẩu số.</p>
@@ -320,7 +320,7 @@
   <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
       <div class="xclose">
-        <button class="btn-x" id="btnCloseProfile" aria-label="Đóng" type="button">✕</button>
+        <button class="btn-x" id="btnCloseProfile" aria-label="Đóng">✕</button>
       </div>
       <h3 id="profileTitle">Tài khoản</h3>
       <p id="profileSub">Quản lý username & mật khẩu.</p>
@@ -336,19 +336,19 @@
       <div style="height:1px;background:#e5e7eb;margin:12px 0;"></div>
 
       <div class="vi" style="font-size:.98rem;margin:0 0 6px;">Mật khẩu</div>
-      <button class="btn btn-primary" id="btnChangePin" style="justify-content:center; width:100%;" type="button">🔒 Đổi mật khẩu</button>
+      <button class="btn btn-primary" id="btnChangePin" style="justify-content:center; width:100%;">🔒 Đổi mật khẩu</button>
 
       <div style="height:1px;background:#e5e7eb;margin:12px 0;"></div>
 
       <div class="vi" style="font-size:.98rem;margin:0 0 6px;">Đổi username</div>
       <div class="grid2">
         <input class="input" id="newUsername" placeholder="Username mới" maxlength="15" autocomplete="off"/>
-        <button class="btn btn-primary" id="btnSaveNewUsername" style="justify-content:center;" type="button">💾 Lưu</button>
+        <button class="btn btn-primary" id="btnSaveNewUsername" style="justify-content:center;">💾 Lưu</button>
       </div>
 
       <div style="height:1px;background:#e5e7eb;margin:12px 0;"></div>
 
-      <button class="btn btn-danger" id="btnLogout" style="justify-content:center; width:100%;" type="button">🚪 Đăng xuất</button>
+      <button class="btn btn-danger" id="btnLogout" style="justify-content:center; width:100%;">🚪 Đăng xuất</button>
     </div>
   </div>
 
@@ -357,34 +357,28 @@
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
-/* ================== TOKEN STORAGE (MATCH admin.html) ================== */
+/* ================== STORAGE (match admin.html) ================== */
+const TOKEN_KEY_PRIMARY = "tk_token_v2";
 const TOKEN_KEYS = ["tk_token_v2","tk_token_v1","tk_token"];
+const TOKEN_COOKIE_PRIMARY = "tk_token_v2";
 const TOKEN_COOKIES = ["tk_token_v2","tk_token_v1","tk_token"];
-const ME_CACHE_KEY = "tk_me_v2";
 
-/* ================== DOM ================== */
-const content = document.getElementById("content");
-const statusPill = document.getElementById("statusPill");
-const adminLinkTop = document.getElementById("adminLinkTop");
+const ME_KEY = "tk_me_v2"; // cache để khỏi bị vòng lặp “login xong lại bắt login”
 
-const userCorner = document.getElementById("userCorner");
-const userCornerName = document.getElementById("userCornerName");
-const userCornerAdmin = document.getElementById("userCornerAdmin");
-
-const toastEl = document.getElementById("toast");
-
-/* ================== UI HELPERS ================== */
+/* ================== HELPERS ================== */
 function toast(msg){
-  toastEl.textContent = String(msg||"");
-  toastEl.classList.add("show");
-  setTimeout(()=>toastEl.classList.remove("show"),1200);
+  const t=document.getElementById("toast");
+  t.textContent=String(msg||"");
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),1200);
 }
 function escapeHtml(s){
-  return String(s??"")
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+  return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
-function normUsername(u){ return String(u||"").trim().toLowerCase(); }
+function normUsername(u){
+  return String(u||"").trim().toLowerCase();
+}
 function validateUsername(u){
   u = normUsername(u);
   if(!u) return "Chưa nhập username.";
@@ -392,6 +386,23 @@ function validateUsername(u){
   if(!/^[a-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z 0-9 và dấu _";
   return null;
 }
+
+function getMeCache(){
+  try{
+    const raw = localStorage.getItem(ME_KEY);
+    if(!raw) return null;
+    const obj = JSON.parse(raw);
+    if(obj && obj.username) return obj;
+  }catch{}
+  return null;
+}
+function setMeCache(me){
+  try{
+    if(!me) localStorage.removeItem(ME_KEY);
+    else localStorage.setItem(ME_KEY, JSON.stringify(me));
+  }catch{}
+}
+
 function safeNextPath(){
   try{
     const u = new URL(location.href);
@@ -400,14 +411,14 @@ function safeNextPath(){
   }catch{}
   return "";
 }
+
 function isAdminUser(me){
   if(!me) return false;
   const u = String(me.username||"").toLowerCase();
-  const r = String(me.role||"").toLowerCase();
-  return r==="admin" || u==="tuankhoi";
+  return me.role==="admin" || u==="tuankhoi";
 }
 
-/* ================== PERSISTENT STORAGE (iOS/PWA) ================== */
+/* ===== persistent storage (optional, helps iOS/PWA) ===== */
 async function requestPersistentStorage(){
   try{
     if(navigator.storage && navigator.storage.persist){
@@ -416,39 +427,7 @@ async function requestPersistentStorage(){
   }catch{}
 }
 
-/* ================== TOKEN HELPERS (FROM admin.html, + minimal guards) ================== */
-function normalizeTokenString(t){
-  t = String(t||"").trim();
-  if(!t) return "";
-  if(/^bearer\s+/i.test(t)) t = t.replace(/^bearer\s+/i,"").trim();
-  if((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))){
-    t = t.slice(1,-1).trim();
-  }
-  return t;
-}
-function isGarbageToken(t){
-  t = normalizeTokenString(t);
-  if(!t) return true;
-  if(/^cache_user:/i.test(t)) return true;
-  if(/^cache:/i.test(t)) return true;
-  // nếu lỡ lưu nhầm username vào token key
-  if(/^[a-z0-9_]{1,15}$/i.test(t)) return true;
-  return false;
-}
-
-function captureTokenFromUrl(){
-  try{
-    const u = new URL(location.href);
-    const t = normalizeTokenString(u.searchParams.get("token") || u.searchParams.get("tk") || "");
-    if(t){
-      setToken(t);
-      u.searchParams.delete("token");
-      u.searchParams.delete("tk");
-      history.replaceState({}, "", u.pathname + (u.search ? u.search : "") + u.hash);
-    }
-  }catch{}
-}
-
+/* ===== token persist (same idea as admin.html) ===== */
 function cookieDomainHint(){
   const host = String(location.hostname||"").trim();
   if(!host || host==="localhost" || host.endsWith(".localhost")) return "";
@@ -461,8 +440,7 @@ function setCookie(name, value){
   const v = encodeURIComponent(String(value||""));
   const maxAge = 60*60*24*365*20;
   const base = cookieDomainHint();
-  const secure = (location.protocol === "https:") ? "; Secure" : "";
-  const common = `${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax${secure}`;
+  const common = `${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
   document.cookie = common;
   if(base && base !== location.hostname){
     document.cookie = `${common}; Domain=${base}`;
@@ -482,18 +460,15 @@ function getCookie(name){
 }
 function delCookie(name){
   const base = cookieDomainHint();
-  const secure = (location.protocol === "https:") ? "; Secure" : "";
-  document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax${secure}`;
+  document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
   if(base && base !== location.hostname){
-    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax${secure}; Domain=${base}`;
+    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax; Domain=${base}`;
   }
 }
 
 function setToken(t){
-  t = normalizeTokenString(t);
+  t = String(t||"").trim();
   if(!t) return;
-  // tránh lưu rác
-  if(isGarbageToken(t)) return;
 
   for(const k of TOKEN_KEYS){
     try{ localStorage.setItem(k, t); }catch{}
@@ -517,59 +492,85 @@ function clearToken(){
 function getToken(){
   let t = "";
 
+  // localStorage
   for(const k of TOKEN_KEYS){
     try{
-      t = normalizeTokenString(localStorage.getItem(k) || "");
+      t = (localStorage.getItem(k) || "").trim();
       if(t) break;
     }catch{}
   }
 
+  // sessionStorage
   if(!t){
     for(const k of TOKEN_KEYS){
       try{
-        t = normalizeTokenString(sessionStorage.getItem(k) || "");
+        t = (sessionStorage.getItem(k) || "").trim();
         if(t) break;
       }catch{}
     }
   }
 
+  // cookies
   if(!t){
     for(const c of TOKEN_COOKIES){
-      t = normalizeTokenString(getCookie(c) || "");
+      t = (getCookie(c) || "").trim();
       if(t) break;
     }
   }
 
+  // window.name
   if(!t){
     const wn = String(window.name||"");
-    if(wn.startsWith("tk:")) t = normalizeTokenString(wn.slice(3));
+    if(wn.startsWith("tk:")) t = wn.slice(3).trim();
   }
 
-  // Nếu đọc ra rác thì coi như không có token (đừng auto clear – để user bấm Clear)
-  if(t && isGarbageToken(t)) return "";
+  // URL param / hash token (optional compat)
+  try{
+    const u = new URL(location.href);
+    if(!t){
+      const q = (u.searchParams.get("tk") || u.searchParams.get("token") || "").trim();
+      if(q) t = q;
+    }
+    if(!t && u.hash){
+      const hs = u.hash.replace(/^#/,"");
+      const p = new URLSearchParams(hs);
+      const q2 = (p.get("tk") || p.get("token") || "").trim();
+      if(q2) t = q2;
+    }
+  }catch{}
 
-  if(t) setToken(t); // sync/migrate
+  if(t) setToken(t); // migrate/sync all
   return t;
 }
 
-/* ================== ME CACHE ================== */
-function getMeCache(){
-  try{
-    const raw = localStorage.getItem(ME_CACHE_KEY);
-    if(!raw) return null;
-    const obj = JSON.parse(raw);
-    if(obj && obj.username) return obj;
-  }catch{}
-  return null;
+/* ================== SORTING HELPERS ================== */
+function toTime(v){
+  const t = Date.parse(String(v||""));
+  return Number.isFinite(t) ? t : 0;
 }
-function setMeCache(me){
-  try{
-    if(!me) localStorage.removeItem(ME_CACHE_KEY);
-    else localStorage.setItem(ME_CACHE_KEY, JSON.stringify(me));
-  }catch{}
+function sortQuizzes(list){
+  const arr = [...(list||[])];
+  arr.sort((a,b)=>{
+    const ap = a && a.pinned === true;
+    const bp = b && b.pinned === true;
+    if(ap !== bp) return bp ? 1 : -1; // pinned lên đầu
+    const at = Math.max(
+      toTime(a?.pinned_at || a?.pinnedAt),
+      toTime(a?.updated_at || a?.updatedAt),
+      toTime(a?.created_at || a?.createdAt)
+    );
+    const bt = Math.max(
+      toTime(b?.pinned_at || b?.pinnedAt),
+      toTime(b?.updated_at || b?.updatedAt),
+      toTime(b?.created_at || b?.createdAt)
+    );
+    if(at !== bt) return bt - at; // mới lên trên
+    return String(a?.quiz_id||"").localeCompare(String(b?.quiz_id||""));
+  });
+  return arr;
 }
 
-/* ================== SUPABASE RPC/REST ================== */
+/* ================== SUPABASE (RPC + REST fallback) ================== */
 function sbHeaders(){
   return {
     "apikey": SUPABASE_ANON_KEY,
@@ -578,10 +579,10 @@ function sbHeaders(){
     "Accept":"application/json"
   };
 }
+
 async function rpc(fn, args){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
     method:"POST",
-    cache:"no-store",
     headers: sbHeaders(),
     body: JSON.stringify(args||{})
   });
@@ -589,16 +590,13 @@ async function rpc(fn, args){
   let data=null;
   try{ data = txt ? JSON.parse(txt) : null; }catch{}
   if(!res.ok){
-    const msg = (data && (data.message||data.error||data.hint||data.details))
-      ? (data.message||data.error||data.hint||data.details)
-      : txt;
-    const err = new Error(msg || `RPC failed: ${fn}`);
-    err.status = res.status;
-    err.fn = fn;
-    throw err;
+    const msg = (data && (data.message||data.error||data.hint)) ? (data.message||data.error||data.hint) : txt;
+    throw new Error(msg || `RPC failed: ${fn}`);
   }
   return data;
 }
+
+/* === RPC try: thử nhiều function name + nhiều biến thể param === */
 async function rpcTry(fns, argsList){
   let lastErr = null;
   const fList = Array.isArray(fns) ? fns : [String(fns||"")].filter(Boolean);
@@ -606,17 +604,21 @@ async function rpcTry(fns, argsList){
 
   for(const fn of fList){
     for(const args of aList){
-      try{ return await rpc(fn, args || {}); }
-      catch(e){ lastErr = e; }
+      try{
+        return await rpc(fn, args || {});
+      }catch(e){
+        lastErr = e;
+      }
     }
   }
   throw (lastErr || new Error("RPC failed"));
 }
+
+/* === REST SELECT fallback (khi RPC listStore không khớp) === */
 async function restSelect(pathWithQuery){
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${pathWithQuery}`,{
     method:"GET",
-    cache:"no-store",
-    headers:{
+    headers: {
       "apikey": SUPABASE_ANON_KEY,
       "Authorization": "Bearer " + SUPABASE_ANON_KEY,
       "Accept":"application/json"
@@ -626,12 +628,8 @@ async function restSelect(pathWithQuery){
   let data=null;
   try{ data = txt ? JSON.parse(txt) : null; }catch{}
   if(!res.ok){
-    const msg = (data && (data.message||data.error||data.hint||data.details))
-      ? (data.message||data.error||data.hint||data.details)
-      : txt;
-    const err = new Error(msg || "REST failed");
-    err.status = res.status;
-    throw err;
+    const msg = (data && (data.message||data.error||data.hint)) ? (data.message||data.error||data.hint) : txt;
+    throw new Error(msg || `REST failed`);
   }
   return data;
 }
@@ -644,14 +642,11 @@ function firstObj(x){
 }
 function pickToken(out){
   const o = firstObj(out) || {};
-  // Ưu tiên token "thực" trước, token_hash chỉ là fallback cuối
   return (
     o.token || o.session_token || o.sessionToken ||
     o.access_token || o.accessToken ||
     o.app_token || o.appToken ||
     o.tk || o.jwt || o.bearer ||
-    o.session || o.session_id || o.sessionId ||
-    o.token_hash || o.tokenHash ||
     ""
   );
 }
@@ -665,6 +660,7 @@ function pickMe(out){
       role: me.role || me.user_role || me.userRole || "user"
     };
   }
+  // một số RPC trả thẳng {username, role}
   if(o.username){
     return { username: o.username, role: o.role || "user" };
   }
@@ -673,7 +669,9 @@ function pickMe(out){
 function asOk(out){
   const o = firstObj(out) || {};
   if(o && typeof o.ok === "boolean") return o.ok;
+  // không có ok nhưng có token thì coi như ok
   if(!!pickToken(o)) return true;
+  // hoặc có username/me
   if(!!pickMe(o)) return true;
   return false;
 }
@@ -682,7 +680,7 @@ function pickExists(ck){
   if(typeof o.exists === "boolean") return o.exists;
   if(typeof o.is_exists === "boolean") return o.is_exists;
   if(typeof o.found === "boolean") return o.found;
-  if(typeof o.available === "boolean") return !o.available;
+  if(typeof o.available === "boolean") return !o.available; // available=true => exists=false
   if(o.userId || o.user_id || o.id) return true;
   if(o.ok === true && typeof o.exists === "boolean") return o.exists;
   return null;
@@ -690,63 +688,62 @@ function pickExists(ck){
 function pickPinLen(ck, username){
   const u = normUsername(username);
   if(u === "tuankhoi") return 6;
+
   const o = firstObj(ck) || {};
   const raw = (
     o.pinLen ?? o.pin_len ?? o.pin_length ??
     (o.user && (o.user.pinLen ?? o.user.pin_len ?? o.user.pin_length)) ??
     4
   );
+
   let n = Number(raw) || 4;
   if(!isFinite(n) || n < 4) n = 4;
   if(n > 12) n = 12;
   return n;
 }
 
-function tokenArgsVariants(token, extra){
-  const t = normalizeTokenString(token||"");
-  const ex = extra || {};
-  return [
-    Object.assign({ p_token: t }, ex),
-    Object.assign({ token: t }, ex),
-    Object.assign({ session_token: t }, ex),
-    Object.assign({ p_session_token: t }, ex),
-    Object.assign({ sessionToken: t }, ex),
-    // compat: nếu backend dùng token_hash
-    Object.assign({ p_token_hash: t }, ex),
-    Object.assign({ token_hash: t }, ex),
-    Object.assign({ p_session: t }, ex),
-    Object.assign({ session: t }, ex),
-    Object.assign({ p_raw_token: t }, ex),
-    Object.assign({ raw_token: t }, ex),
-  ];
-}
-
-/* ================== API ================== */
+/* ================== API (FIX COMPAT) ================== */
 const API = {
   me: async (token)=>{
+    const t = String(token||"").trim();
     const out = await rpcTry(
+      ["api_me","me","app_me","api_whoami","api_profile","whoami"],
       [
-        "api_me_v2","me_v2","app_me_v2",
-        "api_me","me","app_me",
-        "api_whoami","api_profile","whoami"
-      ],
-      tokenArgsVariants(token, {})
+        {p_token:t},
+        {token:t},
+        {p_session:t},
+        {session:t},
+        {session_token:t},
+        {p_session_token:t}
+      ]
     );
-    return { ok: asOk(out), me: pickMe(out), token: normalizeTokenString(pickToken(out) || "") };
+    // normalize về {ok, me, token?}
+    return {
+      ok: asOk(out),
+      me: pickMe(out),
+      token: pickToken(out) || ""
+    };
   },
 
   logout: async (token)=>{
+    const t = String(token||"").trim();
     const out = await rpcTry(
-      ["api_logout_v2","logout_v2","api_logout","logout","api_signout","signout","api_log_out"],
-      tokenArgsVariants(token, {})
+      ["api_logout","logout","api_signout","signout","api_log_out"],
+      [
+        {p_token:t},
+        {token:t},
+        {p_session:t},
+        {session:t},
+        {session_token:t}
+      ]
     );
     return { ok: asOk(out) || true };
   },
 
   checkUsername: async (username)=>{
     const u = normUsername(username);
-    return await rpcTry(
-      ["api_check_username_v2","api_check_username","check_username","api_user_exists","api_check_user"],
+    const out = await rpcTry(
+      ["api_check_username","check_username","api_user_exists","api_check_user","api_check_username_v2"],
       [
         {p_username:u},
         {username:u},
@@ -756,13 +753,15 @@ const API = {
         {username_norm:u}
       ]
     );
+    // pass-through; caller sẽ pickExists/pickPinLen/reserved...
+    return out;
   },
 
   login: async (username, pin)=>{
     const u = normUsername(username);
     const p = String(pin||"");
-    return await rpcTry(
-      ["api_login_v2","login_v2","api_login","login","api_signin","signin","api_login_user"],
+    const out = await rpcTry(
+      ["api_login","login","api_signin","signin","api_login_user","api_login_v2"],
       [
         {p_username:u, p_pin:p},
         {username:u, pin:p},
@@ -772,13 +771,14 @@ const API = {
         {username:u, password:p}
       ]
     );
+    return out;
   },
 
   register: async (username, pin)=>{
     const u = normUsername(username);
     const p = String(pin||"");
-    return await rpcTry(
-      ["api_register_v2","register_v2","api_register","register","api_signup","signup","api_create_user"],
+    const out = await rpcTry(
+      ["api_register","register","api_signup","signup","api_create_user","api_register_v2"],
       [
         {p_username:u, p_pin:p},
         {username:u, pin:p},
@@ -788,15 +788,20 @@ const API = {
         {username:u, password:p}
       ]
     );
+    return out;
   },
 
   listStore: async ()=>{
+    // 1) thử RPC trước
     try{
-      return await rpcTry(
+      const out = await rpcTry(
         ["api_list_public_quizzes","list_public_quizzes","api_store_list","api_list_store","api_public_store"],
         [ {}, {p_only_public:true}, {only_public:true} ]
       );
+      return out;
     }catch(e){
+      // 2) fallback REST select trực tiếp bảng quizzes (nếu RLS cho phép)
+      // lấy các cột cần dùng (thêm created/updated/pinned_at để sort)
       const cols = [
         "quiz_id","title","sub",
         "is_public","is_hidden","show_in_store",
@@ -811,63 +816,47 @@ const API = {
         `is_hidden=eq.false`,
         `order=pinned.desc,updated_at.desc,created_at.desc`
       ].join("&");
+
       const rows = await restSelect(`quizzes?${q}`);
       return { ok:true, items: rows };
     }
   },
 
+  // đổi username: thử nhiều biến thể args / function name (không sửa SQL)
   changeUsername: async (token,newU)=>{
+    const t = String(token||"").trim();
     const u = normUsername(newU);
-    const out = await rpcTry(
-      ["api_change_username_v2","api_change_username","api_rename_username","api_update_username","change_username","rename_username"],
-      tokenArgsVariants(token, { p_new_username:u })
-        .concat(tokenArgsVariants(token, { new_username:u }))
-        .concat(tokenArgsVariants(token, { p_username:u }))
-        .concat(tokenArgsVariants(token, { username:u }))
+    return await rpcTry(
+      ["api_change_username","api_rename_username","api_update_username","change_username","rename_username"],
+      [
+        {p_token:t, p_new_username:u},
+        {p_token:t, p_username:u},
+        {token:t, new_username:u},
+        {token:t, username:u},
+        {session_token:t, new_username:u},
+        {p_session_token:t, p_new_username:u},
+      ]
     );
-    return out;
   },
 
+  // đổi pin: thử nhiều biến thể args / function name (không sửa SQL)
   changePin: async (token,oldPin,newPin)=>{
+    const t = String(token||"").trim();
     const o = String(oldPin||"");
     const n = String(newPin||"");
-    const out = await rpcTry(
-      ["api_change_pin_v2","api_change_pin","api_update_pin","api_change_password","api_change_passcode","change_pin","change_password"],
-      tokenArgsVariants(token, { p_old_pin:o, p_new_pin:n })
-        .concat(tokenArgsVariants(token, { old_pin:o, new_pin:n }))
-        .concat(tokenArgsVariants(token, { p_old:o, p_new:n }))
-        .concat(tokenArgsVariants(token, { old:o, new:n }))
+    return await rpcTry(
+      ["api_change_pin","api_update_pin","api_change_password","api_change_passcode","change_pin","change_password"],
+      [
+        {p_token:t, p_old_pin:o, p_new_pin:n},
+        {p_token:t, p_old:o, p_new:n},
+        {token:t, old_pin:o, new_pin:n},
+        {token:t, old:o, new:n},
+        {session_token:t, old_pin:o, new_pin:n},
+        {p_session_token:t, p_old_pin:o, p_new_pin:n},
+      ]
     );
-    return out;
   }
 };
-
-/* ================== SORTING HELPERS ================== */
-function toTime(v){
-  const t = Date.parse(String(v||""));
-  return Number.isFinite(t) ? t : 0;
-}
-function sortQuizzes(list){
-  const arr = [...(list||[])];
-  arr.sort((a,b)=>{
-    const ap = a && a.pinned === true;
-    const bp = b && b.pinned === true;
-    if(ap !== bp) return bp ? 1 : -1;
-    const at = Math.max(
-      toTime(a?.pinned_at || a?.pinnedAt),
-      toTime(a?.updated_at || a?.updatedAt),
-      toTime(a?.created_at || a?.createdAt)
-    );
-    const bt = Math.max(
-      toTime(b?.pinned_at || b?.pinnedAt),
-      toTime(b?.updated_at || b?.updatedAt),
-      toTime(b?.created_at || b?.createdAt)
-    );
-    if(at !== bt) return bt - at;
-    return String(a?.quiz_id||"").localeCompare(String(b?.quiz_id||""));
-  });
-  return arr;
-}
 
 /* ================== STATE ================== */
 let ME = null;     // { username, role }
@@ -883,7 +872,26 @@ function requiresLogin(q){
   return true;
 }
 
+function pickExistsCompat(ck){
+  const v = pickExists(ck);
+  if(v !== null) return v;
+
+  const o = firstObj(ck) || {};
+  if(typeof o.ok === "boolean" && o.ok === false) return null;
+
+  // trường hợp trả về {available:true/false}
+  if(typeof o.available === "boolean") return !o.available;
+
+  return null;
+}
+
 /* ================== USER CORNER + PROFILE ================== */
+const userCorner = document.getElementById("userCorner");
+const userCornerName = document.getElementById("userCornerName");
+const userCornerAdmin = document.getElementById("userCornerAdmin");
+const statusPill = document.getElementById("statusPill");
+const adminLinkTop = document.getElementById("adminLinkTop");
+
 const profileBackdrop = document.getElementById("profileBackdrop");
 document.getElementById("btnCloseProfile").onclick = closeProfileModal;
 profileBackdrop.addEventListener("click",(e)=>{ if(e.target===profileBackdrop) closeProfileModal(); });
@@ -1023,6 +1031,7 @@ function pinErrorPulse(msg){
     updatePinHeader();
   },520);
 }
+
 function updatePinHeader(){
   const u = normUsername(PIN.username);
   const note = (u==="tuankhoi") ? "Tài khoản tuankhoi dùng mật khẩu 6 số."
@@ -1040,6 +1049,7 @@ function updatePinHeader(){
   }
   setPinNote(note);
 }
+
 function openPin({username, mode="login", pinLen=4}){
   return new Promise((resolve,reject)=>{
     PIN.open=true; PIN.resolve=resolve; PIN.reject=reject;
@@ -1056,6 +1066,7 @@ function openPin({username, mode="login", pinLen=4}){
     pinBackdrop.setAttribute("aria-hidden","false");
   });
 }
+
 function closePin(why){
   if(!PIN.open) return;
   pinBackdrop.classList.remove("show");
@@ -1068,7 +1079,31 @@ function closePin(why){
   if(rej) rej(new Error("cancel"));
 }
 
-/* ================== AUTH FLOW (STABLE + VALIDATE SESSION) ================== */
+/* ================== AUTH FLOW (AUTO ADMIN PANEL) ================== */
+async function enterAfterAuth({ token, me, redirectNext=true }){
+  if(token) setToken(token);
+  if(me && me.username){
+    ME = me;
+    setMeCache(me);
+  }
+  updateUserCorner();
+
+  const next = redirectNext ? safeNextPath() : "";
+  if(next){
+    location.href = next;
+    return;
+  }
+
+  // ✅ nếu là admin -> tự chuyển sang admin panel
+  if(ME && isAdminUser(ME)){
+    location.href = "/";
+    return;
+  }
+
+  await loadStore();
+  renderStore();
+}
+
 function clearAuthLocal(){
   clearToken();
   setMeCache(null);
@@ -1076,80 +1111,11 @@ function clearAuthLocal(){
   updateUserCorner();
 }
 
-function renderAuthErrorCard(title, detail){
-  content.innerHTML = `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">${escapeHtml(title || "Không xác thực được phiên")}</p>
-        <div><span class="idx badge-code">LỖI</span></div>
-      </div>
-      <div class="muted" style="margin-top:8px; line-height:1.35">
-        ${escapeHtml(detail || "Token có thể sai hoặc backend đang lỗi.")}
-        <div style="margin-top:10px">
-          <span class="muted">Gợi ý:</span> Nếu vừa login mà vào /admin báo lỗi, thường do token không hợp lệ hoặc SQL function trả sai field token.
-        </div>
-      </div>
-      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end">
-        <button class="btn" id="btnRetryAuth" type="button">Retry</button>
-        <button class="btn btn-danger" id="btnClearTokenNow" type="button">Clear token</button>
-      </div>
-    </div>
-  `;
-  document.getElementById("btnRetryAuth").onclick = ()=>boot().catch(()=>{});
-  document.getElementById("btnClearTokenNow").onclick = ()=>{
-    clearAuthLocal();
-    toast("Đã xóa token");
-    boot().catch(()=>{});
-  };
-}
-
-async function validateAndEnter(token, meHint){
-  const t = normalizeTokenString(token || "");
-  if(!t || isGarbageToken(t)){
-    renderAuthErrorCard("Token không hợp lệ", "Token rỗng hoặc bị lỗi (cache/username).");
-    return;
-  }
-
-  setToken(t);
-
-  // BẮT BUỘC: validate bằng api_me trước khi coi như đăng nhập thành công
-  try{
-    const meOut = await API.me(t);
-    if(!meOut?.ok || !meOut?.me?.username){
-      renderAuthErrorCard("Không xác thực được phiên", "api_me không trả về user hợp lệ.");
-      return;
-    }
-
-    ME = meOut.me;
-    setMeCache(ME);
-
-    const t2 = normalizeTokenString(meOut.token || "");
-    if(t2) setToken(t2);
-
-    updateUserCorner();
-
-    const next = safeNextPath();
-    if(next){
-      try{ location.replace(next); }catch{ location.href = next; }
-      return;
-    }
-
-    if(isAdminUser(ME)){
-      try{ location.replace("/admin"); }catch{ location.href="/admin"; }
-      return;
-    }
-
-    await loadStore();
-    renderStore();
-  }catch(e){
-    renderAuthErrorCard("Không xác thực được phiên", String(e?.message||"RPC error"));
-  }
-}
-
+/* === helper: normalize login/register output === */
 function normalizeAuthOut(out){
   const o = firstObj(out) || {};
   const ok = asOk(out);
-  const token = normalizeTokenString(pickToken(out));
+  const token = pickToken(out);
   const me = pickMe(out);
   const err = o.error || o.message || o.msg || "";
   return { ok, token, me, error: err };
@@ -1167,15 +1133,35 @@ async function onPinKey(k){
   if(PIN.value.length!==PIN.pinLen) return;
 
   const val = PIN.value;
+
   if(!/^[0-9]+$/.test(val)){
     pinErrorPulse("Mật khẩu chỉ gồm số");
     return;
   }
 
-  // ONLY capture/return PIN here. Actual login/register happens in caller.
   if(PIN.mode==="login"){
-    PIN.payload = val;
-    closePin("ok");
+    PIN.submitting=true;
+    try{
+      setPinNote("Đang kiểm tra…");
+      const raw = await API.login(PIN.username, val);
+      const out = normalizeAuthOut(raw);
+
+      if(out.ok && out.token){
+        PIN.payload = val;
+        closePin("ok");
+        toast("Đăng nhập thành công");
+        await enterAfterAuth({ token: out.token, me: out.me, redirectNext:true });
+        return;
+      }
+
+      pinErrorPulse(out.error || "Sai mật khẩu");
+    }catch(e){
+      // nếu do mismatch RPC -> báo rõ hơn
+      const msg = String(e?.message||"Sai mật khẩu");
+      pinErrorPulse(msg.includes("function") ? "RPC login không khớp param/tên. Kiểm tra SQL function." : "Sai mật khẩu");
+    }finally{
+      PIN.submitting=false;
+    }
     return;
   }
 
@@ -1227,32 +1213,10 @@ async function onPinKey(k){
   }
 }
 
-/* ================== STORE LOAD ================== */
-async function loadStore(){
-  try{
-    const raw = await API.listStore();
-    const o = firstObj(raw) || raw;
+/* ================== RENDER ================== */
+const content = document.getElementById("content");
 
-    if(Array.isArray(raw)){
-      STORE = raw;
-      return;
-    }
-    if(o && o.ok){
-      STORE = o.items || o.rows || o.data || [];
-      return;
-    }
-    if(o && (Array.isArray(o.items) || Array.isArray(o.rows) || Array.isArray(o.data))){
-      STORE = o.items || o.rows || o.data || [];
-      return;
-    }
-  }catch(e){
-    // silent
-  }
-  STORE = [];
-}
-
-/* ================== RENDER: GATE ================== */
-function renderGate(extraMsg){
+function renderGate(){
   const openQuizzes = sortQuizzes((STORE||[]).filter(q => !requiresLogin(q)));
 
   const openSection = openQuizzes.length ? `
@@ -1279,7 +1243,7 @@ function renderGate(extraMsg){
                   </div>
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-                  <a href="${href}"><button class="btn btn-primary" type="button">Vào</button></a>
+                  <a href="${href}"><button class="btn btn-primary">Vào</button></a>
                 </div>
               </div>
             </div>
@@ -1288,19 +1252,6 @@ function renderGate(extraMsg){
       </div>
     </div>
   ` : "";
-
-  const tokenNow = getToken();
-  const cached = getMeCache();
-  const tokenHint = tokenNow
-    ? `<div class="muted" style="margin-top:8px;line-height:1.35">
-         <span class="idx badge-code">TOKEN</span>
-         Đang có token local (cache user: <b>${escapeHtml(cached?.username||"—")}</b>).
-         Nếu bạn bị lỗi phiên, hãy bấm Clear token.
-       </div>
-       <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end">
-         <button class="btn btn-ghost" id="btnClearTokenGate" type="button">Clear token</button>
-       </div>`
-    : "";
 
   content.innerHTML = `
     <div class="card">
@@ -1312,15 +1263,12 @@ function renderGate(extraMsg){
         Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b>.<br/>
         - Username <b>đã có.</b> <b>Đăng nhập</b>.<br/>
         - Username <b>chưa có.</b> <b>Đăng ký</b>.<br/>
-      </div>
 
       <div style="margin-top:10px; display:grid; gap:10px;">
         <input id="nameInput" class="input" placeholder="vd: tuankhoi123" maxlength="15" autocomplete="off"/>
-        <button id="btnContinue" class="btn btn-primary" style="justify-content:center;" type="button">➡️ Tiếp tục</button>
-        <div class="muted" id="gateStatus">${escapeHtml(extraMsg || "Sẵn sàng.")}</div>
+        <button id="btnContinue" class="btn btn-primary" style="justify-content:center;">➡️ Tiếp tục</button>
+        <div class="muted" id="gateStatus">Sẵn sàng.</div>
       </div>
-
-      ${tokenHint}
     </div>
 
     ${openSection}
@@ -1329,15 +1277,6 @@ function renderGate(extraMsg){
   const nameInput = document.getElementById("nameInput");
   const btnContinue = document.getElementById("btnContinue");
   const gateStatus = document.getElementById("gateStatus");
-  const btnClearTokenGate = document.getElementById("btnClearTokenGate");
-
-  if(btnClearTokenGate){
-    btnClearTokenGate.onclick = ()=>{
-      clearAuthLocal();
-      toast("Đã xóa token");
-      renderGate("Đã xóa token. Bạn có thể đăng nhập lại.");
-    };
-  }
 
   nameInput.addEventListener("input",()=>{
     const v = normUsername(nameInput.value);
@@ -1352,37 +1291,40 @@ function renderGate(extraMsg){
 
     btnContinue.disabled=true; btnContinue.textContent="⏳";
     gateStatus.textContent="Đang kiểm tra username…";
-
     try{
       const ck = await API.checkUsername(u);
-      const exists = pickExists(ck);
+
+      const exists = pickExistsCompat(ck);
       const pinLen = pickPinLen(ck, u);
+
       const o = firstObj(ck) || {};
       const reserved = !!(o.reserved === true || o.is_reserved === true || o.isReserved === true);
 
       if(u === "tuankhoi"){
-        // ignore reserved
-      }else{
-        if(reserved === true && exists !== true){
-          toast("Username này đã bị giữ lại (đổi tên rồi).");
-          gateStatus.textContent="Thử username khác.";
-          return;
-        }
+        // bỏ qua cờ reserved nếu backend trả nhầm
+      } else {
+        // ✅ reserved chỉ nên chặn khi KHÔNG tồn tại user thật (thường là alias cũ)
+      if(reserved === true && exists !== true){
+        toast("Username này đã bị giữ lại (đổi tên rồi).");
+        gateStatus.textContent="Thử username khác.";
+        return;
+       }
+      }
+
+      // Nếu exists=true thì luôn cho nhập PIN để login
+     if(exists === true){
+       if(reserved === true && u !== "tuankhoi"){
+         // optional: cảnh báo nhẹ nhưng vẫn cho login
+         toast("Username đã đăng ký, bạn muốn đăng nhập…");
+       }
+       gateStatus.textContent="Đăng nhập: nhập mật khẩu…";
+       await openPin({username:u, mode:"login", pinLen});
+       return;
       }
 
       if(exists === true){
         gateStatus.textContent="Đăng nhập: nhập mật khẩu…";
-        const pin = await openPin({username:u, mode:"login", pinLen});
-        gateStatus.textContent="Đang đăng nhập…";
-        const raw = await API.login(u, pin);
-        const out = normalizeAuthOut(raw);
-
-        if(!out.ok || !out.token){
-          throw new Error(out.error || "Sai mật khẩu / login fail");
-        }
-
-        toast("Đăng nhập thành công");
-        await validateAndEnter(out.token, out.me || { username:u, role:(u==="tuankhoi"?"admin":"user") });
+        await openPin({username:u, mode:"login", pinLen});
         return;
       }
 
@@ -1399,24 +1341,16 @@ function renderGate(extraMsg){
         const raw = await API.register(u, pin);
         const out = normalizeAuthOut(raw);
 
-        if(!out.ok || !out.token){
-          throw new Error(out.error || "register fail");
-        }
+        if(!out.ok || !out.token) throw new Error(out.error || "register fail");
 
-        toast("Đã đăng ký");
-        await validateAndEnter(out.token, out.me || { username:u, role:(u==="tuankhoi"?"admin":"user") });
+        toast("Đã đăng ký & đăng nhập");
+        await enterAfterAuth({ token: out.token, me: out.me, redirectNext:true });
         return;
       }
 
       gateStatus.textContent="Không rõ trạng thái. Thử đăng nhập…";
       const forcedLen = (u==="tuankhoi") ? 6 : 4;
-      const pin = await openPin({username:u, mode:"login", pinLen: forcedLen});
-      gateStatus.textContent="Đang đăng nhập…";
-      const raw = await API.login(u, pin);
-      const out = normalizeAuthOut(raw);
-      if(!out.ok || !out.token) throw new Error(out.error || "login fail");
-      toast("Đăng nhập thành công");
-      await validateAndEnter(out.token, out.me || { username:u, role:(u==="tuankhoi"?"admin":"user") });
+      await openPin({username:u, mode:"login", pinLen: forcedLen});
 
     }catch(e){
       if(!(e && e.message==="cancel")) toast(e.message||"Lỗi");
@@ -1430,13 +1364,12 @@ function renderGate(extraMsg){
   nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); doFlow(); }});
 }
 
-/* ================== RENDER: STORE ================== */
 function renderStore(){
   updateUserCorner();
 
   const isAdmin = isAdminUser(ME);
   const adminBtn = (ME && isAdmin) ? `
-    <a href="/admin"><button class="btn btn-admin" type="button">Panel</button></a>
+    <a href="/admin"><button class="btn btn-admin">Panel</button></a>
   ` : ``;
 
   content.innerHTML = `
@@ -1477,12 +1410,40 @@ function renderStore(){
             </div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-            <a href="${href}"><button class="btn btn-primary" type="button">Vào</button></a>
+            <a href="${href}"><button class="btn btn-primary">Vào</button></a>
           </div>
         </div>
       </div>
     `;
   }).join("");
+}
+
+/* ================== STORE LOAD ================== */
+async function loadStore(){
+  try{
+    const raw = await API.listStore();
+    const o = firstObj(raw) || raw;
+
+    // nhiều dạng trả về:
+    // - {ok:true, items:[...]} / {ok:true, rows:[...]} / {ok:true, data:[...]}
+    // - hoặc trả thẳng array [...]
+    if(Array.isArray(raw)){
+      STORE = raw;
+      return;
+    }
+    if(o && o.ok){
+      STORE = o.items || o.rows || o.data || [];
+      return;
+    }
+    // nếu raw là object có key items/rows/data
+    if(o && (Array.isArray(o.items) || Array.isArray(o.rows) || Array.isArray(o.data))){
+      STORE = o.items || o.rows || o.data || [];
+      return;
+    }
+  }catch(e){
+    // im lặng để gate vẫn chạy
+  }
+  STORE = [];
 }
 
 /* ================== PROFILE ACTIONS ================== */
@@ -1545,26 +1506,40 @@ document.getElementById("btnChangePin").onclick = async ()=>{
 /* ================== BOOT ================== */
 async function boot(){
   await requestPersistentStorage();
-  captureTokenFromUrl();
 
   await loadStore();
 
-  // UI early
   ME = getMeCache();
   updateUserCorner();
 
   const t = getToken();
 
-  if(t){
-    // nếu có token thì validate và vào
-    await validateAndEnter(t, ME);
-    return;
+  if(t && (!ME || !ME.username)){
+    try{
+      const meOut = await API.me(t);
+      if(meOut && meOut.ok && meOut.me && meOut.me.username){
+        ME = meOut.me;
+        setMeCache(ME);
+
+        // nếu me() trả token mới thì sync
+        if(meOut.token){
+          setToken(meOut.token);
+        }else{
+          setToken(t);
+        }
+      }
+    }catch{}
+  }else if(t){
+    // sync token to cookies/window.name for admin.html to pick up reliably
+    setToken(t);
   }
 
-  // không có token -> gate
-  ME = null;
   updateUserCorner();
-  renderGate();
+
+  // Không auto chuyển /admin khi chỉ mở trang chủ.
+  // Chỉ auto chuyển khi vừa login (enterAfterAuth).
+  if(ME && ME.username) renderStore();
+  else renderGate();
 }
 
 if(SUPABASE_URL.includes("PASTE_") || SUPABASE_ANON_KEY.includes("PASTE_")){
