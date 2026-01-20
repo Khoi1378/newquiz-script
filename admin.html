@@ -1159,6 +1159,38 @@ function parseShort4Answers(raw){
   return all;
 }
 
+/* ====== DB -> answers coercion (hỗ trợ text[] / jsonb / text "a|b" / meta.answers) ====== */
+function coerceAnswerArray(val){
+  if(Array.isArray(val)) return val.map(x=>String(x)).map(s=>s.trim()).filter(Boolean);
+  if(typeof val === "string"){
+    const t = val.trim();
+    if(!t) return [];
+    // json string?
+    if((t.startsWith("[") && t.endsWith("]")) || (t.startsWith("{") && t.endsWith("}"))){
+      try{
+        const j = JSON.parse(t);
+        if(Array.isArray(j)) return j.map(x=>String(x)).map(s=>s.trim()).filter(Boolean);
+      }catch{}
+    }
+    // postgres array string "{a,b}" (fallback)
+    if(t.startsWith("{") && t.endsWith("}")){
+      const inner = t.slice(1,-1);
+      return inner.split(",").map(s=>String(s||"").trim().replace(/^"|"$/g,"")).filter(Boolean);
+    }
+    // default: pipe separated
+    return t.split("|").map(s=>s.trim()).filter(Boolean);
+  }
+  return [];
+}
+function answersFromRow(row){
+  const a = coerceAnswerArray(row?.answers);
+  if(a.length) return a;
+  const ma = row?.meta?.answers;
+  const b = coerceAnswerArray(ma);
+  if(b.length) return b;
+  return [];
+}
+
 /* ================== SCORE HELPERS ================== */
 function calcCustomTotal(){
   let sum = 0;
@@ -1517,10 +1549,19 @@ async function openEditorForQuiz(qid){
     QUESTIONS = items.map(x=>{
       const meta = x.meta || {};
       if(meta.image_data_url && !meta.image_url) meta.image_url = meta.image_data_url;
+
+      const type = x.q_type || x.type || "mcq1";
+      const ans = (type==="essay" || type==="short4") ? answersFromRow(x) : [];
+
+      // ưu tiên raw_answers nếu có (để UI hiển thị gọn)
+      if((type==="essay" || type==="short4") && typeof meta.raw_answers !== "string"){
+        meta.raw_answers = ans.length ? ans.join("|") : "";
+      }
+
       return {
-        type: x.q_type || x.type || "mcq1",
+        type,
         prompt: x.prompt || "",
-        answers: x.answers || [],
+        answers: ans,
         points: x.points ?? null,
         meta
       };
@@ -1552,6 +1593,9 @@ function ensureMeta(q){
     q.meta.statements = Array.isArray(q.meta.statements) ? q.meta.statements : ["","","",""];
     q.meta.keys = Array.isArray(q.meta.keys) ? q.meta.keys : [false,false,false,false];
     q.meta.rule = q.meta.rule || { byCorrectCount:{ "0":0,"1":0.1,"2":0.25,"3":0.5,"4":1 } };
+  }
+  if((q.type==="essay" || q.type==="short4") && typeof q.meta.raw_answers !== "string"){
+    q.meta.raw_answers = "";
   }
 }
 
@@ -1594,6 +1638,12 @@ function renderAllQuestions(){
     const img = q.meta.image_url || "";
     const showImg = !!img;
     const showPrev = hasLatex(q.prompt);
+
+    const essayRaw = String(q.meta?.raw_answers ?? "");
+    const essayVal = essayRaw.trim().length ? essayRaw : ((q.answers||[]).join("|"));
+
+    const shortRaw = String(q.meta?.raw_answers ?? "");
+    const shortVal = shortRaw.trim().length ? shortRaw : ((q.answers||[]).join("|"));
 
     return `
       <div class="qCard" data-i="${i}" data-imgdrop="1">
@@ -1649,7 +1699,7 @@ function renderAllQuestions(){
 
         <div class="qEssay ${q.type==="essay"?"":"hidden"}">
           <label>Đáp án (nhiều đáp án dùng dấu |)</label>
-          <input class="qAnswers input mono" placeholder="vd: thích nghi|thich nghi" value="${esc((q.answers||[]).join("|"))}">
+          <input class="qAnswers input mono" placeholder="vd: thích nghi|thich nghi" value="${esc(essayVal)}">
         </div>
 
         <div class="qMcq ${q.type==="mcq1"?"":"hidden"}">
@@ -1671,7 +1721,7 @@ function renderAllQuestions(){
 
         <div class="qShort4 ${q.type==="short4"?"":"hidden"}">
           <label>Đáp án (nhiều đáp án dùng dấu |)</label>
-          <input class="qAnswers input mono" placeholder='vd: -0,3|9999|0,02' value="${esc((q.answers||[]).join("|"))}">
+          <input class="qAnswers input mono" placeholder='vd: -0,3|9999|0,02' value="${esc(shortVal)}">
           <div class="hint" style="margin-top:6px">
             Short4: tự sinh thêm biến thể dấu phẩy/chấm và chuẩn hóa để giảm “chấm sai”.
           </div>
@@ -1747,11 +1797,11 @@ function syncQuestionFromCard(card){
   if(type==="essay"){
     const raw = card.querySelector(".qEssay .qAnswers")?.value || "";
     q.answers = raw.split("|").map(s=>s.trim()).filter(Boolean);
-    q.meta = { ...(q.meta||{}), fuzzy:true, image_url:q.meta.image_url||"", image_path:q.meta.image_path||"" };
+    q.meta = { ...(q.meta||{}), fuzzy:true, raw_answers: raw, image_url:q.meta.image_url||"", image_path:q.meta.image_path||"" };
   }else if(type==="short4"){
     const raw = card.querySelector(".qShort4 .qAnswers")?.value || "";
     q.answers = parseShort4Answers(raw);
-    q.meta = { ...(q.meta||{}), format:"4boxes", image_url:q.meta.image_url||"", image_path:q.meta.image_path||"" };
+    q.meta = { ...(q.meta||{}), format:"4boxes", raw_answers: raw, image_url:q.meta.image_url||"", image_path:q.meta.image_path||"" };
   }else if(type==="mcq1"){
     const opts = Array.from(card.querySelectorAll(".qOpt")).map(x=>x.value.trim());
     const correct = Number(card.querySelector(".qCorrect")?.value || "1") || 1;
@@ -2129,18 +2179,22 @@ function parseImportText(text){
       let answers = body.map(extractStarWrapped).filter(Boolean).map(x=>cleanLine(x));
       if(!answers.length && body.length) answers = [ cleanLine(body.join(" ")) ];
       answers = answers.map(x=>x.trim()).filter(Boolean);
-      out.push({ type:"essay", prompt: head, answers, points: 0, meta: { fuzzy:true, image_url:"", image_path:"" }});
+
+      const raw_answers = answers.join("|");
+      out.push({ type:"essay", prompt: head, answers, points: 0, meta: { fuzzy:true, raw_answers, image_url:"", image_path:"" }});
       continue;
     }
 
     if(tag==="tln"){
-      let answers = body.map(extractStarWrapped).filter(Boolean).map(x=>cleanLine(x));
-      if(!answers.length && body.length) answers = [ cleanLine(body.join(" ")) ];
-      answers = answers.map(x=>x.trim()).filter(Boolean);
+      let baseAnswers = body.map(extractStarWrapped).filter(Boolean).map(x=>cleanLine(x));
+      if(!baseAnswers.length && body.length) baseAnswers = [ cleanLine(body.join(" ")) ];
+      baseAnswers = baseAnswers.map(x=>x.trim()).filter(Boolean);
+
+      const raw_answers = baseAnswers.join("|");
 
       const merged = [];
       const seen = new Set();
-      for(const a of answers){
+      for(const a of baseAnswers){
         for(const v of variantsForShort4(a)){
           if(!seen.has(v)){
             seen.add(v);
@@ -2148,7 +2202,7 @@ function parseImportText(text){
           }
         }
       }
-      out.push({ type:"short4", prompt: head, answers: merged, points: 0, meta: { format:"4boxes", image_url:"", image_path:"" }});
+      out.push({ type:"short4", prompt: head, answers: merged, points: 0, meta: { format:"4boxes", raw_answers, image_url:"", image_path:"" }});
       continue;
     }
 
@@ -2210,6 +2264,9 @@ async function publishAll(){
     if(err) return toast(err);
     if(!QUESTIONS.length) return toast("Chưa có câu hỏi");
 
+    // ✅ CHỐT: sync tất cả card trước khi publish (fix short4/essay chưa kịp sync)
+    document.querySelectorAll("#qAllHost .qCard").forEach(syncQuestionFromCard);
+
     const qid = await saveQuizOnly();
     const token = getToken();
 
@@ -2217,11 +2274,19 @@ async function publishAll(){
       ensureMeta(q);
       const meta = { ...(q.meta||{}) };
       delete meta.image_data_url;
+
+      const answers = Array.isArray(q.answers)?q.answers:[];
+      // ✅ đảm bảo backend nào cũng chấm được: meta.answers luôn có cho essay/short4
+      if(q.type==="essay" || q.type==="short4"){
+        meta.answers = answers;
+        if(typeof meta.raw_answers !== "string") meta.raw_answers = "";
+      }
+
       return {
         no: idx+1,
         q_type: q.type,
         prompt: (q.prompt||"").trim(),
-        answers: Array.isArray(q.answers)?q.answers:[],
+        answers,
         points: q.points ?? 0,
         meta
       };
