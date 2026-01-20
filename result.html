@@ -657,7 +657,7 @@ function renderSummaryCard({ score10, correctCount, totalCount, wrongCount, crea
 
       ${canViewDetails ? `
         <div class="resultline" style="margin-top:0">
-          <b>Chi tiết:</b> Bấm vào thẻ <b>Những câu sai</b> để xem full câu hỏi + đáp án.
+          <b>Chi tiết:</b> Bấm vào để xem câu hỏi và đáp án.
         </div>
       ` : `
         <div class="resultline" style="margin-top:0">
@@ -682,7 +682,7 @@ function renderWrongCard(wrongCount, canViewDetails){
     card.style.display = "";
     card.innerHTML = `
       <div class="row1">
-        <p class="vi">Những câu sai</p>
+        <p class="vi">Những câu sai ❌</p>
         <div class="meta"><span class="idx">0 câu</span></div>
       </div>
       <div class="muted" style="margin-top:6px">Bạn không sai câu nào ✅</div>
@@ -694,7 +694,7 @@ function renderWrongCard(wrongCount, canViewDetails){
   card.style.display = "";
   card.innerHTML = `
     <div class="row1">
-      <p class="vi">Những câu sai</p>
+      <p class="vi">Những câu sai ❌</p>
       <div class="meta"><span class="idx">${wc} câu</span></div>
     </div>
     <div class="muted" style="margin-top:6px">Bấm vào đây để xem chi tiết (full câu hỏi + hình + đáp án).</div>
@@ -760,7 +760,7 @@ function renderLeaderboard(rows, myUserId, errMsg){
     return `
       <tr class="${rowClass}">
         <td><span class="rankpill">${medal}<span>${rk}</span></span></td>
-        <td>${nameCell}${String(r.role||"").toLowerCase()==="admin" ? ` <span style="color:#2563eb;font-weight:900">(ADMIN)</span>` : ``}</td>
+        <td>${nameCell}${String(r.role||"").toLowerCase()==="admin" ? ` <span style="color:#2563eb;font-weight:900">admin</span>` : ``}</td>
         <td><b>${score10.toFixed(1)}</b>/10</td>
         <td>${pct}%</td>
       </tr>
