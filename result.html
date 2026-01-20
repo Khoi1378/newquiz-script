@@ -9,6 +9,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
 
+  <!-- ✅ KaTeX (LaTeX render) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+
   <style>
     :root{
       --bg1:#ffecd2; --bg2:#fcb69f;
@@ -17,7 +20,6 @@
       --border:#e5e7eb; --soft:#f8fafc;
       --shadow:0 14px 40px rgba(0,0,0,.10);
       --radius:18px;
-
       --admin:#2563eb;
       --pin:#f59e0b;
     }
@@ -63,6 +65,7 @@
       color:#fff;border:0;
       box-shadow:0 12px 24px rgba(124,58,237,.18);
     }
+    .btn[disabled]{opacity:.65;cursor:not-allowed;transform:none !important;filter:none !important}
 
     .topbar{
       margin-top:10px;
@@ -238,7 +241,7 @@
     }
     .modal-backdrop.show{display:flex}
     .modal{
-      width:100%; max-width:520px;
+      width:100%; max-width:720px;
       background:#fff;
       border-radius:18px;
       border:1px solid #e5e7eb;
@@ -270,61 +273,82 @@
     .btn-x:hover{filter:brightness(.98);transform:translateY(-1px)}
     .btn-x:active{transform:translateY(0)}
 
-    .input{
-      width:100%;
-      border-radius:14px;border:2px solid #e5e7eb;
-      padding:11px 12px;font-size:.95rem;font-weight:700;
-      outline:none;background:var(--soft);
-      transition:border-color .15s ease, box-shadow .15s ease;
-      font-family:inherit;
-      color:#111827;
-    }
-    .input:focus{
-      border-color:rgba(124,58,237,.55);
-      box-shadow:0 0 0 5px rgba(124,58,237,.10);
-      background:#fff;
-    }
-
-    .cmtBox{display:grid;gap:12px;margin-top:10px}
-    .cmtItem{border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:#fff}
-    .cmtHead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
-    .cmtAuthor{font-weight:950;color:#6b7280;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-
-    .adminBadgeInline{
-      padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
-      background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin);white-space:nowrap;
-    }
-    .pinBadgeInline{
-      padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
-      background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.35);color:#92400e;white-space:nowrap;
-    }
-    .cmtText{color:#111827;font-weight:750;line-height:1.35;white-space:pre-wrap;word-break:break-word}
-    .cmtActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;justify-content:flex-end}
-    .cmtBtn{
-      border-radius:999px;padding:7px 10px;font-weight:900;
-      border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-size:.82rem;
-    }
-    .cmtBtnDanger{background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.25);color:#991b1b}
-    .cmtBtnPin{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:#92400e}
-    .cmtTime{margin-top:6px;text-align:right;color:#6b7280;font-weight:800;font-size:.82rem}
-    .replyWrap{margin-top:10px;margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;display:grid;gap:10px}
-    .replyForm{margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;margin-top:10px;display:grid;gap:10px}
-    .charRow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6b7280;font-weight:800;font-size:.85rem}
-
-    .miniLink{
-      display:inline-flex; align-items:center; justify-content:center;
-      padding:8px 10px;
+    .miniBtn{
       border-radius:999px;
+      padding:8px 12px;
+      font-weight:900;
       border:1px solid #e5e7eb;
       background:#fff;
-      font-weight:900;
-      font-size:.82rem;
-      color:#111827;
-      text-decoration:none;
+      cursor:pointer;
+      font-size:.84rem;
       box-shadow:0 10px 22px rgba(0,0,0,.08);
     }
-    .miniLink:hover{filter:brightness(.98);transform:translateY(-1px)}
-    .miniLink:active{transform:translateY(0)}
+    .miniBtn:hover{filter:brightness(.98);transform:translateY(-1px)}
+    .miniBtn:active{transform:translateY(0)}
+
+    .qBox{
+      border:1px solid #e5e7eb;
+      border-radius:16px;
+      padding:12px;
+      background:#fff;
+      line-height:1.35;
+    }
+    .qPrompt{font-weight:900;white-space:pre-wrap}
+    .qImg{
+      margin-top:10px;
+      width:100%;
+      max-width:420px;
+      border-radius:16px;
+      border:1px solid #e5e7eb;
+      box-shadow:0 10px 24px rgba(0,0,0,.08);
+      display:block;
+    }
+    .kv{
+      margin-top:10px;
+      display:grid;
+      gap:10px;
+    }
+    .kvRow{
+      border:1px dashed #e5e7eb;
+      border-radius:16px;
+      padding:10px 12px;
+      background:#fff;
+      display:grid;
+      gap:6px;
+    }
+    .kvKey{font-weight:900;color:#374151}
+    .kvVal{font-weight:800}
+    .optList{margin-top:8px;display:grid;gap:8px}
+    .optItem{
+      border-radius:14px;
+      border:1px solid #e5e7eb;
+      padding:10px 12px;
+      background:#fff;
+      font-weight:850;
+      line-height:1.35;
+    }
+    .optItem.good{border-color:rgba(22,163,74,.45);background:rgba(22,163,74,.06)}
+    .optItem.bad{border-color:rgba(220,38,38,.45);background:rgba(220,38,38,.06)}
+    .badge{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:999px;
+      font-weight:950;font-size:.82rem;
+      border:1px solid #e5e7eb;background:#fff;
+      white-space:nowrap;
+    }
+    .badge.bad{border-color:rgba(220,38,38,.35);background:rgba(220,38,38,.06);color:#991b1b}
+    .badge.ok{border-color:rgba(22,163,74,.35);background:rgba(22,163,74,.06);color:#065f46}
+
+    .wrongRow{
+      display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;
+      border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:#fff;
+    }
+    .wrongLeft{min-width:220px;flex:1 1 520px}
+    .wrongTitle{font-weight:1000;line-height:1.25}
+    .wrongSub{margin-top:6px;color:#6b7280;font-weight:800;font-size:.9rem;line-height:1.35;white-space:pre-wrap}
+    .wrongRight{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+
+    .mutedSmall{color:#6b7280;font-weight:800;font-size:.85rem}
 
     @media (max-width:820px){
       .progressline{max-width:100%}
@@ -372,21 +396,37 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- WRONG LIST MODAL -->
   <div class="modal-backdrop" id="wrongBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="wrongTitle">
       <div class="xclose">
         <button class="btn-x" id="btnCloseWrong" aria-label="Đóng">✕</button>
       </div>
-      <h3 id="wrongTitle">Những câu sai</h3>
-      <p>Liệt kê câu bạn làm sai hoặc chưa chọn.</p>
+      <h3 id="wrongTitle">Chi tiết đúng / sai</h3>
+      <p>Chỉ liệt kê những câu <b>sai</b> hoặc <b>bỏ trống</b>. Bấm <b>Chi tiết</b> để xem full câu hỏi + đáp án.</p>
       <div id="wrongBody" style="display:grid; gap:12px;"></div>
     </div>
   </div>
 
+  <!-- QUESTION DETAIL MODAL -->
+  <div class="modal-backdrop" id="detailBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+      <div class="xclose">
+        <button class="btn-x" id="btnCloseDetail" aria-label="Đóng">✕</button>
+      </div>
+      <h3 id="detailTitle">Chi tiết câu hỏi</h3>
+      <div id="detailBody"></div>
+    </div>
+  </div>
+
+  <!-- ✅ KaTeX JS -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
 <script>
 /* ================== CONFIG ================== */
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
 const RPC = {
   me: "api_me",
@@ -399,6 +439,14 @@ const RPC = {
 
 const TOKEN_KEY = "tk_token_v2";
 const NAME_KEY  = "tk_display_name_v1";
+
+/* ================== HARD DEBUG ================== */
+function renderFatal(err){
+  const msg = (err && (err.message || err)) ? (err.message || String(err)) : "Unknown error";
+  toast("Lỗi: " + msg);
+}
+window.addEventListener("error", (e)=>{ renderFatal(e?.error || e?.message); });
+window.addEventListener("unhandledrejection", (e)=>{ renderFatal(e?.reason || e); });
 
 /* ===== helpers ===== */
 function toast(msg){
@@ -485,6 +533,20 @@ async function sbDelete(path){
   return data;
 }
 
+function applyMath(rootEl){
+  if(!rootEl) return;
+  if(typeof window.renderMathInElement !== "function") return;
+  try{
+    window.renderMathInElement(rootEl, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false }
+      ],
+      throwOnError: false
+    });
+  }catch{}
+}
+
 function toMs(ts){
   const d = new Date(ts);
   const t = d.getTime();
@@ -522,55 +584,43 @@ document.getElementById("btnRestart").addEventListener("click", ()=>{
   location.href = `/q/index.html?quiz=${quizId}&restart=1&start=1`;
 });
 
-/* ================== WRONG MODAL ================== */
-let CURRENT_WRONG_LIST = [];
-
+/* ================== MODALS ================== */
 const wrongBackdrop = document.getElementById("wrongBackdrop");
 const wrongBody = document.getElementById("wrongBody");
-const btnCloseWrong = document.getElementById("btnCloseWrong");
+document.getElementById("btnCloseWrong").addEventListener("click", ()=>closeWrongPopup());
+wrongBackdrop.addEventListener("click",(e)=>{ if(e.target===wrongBackdrop) closeWrongPopup(); });
+
+const detailBackdrop = document.getElementById("detailBackdrop");
+const detailBody = document.getElementById("detailBody");
+document.getElementById("btnCloseDetail").addEventListener("click", ()=>closeDetail());
+detailBackdrop.addEventListener("click",(e)=>{ if(e.target===detailBackdrop) closeDetail(); });
+
+document.addEventListener("keydown",(e)=>{
+  if(e.key==="Escape"){
+    if(detailBackdrop.classList.contains("show")) closeDetail();
+    else if(wrongBackdrop.classList.contains("show")) closeWrongPopup();
+  }
+});
 
 function openWrongPopup(){
-  renderWrongPopupContent(CURRENT_WRONG_LIST);
   wrongBackdrop.classList.add("show");
   wrongBackdrop.setAttribute("aria-hidden","false");
+  applyMath(wrongBody);
 }
 function closeWrongPopup(){
   wrongBackdrop.classList.remove("show");
   wrongBackdrop.setAttribute("aria-hidden","true");
 }
-btnCloseWrong.addEventListener("click", closeWrongPopup);
-wrongBackdrop.addEventListener("click", (e)=>{ if(e.target === wrongBackdrop) closeWrongPopup(); });
-document.addEventListener("keydown",(e)=>{ if(e.key === "Escape") closeWrongPopup(); });
-
-function renderWrongPopupContent(list){
-  const arr = Array.isArray(list) ? list : [];
-  CURRENT_WRONG_LIST = arr;
-  wrongBody.innerHTML = "";
-
-  if(!arr.length){
-    wrongBody.innerHTML = `<div class="resultline"><span class="oktxt">Bạn không sai câu nào ✅</span></div>`;
-    return;
-  }
-
-  arr.forEach((w,i)=>{
-    const word = w.word || "(?)";
-    const u = (w.user_answer ?? w.user ?? "").toString().trim();
-    const ex = (w.expected ?? "").toString().trim();
-    const jump = (quizId && w.id) ? `/q/index.html?quiz=${quizId}&start=1#q${encodeURIComponent(String(w.id))}` : "";
-
-    const box = document.createElement("div");
-    box.className = "resultline";
-    box.innerHTML = `
-      <div><b>Câu ${i+1}.</b> ${escapeHtml(word)}</div>
-      <div style="margin-top:6px"><span class="badtxt">SAI ❌</span></div>
-      <div style="margin-top:6px"><span class="muted">Bạn trả lời:</span> <b>${escapeHtml(u||"(trống)")}</b></div>
-      <div style="margin-top:4px"><span class="muted">Đáp án/ghi chú:</span> <b>${escapeHtml(ex||"(?)")}</b></div>
-      ${jump ? `<div style="margin-top:10px; display:flex; justify-content:flex-end;">
-        <a class="miniLink" href="${jump}">Mở đúng câu này</a>
-      </div>` : ``}
-    `;
-    wrongBody.appendChild(box);
-  });
+function openDetail(html){
+  detailBody.innerHTML = html || "";
+  detailBackdrop.classList.add("show");
+  detailBackdrop.setAttribute("aria-hidden","false");
+  applyMath(detailBody);
+}
+function closeDetail(){
+  detailBackdrop.classList.remove("show");
+  detailBackdrop.setAttribute("aria-hidden","true");
+  detailBody.innerHTML = "";
 }
 
 /* ================== UI RENDER ================== */
@@ -583,52 +633,92 @@ function setTopbar({title, sub, username, correctCount, totalCount, progressPerc
   document.getElementById("progressFill").style.width = `${Math.max(0, Math.min(100, Number(progressPercent||0)))}%`;
 }
 
-function renderSummaryCard({ score10, correctCount, totalCount, wrongCount, recomputeNote }){
+function renderSummaryCard({ score10, correctCount, totalCount, wrongCount, createdAt, canViewDetails }){
   const sum = document.getElementById("summary");
-  const pct = totalCount ? (Number(correctCount||0)/Number(totalCount||0))*100 : (Number(score10||0)*10);
-  const pctInt = isFinite(pct) ? Math.round(pct) : 0;
+  const pct = Math.round(Math.max(0, Math.min(100, Number(score10||0)*10)));
+  const createdLine = createdAt ? `<div class="mutedSmall">Nộp lúc: <b>${escapeHtml(fmtTs(createdAt))}</b></div>` : "";
 
   sum.innerHTML = `
     <div class="row1">
       <p class="vi">Kết quả</p>
-      <div class="meta"><span class="idx">ĐÃ SUBMIT</span></div>
+      <div class="meta"><span class="idx">DB</span></div>
     </div>
 
     <div class="scoreHero">
-      <div class="scoreBig">${pctInt}%</div>
+      <div class="scoreBig">${pct}%</div>
       <div class="scoreSub">= ${Number(score10||0).toFixed(1)} điểm (thang 10)</div>
 
       <div class="scoreMeta">
         <div class="pill">Đúng: <strong>${Number(correctCount||0)}</strong>/${Number(totalCount||0)}</div>
-        <div class="pill">Sai: <strong>${Number(wrongCount||0)}</strong></div>
+        <div class="pill">Sai/Trống: <strong>${Number(wrongCount||0)}</strong></div>
       </div>
 
-      ${recomputeNote ? `<div class="resultline" style="margin-top:0">${recomputeNote}</div>` : ``}
+      ${createdLine}
+
+      ${canViewDetails ? `
+        <div class="resultline" style="margin-top:0">
+          <b>Chi tiết:</b> Bấm vào thẻ <b>Những câu sai</b> để xem full câu hỏi + đáp án.
+        </div>
+      ` : `
+        <div class="resultline" style="margin-top:0">
+          <b>Lưu ý:</b> Link này đang hiển thị theo DB. Nếu muốn xem <b>chi tiết đáp án</b>, hãy mở bằng tài khoản đã làm bài (có token).
+        </div>
+      `}
     </div>
   `;
+  applyMath(sum);
 }
 
-function renderWrongCard(wrongCount){
+function renderWrongCard(wrongCount, canViewDetails){
   const wc = Number(wrongCount||0);
   const card = document.getElementById("wrongCard");
-  if(wc <= 0){
+
+  if(!canViewDetails){
     card.style.display = "none";
     return;
   }
+
+  if(wc <= 0){
+    card.style.display = "";
+    card.innerHTML = `
+      <div class="row1">
+        <p class="vi">Những câu sai</p>
+        <div class="meta"><span class="idx">0 câu</span></div>
+      </div>
+      <div class="muted" style="margin-top:6px">Bạn không sai câu nào ✅</div>
+    `;
+    card.onclick = ()=>{};
+    return;
+  }
+
   card.style.display = "";
   card.innerHTML = `
     <div class="row1">
       <p class="vi">Những câu sai</p>
       <div class="meta"><span class="idx">${wc} câu</span></div>
     </div>
-    <div class="muted" style="margin-top:6px">Bấm vào đây để xem chi tiết câu sai.</div>
+    <div class="muted" style="margin-top:6px">Bấm vào đây để xem chi tiết (full câu hỏi + hình + đáp án).</div>
   `;
   card.onclick = ()=> openWrongPopup();
 }
 
-function renderLeaderboard(rows, myUserId){
+function renderLeaderboard(rows, myUserId, errMsg){
   const lb = document.getElementById("lb");
   const arr = Array.isArray(rows) ? rows : [];
+
+  if(errMsg){
+    lb.innerHTML = `
+      <div class="row1">
+        <p class="vi">Bảng xếp hạng</p>
+        <div class="meta"><span class="idx">RPC</span></div>
+      </div>
+      <div class="muted" style="margin-top:6px;line-height:1.35">
+        Lỗi load leaderboard: <b>${escapeHtml(errMsg)}</b><br/>
+        (Hãy chạy lại SQL phần <b>api_get_leaderboard</b> và đảm bảo đã <b>GRANT</b> cho anon/authenticated.)
+      </div>
+    `;
+    return;
+  }
 
   if(!arr.length){
     lb.innerHTML = `
@@ -683,7 +773,7 @@ function renderLeaderboard(rows, myUserId){
       <div class="meta"><span class="idx">TOP</span></div>
     </div>
     <div class="muted" style="margin-top:6px">
-      Xếp theo <b>điểm cao nhất</b> của mỗi <b>người</b>. Dòng của <b>bạn</b> sẽ được tô nổi bật. (0 điểm vẫn hiển thị)
+      Xếp theo <b>điểm cao nhất</b> của mỗi <b>người</b>. (Tính theo DB)
     </div>
     <div style="margin-top:10px">${myRankLine}</div>
     <div style="overflow:auto; margin-top:10px;">
@@ -695,7 +785,7 @@ function renderLeaderboard(rows, myUserId){
   `;
 }
 
-/* ================== GRADING (match q/index) ================== */
+/* ================== GRADING (for wrong-details only) ================== */
 function normalizeForCompare(s) {
   let t = String(s||"").trim().toLowerCase();
   t = t.replace(/đ/g, "d");
@@ -752,7 +842,6 @@ function toMcqNumber(v){
 function mcqCorrectOf(q){
   const m = q.meta || {};
   if(Number(m.correct)>=1 && Number(m.correct)<=4) return Number(m.correct);
-
   const ans = String(m.answer || "").trim();
   if(ans){
     const n = toMcqNumber(ans);
@@ -780,47 +869,49 @@ function gradeOne(q, userAnswer){
     const correct = mcqCorrectOf(q);
     const ok = (user>0 && correct>0 && user === correct);
     const opts = mcqOptionsOf(q);
-    const expected = correct ? `Đáp án: ${fmtMcqChoice(correct, opts)}` : "Đáp án: (chưa set)";
-    return { ok, expected, earned: ok ? max : 0, max, user_fmt: fmtMcqChoice(user, opts) };
+    const expected = correct ? `Đáp án đúng: ${fmtMcqChoice(correct, opts)}` : "Đáp án đúng: (chưa set)";
+    const userFmt = user ? `Bạn chọn: ${fmtMcqChoice(user, opts)}` : "Bạn chọn: (trống)";
+    return { ok, expected, userFmt, earned: ok ? max : 0, max };
   }
 
   if(t === "tf4"){
     const keys = Array.isArray(q.meta?.keys) ? q.meta.keys : [true,false,false,false];
+    const stmts = Array.isArray(q.meta?.statements) ? q.meta.statements : ["","","",""];
     const user = Array.isArray(userAnswer) ? userAnswer : [null,null,null,null];
 
     let correctCount = 0;
     for(let i=0;i<4;i++){
       if((user[i] === true || user[i] === false) && user[i] === Boolean(keys[i])) correctCount++;
     }
-
     const rule = q.meta?.rule?.byCorrectCount || { "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 };
     const mult = Number(rule[String(correctCount)] ?? 0) || 0;
 
     const earned = Math.round(max * mult * 100) / 100;
     const ok = (correctCount === 4);
 
-    const expected = `Đúng ${correctCount}/4 (điểm: ${earned}/${max})`;
     const ufmt = Array.isArray(user)
       ? user.map(x => x===true ? "Đúng" : x===false ? "Sai" : "—").join(" | ")
       : "(trống)";
     const kfmt = keys.map(x => x ? "Đúng" : "Sai").join(" | ");
-    return { ok, expected: expected + ` • Key: ${kfmt}`, earned, max, user_fmt: ufmt };
+    const expected = `Key: ${kfmt} • Đúng ${correctCount}/4 (điểm: ${earned}/${max})`;
+
+    return { ok, expected, userFmt: `Bạn chọn: ${ufmt}`, earned, max, stmts, keys, user };
   }
 
   // essay / short4
   const user = String(userAnswer || "").trim();
   const acc = acceptedAnswersFromQuestion(q);
-  const expected = acc[0] ? `Đáp án: ${acc[0]}` : "Đáp án: (chưa set)";
-  if(!user) return { ok:false, expected, earned: 0, max, user_fmt: "(trống)" };
+  const expected = acc[0] ? `Đáp án đúng: ${acc[0]}` : "Đáp án đúng: (chưa set)";
+  if(!user) return { ok:false, expected, userFmt:"Bạn trả lời: (trống)", earned: 0, max };
 
   let ok = false;
   for(const a of acc){
     if(looseEq(user, a)){ ok = true; break; }
   }
-  return { ok, expected, earned: ok ? max : 0, max, user_fmt: user };
+  return { ok, expected, userFmt:`Bạn trả lời: ${user}`, earned: ok ? max : 0, max };
 }
 
-/* ================== COMMENTS ================== */
+/* ================== COMMENTS (giữ nguyên logic cũ) ================== */
 const DISCUSS_MAX = 120;
 let DISC = { tree:[], openReply:"" };
 
@@ -832,15 +923,15 @@ function discussionHtml(username){
     </div>
 
     <div style="margin-top:10px; display:grid; gap:10px;">
-      <div class="charRow">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6b7280;font-weight:800;font-size:.85rem">
         <div><b>Viết bình luận</b> <span class="muted">(Tên: <b>${escapeHtml(username||"—")}</b>)</span></div>
         <div><span id="rootCount">0</span>/${DISCUSS_MAX}</div>
       </div>
-      <textarea id="rootInput" class="input" rows="3" maxlength="${DISCUSS_MAX}" placeholder="Nhập bình luận..."></textarea>
+      <textarea id="rootInput" class="qBox" style="min-height:86px;border-style:solid;border-width:2px;background:var(--soft)" maxlength="${DISCUSS_MAX}" placeholder="Nhập bình luận..."></textarea>
       <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
         <button class="btn btn-primary" id="btnPostRoot" style="justify-content:center;">Gửi</button>
       </div>
-      <div id="discussList" class="cmtBox"></div>
+      <div id="discussList" style="display:grid;gap:12px"></div>
     </div>
   `;
 }
@@ -872,14 +963,12 @@ function buildTree(rows){
     }
   }
 
-  // roots: pinned first, then pinned_at desc, then created_at asc
   roots.sort((a,b)=>{
     if(a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     if(a.pinned && b.pinned && a.pinnedAtMs !== b.pinnedAtMs) return b.pinnedAtMs - a.pinnedAtMs;
     return a.createdAtMs - b.createdAtMs;
   });
 
-  // replies: pinned first too
   roots.forEach(r=>r.replies.sort((a,b)=>{
     if(a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     if(a.pinned && b.pinned && a.pinnedAtMs !== b.pinnedAtMs) return b.pinnedAtMs - a.pinnedAtMs;
@@ -942,51 +1031,52 @@ function renderDiscussion(me){
   list.innerHTML = "";
   tree.forEach(root=>{
     const wrap = document.createElement("div");
-    wrap.className = "cmtItem";
+    wrap.className = "qBox";
+    wrap.style.boxShadow = "none";
 
     const showAdminBadge = (String(root.author||"").trim().toLowerCase() === "tuankhoi");
-    const adminTag = showAdminBadge ? `<span class="adminBadgeInline">ADMIN</span>` : ``;
-    const pinTag = root.pinned ? `<span class="pinBadgeInline">📌 PIN</span>` : ``;
+    const adminTag = showAdminBadge ? `<span style="padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin)">ADMIN</span>` : ``;
+    const pinTag = root.pinned ? `<span style="padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.35);color:#92400e">📌 PIN</span>` : ``;
 
     const delBtn = canDeleteComment(root, me)
-      ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(root.id)}">Xóa</button>` : ``;
+      ? `<button class="miniBtn" style="background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25);color:#991b1b" data-del="${escapeHtml(root.id)}">Xóa</button>` : ``;
 
     const pinBtn = isAdmin(me)
-      ? `<button class="cmtBtn cmtBtnPin" data-pin="${escapeHtml(root.id)}" data-pv="${root.pinned?0:1}">
+      ? `<button class="miniBtn" style="background:rgba(245,158,11,.10);border-color:rgba(245,158,11,.30);color:#92400e" data-pin="${escapeHtml(root.id)}" data-pv="${root.pinned?0:1}">
           ${root.pinned ? "Bỏ pin" : "📌 Pin"}
         </button>` : ``;
 
     wrap.innerHTML = `
-      <div class="cmtHead">
-        <div class="cmtAuthor">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <div style="font-weight:950;color:#6b7280;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <span>${escapeHtml(root.author||"—")}</span>
           ${adminTag}
           ${pinTag}
         </div>
       </div>
-      <div class="cmtText">${escapeHtml(root.text||"")}</div>
+      <div style="color:#111827;font-weight:750;line-height:1.35;white-space:pre-wrap;word-break:break-word">${escapeHtml(root.text||"")}</div>
 
-      <div class="cmtActions">
-        <button class="cmtBtn" data-reply="${escapeHtml(root.id)}">Trả lời</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;justify-content:flex-end">
+        <button class="miniBtn" data-reply="${escapeHtml(root.id)}">Trả lời</button>
         ${pinBtn}
         ${delBtn}
       </div>
-      <div class="cmtTime">${escapeHtml(fmtTs(root.created_at))}</div>
+      <div style="margin-top:6px;text-align:right;color:#6b7280;font-weight:800;font-size:.82rem">${escapeHtml(fmtTs(root.created_at))}</div>
 
       <div class="replySlot" data-slot="${escapeHtml(root.id)}"></div>
-      <div class="replyWrap" data-replies="${escapeHtml(root.id)}"></div>
+      <div class="replyWrap" data-replies="${escapeHtml(root.id)}" style="margin-top:10px;margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;display:grid;gap:10px"></div>
     `;
     list.appendChild(wrap);
 
     const slot = wrap.querySelector(`[data-slot="${CSS.escape(String(root.id))}"]`);
     if(slot && DISC.openReply === String(root.id)){
       slot.innerHTML = `
-        <div class="replyForm">
-          <div class="charRow">
+        <div style="margin-top:10px;display:grid;gap:10px">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6b7280;font-weight:800;font-size:.85rem">
             <div><b>Trả lời</b></div>
             <div><span data-ct>0</span>/${DISCUSS_MAX}</div>
           </div>
-          <textarea class="input" rows="2" maxlength="${DISCUSS_MAX}" placeholder="Nhập trả lời..."></textarea>
+          <textarea class="qBox" style="min-height:72px;border-style:solid;border-width:2px;background:var(--soft)" maxlength="${DISCUSS_MAX}" placeholder="Nhập trả lời..."></textarea>
           <div style="display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap;">
             <button class="btn btn-primary" data-sendreply="${escapeHtml(root.id)}" style="justify-content:center;">Gửi</button>
             <button class="btn" data-cancelreply style="justify-content:center;">Hủy</button>
@@ -1000,39 +1090,39 @@ function renderDiscussion(me){
       rWrap.innerHTML = "";
       (root.replies||[]).forEach(r=>{
         const item = document.createElement("div");
-        item.className = "cmtItem";
+        item.className = "qBox";
         item.style.margin = "0";
+        item.style.boxShadow = "none";
 
-        const rPinTag = r.pinned ? `<span class="pinBadgeInline">📌 PIN</span>` : ``;
+        const rPinTag = r.pinned ? `<span style="padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.35);color:#92400e">📌 PIN</span>` : ``;
 
         const rPinBtn = isAdmin(me)
-          ? `<button class="cmtBtn cmtBtnPin" data-pin="${escapeHtml(r.id)}" data-pv="${r.pinned?0:1}">
+          ? `<button class="miniBtn" style="background:rgba(245,158,11,.10);border-color:rgba(245,158,11,.30);color:#92400e" data-pin="${escapeHtml(r.id)}" data-pv="${r.pinned?0:1}">
               ${r.pinned ? "Bỏ pin" : "📌 Pin"}
             </button>` : ``;
 
         const rDelBtn = canDeleteComment(r, me)
-          ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(r.id)}">Xóa</button>` : ``;
+          ? `<button class="miniBtn" style="background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25);color:#991b1b" data-del="${escapeHtml(r.id)}">Xóa</button>` : ``;
 
         item.innerHTML = `
-          <div class="cmtHead">
-            <div class="cmtAuthor">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+            <div style="font-weight:950;color:#6b7280;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <span>${escapeHtml(r.author||"—")}</span>
               ${rPinTag}
             </div>
           </div>
-          <div class="cmtText">${escapeHtml(r.text||"")}</div>
-          <div class="cmtActions">
+          <div style="color:#111827;font-weight:750;line-height:1.35;white-space:pre-wrap;word-break:break-word">${escapeHtml(r.text||"")}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;justify-content:flex-end">
             ${rPinBtn}
             ${rDelBtn}
           </div>
-          <div class="cmtTime">${escapeHtml(fmtTs(r.created_at))}</div>
+          <div style="margin-top:6px;text-align:right;color:#6b7280;font-weight:800;font-size:.82rem">${escapeHtml(fmtTs(r.created_at))}</div>
         `;
         rWrap.appendChild(item);
       });
     }
   });
 
-  // bind events once at container level
   discussionEl.onclick = async (e)=>{
     const pinBtn = e.target.closest("[data-pin]");
     if(pinBtn){
@@ -1105,7 +1195,7 @@ function renderDiscussion(me){
   discussionEl.oninput = (e)=>{
     const ta = e.target;
     if(!(ta && ta.tagName === "TEXTAREA")) return;
-    const form = ta.closest(".replyForm");
+    const form = ta.closest("div");
     if(!form) return;
     const ct = form.querySelector("[data-ct]");
     if(ct) ct.textContent = String((ta.value||"").length);
@@ -1140,7 +1230,6 @@ async function loadAttemptPublic(attemptId, token){
 async function loadLeaderboard(){
   const out = await sbRpc(RPC.leaderboard, { p_quiz_id: quizId, p_limit: 50 });
   if(Array.isArray(out)) return out;
-  // fallback nếu RPC trả object {items:[]}
   if(out && Array.isArray(out.items)) return out.items;
   return [];
 }
@@ -1150,38 +1239,210 @@ async function loadQuestionsPublic(){
   return Array.isArray(out.items) ? out.items : [];
 }
 
-/* ================== BUILD WRONG LIST + RECOMPUTE ================== */
-function buildWrongFrom({ questions, answersMap }){
-  const byId = new Map();
-  questions.forEach(q=>byId.set(String(q.id), q));
+/* ================== WRONG LIST BUILD + DETAIL UI ================== */
+let QUESTIONS = [];
+let QBYID = new Map();
+let WRONG_ITEMS = []; // [{id, idx, prompt, q, g, userAnswerRaw}]
+let CAN_VIEW_DETAILS = false;
 
-  const wrong = [];
-  let earned = 0;
-  let max = 0;
-  let correctCount = 0;
-  let totalCount = questions.length;
-
-  for(const q of questions){
-    const id = String(q.id);
-    const ua = (answersMap && Object.prototype.hasOwnProperty.call(answersMap, id)) ? answersMap[id] : answersMap?.[q.id];
-    const g = gradeOne(q, ua);
-    max += g.max;
-    earned += g.earned;
-    if(g.ok) correctCount++;
-
-    if(!g.ok){
-      const word = String(q.prompt || "").trim() || `#${q.id}`;
-      wrong.push({
-        id: q.id,
-        word,
-        user_answer: g.user_fmt || (ua==null ? "" : String(ua)),
-        expected: g.expected || ""
-      });
+function pickAnswer(answersMap, qid){
+  if(!answersMap) return undefined;
+  const k1 = String(qid);
+  if(Object.prototype.hasOwnProperty.call(answersMap, k1)) return answersMap[k1];
+  if(Object.prototype.hasOwnProperty.call(answersMap, qid)) return answersMap[qid];
+  return answersMap[k1];
+}
+function imgOf(q){
+  const m = q.meta || {};
+  return String(m.image_url || m.image || m.img || "").trim();
+}
+function buildWrongFromAttempt({ perList, answersMap }){
+  WRONG_ITEMS = [];
+  const perById = new Map();
+  if(Array.isArray(perList)){
+    for(const p of perList){
+      if(p && p.id!=null) perById.set(String(p.id), p);
     }
   }
 
-  const score10 = max>0 ? Math.round((earned/max*10)*10)/10 : 0;
-  return { wrong, recompute: { score10, correctCount, totalCount, earned, max } };
+  QUESTIONS.forEach((q, idx0)=>{
+    const id = String(q.id);
+    const per = perById.get(id);
+    const okFromPer = (per && typeof per.ok === "boolean") ? per.ok : null;
+
+    const ua = pickAnswer(answersMap, q.id);
+    const g = gradeOne(q, ua);
+
+    const ok = (okFromPer === null) ? !!g.ok : !!okFromPer;
+
+    if(!ok){
+      const prompt = String(q.prompt || "").trim() || `#${q.id}`;
+      WRONG_ITEMS.push({
+        id: q.id,
+        idx: idx0 + 1,
+        prompt,
+        q,
+        g,
+        userAnswerRaw: ua
+      });
+    }
+  });
+}
+
+function renderWrongList(){
+  wrongBody.innerHTML = "";
+
+  if(!CAN_VIEW_DETAILS){
+    wrongBody.innerHTML = `<div class="resultline">Không có quyền xem chi tiết đáp án cho attempt này.</div>`;
+    return;
+  }
+
+  if(!WRONG_ITEMS.length){
+    wrongBody.innerHTML = `<div class="resultline"><span class="oktxt">Bạn không sai câu nào ✅</span></div>`;
+    return;
+  }
+
+  WRONG_ITEMS.forEach((w)=>{
+    const wrap = document.createElement("div");
+    wrap.className = "wrongRow";
+
+    const t = qTypeOf(w.q);
+    const typeLabel = (t==="mcq1"||t==="mcq") ? "Trắc nghiệm" : (t==="tf4") ? "Đúng/Sai" : (t==="short4") ? "4 ô" : "Tự luận";
+
+    const uline = (w.g && w.g.userFmt) ? w.g.userFmt : "Bạn trả lời: (trống)";
+    const eline = (w.g && w.g.expected) ? w.g.expected : "Đáp án đúng: (?)";
+
+    wrap.innerHTML = `
+      <div class="wrongLeft">
+        <div class="wrongTitle">
+          <span class="badge bad">SAI</span>
+          <span class="badge" style="margin-left:8px">${escapeHtml(typeLabel)}</span>
+          <span class="badge" style="margin-left:8px">Câu ${Number(w.idx||0)}</span>
+        </div>
+        <div class="wrongSub" style="margin-top:8px">${escapeHtml(w.prompt)}</div>
+        <div class="wrongSub" style="margin-top:8px">${escapeHtml(uline)}</div>
+        <div class="wrongSub" style="margin-top:4px">${escapeHtml(eline)}</div>
+      </div>
+      <div class="wrongRight">
+        <button class="miniBtn" data-detail="${escapeHtml(String(w.id))}">Chi tiết</button>
+      </div>
+    `;
+    wrongBody.appendChild(wrap);
+
+    wrap.querySelector(`[data-detail="${CSS.escape(String(w.id))}"]`).onclick = ()=>{
+      openDetail(renderQuestionDetailHtml(w.q, w.g, w.userAnswerRaw));
+    };
+
+    applyMath(wrap);
+  });
+
+  applyMath(wrongBody);
+}
+
+function renderQuestionDetailHtml(q, g, userAnswerRaw){
+  const t = qTypeOf(q);
+  const img = imgOf(q);
+  const prompt = String(q.prompt||"").trim();
+
+  let body = `
+    <div class="qBox">
+      <div class="qPrompt">${escapeHtml(prompt || "(trống)")}</div>
+      ${img ? `<img class="qImg" src="${escapeHtml(img)}" alt="image">` : ``}
+    </div>
+
+    <div class="kv">
+      <div class="kvRow">
+        <div class="kvKey">Kết quả</div>
+        <div class="kvVal">${g.ok ? `<span class="badge ok">ĐÚNG</span>` : `<span class="badge bad">SAI</span>`}</div>
+      </div>
+      <div class="kvRow">
+        <div class="kvKey">Bạn làm</div>
+        <div class="kvVal">${escapeHtml(g.userFmt || "—")}</div>
+      </div>
+      <div class="kvRow">
+        <div class="kvKey">Đáp án đúng</div>
+        <div class="kvVal">${escapeHtml(g.expected || "—")}</div>
+      </div>
+    </div>
+  `;
+
+  if(t==="mcq1" || t==="mcq"){
+    const opts = mcqOptionsOf(q);
+    const userN = toMcqNumber(userAnswerRaw);
+    const corN = mcqCorrectOf(q);
+    const L = "ABCD";
+    body += `
+      <div class="qBox" style="margin-top:12px">
+        <div style="font-weight:1000">Các lựa chọn</div>
+        <div class="optList">
+          ${[1,2,3,4].map(n=>{
+            const text = String(opts[n-1]||"");
+            const isCor = (corN===n);
+            const isUser = (userN===n);
+            const cls = isCor ? "good" : (isUser && !isCor) ? "bad" : "";
+            const tag = isCor ? `<span class="badge ok">Đúng</span>` : isUser ? `<span class="badge bad">Bạn chọn</span>` : ``;
+            return `
+              <div class="optItem ${cls}">
+                <b>${L[n-1]}.</b> ${escapeHtml(text || "(trống)")}
+                ${tag ? `<div style="margin-top:6px">${tag}</div>` : ``}
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  if(t==="tf4"){
+    const stmts = Array.isArray(q.meta?.statements) ? q.meta.statements : ["","","",""];
+    const keys = Array.isArray(q.meta?.keys) ? q.meta.keys : [true,false,false,false];
+    const user = Array.isArray(userAnswerRaw) ? userAnswerRaw : [null,null,null,null];
+
+    body += `
+      <div class="qBox" style="margin-top:12px">
+        <div style="font-weight:1000">Đúng/Sai (4 ý)</div>
+        <div class="optList">
+          ${[0,1,2,3].map(i=>{
+            const st = String(stmts[i]||"").trim();
+            const k = !!keys[i];
+            const u = user[i];
+            const uTxt = (u===true) ? "Đúng" : (u===false) ? "Sai" : "—";
+            const kTxt = k ? "Đúng" : "Sai";
+            const ok = (u===true || u===false) ? (u===k) : false;
+            const cls = ok ? "good" : "bad";
+            return `
+              <div class="optItem ${cls}">
+                <b>${"ABCD"[i]}.</b> ${escapeHtml(st || "(trống)")}
+                <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+                  <span class="badge">${escapeHtml("Bạn: " + uTxt)}</span>
+                  <span class="badge ok">${escapeHtml("Key: " + kTxt)}</span>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  if(t==="essay" || t==="short4"){
+    const acc = acceptedAnswersFromQuestion(q);
+    const ua = String(userAnswerRaw ?? "").trim();
+    body += `
+      <div class="qBox" style="margin-top:12px">
+        <div style="font-weight:1000">Đáp án</div>
+        <div class="muted" style="margin-top:6px">Các đáp án chấp nhận:</div>
+        <div class="optList">
+          ${(acc.length?acc:["(chưa set)"]).map(a=>`<div class="optItem good">${escapeHtml(a)}</div>`).join("")}
+        </div>
+        <div class="resultline">
+          <b>Bạn trả lời:</b> ${escapeHtml(ua || "(trống)")}
+        </div>
+      </div>
+    `;
+  }
+
+  return body;
 }
 
 /* ================== BOOT ================== */
@@ -1195,24 +1456,13 @@ function buildWrongFrom({ questions, answersMap }){
     return;
   }
 
-  let cached = null;
-  try{ cached = JSON.parse(sessionStorage.getItem(`tk_last_result::${quizId}`)||"null"); }catch{}
+  const token = getToken();
   const fallbackName = loadName();
 
-  const token = getToken();
   let me = await loadMeIfAny();
+  let username = me?.username || fallbackName || "—";
+  let myUserId = me?.user_id || "";
 
-  let username = me?.username || (cached?.me?.username || fallbackName || "");
-  let myUserId = me?.user_id || (cached?.me?.user_id || "");
-
-  let score10 = Number(cached?.result?.score10 || 0);
-  let correctCount = Number(cached?.result?.fullCorrectCount || cached?.result?.correctCount || 0);
-  let totalCount = Number(cached?.result?.totalCount || 0);
-  let wrongList = Array.isArray(cached?.result?.wrong) ? cached.result.wrong : [];
-
-  let djAnswers = cached?.result?.answers || cached?.answers || null;
-
-  // quiz meta
   let qTitle="", qSub="";
   try{
     const qm = await loadQuizMeta();
@@ -1220,76 +1470,106 @@ function buildWrongFrom({ questions, answersMap }){
     qSub = qm.sub || "";
   }catch{}
 
-  // attempt thật (RPC)
-  let attemptDetails = null;
+  // 1) ưu tiên load theo attemptId từ DB (đúng yêu cầu: điểm lấy theo DB)
+  let aScore10 = 0, aCorrect = 0, aTotal = 0, aCreatedAt = "";
+  let detailsJson = {};
+  CAN_VIEW_DETAILS = false;
+
   if(attemptId){
     try{
       const out = await loadAttemptPublic(attemptId, token);
       const a = out.attempt || {};
       const u = out.user || {};
+      const q = out.quiz || {};
 
-      score10 = Number(a.score10||0);
-      correctCount = Number(a.correct_count||0);
-      totalCount = Number(a.total_count||0);
+      // topbar meta ưu tiên từ DB
+      qTitle = q.title || qTitle || "Kết quả";
+      qSub = q.sub || qSub || "";
 
-      if(!username && u.username) username = u.username;
-      if(!myUserId && me?.user_id) myUserId = me.user_id;
+      username = u.username || username || "—";
+      // myUserId chỉ dùng highlight leaderboard, vẫn lấy từ me
+      if(me?.user_id) myUserId = me.user_id;
 
-      attemptDetails = a.details_json || {};
-      djAnswers = attemptDetails.answers || djAnswers;
+      aScore10 = Number(a.score10||0);
+      aCorrect = Number(a.correct_count||0);
+      aTotal = Number(a.total_count||0);
+      aCreatedAt = a.created_at || "";
 
-      if(Array.isArray(attemptDetails.wrong)) wrongList = attemptDetails.wrong;
-    }catch(_e){}
+      CAN_VIEW_DETAILS = !!out.can_view_details;
+      detailsJson = (a.details_json && typeof a.details_json === "object") ? a.details_json : {};
+    }catch(e){
+      toast("Không load được attempt: " + (e?.message || "error"));
+    }
+  }else{
+    // fallback: nếu không có attempt param, dùng cache sessionStorage (nếu có)
+    try{
+      const cached = JSON.parse(sessionStorage.getItem(`tk_last_result::${quizId}`)||"null");
+      if(cached && cached.result){
+        aScore10 = Number(cached.result.score10||0);
+        aCorrect = Number(cached.result.fullCorrectCount||cached.result.correctCount||0);
+        aTotal = Number(cached.result.totalCount||0);
+        detailsJson = (cached.result && typeof cached.result === "object") ? cached.result : {};
+        username = cached?.me?.username || username;
+        CAN_VIEW_DETAILS = true;
+      }
+    }catch{}
   }
 
-  // Nếu thiếu wrongList (đa phần do submit không lưu wrong) -> tự tính từ questions + answers
-  let recomputeNote = "";
-  try{
-    const questions = await loadQuestionsPublic();
-    const answersMap = (attemptDetails && attemptDetails.answers) ? attemptDetails.answers : (djAnswers || {});
-    if(questions.length){
-      const out2 = buildWrongFrom({ questions, answersMap });
-      if(!wrongList || !wrongList.length) wrongList = out2.wrong;
-
-      // Recompute score to sanity-check (nếu muốn “đúng hoàn toàn” thì ít nhất detect mismatch)
-      const rs = out2.recompute;
-      const dbScore = Number(score10||0);
-      const reScore = Number(rs.score10||0);
-
-      // chỉ show note nếu lệch rõ ràng
-      if(isFinite(dbScore) && isFinite(reScore) && Math.abs(dbScore - reScore) >= 0.2){
-        recomputeNote = `⚠️ <b>Cảnh báo:</b> Điểm trong DB = <b>${dbScore.toFixed(1)}</b> nhưng tính lại theo đáp án = <b>${reScore.toFixed(1)}</b>. 
-        Hãy kiểm tra logic chấm ở trang làm bài / server.`;
-      }
-      // update counts theo recompute nếu DB đang 0/thiếu
-      if(!totalCount || totalCount<=0) totalCount = rs.totalCount;
-      if(!correctCount && rs.correctCount>=0) correctCount = rs.correctCount;
-    }
-  }catch(_e){}
-
-  CURRENT_WRONG_LIST = Array.isArray(wrongList) ? wrongList : [];
-
-  // topbar
-  const prog = totalCount ? (Number(correctCount||0)/Number(totalCount||0))*100 : (Number(score10||0)*10);
+  // counts/percent theo DB
+  const prog = aTotal ? (aCorrect/aTotal)*100 : (aScore10*10);
   setTopbar({
-    title: qTitle || cached?.title || "Kết quả",
-    sub: qSub || cached?.sub || "",
+    title: qTitle || "Kết quả",
+    sub: qSub || "",
     username: username || "—",
-    correctCount: Number(correctCount||0),
-    totalCount: Number(totalCount||0),
+    correctCount: aCorrect,
+    totalCount: aTotal,
     progressPercent: prog
   });
 
+  // nếu xem được chi tiết: build wrong list từ questions + (per/answers) trong details_json
+  let wrongCountForUI = Math.max(0, (aTotal||0) - (aCorrect||0));
+
+  if(CAN_VIEW_DETAILS){
+    try{
+      QUESTIONS = await loadQuestionsPublic();
+      QBYID = new Map(QUESTIONS.map(q=>[String(q.id), q]));
+      const perList = Array.isArray(detailsJson?.per) ? detailsJson.per : [];
+      const answersMap = (detailsJson && detailsJson.answers && typeof detailsJson.answers==="object") ? detailsJson.answers : null;
+
+      // Nếu không có answers/per => không build để tránh “gán trống”
+      if(QUESTIONS.length && (perList.length || answersMap)){
+        buildWrongFromAttempt({ perList, answersMap });
+        wrongCountForUI = WRONG_ITEMS.length;
+        renderWrongList();
+      }else{
+        WRONG_ITEMS = [];
+        wrongBody.innerHTML = `<div class="resultline">
+          Không có dữ liệu chi tiết (answers/per) trong attempt để hiển thị câu sai.
+        </div>`;
+      }
+    }catch(e){
+      WRONG_ITEMS = [];
+      wrongBody.innerHTML = `<div class="resultline">Lỗi load câu hỏi: ${escapeHtml(e?.message||"")}</div>`;
+    }
+  }
+
   // summary + wrong card
-  renderSummaryCard({ score10, correctCount, totalCount, wrongCount: CURRENT_WRONG_LIST.length, recomputeNote });
-  renderWrongCard(CURRENT_WRONG_LIST.length);
+  renderSummaryCard({
+    score10: aScore10,
+    correctCount: aCorrect,
+    totalCount: aTotal,
+    wrongCount: wrongCountForUI,
+    createdAt: aCreatedAt,
+    canViewDetails: CAN_VIEW_DETAILS
+  });
+  renderWrongCard(wrongCountForUI, CAN_VIEW_DETAILS);
 
   // leaderboard
   try{
-    const lb = await loadLeaderboard();
-    renderLeaderboard(lb, myUserId);
-  }catch(_e){
-    renderLeaderboard([], "");
+    const lbRows = await loadLeaderboard();
+    renderLeaderboard(lbRows, myUserId, "");
+  }catch(e){
+    renderLeaderboard([], "", e?.message || "RPC error");
   }
 
   // discussion
@@ -1329,6 +1609,12 @@ function buildWrongFrom({ questions, answersMap }){
       toast("Gửi lỗi (có thể do RLS)");
     }
   });
+
+  // bind wrongCard click
+  const wrongCard = document.getElementById("wrongCard");
+  if(wrongCard && CAN_VIEW_DETAILS){
+    wrongCard.addEventListener("click", ()=> openWrongPopup());
+  }
 })();
 </script>
 </body>
