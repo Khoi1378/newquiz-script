@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <title>Kết quả</title>
 
-  <!-- Montserrat Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
@@ -19,12 +18,6 @@
       --shadow:0 14px 40px rgba(0,0,0,.10);
       --radius:18px;
 
-      /* leaderboard medals */
-      --gold:#f59e0b;
-      --silver:#94a3b8;
-      --bronze:#d97706;
-
-      /* admin/pin */
       --admin:#2563eb;
       --pin:#f59e0b;
     }
@@ -44,7 +37,6 @@
     #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 140px}
     .wrap{max-width:980px;margin:0 auto;padding:0 14px}
 
-    /* === ACTION BAR (giống (2)) === */
     .actionbar{
       position: sticky; top: 10px; z-index: 9999;
       display:flex; justify-content:flex-end; gap:10px; padding:0 14px;
@@ -72,7 +64,6 @@
       box-shadow:0 12px 24px rgba(124,58,237,.18);
     }
 
-    /* === TOPBAR (giống (2)) === */
     .topbar{
       margin-top:10px;
       background:rgba(255,255,255,.86);
@@ -114,7 +105,6 @@
 
     .content{padding:12px 0 0}
 
-    /* === CARDS === */
     .card{
       background:var(--card);
       border:2px solid var(--border);
@@ -134,7 +124,6 @@
     .oktxt{color:var(--ok);font-weight:900}
     .badtxt{color:var(--bad);font-weight:900}
 
-    /* Big score display (giống (2)) */
     .scoreHero{
       display:grid; gap:10px;
       align-items:center; justify-items:center;
@@ -160,7 +149,6 @@
       display:flex; gap:10px; flex-wrap:wrap; justify-content:center;
     }
 
-    /* result line style (giống (2)) */
     .resultline{
       margin-top:10px;
       padding:10px 12px;
@@ -171,7 +159,6 @@
       line-height:1.35;
     }
 
-    /* Table (giống (2)) */
     .table{
       width:100%;
       border-collapse:separate;
@@ -191,7 +178,6 @@
     .table th{background:#f8fafc;font-weight:900}
     .table tr:last-child td{border-bottom:0}
 
-    /* leaderboard highlight (giống (2)) */
     .rankpill{
       display:inline-flex; align-items:center; gap:8px;
       border-radius:999px; padding:6px 10px;
@@ -231,7 +217,6 @@
       white-space:nowrap;
     }
 
-    /* Toast (giống (2)) */
     .toast{
       position:fixed; left:50%; bottom:88px; transform:translateX(-50%);
       background:rgba(17,24,39,.92); color:#fff;
@@ -245,7 +230,6 @@
     }
     .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
-    /* Modal (giống (2) wrong popup) */
     .modal-backdrop{
       position:fixed; inset:0; background:rgba(0,0,0,.35);
       display:none; align-items:center; justify-content:center;
@@ -286,7 +270,6 @@
     .btn-x:hover{filter:brightness(.98);transform:translateY(-1px)}
     .btn-x:active{transform:translateY(0)}
 
-    /* ===== COMMENTS UI (giữ tính năng (1), chỉnh style cho hòa (2)) ===== */
     .input{
       width:100%;
       border-radius:14px;border:2px solid #e5e7eb;
@@ -301,10 +284,12 @@
       box-shadow:0 0 0 5px rgba(124,58,237,.10);
       background:#fff;
     }
+
     .cmtBox{display:grid;gap:12px;margin-top:10px}
     .cmtItem{border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:#fff}
     .cmtHead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
     .cmtAuthor{font-weight:950;color:#6b7280;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
     .adminBadgeInline{
       padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
       background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin);white-space:nowrap;
@@ -326,7 +311,6 @@
     .replyForm{margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;margin-top:10px;display:grid;gap:10px}
     .charRow{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6b7280;font-weight:800;font-size:.85rem}
 
-    /* small jump button in wrong modal */
     .miniLink{
       display:inline-flex; align-items:center; justify-content:center;
       padding:8px 10px;
@@ -352,7 +336,6 @@
 
 <body>
   <div id="shell">
-    <!-- Actionbar: Trang chủ / Lên đầu / Làm lại / Thảo luận -->
     <div class="actionbar">
       <a class="btn" id="btnHome" href="https://www.tuankhoi.site" rel="noopener">Trang chủ</a>
       <button class="btn" id="btnScrollTop" type="button">⬆️ Lên đầu</button>
@@ -372,18 +355,15 @@
 
         <div class="stats">
           <div class="pill">Người làm: <strong id="whoName">—</strong></div>
-          <div class="pill">Đã chọn: <strong id="answeredCount">0</strong>/<span id="totalCount">0</span></div>
+          <div class="pill">Đúng: <strong id="answeredCount">0</strong>/<span id="totalCount">0</span></div>
           <div class="progressline"><div class="progressfill" id="progressFill"></div></div>
         </div>
       </div>
 
       <div class="content" id="content">
-        <!-- JS render: summary / wrong card / leaderboard / discussion -->
         <div id="summary" class="card"></div>
         <div id="wrongCard" class="card" style="display:none; cursor:pointer;"></div>
         <div id="lb" class="card"></div>
-
-        <!-- neo cuối trang -->
         <div id="discussionAnchor" style="height:1px;"></div>
         <div id="discussion" class="card"></div>
       </div>
@@ -392,14 +372,13 @@
 
   <div class="toast" id="toast"></div>
 
-  <!-- Wrong Answers Popup (match style (2)) -->
   <div class="modal-backdrop" id="wrongBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="wrongTitle">
       <div class="xclose">
         <button class="btn-x" id="btnCloseWrong" aria-label="Đóng">✕</button>
       </div>
       <h3 id="wrongTitle">Những câu sai</h3>
-      <p>Chỉ liệt kê câu bạn làm sai hoặc chưa chọn.</p>
+      <p>Liệt kê câu bạn làm sai hoặc chưa chọn.</p>
       <div id="wrongBody" style="display:grid; gap:12px;"></div>
     </div>
   </div>
@@ -407,14 +386,15 @@
 <script>
 /* ================== CONFIG ================== */
 const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o"; // <-- giữ key của bạn (đừng đổi nếu đang chạy OK)
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
 
 const RPC = {
   me: "api_me",
   quizMeta: "api_get_quiz_meta",
   attemptPublic: "api_get_attempt_public",
   leaderboard: "api_get_leaderboard",
-  pinComment: "api_toggle_comment_pin"
+  pinComment: "api_toggle_comment_pin",
+  questionsPublic: "api_get_questions_public"
 };
 
 const TOKEN_KEY = "tk_token_v2";
@@ -531,22 +511,18 @@ function clearForRestart(){
 
 /* ================== ACTION BUTTONS ================== */
 const shell = document.getElementById("shell");
-document.getElementById("btnScrollTop").addEventListener("click", ()=>{
-  shell.scrollTo({ top:0, behavior:"smooth" });
-});
+document.getElementById("btnScrollTop").addEventListener("click", ()=> shell.scrollTo({ top:0, behavior:"smooth" }));
 document.getElementById("btnDiscuss").addEventListener("click", ()=>{
   const a = document.getElementById("discussionAnchor");
-  if(!a) return;
-  a.scrollIntoView({ behavior:"smooth", block:"start" });
+  if(a) a.scrollIntoView({ behavior:"smooth", block:"start" });
 });
-
 document.getElementById("btnRestart").addEventListener("click", ()=>{
   if(!quizId){ location.href = "/"; return; }
   clearForRestart();
   location.href = `/q/index.html?quiz=${quizId}&restart=1&start=1`;
 });
 
-/* ================== WRONG MODAL (match (2)) ================== */
+/* ================== WRONG MODAL ================== */
 let CURRENT_WRONG_LIST = [];
 
 const wrongBackdrop = document.getElementById("wrongBackdrop");
@@ -597,17 +573,17 @@ function renderWrongPopupContent(list){
   });
 }
 
-/* ================== UI RENDER (RESULT LIKE (2)) ================== */
-function setTopbar({title, sub, username, answeredCount, totalCount, progressPercent}){
+/* ================== UI RENDER ================== */
+function setTopbar({title, sub, username, correctCount, totalCount, progressPercent}){
   document.getElementById("quizTitle").textContent = title || "Kết quả";
   document.getElementById("quizSub").textContent = sub || "";
   document.getElementById("whoName").textContent = username || "—";
-  document.getElementById("answeredCount").textContent = String(Number(answeredCount||0));
+  document.getElementById("answeredCount").textContent = String(Number(correctCount||0));
   document.getElementById("totalCount").textContent = String(Number(totalCount||0));
   document.getElementById("progressFill").style.width = `${Math.max(0, Math.min(100, Number(progressPercent||0)))}%`;
 }
 
-function renderSummaryCard({ score10, correctCount, totalCount, wrongCount }){
+function renderSummaryCard({ score10, correctCount, totalCount, wrongCount, recomputeNote }){
   const sum = document.getElementById("summary");
   const pct = totalCount ? (Number(correctCount||0)/Number(totalCount||0))*100 : (Number(score10||0)*10);
   const pctInt = isFinite(pct) ? Math.round(pct) : 0;
@@ -626,6 +602,8 @@ function renderSummaryCard({ score10, correctCount, totalCount, wrongCount }){
         <div class="pill">Đúng: <strong>${Number(correctCount||0)}</strong>/${Number(totalCount||0)}</div>
         <div class="pill">Sai: <strong>${Number(wrongCount||0)}</strong></div>
       </div>
+
+      ${recomputeNote ? `<div class="resultline" style="margin-top:0">${recomputeNote}</div>` : ``}
     </div>
   `;
 }
@@ -633,6 +611,10 @@ function renderSummaryCard({ score10, correctCount, totalCount, wrongCount }){
 function renderWrongCard(wrongCount){
   const wc = Number(wrongCount||0);
   const card = document.getElementById("wrongCard");
+  if(wc <= 0){
+    card.style.display = "none";
+    return;
+  }
   card.style.display = "";
   card.innerHTML = `
     <div class="row1">
@@ -647,13 +629,16 @@ function renderWrongCard(wrongCount){
 function renderLeaderboard(rows, myUserId){
   const lb = document.getElementById("lb");
   const arr = Array.isArray(rows) ? rows : [];
+
   if(!arr.length){
     lb.innerHTML = `
       <div class="row1">
         <p class="vi">Bảng xếp hạng</p>
         <div class="meta"><span class="idx">TOP</span></div>
       </div>
-      <div class="muted" style="margin-top:6px">Chưa có dữ liệu.</div>
+      <div class="muted" style="margin-top:6px">
+        Chưa có dữ liệu. (Nếu bạn đã làm mà vẫn trống: kiểm tra lại RPC <b>api_get_leaderboard</b> và RLS.)
+      </div>
     `;
     return;
   }
@@ -668,11 +653,9 @@ function renderLeaderboard(rows, myUserId){
 
   const body = top.map((r, index)=>{
     const rk = index + 1;
-
     const medal = rk === 1 ? `<span class="medal m1">🥇</span>` :
                   rk === 2 ? `<span class="medal m2">🥈</span>` :
                   rk === 3 ? `<span class="medal m3">🥉</span>` : "";
-
     const trClass = rk === 1 ? "toprow1" : rk === 2 ? "toprow2" : rk === 3 ? "toprow3" : "";
     const isMe = myUserId && String(r.user_id) === String(myUserId);
     const rowClass = `${trClass} ${isMe ? "meRow" : ""}`.trim();
@@ -700,7 +683,7 @@ function renderLeaderboard(rows, myUserId){
       <div class="meta"><span class="idx">TOP</span></div>
     </div>
     <div class="muted" style="margin-top:6px">
-      Top 🥇🥈🥉 • Xếp theo <b>điểm cao nhất</b> của mỗi <b>người</b>. Dòng của <b>bạn</b> sẽ được tô nổi bật.
+      Xếp theo <b>điểm cao nhất</b> của mỗi <b>người</b>. Dòng của <b>bạn</b> sẽ được tô nổi bật. (0 điểm vẫn hiển thị)
     </div>
     <div style="margin-top:10px">${myRankLine}</div>
     <div style="overflow:auto; margin-top:10px;">
@@ -712,7 +695,132 @@ function renderLeaderboard(rows, myUserId){
   `;
 }
 
-/* ================== COMMENTS (GIỮ TÍNH NĂNG) ================== */
+/* ================== GRADING (match q/index) ================== */
+function normalizeForCompare(s) {
+  let t = String(s||"").trim().toLowerCase();
+  t = t.replace(/đ/g, "d");
+  try { t = t.normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); } catch {}
+  t = t.replace(/[“”"']/g, " ");
+  t = t.replace(/[^a-z0-9\s\-,.]/g, " ");
+  t = t.replace(/\s+/g, " ").trim();
+  return t;
+}
+function looseEq(user, expected){
+  const u = normalizeForCompare(user);
+  const a = normalizeForCompare(expected);
+  if (!u || !a) return false;
+  if (u === a) return true;
+  if (u.replace(/\s/g,"") === a.replace(/\s/g,"")) return true;
+  return false;
+}
+function pointsOf(q){
+  const p = Number(q.points ?? 0);
+  return (isFinite(p) && p > 0) ? p : 1;
+}
+function qTypeOf(q){
+  return String(q.q_type || "essay").toLowerCase();
+}
+function acceptedAnswersFromQuestion(q){
+  const out = [];
+  if(Array.isArray(q.answers)) out.push(...q.answers);
+  const seen = new Set();
+  const uniq = [];
+  for(const x of out){
+    const k = normalizeForCompare(x);
+    if(!k) continue;
+    if(seen.has(k)) continue;
+    seen.add(k);
+    uniq.push(String(x).trim());
+  }
+  return uniq;
+}
+function toMcqNumber(v){
+  if(v==null) return 0;
+  if(typeof v === "number"){
+    const n = Math.floor(v);
+    return (n>=1 && n<=4) ? n : 0;
+  }
+  const s = String(v).trim();
+  if(/^[1-4]$/.test(s)) return Number(s);
+  const u = s.toUpperCase();
+  if(u==="A") return 1;
+  if(u==="B") return 2;
+  if(u==="C") return 3;
+  if(u==="D") return 4;
+  return 0;
+}
+function mcqCorrectOf(q){
+  const m = q.meta || {};
+  if(Number(m.correct)>=1 && Number(m.correct)<=4) return Number(m.correct);
+
+  const ans = String(m.answer || "").trim();
+  if(ans){
+    const n = toMcqNumber(ans);
+    if(n) return n;
+  }
+  return 0;
+}
+function mcqOptionsOf(q){
+  const m = q.meta || {};
+  if(Array.isArray(m.options)) return m.options;
+  return ["","","",""];
+}
+function fmtMcqChoice(n, opts){
+  const L = "ABCD";
+  const idx = (Number(n||0)-1);
+  const t = (idx>=0 && idx<4) ? String(opts[idx]||"") : "";
+  return idx>=0 ? `${L[idx]}${t ? `. ${t}` : ""}` : "(trống)";
+}
+function gradeOne(q, userAnswer){
+  const t = qTypeOf(q);
+  const max = pointsOf(q);
+
+  if(t === "mcq1" || t === "mcq"){
+    const user = toMcqNumber(userAnswer);
+    const correct = mcqCorrectOf(q);
+    const ok = (user>0 && correct>0 && user === correct);
+    const opts = mcqOptionsOf(q);
+    const expected = correct ? `Đáp án: ${fmtMcqChoice(correct, opts)}` : "Đáp án: (chưa set)";
+    return { ok, expected, earned: ok ? max : 0, max, user_fmt: fmtMcqChoice(user, opts) };
+  }
+
+  if(t === "tf4"){
+    const keys = Array.isArray(q.meta?.keys) ? q.meta.keys : [true,false,false,false];
+    const user = Array.isArray(userAnswer) ? userAnswer : [null,null,null,null];
+
+    let correctCount = 0;
+    for(let i=0;i<4;i++){
+      if((user[i] === true || user[i] === false) && user[i] === Boolean(keys[i])) correctCount++;
+    }
+
+    const rule = q.meta?.rule?.byCorrectCount || { "0":0, "1":0.25, "2":0.5, "3":0.5, "4":1 };
+    const mult = Number(rule[String(correctCount)] ?? 0) || 0;
+
+    const earned = Math.round(max * mult * 100) / 100;
+    const ok = (correctCount === 4);
+
+    const expected = `Đúng ${correctCount}/4 (điểm: ${earned}/${max})`;
+    const ufmt = Array.isArray(user)
+      ? user.map(x => x===true ? "Đúng" : x===false ? "Sai" : "—").join(" | ")
+      : "(trống)";
+    const kfmt = keys.map(x => x ? "Đúng" : "Sai").join(" | ");
+    return { ok, expected: expected + ` • Key: ${kfmt}`, earned, max, user_fmt: ufmt };
+  }
+
+  // essay / short4
+  const user = String(userAnswer || "").trim();
+  const acc = acceptedAnswersFromQuestion(q);
+  const expected = acc[0] ? `Đáp án: ${acc[0]}` : "Đáp án: (chưa set)";
+  if(!user) return { ok:false, expected, earned: 0, max, user_fmt: "(trống)" };
+
+  let ok = false;
+  for(const a of acc){
+    if(looseEq(user, a)){ ok = true; break; }
+  }
+  return { ok, expected, earned: ok ? max : 0, max, user_fmt: user };
+}
+
+/* ================== COMMENTS ================== */
 const DISCUSS_MAX = 120;
 let DISC = { tree:[], openReply:"" };
 
@@ -736,11 +844,9 @@ function discussionHtml(username){
     </div>
   `;
 }
-
 function isAdmin(me){
   return !!me && (String(me.role||"").toLowerCase()==="admin" || String(me.username||"").toLowerCase()==="tuankhoi");
 }
-
 function buildTree(rows){
   const byId = new Map();
   rows.forEach(r=>{
@@ -766,23 +872,28 @@ function buildTree(rows){
     }
   }
 
-  // Sort: pinned first, then pinned_at desc, then created_at asc
+  // roots: pinned first, then pinned_at desc, then created_at asc
   roots.sort((a,b)=>{
     if(a.pinned !== b.pinned) return a.pinned ? -1 : 1;
     if(a.pinned && b.pinned && a.pinnedAtMs !== b.pinnedAtMs) return b.pinnedAtMs - a.pinnedAtMs;
     return a.createdAtMs - b.createdAtMs;
   });
-  roots.forEach(r=>r.replies.sort((a,b)=>a.createdAtMs-b.createdAtMs));
+
+  // replies: pinned first too
+  roots.forEach(r=>r.replies.sort((a,b)=>{
+    if(a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+    if(a.pinned && b.pinned && a.pinnedAtMs !== b.pinnedAtMs) return b.pinnedAtMs - a.pinnedAtMs;
+    return a.createdAtMs - b.createdAtMs;
+  }));
+
   return roots;
 }
-
 function canDeleteComment(c, me){
   if(isAdmin(me)) return true;
   const a = String(c.author||"").trim().toLowerCase();
   const m = String(me?.username||"").trim().toLowerCase();
   return !!m && a === m;
 }
-
 async function loadComments(){
   const rows = await sbGet(
     `comments?quiz_id=eq.${quizId}` +
@@ -791,7 +902,6 @@ async function loadComments(){
   );
   DISC.tree = buildTree(Array.isArray(rows)?rows:[]);
 }
-
 async function addComment({ text, parent_id, author }){
   const payload = {
     quiz_id: quizId,
@@ -805,7 +915,6 @@ async function addComment({ text, parent_id, author }){
 async function deleteComment(id){
   await sbDelete(`comments?id=eq.${encodeURIComponent(id)}`);
 }
-
 async function togglePinComment({ me, commentId, pin }){
   const token = getToken();
   if(!token) { toast("Admin cần đăng nhập"); return; }
@@ -819,8 +928,8 @@ async function togglePinComment({ me, commentId, pin }){
     toast(e?.message || "Pin lỗi");
   }
 }
-
 function renderDiscussion(me){
+  const discussionEl = document.getElementById("discussion");
   const list = document.getElementById("discussList");
   if(!list) return;
 
@@ -837,20 +946,15 @@ function renderDiscussion(me){
 
     const showAdminBadge = (String(root.author||"").trim().toLowerCase() === "tuankhoi");
     const adminTag = showAdminBadge ? `<span class="adminBadgeInline">ADMIN</span>` : ``;
-
     const pinTag = root.pinned ? `<span class="pinBadgeInline">📌 PIN</span>` : ``;
 
     const delBtn = canDeleteComment(root, me)
       ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(root.id)}">Xóa</button>` : ``;
 
-    // Admin pin: only root comments; cannot pin if has replies
-    const canPin = isAdmin(me) && (root.replies||[]).length===0;
     const pinBtn = isAdmin(me)
-      ? (canPin
-          ? `<button class="cmtBtn cmtBtnPin" data-pin="${escapeHtml(root.id)}" data-pv="${root.pinned?0:1}">${root.pinned ? "Bỏ pin" : "📌 Pin"}</button>`
-          : `<span class="muted" style="font-weight:900;font-size:.82rem">Không pin được (đã có trả lời)</span>`
-        )
-      : ``;
+      ? `<button class="cmtBtn cmtBtnPin" data-pin="${escapeHtml(root.id)}" data-pv="${root.pinned?0:1}">
+          ${root.pinned ? "Bỏ pin" : "📌 Pin"}
+        </button>` : ``;
 
     wrap.innerHTML = `
       <div class="cmtHead">
@@ -899,6 +1003,13 @@ function renderDiscussion(me){
         item.className = "cmtItem";
         item.style.margin = "0";
 
+        const rPinTag = r.pinned ? `<span class="pinBadgeInline">📌 PIN</span>` : ``;
+
+        const rPinBtn = isAdmin(me)
+          ? `<button class="cmtBtn cmtBtnPin" data-pin="${escapeHtml(r.id)}" data-pv="${r.pinned?0:1}">
+              ${r.pinned ? "Bỏ pin" : "📌 Pin"}
+            </button>` : ``;
+
         const rDelBtn = canDeleteComment(r, me)
           ? `<button class="cmtBtn cmtBtnDanger" data-del="${escapeHtml(r.id)}">Xóa</button>` : ``;
 
@@ -906,16 +1017,99 @@ function renderDiscussion(me){
           <div class="cmtHead">
             <div class="cmtAuthor">
               <span>${escapeHtml(r.author||"—")}</span>
+              ${rPinTag}
             </div>
           </div>
           <div class="cmtText">${escapeHtml(r.text||"")}</div>
-          <div class="cmtActions">${rDelBtn}</div>
+          <div class="cmtActions">
+            ${rPinBtn}
+            ${rDelBtn}
+          </div>
           <div class="cmtTime">${escapeHtml(fmtTs(r.created_at))}</div>
         `;
         rWrap.appendChild(item);
       });
     }
   });
+
+  // bind events once at container level
+  discussionEl.onclick = async (e)=>{
+    const pinBtn = e.target.closest("[data-pin]");
+    if(pinBtn){
+      const id = pinBtn.getAttribute("data-pin");
+      const pv = pinBtn.getAttribute("data-pv");
+      await togglePinComment({ me, commentId: id, pin: pv==="1" });
+      return;
+    }
+
+    const delBtn = e.target.closest("[data-del]");
+    if(delBtn){
+      const id = String(delBtn.getAttribute("data-del")||"");
+      if(!id) return;
+      if(!confirm("Xóa bình luận này?")) return;
+      try{
+        await deleteComment(id);
+        await loadComments();
+        renderDiscussion(me);
+        toast("Đã xóa");
+      }catch(_err){
+        toast("Xóa lỗi (có thể do RLS)");
+      }
+      return;
+    }
+
+    const replyBtn = e.target.closest("[data-reply]");
+    if(replyBtn){
+      const rootId = String(replyBtn.getAttribute("data-reply")||"");
+      DISC.openReply = (DISC.openReply === rootId) ? "" : rootId;
+      renderDiscussion(me);
+      const slot = discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
+      const ta = slot ? slot.querySelector("textarea") : null;
+      if(ta) ta.focus();
+      return;
+    }
+
+    const cancelBtn = e.target.closest("[data-cancelreply]");
+    if(cancelBtn){
+      DISC.openReply = "";
+      renderDiscussion(me);
+      return;
+    }
+
+    const sendBtn = e.target.closest("[data-sendreply]");
+    if(sendBtn){
+      const rootId = String(sendBtn.getAttribute("data-sendreply")||"");
+      const slot = discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
+      const ta = slot ? slot.querySelector("textarea") : null;
+      const text = ta ? String(ta.value||"").trim() : "";
+      if(!text || text.length > DISCUSS_MAX){ toast("Tối đa 120 ký tự"); return; }
+
+      const author = String(me?.username || "").trim();
+      if(!author){ toast("Thiếu tên"); return; }
+
+      DISC.openReply = "";
+      renderDiscussion(me);
+
+      try{
+        await addComment({ text, parent_id: rootId, author });
+        await loadComments();
+        renderDiscussion(me);
+        toast("Đã gửi");
+      }catch(_err){
+        toast("Gửi lỗi (có thể do RLS)");
+      }
+      return;
+    }
+  };
+
+  discussionEl.oninput = (e)=>{
+    const ta = e.target;
+    if(!(ta && ta.tagName === "TEXTAREA")) return;
+    const form = ta.closest(".replyForm");
+    if(!form) return;
+    const ct = form.querySelector("[data-ct]");
+    if(ct) ct.textContent = String((ta.value||"").length);
+  };
 }
 
 /* ================== DATA LOADERS ================== */
@@ -932,29 +1126,68 @@ async function loadMeIfAny(){
     return null;
   }
 }
-
 async function loadQuizMeta(){
   const out = await sbRpc(RPC.quizMeta, { p_quiz_id: quizId });
   if(!out || out.ok!==true) throw new Error(out?.error || "Không load quiz meta");
   const q = out.quiz || {};
   return { title: q.title || "", sub: q.sub || "" };
 }
-
 async function loadAttemptPublic(attemptId, token){
   const out = await sbRpc(RPC.attemptPublic, { p_attempt_id: attemptId, p_token: token || "" });
   if(!out || out.ok!==true) throw new Error(out?.error || "Không load attempt");
   return out;
 }
-
 async function loadLeaderboard(){
-  const rows = await sbRpc(RPC.leaderboard, { p_quiz_id: quizId, p_limit: 50 });
-  return Array.isArray(rows) ? rows : [];
+  const out = await sbRpc(RPC.leaderboard, { p_quiz_id: quizId, p_limit: 50 });
+  if(Array.isArray(out)) return out;
+  // fallback nếu RPC trả object {items:[]}
+  if(out && Array.isArray(out.items)) return out.items;
+  return [];
+}
+async function loadQuestionsPublic(){
+  const out = await sbRpc(RPC.questionsPublic, { p_quiz_id: quizId });
+  if(!out || out.ok!==true) return [];
+  return Array.isArray(out.items) ? out.items : [];
+}
+
+/* ================== BUILD WRONG LIST + RECOMPUTE ================== */
+function buildWrongFrom({ questions, answersMap }){
+  const byId = new Map();
+  questions.forEach(q=>byId.set(String(q.id), q));
+
+  const wrong = [];
+  let earned = 0;
+  let max = 0;
+  let correctCount = 0;
+  let totalCount = questions.length;
+
+  for(const q of questions){
+    const id = String(q.id);
+    const ua = (answersMap && Object.prototype.hasOwnProperty.call(answersMap, id)) ? answersMap[id] : answersMap?.[q.id];
+    const g = gradeOne(q, ua);
+    max += g.max;
+    earned += g.earned;
+    if(g.ok) correctCount++;
+
+    if(!g.ok){
+      const word = String(q.prompt || "").trim() || `#${q.id}`;
+      wrong.push({
+        id: q.id,
+        word,
+        user_answer: g.user_fmt || (ua==null ? "" : String(ua)),
+        expected: g.expected || ""
+      });
+    }
+  }
+
+  const score10 = max>0 ? Math.round((earned/max*10)*10)/10 : 0;
+  return { wrong, recompute: { score10, correctCount, totalCount, earned, max } };
 }
 
 /* ================== BOOT ================== */
 (async function boot(){
   if(!quizId){
-    setTopbar({ title:"Kết quả", sub:"Sai link (thiếu ?quiz=abcde)", username:"—", answeredCount:0, totalCount:0, progressPercent:0 });
+    setTopbar({ title:"Kết quả", sub:"Sai link (thiếu ?quiz=abcde)", username:"—", correctCount:0, totalCount:0, progressPercent:0 });
     document.getElementById("summary").innerHTML = `<div class="muted">Sai link.</div>`;
     document.getElementById("wrongCard").style.display="none";
     document.getElementById("lb").innerHTML = `<div class="muted">Sai link.</div>`;
@@ -962,21 +1195,22 @@ async function loadLeaderboard(){
     return;
   }
 
-  // cache nhanh
   let cached = null;
   try{ cached = JSON.parse(sessionStorage.getItem(`tk_last_result::${quizId}`)||"null"); }catch{}
   const fallbackName = loadName();
 
   const token = getToken();
-  let me = await loadMeIfAny(); // có thể null
+  let me = await loadMeIfAny();
 
   let username = me?.username || (cached?.me?.username || fallbackName || "");
   let myUserId = me?.user_id || (cached?.me?.user_id || "");
 
-  let score10 = cached?.result?.score10 || 0;
-  let correctCount = cached?.result?.fullCorrectCount || cached?.result?.correctCount || 0;
-  let totalCount = cached?.result?.totalCount || 0;
-  let wrongList = cached?.result?.wrong || [];
+  let score10 = Number(cached?.result?.score10 || 0);
+  let correctCount = Number(cached?.result?.fullCorrectCount || cached?.result?.correctCount || 0);
+  let totalCount = Number(cached?.result?.totalCount || 0);
+  let wrongList = Array.isArray(cached?.result?.wrong) ? cached.result.wrong : [];
+
+  let djAnswers = cached?.result?.answers || cached?.answers || null;
 
   // quiz meta
   let qTitle="", qSub="";
@@ -987,6 +1221,7 @@ async function loadLeaderboard(){
   }catch{}
 
   // attempt thật (RPC)
+  let attemptDetails = null;
   if(attemptId){
     try{
       const out = await loadAttemptPublic(attemptId, token);
@@ -1000,11 +1235,37 @@ async function loadLeaderboard(){
       if(!username && u.username) username = u.username;
       if(!myUserId && me?.user_id) myUserId = me.user_id;
 
-      const dj = a.details_json || {};
-      if(Array.isArray(dj.wrong)) wrongList = dj.wrong;
-      else if(cached?.result?.wrong) wrongList = cached.result.wrong;
+      attemptDetails = a.details_json || {};
+      djAnswers = attemptDetails.answers || djAnswers;
+
+      if(Array.isArray(attemptDetails.wrong)) wrongList = attemptDetails.wrong;
     }catch(_e){}
   }
+
+  // Nếu thiếu wrongList (đa phần do submit không lưu wrong) -> tự tính từ questions + answers
+  let recomputeNote = "";
+  try{
+    const questions = await loadQuestionsPublic();
+    const answersMap = (attemptDetails && attemptDetails.answers) ? attemptDetails.answers : (djAnswers || {});
+    if(questions.length){
+      const out2 = buildWrongFrom({ questions, answersMap });
+      if(!wrongList || !wrongList.length) wrongList = out2.wrong;
+
+      // Recompute score to sanity-check (nếu muốn “đúng hoàn toàn” thì ít nhất detect mismatch)
+      const rs = out2.recompute;
+      const dbScore = Number(score10||0);
+      const reScore = Number(rs.score10||0);
+
+      // chỉ show note nếu lệch rõ ràng
+      if(isFinite(dbScore) && isFinite(reScore) && Math.abs(dbScore - reScore) >= 0.2){
+        recomputeNote = `⚠️ <b>Cảnh báo:</b> Điểm trong DB = <b>${dbScore.toFixed(1)}</b> nhưng tính lại theo đáp án = <b>${reScore.toFixed(1)}</b>. 
+        Hãy kiểm tra logic chấm ở trang làm bài / server.`;
+      }
+      // update counts theo recompute nếu DB đang 0/thiếu
+      if(!totalCount || totalCount<=0) totalCount = rs.totalCount;
+      if(!correctCount && rs.correctCount>=0) correctCount = rs.correctCount;
+    }
+  }catch(_e){}
 
   CURRENT_WRONG_LIST = Array.isArray(wrongList) ? wrongList : [];
 
@@ -1014,13 +1275,13 @@ async function loadLeaderboard(){
     title: qTitle || cached?.title || "Kết quả",
     sub: qSub || cached?.sub || "",
     username: username || "—",
-    answeredCount: Number(correctCount||0),   // giữ layout (2)
+    correctCount: Number(correctCount||0),
     totalCount: Number(totalCount||0),
     progressPercent: prog
   });
 
   // summary + wrong card
-  renderSummaryCard({ score10, correctCount, totalCount, wrongCount: CURRENT_WRONG_LIST.length });
+  renderSummaryCard({ score10, correctCount, totalCount, wrongCount: CURRENT_WRONG_LIST.length, recomputeNote });
   renderWrongCard(CURRENT_WRONG_LIST.length);
 
   // leaderboard
@@ -1039,9 +1300,7 @@ async function loadLeaderboard(){
   const rootCount = document.getElementById("rootCount");
   const btnPostRoot = document.getElementById("btnPostRoot");
 
-  rootInput.addEventListener("input", ()=>{
-    rootCount.textContent = String((rootInput.value||"").length);
-  }, {passive:true});
+  rootInput.addEventListener("input", ()=>{ rootCount.textContent = String((rootInput.value||"").length); }, {passive:true});
 
   const meForUI = me || { username: username || fallbackName || "", role:"user" };
 
@@ -1049,15 +1308,15 @@ async function loadLeaderboard(){
     await loadComments();
     renderDiscussion(meForUI);
   }catch(e){
-  discussionEl.innerHTML += `<div class="muted" style="margin-top:10px">
-    Không load được comments: <b>${escapeHtml(e?.message || String(e))}</b>
-  </div>`;
+    discussionEl.innerHTML += `<div class="muted" style="margin-top:10px">
+      Không load được comments: <b>${escapeHtml(e?.message || String(e))}</b>
+    </div>`;
   }
 
   btnPostRoot.addEventListener("click", async ()=>{
     const text = String(rootInput.value||"").trim();
     if(!text || text.length > DISCUSS_MAX){ toast("Tối đa 120 ký tự"); return; }
-    const author = (username || fallbackName || "").trim();
+    const author = String(meForUI.username || "").trim();
     if(!author){ toast("Thiếu tên"); return; }
 
     rootInput.value = ""; rootCount.textContent = "0";
@@ -1066,88 +1325,10 @@ async function loadLeaderboard(){
       await loadComments();
       renderDiscussion(meForUI);
       toast("Đã gửi");
-    }catch(e){
+    }catch(_e){
       toast("Gửi lỗi (có thể do RLS)");
     }
   });
-
-  discussionEl.addEventListener("click", async (e)=>{
-    const pinBtn = e.target.closest("[data-pin]");
-    if(pinBtn){
-      const id = pinBtn.getAttribute("data-pin");
-      const pv = pinBtn.getAttribute("data-pv"); // 1=pin,0=unpin
-      await togglePinComment({ me: meForUI, commentId: id, pin: pv==="1" });
-      return;
-    }
-
-    const delBtn = e.target.closest("[data-del]");
-    if(delBtn){
-      const id = String(delBtn.getAttribute("data-del")||"");
-      if(!id) return;
-      if(!confirm("Xóa bình luận này?")) return;
-      try{
-        await deleteComment(id);
-        await loadComments();
-        renderDiscussion(meForUI);
-        toast("Đã xóa");
-      }catch(err){
-        toast("Xóa lỗi (có thể do RLS)");
-      }
-      return;
-    }
-
-    const replyBtn = e.target.closest("[data-reply]");
-    if(replyBtn){
-      const rootId = String(replyBtn.getAttribute("data-reply")||"");
-      DISC.openReply = (DISC.openReply === rootId) ? "" : rootId;
-      renderDiscussion(meForUI);
-      const slot = discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
-      const ta = slot ? slot.querySelector("textarea") : null;
-      if(ta) ta.focus();
-      return;
-    }
-
-    const cancelBtn = e.target.closest("[data-cancelreply]");
-    if(cancelBtn){
-      DISC.openReply = "";
-      renderDiscussion(meForUI);
-      return;
-    }
-
-    const sendBtn = e.target.closest("[data-sendreply]");
-    if(sendBtn){
-      const rootId = String(sendBtn.getAttribute("data-sendreply")||"");
-      const slot = discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
-      const ta = slot ? slot.querySelector("textarea") : null;
-      const text = ta ? String(ta.value||"").trim() : "";
-      if(!text || text.length > DISCUSS_MAX){ toast("Tối đa 120 ký tự"); return; }
-
-      const author = (username || fallbackName || "").trim();
-      if(!author){ toast("Thiếu tên"); return; }
-
-      DISC.openReply = "";
-      renderDiscussion(meForUI);
-
-      try{
-        await addComment({ text, parent_id: rootId, author });
-        await loadComments();
-        renderDiscussion(meForUI);
-        toast("Đã gửi");
-      }catch(err){
-        toast("Gửi lỗi (có thể do RLS)");
-      }
-      return;
-    }
-  });
-
-  discussionEl.addEventListener("input", (e)=>{
-    const ta = e.target;
-    if(!(ta && ta.tagName === "TEXTAREA")) return;
-    const form = ta.closest(".replyForm");
-    if(!form) return;
-    const ct = form.querySelector("[data-ct]");
-    if(ct) ct.textContent = String((ta.value||"").length);
-  }, {passive:true});
 })();
 </script>
 </body>
