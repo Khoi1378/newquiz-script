@@ -466,9 +466,56 @@ function delCookie(name){
   }
 }
 
-function setToken(t){
+/* ===== TOKEN SANITIZE / VALIDATE (fix cache_user:* being treated as token) ===== */
+function normalizeTokenString(t){
   t = String(t||"").trim();
+  if(!t) return "";
+  // strip Bearer prefix (just in case)
+  if(/^bearer\s+/i.test(t)) t = t.replace(/^bearer\s+/i,"").trim();
+  // strip wrapping quotes
+  if((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))){
+    t = t.slice(1,-1).trim();
+  }
+  return t;
+}
+function isLikelyToken(t){
+  t = normalizeTokenString(t);
+  if(!t) return false;
+
+  // reject common bad cache strings
+  if(/^cache_user:/i.test(t)) return false;
+  if(/^cache:/i.test(t)) return false;
+
+  // reject "looks like username" (too short and only a-z0-9_)
+  if(/^[a-z0-9_]{1,15}$/i.test(t)) return false;
+
+  // allow JWT
+  if(/^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/.test(t)) return true;
+
+  // allow UUID
+  if(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(t)) return true;
+
+  // allow opaque token (avoid whitespace / angle brackets)
+  if(t.length >= 16 && !/[\s<>]/.test(t)) return true;
+
+  return false;
+}
+function isTokenInvalidError(e){
+  const m = String(e?.message||"").toUpperCase();
+  return (
+    m.includes("TOKEN_INVALID") ||
+    m.includes("INVALID_TOKEN") ||
+    m.includes("TOKEN EXPIRED") ||
+    m.includes("EXPIRED_TOKEN") ||
+    m.includes("SESSION_EXPIRED") ||
+    m.includes("UNAUTHORIZED")
+  );
+}
+
+function setToken(t){
+  t = normalizeTokenString(t);
   if(!t) return;
+  if(!isLikelyToken(t)) return; // don't persist garbage
 
   for(const k of TOKEN_KEYS){
     try{ localStorage.setItem(k, t); }catch{}
@@ -538,6 +585,14 @@ function getToken(){
       if(q2) t = q2;
     }
   }catch{}
+
+  t = normalizeTokenString(t);
+
+  // ✅ if token is garbage (ex: cache_user:tuankhoi), wipe it immediately
+  if(t && !isLikelyToken(t)){
+    clearToken();
+    return "";
+  }
 
   if(t) setToken(t); // migrate/sync all
   return t;
@@ -647,6 +702,8 @@ function pickToken(out){
     o.access_token || o.accessToken ||
     o.app_token || o.appToken ||
     o.tk || o.jwt || o.bearer ||
+    o.token_hash || o.tokenHash ||          /* ✅ add token_hash variants */
+    o.session || o.session_id || o.sessionId ||
     ""
   );
 }
@@ -705,36 +762,47 @@ function pickPinLen(ck, username){
 /* ================== API (FIX COMPAT) ================== */
 const API = {
   me: async (token)=>{
-    const t = String(token||"").trim();
+    const t = normalizeTokenString(token||"");
     const out = await rpcTry(
-      ["api_me","me","app_me","api_whoami","api_profile","whoami"],
+      [
+        "api_me_v2","me_v2","app_me_v2",
+        "api_me","me","app_me",
+        "api_whoami","api_profile","whoami"
+      ],
       [
         {p_token:t},
         {token:t},
         {p_session:t},
         {session:t},
         {session_token:t},
-        {p_session_token:t}
+        {p_session_token:t},
+        {p_token_hash:t},
+        {token_hash:t},
+        {p_raw_token:t},
+        {raw_token:t}
       ]
     );
     // normalize về {ok, me, token?}
     return {
       ok: asOk(out),
       me: pickMe(out),
-      token: pickToken(out) || ""
+      token: normalizeTokenString(pickToken(out) || "")
     };
   },
 
   logout: async (token)=>{
-    const t = String(token||"").trim();
+    const t = normalizeTokenString(token||"");
     const out = await rpcTry(
-      ["api_logout","logout","api_signout","signout","api_log_out"],
+      ["api_logout_v2","logout_v2","api_logout","logout","api_signout","signout","api_log_out"],
       [
         {p_token:t},
         {token:t},
         {p_session:t},
         {session:t},
-        {session_token:t}
+        {session_token:t},
+        {p_session_token:t},
+        {p_token_hash:t},
+        {token_hash:t}
       ]
     );
     return { ok: asOk(out) || true };
@@ -743,7 +811,7 @@ const API = {
   checkUsername: async (username)=>{
     const u = normUsername(username);
     const out = await rpcTry(
-      ["api_check_username","check_username","api_user_exists","api_check_user","api_check_username_v2"],
+      ["api_check_username_v2","api_check_username","check_username","api_user_exists","api_check_user"],
       [
         {p_username:u},
         {username:u},
@@ -761,7 +829,7 @@ const API = {
     const u = normUsername(username);
     const p = String(pin||"");
     const out = await rpcTry(
-      ["api_login","login","api_signin","signin","api_login_user","api_login_v2"],
+      ["api_login_v2","login_v2","api_login","login","api_signin","signin","api_login_user"],
       [
         {p_username:u, p_pin:p},
         {username:u, pin:p},
@@ -778,7 +846,7 @@ const API = {
     const u = normUsername(username);
     const p = String(pin||"");
     const out = await rpcTry(
-      ["api_register","register","api_signup","signup","api_create_user","api_register_v2"],
+      ["api_register_v2","register_v2","api_register","register","api_signup","signup","api_create_user"],
       [
         {p_username:u, p_pin:p},
         {username:u, pin:p},
@@ -824,10 +892,10 @@ const API = {
 
   // đổi username: thử nhiều biến thể args / function name (không sửa SQL)
   changeUsername: async (token,newU)=>{
-    const t = String(token||"").trim();
+    const t = normalizeTokenString(token||"");
     const u = normUsername(newU);
     return await rpcTry(
-      ["api_change_username","api_rename_username","api_update_username","change_username","rename_username"],
+      ["api_change_username_v2","api_change_username","api_rename_username","api_update_username","change_username","rename_username"],
       [
         {p_token:t, p_new_username:u},
         {p_token:t, p_username:u},
@@ -835,17 +903,19 @@ const API = {
         {token:t, username:u},
         {session_token:t, new_username:u},
         {p_session_token:t, p_new_username:u},
+        {p_token_hash:t, p_new_username:u},
+        {token_hash:t, new_username:u}
       ]
     );
   },
 
   // đổi pin: thử nhiều biến thể args / function name (không sửa SQL)
   changePin: async (token,oldPin,newPin)=>{
-    const t = String(token||"").trim();
+    const t = normalizeTokenString(token||"");
     const o = String(oldPin||"");
     const n = String(newPin||"");
     return await rpcTry(
-      ["api_change_pin","api_update_pin","api_change_password","api_change_passcode","change_pin","change_password"],
+      ["api_change_pin_v2","api_change_pin","api_update_pin","api_change_password","api_change_passcode","change_pin","change_password"],
       [
         {p_token:t, p_old_pin:o, p_new_pin:n},
         {p_token:t, p_old:o, p_new:n},
@@ -853,6 +923,8 @@ const API = {
         {token:t, old:o, new:n},
         {session_token:t, old_pin:o, new_pin:n},
         {p_session_token:t, p_old_pin:o, p_new_pin:n},
+        {p_token_hash:t, p_old_pin:o, p_new_pin:n},
+        {token_hash:t, old_pin:o, new_pin:n}
       ]
     );
   }
@@ -1080,12 +1152,46 @@ function closePin(why){
 }
 
 /* ================== AUTH FLOW (AUTO ADMIN PANEL) ================== */
+function clearAuthLocal(){
+  clearToken();
+  setMeCache(null);
+  ME = null;
+  updateUserCorner();
+}
+function invalidateSessionUI(msg){
+  clearAuthLocal();
+  if(msg) toast(msg);
+}
+
 async function enterAfterAuth({ token, me, redirectNext=true }){
   if(token) setToken(token);
-  if(me && me.username){
-    ME = me;
-    setMeCache(me);
+
+  // ✅ ensure token is valid + get fresh me from api_me_v2 if missing
+  let meUse = (me && me.username) ? me : null;
+  const t = getToken();
+
+  if(t){
+    try{
+      const meOut = await API.me(t);
+      if(meOut && meOut.ok && meOut.me && meOut.me.username){
+        meUse = meOut.me;
+        if(meOut.token) setToken(meOut.token);
+      }
+    }catch(e){
+      if(isTokenInvalidError(e)){
+        invalidateSessionUI("Phiên đăng nhập không hợp lệ/hết hạn. Vui lòng đăng nhập lại.");
+        renderGate();
+        return;
+      }
+      // ignore transient errors
+    }
   }
+
+  if(meUse && meUse.username){
+    ME = meUse;
+    setMeCache(meUse);
+  }
+
   updateUserCorner();
 
   const next = redirectNext ? safeNextPath() : "";
@@ -1104,18 +1210,11 @@ async function enterAfterAuth({ token, me, redirectNext=true }){
   renderStore();
 }
 
-function clearAuthLocal(){
-  clearToken();
-  setMeCache(null);
-  ME = null;
-  updateUserCorner();
-}
-
 /* === helper: normalize login/register output === */
 function normalizeAuthOut(out){
   const o = firstObj(out) || {};
   const ok = asOk(out);
-  const token = pickToken(out);
+  const token = normalizeTokenString(pickToken(out));
   const me = pickMe(out);
   const err = o.error || o.message || o.msg || "";
   return { ok, token, me, error: err };
@@ -1156,9 +1255,8 @@ async function onPinKey(k){
 
       pinErrorPulse(out.error || "Sai mật khẩu");
     }catch(e){
-      // nếu do mismatch RPC -> báo rõ hơn
       const msg = String(e?.message||"Sai mật khẩu");
-      pinErrorPulse(msg.includes("function") ? "RPC login không khớp param/tên. Kiểm tra SQL function." : "Sai mật khẩu");
+      pinErrorPulse(msg.includes("function") ? "RPC login không khớp param/tên. Kiểm tra SQL function." : msg);
     }finally{
       PIN.submitting=false;
     }
@@ -1263,6 +1361,7 @@ function renderGate(){
         Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b>.<br/>
         - Username <b>đã có.</b> <b>Đăng nhập</b>.<br/>
         - Username <b>chưa có.</b> <b>Đăng ký</b>.<br/>
+      </div>
 
       <div style="margin-top:10px; display:grid; gap:10px;">
         <input id="nameInput" class="input" placeholder="vd: tuankhoi123" maxlength="15" autocomplete="off"/>
@@ -1304,25 +1403,19 @@ function renderGate(){
         // bỏ qua cờ reserved nếu backend trả nhầm
       } else {
         // ✅ reserved chỉ nên chặn khi KHÔNG tồn tại user thật (thường là alias cũ)
-      if(reserved === true && exists !== true){
-        toast("Username này đã bị giữ lại (đổi tên rồi).");
-        gateStatus.textContent="Thử username khác.";
-        return;
-       }
+        if(reserved === true && exists !== true){
+          toast("Username này đã bị giữ lại (đổi tên rồi).");
+          gateStatus.textContent="Thử username khác.";
+          return;
+        }
       }
 
       // Nếu exists=true thì luôn cho nhập PIN để login
-     if(exists === true){
-       if(reserved === true && u !== "tuankhoi"){
-         // optional: cảnh báo nhẹ nhưng vẫn cho login
-         toast("Username đã đăng ký, bạn muốn đăng nhập…");
-       }
-       gateStatus.textContent="Đăng nhập: nhập mật khẩu…";
-       await openPin({username:u, mode:"login", pinLen});
-       return;
-      }
-
       if(exists === true){
+        if(reserved === true && u !== "tuankhoi"){
+          // optional: cảnh báo nhẹ nhưng vẫn cho login
+          toast("Username đã đăng ký, bạn muốn đăng nhập…");
+        }
         gateStatus.textContent="Đăng nhập: nhập mật khẩu…";
         await openPin({username:u, mode:"login", pinLen});
         return;
@@ -1509,35 +1602,37 @@ async function boot(){
 
   await loadStore();
 
+  // load cached ME early (for UI only)
   ME = getMeCache();
   updateUserCorner();
 
   const t = getToken();
 
-  if(t && (!ME || !ME.username)){
+  // ✅ Always verify token if present (prevents “ME cache but token invalid”)
+  if(t){
     try{
       const meOut = await API.me(t);
       if(meOut && meOut.ok && meOut.me && meOut.me.username){
         ME = meOut.me;
         setMeCache(ME);
-
-        // nếu me() trả token mới thì sync
-        if(meOut.token){
-          setToken(meOut.token);
-        }else{
-          setToken(t);
-        }
+        if(meOut.token) setToken(meOut.token);
+        else setToken(t);
+      }else{
+        // no valid me -> treat as invalid session
+        invalidateSessionUI("Phiên đăng nhập không hợp lệ/hết hạn. Vui lòng đăng nhập lại.");
       }
-    }catch{}
-  }else if(t){
-    // sync token to cookies/window.name for admin.html to pick up reliably
-    setToken(t);
+    }catch(e){
+      if(isTokenInvalidError(e)){
+        invalidateSessionUI("Phiên đăng nhập không hợp lệ/hết hạn. Vui lòng đăng nhập lại.");
+      }else{
+        // transient error: keep cache UI but do not trust token
+        // (do nothing)
+      }
+    }
   }
 
   updateUserCorner();
 
-  // Không auto chuyển /admin khi chỉ mở trang chủ.
-  // Chỉ auto chuyển khi vừa login (enterAfterAuth).
   if(ME && ME.username) renderStore();
   else renderGate();
 }
