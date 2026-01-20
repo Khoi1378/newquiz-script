@@ -426,7 +426,7 @@
           </div>
         </div>
 
-        <!-- ✅ FIX: luôn có chỗ đặt nút logout (hiện khi đã auth ok) -->
+        <!-- ✅ luôn có chỗ đặt nút logout -->
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
           <div class="pill" id="mePill">Checking…</div>
           <button class="btn btn-ghost" id="btnLogoutFixed" type="button" style="display:none;box-shadow:none">Logout</button>
@@ -748,22 +748,22 @@ const STORAGE_BUCKET = "quiz";
 /* ================== TOKEN STORAGE (match index.html) ================== */
 const TOKEN_KEYS = ["tk_token_v2","tk_token_v1","tk_token"];
 const TOKEN_COOKIES = ["tk_token_v2","tk_token_v1","tk_token"];
-const ME_CACHE_KEY = "tk_me_v2"; // ✅ match index.html cache
+const ME_CACHE_KEY = "tk_me_v2"; // match cache
 
-/* ================== RPC NAMES (try multiple) ================== */
+/* ================== RPC NAMES (PREFER v2 FIRST) ================== */
 const RPC = {
-  me: ["api_me","api_me_v0","api_me_v1","api_me_v2"],
-  logout: ["api_logout","api_logout_v0","api_logout_v1","api_logout_v2"],
+  me: ["api_me_v2","api_me_v1","api_me","api_me_v0"],
+  logout: ["api_logout_v2","api_logout_v1","api_logout","api_logout_v0"],
 
-  adminUpsertQuiz: ["admin_upsert_quiz","admin_upsert_quiz_v1","admin_upsert_quiz_v0"],
-  adminListQuizzes: ["admin_list_quizzes","admin_list_quizzes_v1","admin_list_quizzes_v0"],
-  adminDeleteQuiz: ["admin_delete_quiz","admin_delete_quiz_v1","admin_delete_quiz_v0"],
-  adminGetQuestions: ["admin_get_questions","admin_get_questions_v1","admin_get_questions_v0"],
-  adminReplaceQuestions: ["admin_replace_questions_v3","admin_replace_questions_v3_v0","admin_replace_questions","admin_replace_questions_v1","admin_replace_questions_v0"],
-  adminListUsers: ["admin_list_users","admin_list_users_v1","admin_list_users_v0"],
-  adminDeleteUser: ["admin_delete_user","admin_delete_user_v1","admin_delete_user_v0"],
-  adminForceRename: ["admin_force_rename","admin_force_rename_v1","admin_force_rename_v0"],
-  adminForceSetPin: ["admin_force_set_pin","admin_force_set_pin_v1","admin_force_set_pin_v0"]
+  adminUpsertQuiz: ["admin_upsert_quiz_v2","admin_upsert_quiz_v1","admin_upsert_quiz","admin_upsert_quiz_v0"],
+  adminListQuizzes: ["admin_list_quizzes_v2","admin_list_quizzes_v1","admin_list_quizzes","admin_list_quizzes_v0"],
+  adminDeleteQuiz: ["admin_delete_quiz_v2","admin_delete_quiz_v1","admin_delete_quiz","admin_delete_quiz_v0"],
+  adminGetQuestions: ["admin_get_questions_v2","admin_get_questions_v1","admin_get_questions","admin_get_questions_v0"],
+  adminReplaceQuestions: ["admin_replace_questions_v3_v2","admin_replace_questions_v3","admin_replace_questions_v3_v0","admin_replace_questions","admin_replace_questions_v1","admin_replace_questions_v0"],
+  adminListUsers: ["admin_list_users_v2","admin_list_users_v1","admin_list_users","admin_list_users_v0"],
+  adminDeleteUser: ["admin_delete_user_v2","admin_delete_user_v1","admin_delete_user","admin_delete_user_v0"],
+  adminForceRename: ["admin_force_rename_v2","admin_force_rename_v1","admin_force_rename","admin_force_rename_v0"],
+  adminForceSetPin: ["admin_force_set_pin_v2","admin_force_set_pin_v1","admin_force_set_pin","admin_force_set_pin_v0"]
 };
 
 /* ================== UI HELPERS ================== */
@@ -790,6 +790,20 @@ async function requestPersistentStorage(){
   }catch{}
 }
 
+/* ===== URL token capture (optional, harmless) ===== */
+function captureTokenFromUrl(){
+  try{
+    const u = new URL(location.href);
+    const t = String(u.searchParams.get("token") || u.searchParams.get("tk") || "").trim();
+    if(t){
+      setToken(t);
+      u.searchParams.delete("token");
+      u.searchParams.delete("tk");
+      history.replaceState({}, "", u.pathname + (u.search ? u.search : "") + u.hash);
+    }
+  }catch{}
+}
+
 /* ===== cookies helpers ===== */
 function cookieDomainHint(){
   const host = String(location.hostname||"").trim();
@@ -803,7 +817,8 @@ function setCookie(name, value){
   const v = encodeURIComponent(String(value||""));
   const maxAge = 60*60*24*365*20;
   const base = cookieDomainHint();
-  const common = `${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
+  const secure = (location.protocol === "https:") ? "; Secure" : "";
+  const common = `${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax${secure}`;
   document.cookie = common;
   if(base && base !== location.hostname){
     document.cookie = `${common}; Domain=${base}`;
@@ -823,9 +838,10 @@ function getCookie(name){
 }
 function delCookie(name){
   const base = cookieDomainHint();
-  document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
+  const secure = (location.protocol === "https:") ? "; Secure" : "";
+  document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax${secure}`;
   if(base && base !== location.hostname){
-    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax; Domain=${base}`;
+    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax${secure}; Domain=${base}`;
   }
 }
 
@@ -929,6 +945,7 @@ async function rpc(fn, args){
   const url = `${SUPABASE_URL}/rest/v1/rpc/${fn}`;
   const res = await fetch(url,{
     method:"POST",
+    cache:"no-store",
     headers:{
       "apikey": SUPABASE_ANON_KEY,
       "Authorization":"Bearer " + SUPABASE_ANON_KEY,
@@ -998,7 +1015,15 @@ function tokenArgsVariants(extra){
 
 async function callRpc(key, extra){
   const fns = RPC[key] || [key];
-  return await rpcTry(fns, tokenArgsVariants(extra));
+  const out = await rpcTry(fns, tokenArgsVariants(extra));
+
+  if(out && typeof out === "object" && out.ok === false){
+    const err = new Error(String(out.error || "RPC error"));
+    err.code = out.code || "RPC_ERROR";
+    err.isAuth = /TOKEN|AUTH|LOGIN|EXPIRED/i.test(String(err.code) + " " + String(out.error||""));
+    throw err;
+  }
+  return out;
 }
 
 /* ================== DOM ================== */
@@ -1046,8 +1071,8 @@ function renderGateError(err){
     </div>
     <div class="muted" style="margin-top:8px;line-height:1.35">
       ${who}
-      Lỗi khi gọi <code>${fn || "api_me"}</code>: <code>${msg}</code><br/>
-      <span class="muted">Quan trọng:</span> Admin panel <b>không tự xóa token</b> nữa. Bạn có thể bấm Retry khi backend ổn lại.
+      Lỗi khi gọi <code>${fn || "api_me_v2"}</code>: <code>${msg}</code><br/>
+      <span class="muted">Quan trọng:</span> Admin panel <b>không tự xóa token</b>. Bạn có thể bấm Retry khi backend ổn lại.
     </div>
     <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
       <button class="btn" type="button" id="btnRetryGate">Retry</button>
@@ -1162,7 +1187,6 @@ async function gateCheck(){
     app.style.display = "";
     return true;
   }catch(e){
-    // ✅ FIX: KHÔNG xóa token tự động nữa
     mePill.innerHTML = `Token có thể lỗi / backend đang lỗi`;
     renderGateError(e);
     return false;
@@ -1202,7 +1226,7 @@ async function refreshMeSilent(){
       }
     }
   }catch{
-    // không làm gì: tránh “văng” chỉ vì lỗi tạm thời
+    // silent
   }
 }
 function startKeepalive(){
@@ -1222,6 +1246,7 @@ async function uploadToBucket(bucket, path, blob, contentType){
   const url = `${SUPABASE_URL}/storage/v1/object/${bucket}/${path.split("/").map(encodeURIComponent).join("/")}`;
   const res = await fetch(url, {
     method: "POST",
+    cache: "no-store",
     headers: {
       "apikey": SUPABASE_ANON_KEY,
       "Authorization": "Bearer " + SUPABASE_ANON_KEY,
@@ -2016,6 +2041,7 @@ qAllHost.addEventListener("click", async (e)=>{
         const delUrl = `${SUPABASE_URL}/storage/v1/object/${encodeURIComponent(STORAGE_BUCKET)}/${path.split("/").map(encodeURIComponent).join("/")}`;
         const res = await fetch(delUrl,{
           method:"DELETE",
+          cache:"no-store",
           headers:{
             "apikey": SUPABASE_ANON_KEY,
             "Authorization":"Bearer " + SUPABASE_ANON_KEY
@@ -2048,7 +2074,7 @@ qAllHost.addEventListener("click", async (e)=>{
 },{passive:true});
 
 function scrollToQuestion(i){
-  const el = qAllHost.querySelector(\`.qCard[data-i="\${i}"]\`);
+  const el = qAllHost.querySelector(`.qCard[data-i="${i}"]`);
   if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
 }
 
@@ -2470,6 +2496,15 @@ async function resetPin(id){
   await reloadUsers();
 }
 
+/* ================== Tabs / Views ================== */
+function setTab(which){
+  const isQ = which==="q";
+  tabQuizzes.classList.toggle("active", isQ);
+  tabUsers.classList.toggle("active", !isQ);
+  viewQuizzes.style.display = isQ ? "" : "none";
+  viewUsers.style.display = isQ ? "none" : "";
+}
+
 /* ================== LaTeX modal ================== */
 const latexModalBack = document.getElementById("latexModalBack");
 const latexGrid = document.getElementById("latexGrid");
@@ -2594,6 +2629,7 @@ updateLatexPreview();
 /* ================== BOOT ================== */
 async function boot(){
   await requestPersistentStorage();
+  captureTokenFromUrl();
 
   const ok = await gateCheck();
   if(ok){
