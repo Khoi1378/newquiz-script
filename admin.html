@@ -2320,7 +2320,7 @@ async function renameUser(id){
   await reloadUsers();
 }
 async function resetPin(id){
-  const pin = prompt("Set new PIN (6 digits, ví dụ 072008).");
+  const pin = prompt("Tạo PIN mới (4 digits).");
   if(!pin) return;
   const token = getToken();
   await rpc(RPC.adminForceSetPin,{p_token:token, p_user_id:id, p_new_pin:pin});
