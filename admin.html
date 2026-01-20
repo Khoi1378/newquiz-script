@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="vi">
 <head>
@@ -1851,44 +1852,13 @@ qAllHost.addEventListener("click",(e)=>{
     return;
   }
   if(act==="removeimg"){
-  if(ACTIVE_Q_INDEX<0) return;
-
-  const ok = confirm("Xóa ảnh này khỏi storage luôn?");
-  if(!ok) return;
-
-  ensureMeta(QUESTIONS[ACTIVE_Q_INDEX]);
-  const path = String(QUESTIONS[ACTIVE_Q_INDEX].meta.image_path || "").trim();
-
-  // nếu có path thì xóa thật trong bucket
-  if(path){
-    try{
-      const delUrl = `${SUPABASE_URL}/storage/v1/object/${encodeURIComponent(STORAGE_BUCKET)}/${path.split("/").map(encodeURIComponent).join("/")}`;
-      const res = await fetch(delUrl,{
-        method:"DELETE",
-        headers:{
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization":"Bearer " + SUPABASE_ANON_KEY
-        }
-      });
-      if(!res.ok){
-        const t = await res.text().catch(()=> "");
-        throw new Error(`Xóa ảnh thất bại (${res.status}): ${t || "check storage policy"}`);
-      }
-    }catch(e){
-      toast(e.message || "Lỗi xóa ảnh");
-      return;
-    }
+    ensureMeta(QUESTIONS[i]);
+    QUESTIONS[i].meta.image_url = "";
+    QUESTIONS[i].meta.image_path = "";
+    renderAllQuestions();
+    toast("Đã xóa ảnh (chỉ xóa link)");
+    return;
   }
-
-  // xóa link/meta sau khi xóa storage ok (hoặc không có path)
-  QUESTIONS[ACTIVE_Q_INDEX].meta.image_url = "";
-  QUESTIONS[ACTIVE_Q_INDEX].meta.image_path = "";
-  renderActiveEditor();
-  renderSidebar();
-  toast("Đã xóa ảnh");
-  return;
-}
-
 
   if(act==="openLatex"){
     ACTIVE_Q_INDEX = i;
