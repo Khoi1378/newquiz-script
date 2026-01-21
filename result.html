@@ -738,7 +738,7 @@ function renderLeaderboard(rows, myUserId, errMsg){
 
   const myIndex = myUserId ? top.findIndex(r => String(r.user_id) === String(myUserId)) : -1;
   const myRankLine = (myIndex >= 0)
-    ? `<div class="resultline" style="margin-top:0"><b>Vị trí của bạn:</b> Bạn đang ở hạng <b>#${myIndex+1}</b> trong bảng đang hiển thị.</div>`
+    ? `<div class="resultline" style="margin-top:0"><b>Vị trí của bạn:</b> Bạn đang ở hạng <b>#${myIndex+1}</b> trong bảng xếp hạng.</div>`
     : `<div class="resultline" style="margin-top:0">Bạn chưa nằm trong top đang hiển thị.</div>`;
 
   const body = top.map((r, index)=>{
@@ -773,7 +773,7 @@ function renderLeaderboard(rows, myUserId, errMsg){
       <div class="meta"><span class="idx">TOP</span></div>
     </div>
     <div class="muted" style="margin-top:6px">
-      Xếp theo <b>điểm cao nhất</b> của mỗi <b>người</b>. (Tính theo DB)
+      Xếp theo <b>điểm cao nhất</b> của mỗi <b>người</b>.
     </div>
     <div style="margin-top:10px">${myRankLine}</div>
     <div style="overflow:auto; margin-top:10px;">
