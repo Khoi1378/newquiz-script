@@ -1,1551 +1,287 @@
 <!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
-  <title>tuankhoi.site - Quiz Store</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
-
-  <style>
-    :root {
-      --bg1:#ffecd2; --bg2:#fcb69f;
-      --card:#fff; --text:#1f2937; --muted:#6b7280;
-      --primary:#7c3aed; --ok:#16a34a; --bad:#dc2626;
-      --border:#e5e7eb; --soft:#f8fafc;
-      --shadow:0 14px 40px rgba(0,0,0,.10);
-      --radius:18px;
-      --admin:#2563eb;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    html{-webkit-text-size-adjust:100%}
-    body{
-      margin:0;
-      font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(1200px 600px at 20% 10%, #fff 0%, rgba(255,255,255,0) 55%),
-        linear-gradient(120deg,var(--bg1) 0%, var(--bg2) 100%);
-      overflow:hidden;
-      touch-action: pan-x pan-y;
-    }
-
-    /* remove underline globally */
-    a{color:inherit;text-decoration:none}
-    a:hover,a:active,a:visited{text-decoration:none}
-    a:focus-visible{outline:3px solid rgba(124,58,237,.25); outline-offset:3px; border-radius:14px}
-
-    .btn,.pinKey,.btn-x{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-
-    #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px;touch-action:pan-y}
-    .wrap{max-width:980px;margin:0 auto;padding:0 14px}
-
-    .userCorner{
-      position:fixed;top:10px;left:12px;z-index:10010;
-      display:none;align-items:center;gap:8px;
-      padding:8px 10px;border-radius:999px;
-      background:rgba(255,255,255,.55);
-      border:1px solid rgba(229,231,235,.65);
-      backdrop-filter:blur(6px);
-      box-shadow:0 10px 22px rgba(0,0,0,.06);
-      user-select:none;
-      max-width:calc(100vw - 24px);
-      cursor:pointer;
-    }
-    .userCorner .name{
-      font-weight:950;font-size:.88rem;color:rgba(31,41,55,.55);
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-      max-width:58vw;
-    }
-    .userCorner .adminBadge{
-      padding:4px 8px;border-radius:999px;
-      font-weight:950;font-size:.78rem;
-      background:rgba(37,99,235,.12);
-      border:1px solid rgba(37,99,235,.35);
-      color:var(--admin);
-      white-space:nowrap;
-    }
-
-    .btn{
-      border:0;cursor:pointer;border-radius:999px;padding:10px 14px;
-      font-weight:900;font-size:.9rem;
-      transition:transform .16s ease, filter .16s ease;
-      display:inline-flex;align-items:center;gap:8px;
-      user-select:none;white-space:nowrap;
-      box-shadow:0 12px 24px rgba(0,0,0,.12);
-      background:#fff;color:#111827;border:1px solid #e5e7eb;
-    }
-    .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
-    .btn:active{transform:translateY(0)}
-    .btn-primary{
-      background:linear-gradient(135deg,#7c3aed,#fb7185);
-      color:#fff;border:0;
-      box-shadow:0 12px 24px rgba(124,58,237,.18);
-    }
-    .btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
-    .btn-danger{background:var(--bad);color:#fff;border:0}
-    .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none !important;filter:none !important}
-
-    .btn-admin{
-      background:linear-gradient(135deg,#2563eb,#22c55e);
-      color:#fff;border:0;
-      box-shadow:0 12px 24px rgba(37,99,235,.16);
-    }
-
-    .topbar{
-      margin-top:10px;
-      background:rgba(255,255,255,.86);
-      border:1px solid rgba(229,231,235,.9);
-      border-radius:18px;
-      box-shadow:0 10px 30px rgba(0,0,0,.06);
-      padding:14px;
-      display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;
-    }
-    .titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
-    .logo{
-      width:42px;height:42px;border-radius:16px;
-      background:linear-gradient(135deg,#a78bfa,#fb7185);
-      display:flex;align-items:center;justify-content:center;
-      color:#fff;font-weight:900;
-      box-shadow:0 10px 22px rgba(124,58,237,.18);
-      user-select:none;
-    }
-    .titles h1{font-size:1.02rem;margin:0;font-weight:800}
-    .titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
-
-    .actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex:1 1 320px}
-    .statusPill{
-      display:inline-flex;align-items:center;gap:8px;
-      padding:9px 12px;border-radius:999px;
-      background:rgba(255,255,255,.75);
-      border:1px solid rgba(229,231,235,.9);
-      color:rgba(31,41,55,.8);
-      font-weight:800;font-size:.9rem;
-      box-shadow:0 10px 22px rgba(0,0,0,.05);
-      user-select:none;
-      max-width:72vw;
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    }
-
-    .content{padding:12px 0 0}
-    .card{
-      background:var(--card);
-      border:2px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:14px;margin:12px 0;
-    }
-    .row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
-    .vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25}
-    .muted{color:var(--muted);font-weight:650}
-    .idx{
-      font-size:.78rem;font-weight:900;
-      padding:6px 10px;border-radius:999px;
-      background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;
-      white-space:nowrap;
-    }
-    .badge-open{
-      background:#ecfdf5;color:#065f46;border-color:#a7f3d0;
-    }
-    .badge-code{
-      background:#fff7ed;color:#9a3412;border-color:#fed7aa;
-    }
-    .badge-pin{
-      background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe;
-    }
-
-    .input{
-      width:100%;
-      border-radius:14px;border:2px solid #e5e7eb;
-      padding:11px 12px;font-size:.95rem;font-weight:700;
-      outline:none;background:var(--soft);
-      transition:border-color .15s ease, box-shadow .15s ease;
-    }
-    .input:focus{
-      border-color:rgba(124,58,237,.55);
-      box-shadow:0 0 0 5px rgba(124,58,237,.10);
-      background:#fff;
-    }
-
-    .modal-backdrop{
-      position:fixed;inset:0;background:rgba(0,0,0,.35);
-      display:none;align-items:center;justify-content:center;
-      padding:16px;z-index:20000;
-    }
-    .modal-backdrop.show{display:flex}
-    #registerBackdrop{z-index:20015}
-    #profileBackdrop{z-index:20030}
-    #pinBackdrop{z-index:20040}
-
-    .modal{
-      width:100%;max-width:620px;
-      background:#fff;border-radius:18px;border:1px solid #e5e7eb;
-      box-shadow:0 20px 60px rgba(0,0,0,.18);
-      padding:14px;max-height:82vh;overflow:auto;
-      -webkit-overflow-scrolling:touch;
-    }
-    .modal h3{margin:4px 0 6px;font-size:1.02rem}
-    .modal p{margin:0 0 12px;color:var(--muted);font-weight:650;font-size:.92rem;line-height:1.35}
-    .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
-
-    .xclose{position:sticky;top:0;display:flex;justify-content:flex-end;z-index:2;margin-bottom:4px}
-    .btn-x{
-      width:56px;height:56px;border-radius:16px;
-      border:1px solid #e5e7eb;background:#fff;cursor:pointer;
-      font-weight:1000;font-size:1.8rem;line-height:1;
-      box-shadow:0 12px 24px rgba(0,0,0,.10);
-    }
-
-    .toast{
-      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
-      background:rgba(17,24,39,.92);color:#fff;
-      padding:10px 12px;border-radius:14px;
-      font-weight:800;font-size:.9rem;
-      opacity:0;pointer-events:none;
-      transition:opacity .18s ease, transform .18s ease;
-      max-width:calc(100% - 28px);
-      z-index:20050;text-align:center;
-    }
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
-
-    /* PIN keypad */
-    .pinWrap{display:grid;gap:12px}
-    .pinDots{
-      display:flex;justify-content:center;gap:10px;
-      padding:8px 0 2px;user-select:none;
-    }
-    .dot{
-      width:14px;height:14px;border-radius:999px;
-      border:2px solid #e5e7eb;background:#fff;
-      box-shadow:0 10px 22px rgba(0,0,0,.08);
-    }
-    .dot.filled{
-      background:linear-gradient(135deg,#7c3aed,#fb7185);
-      border-color:rgba(124,58,237,.25);
-    }
-    .pinKeypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .pinKey{
-      height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;
-      font-weight:1000;font-size:1.25rem;cursor:pointer;
-      box-shadow:0 10px 22px rgba(0,0,0,.08);
-      transition:transform .12s ease, filter .12s ease;
-      user-select:none;
-    }
-    .pinKey:hover{transform:translateY(-1px);filter:brightness(.99)}
-    .pinKey:active{transform:translateY(0)}
-    .pinKey.small{font-size:.95rem;font-weight:950;letter-spacing:.02em}
-    .pinNote{text-align:center;color:var(--muted);font-weight:750;font-size:.9rem;line-height:1.35}
-    @keyframes shakeX{0%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-4px)}90%{transform:translateX(4px)}100%{transform:translateX(0)}}
-    .pinWrap.shake{animation:shakeX .5s ease}
-    .pinDots.error .dot{border-color:rgba(220,38,38,.65)}
-    .pinDots.error .dot.filled{
-      background:linear-gradient(135deg,#fca5a5,#dc2626);
-      border-color:rgba(220,38,38,.55);
-    }
-    .pinNote.error{color:var(--bad)}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    @media(max-width:520px){.grid2{grid-template-columns:1fr}}
-    .adminBadgeInline{
-      padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;
-      background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);
-      color:var(--admin);white-space:nowrap;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
+<title>tuankhoi.site - Quiz Store</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg1:#ffecd2;--bg2:#fcb69f;--card:#fff;--text:#1f2937;--muted:#6b7280;--primary:#7c3aed;--ok:#16a34a;--bad:#dc2626;--border:#e5e7eb;--soft:#f8fafc;--shadow:0 14px 40px rgba(0,0,0,.10);--radius:18px;--admin:#2563eb}
+*{box-sizing:border-box}
+html,body{height:100%}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:radial-gradient(1200px 600px at 20% 10%,#fff 0%,rgba(255,255,255,0) 55%),linear-gradient(120deg,var(--bg1) 0%,var(--bg2) 100%);overflow:hidden;touch-action:pan-x pan-y}
+a{color:inherit;text-decoration:none}
+a:hover,a:active,a:visited{text-decoration:none}
+a:focus-visible{outline:3px solid rgba(124,58,237,.25);outline-offset:3px;border-radius:14px}
+.btn,.pinKey,.btn-x{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px;touch-action:pan-y}
+.wrap{max-width:980px;margin:0 auto;padding:0 14px}
+.userCorner{position:fixed;top:10px;left:12px;z-index:10010;display:none;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.55);border:1px solid rgba(229,231,235,.65);backdrop-filter:blur(6px);box-shadow:0 10px 22px rgba(0,0,0,.06);user-select:none;max-width:calc(100vw - 24px);cursor:pointer}
+.userCorner .name{font-weight:950;font-size:.88rem;color:rgba(31,41,55,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:58vw}
+.userCorner .adminBadge{padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin);white-space:nowrap}
+.btn{border:0;cursor:pointer;border-radius:999px;padding:10px 14px;font-weight:900;font-size:.9rem;transition:transform .16s ease,filter .16s ease;display:inline-flex;align-items:center;gap:8px;user-select:none;white-space:nowrap;box-shadow:0 12px 24px rgba(0,0,0,.12);background:#fff;color:#111827;border:1px solid #e5e7eb}
+.btn:hover{transform:translateY(-1px);filter:brightness(.98)}
+.btn:active{transform:translateY(0)}
+.btn-primary{background:linear-gradient(135deg,#7c3aed,#fb7185);color:#fff;border:0;box-shadow:0 12px 24px rgba(124,58,237,.18)}
+.btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
+.btn-danger{background:var(--bad);color:#fff;border:0}
+.btn[disabled]{opacity:.6;cursor:not-allowed;transform:none !important;filter:none !important}
+.btn-admin{background:linear-gradient(135deg,#2563eb,#22c55e);color:#fff;border:0;box-shadow:0 12px 24px rgba(37,99,235,.16)}
+.topbar{margin-top:10px;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.9);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.06);padding:14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
+.logo{width:42px;height:42px;border-radius:16px;background:linear-gradient(135deg,#a78bfa,#fb7185);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;box-shadow:0 10px 22px rgba(124,58,237,.18);user-select:none}
+.titles h1{font-size:1.02rem;margin:0;font-weight:800}
+.titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
+.actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex:1 1 320px;flex-wrap:wrap}
+.statusPill{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;background:rgba(255,255,255,.75);border:1px solid rgba(229,231,235,.9);color:rgba(31,41,55,.8);font-weight:800;font-size:.9rem;box-shadow:0 10px 22px rgba(0,0,0,.05);user-select:none;max-width:72vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.content{padding:12px 0 0}
+.card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin:12px 0}
+.row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25}
+.muted{color:var(--muted);font-weight:650}
+.idx{font-size:.78rem;font-weight:900;padding:6px 10px;border-radius:999px;background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;white-space:nowrap}
+.badge-open{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
+.badge-code{background:#fff7ed;color:#9a3412;border-color:#fed7aa}
+.badge-pin{background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe}
+.input{width:100%;border-radius:14px;border:2px solid #e5e7eb;padding:11px 12px;font-size:.95rem;font-weight:700;outline:none;background:var(--soft);transition:border-color .15s ease,box-shadow .15s ease}
+.input:focus{border-color:rgba(124,58,237,.55);box-shadow:0 0 0 5px rgba(124,58,237,.10);background:#fff}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:20000}
+.modal-backdrop.show{display:flex}
+#registerBackdrop{z-index:20015}
+#profileBackdrop{z-index:20030}
+#pinBackdrop{z-index:20040}
+#confirmBackdrop{z-index:20045}
+.modal{width:100%;max-width:620px;background:#fff;border-radius:18px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,.18);padding:14px;max-height:82vh;overflow:auto;-webkit-overflow-scrolling:touch}
+.modal h3{margin:4px 0 6px;font-size:1.02rem}
+.modal p{margin:0 0 12px;color:var(--muted);font-weight:650;font-size:.92rem;line-height:1.35}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.xclose{position:sticky;top:0;display:flex;justify-content:flex-end;z-index:2;margin-bottom:4px}
+.btn-x{width:56px;height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-weight:1000;font-size:1.8rem;line-height:1;box-shadow:0 12px 24px rgba(0,0,0,.10)}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(17,24,39,.92);color:#fff;padding:10px 12px;border-radius:14px;font-weight:800;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;max-width:calc(100% - 28px);z-index:20050;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+.pinWrap{display:grid;gap:12px}
+.pinDots{display:flex;justify-content:center;gap:10px;padding:8px 0 2px;user-select:none}
+.dot{width:14px;height:14px;border-radius:999px;border:2px solid #e5e7eb;background:#fff;box-shadow:0 10px 22px rgba(0,0,0,.08)}
+.dot.filled{background:linear-gradient(135deg,#7c3aed,#fb7185);border-color:rgba(124,58,237,.25)}
+.pinKeypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pinKey{height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;font-weight:1000;font-size:1.25rem;cursor:pointer;box-shadow:0 10px 22px rgba(0,0,0,.08);transition:transform .12s ease,filter .12s ease;user-select:none}
+.pinKey:hover{transform:translateY(-1px);filter:brightness(.99)}
+.pinKey:active{transform:translateY(0)}
+.pinKey.small{font-size:.95rem;font-weight:950;letter-spacing:.02em}
+.pinNote{text-align:center;color:var(--muted);font-weight:750;font-size:.9rem;line-height:1.35}
+@keyframes shakeX{0%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-4px)}90%{transform:translateX(4px)}100%{transform:translateX(0)}}
+.pinWrap.shake{animation:shakeX .5s ease}
+.pinDots.error .dot{border-color:rgba(220,38,38,.65)}
+.pinDots.error .dot.filled{background:linear-gradient(135deg,#fca5a5,#dc2626);border-color:rgba(220,38,38,.55)}
+.pinNote.error{color:var(--bad)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:520px){.grid2{grid-template-columns:1fr}}
+.adminBadgeInline{padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin);white-space:nowrap}
+</style>
 </head>
-
 <body>
-  <div class="userCorner" id="userCorner" title="Bấm để mở tài khoản">
-    <span class="name" id="userCornerName">—</span>
-    <span class="adminBadge" id="userCornerAdmin" style="display:none;">ADMIN</span>
-  </div>
-
-  <div id="shell">
-    <div class="wrap">
-      <div class="topbar">
-        <div class="titlebox">
-          <div class="logo">Hi!</div>
-          <div class="titles">
-            <h1>Quiz Store</h1>
-            <div class="tiny">Chọn quiz để làm</div>
-          </div>
-        </div>
-
-        <div class="actions">
-          <div class="statusPill" id="statusPill">—</div>
-          <a href="/admin" id="adminLinkTop" style="display:none;">
-            <button class="btn btn-admin">Panel</button>
-          </a>
-        </div>
-      </div>
-
-      <div class="content" id="content"></div>
-    </div>
-  </div>
-
-  <div class="toast" id="toast"></div>
-
-  <!-- Register prompt -->
-  <div class="modal-backdrop" id="registerBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
-      <h3 id="registerTitle">Đăng ký tài khoản?</h3>
-      <p id="registerDesc">Username chưa đăng ký. Bạn có muốn đăng ký không?</p>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="btnRegisterNo">Nhập lại</button>
-        <button class="btn btn-primary" id="btnRegisterYes">Đăng ký</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PIN keypad -->
-  <div class="modal-backdrop" id="pinBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
-      <div class="xclose">
-        <button class="btn-x" id="btnClosePin" aria-label="Đóng">✕</button>
-      </div>
-      <h3 id="pinTitle">Mật khẩu</h3>
-      <p id="pinDesc">Nhập mật khẩu số.</p>
-
-      <div class="pinWrap" id="pinWrap">
-        <div class="pinDots" id="pinDots"></div>
-        <div class="pinKeypad" id="pinKeypad"></div>
-        <div class="pinNote" id="pinNote"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Profile modal -->
-  <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
-      <div class="xclose">
-        <button class="btn-x" id="btnCloseProfile" aria-label="Đóng">✕</button>
-      </div>
-      <h3 id="profileTitle">Tài khoản</h3>
-      <p id="profileSub">Quản lý username & mật khẩu.</p>
-
-      <div class="card" style="margin:10px 0 0; box-shadow:none;">
-        <div class="row1">
-          <p class="vi" style="margin:0">Username: <b id="profileUsername">—</b></p>
-          <div><span class="idx" id="profileRole">USER</span></div>
-        </div>
-        <div class="muted" id="profileHint" style="margin-top:8px; line-height:1.35"></div>
-      </div>
-
-      <div style="height:1px;background:#e5e7eb;margin:12px 0;"></div>
-
-      <div class="vi" style="font-size:.98rem;margin:0 0 6px;">Mật khẩu</div>
-      <button class="btn btn-primary" id="btnChangePin" style="justify-content:center; width:100%;">🔒 Đổi mật khẩu</button>
-
-      <div style="height:1px;background:#e5e7eb;margin:12px 0;"></div>
-
-      <div class="vi" style="font-size:.98rem;margin:0 0 6px;">Đổi username</div>
-      <div class="grid2">
-        <input class="input" id="newUsername" placeholder="Username mới" maxlength="15" autocomplete="off"/>
-        <button class="btn btn-primary" id="btnSaveNewUsername" style="justify-content:center;">💾 Lưu</button>
-      </div>
-
-      <div style="height:1px;background:#e5e7eb;margin:12px 0;"></div>
-
-      <button class="btn btn-danger" id="btnLogout" style="justify-content:center; width:100%;">🚪 Đăng xuất</button>
-    </div>
-  </div>
-
+<div class="userCorner" id="userCorner" title="Bấm để mở tài khoản">
+<span class="name" id="userCornerName">—</span>
+<span class="adminBadge" id="userCornerAdmin" style="display:none;">ADMIN</span>
+</div>
+<div id="shell">
+<div class="wrap">
+<div class="topbar">
+<div class="titlebox">
+<div class="logo">Hi!</div>
+<div class="titles">
+<h1>Quiz Store</h1>
+<div class="tiny">Chọn quiz để làm</div>
+</div>
+</div>
+<div class="actions">
+<div class="statusPill" id="statusPill">—</div>
+<a href="https://www.tuankhoi.site/gift" id="giftLinkTop" style="display:none;">
+<button class="btn btn-ghost">🎁 Quà tặng</button>
+</a>
+<a href="/admin" id="adminLinkTop" style="display:none;">
+<button class="btn btn-admin">Panel</button>
+</a>
+</div>
+</div>
+<div class="content" id="content"></div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal-backdrop" id="registerBackdrop" aria-hidden="true">
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
+<h3 id="registerTitle">Đăng ký tài khoản?</h3>
+<p id="registerDesc">Username chưa đăng ký. Bạn có muốn đăng ký không?</p>
+<div class="modal-actions">
+<button class="btn btn-ghost" id="btnRegisterNo">Nhập lại</button>
+<button class="btn btn-primary" id="btnRegisterYes">Đăng ký</button>
+</div>
+</div>
+</div>
+<div class="modal-backdrop" id="pinBackdrop" aria-hidden="true">
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
+<div class="xclose">
+<button class="btn-x" id="btnClosePin" aria-label="Đóng">✕</button>
+</div>
+<h3 id="pinTitle">Mật khẩu</h3>
+<p id="pinDesc">Nhập mật khẩu số.</p>
+<div class="pinWrap" id="pinWrap">
+<div class="pinDots" id="pinDots"></div>
+<div class="pinKeypad" id="pinKeypad"></div>
+<div class="pinNote" id="pinNote"></div>
+</div>
+</div>
+</div>
+<div class="modal-backdrop" id="confirmBackdrop" aria-hidden="true">
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+<h3 id="confirmTitle">Xác nhận</h3>
+<p id="confirmMsg"></p>
+<div class="modal-actions">
+<button class="btn btn-ghost" id="btnConfirmCancel">Huỷ</button>
+<button class="btn btn-primary" id="btnConfirmOk">Xác nhận</button>
+</div>
+</div>
+</div>
+<div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+<div class="xclose">
+<button class="btn-x" id="btnCloseProfile" aria-label="Đóng">✕</button>
+</div>
+<h3 id="profileTitle">Tài khoản</h3>
+<p id="profileSub">Quản lý username & mật khẩu.</p>
+<div class="card" style="margin:10px 0 0;box-shadow:none">
+<div class="row1">
+<p class="vi" style="margin:0">Username: <b id="profileUsername">—</b></p>
+<div><span class="idx" id="profileRole">USER</span></div>
+</div>
+<div class="muted" id="profileHint" style="margin-top:8px;line-height:1.35"></div>
+</div>
+<div style="height:1px;background:#e5e7eb;margin:12px 0"></div>
+<div class="vi" style="font-size:.98rem;margin:0 0 6px">Mật khẩu</div>
+<button class="btn btn-primary" id="btnChangePin" style="justify-content:center;width:100%">🔒 Đổi mật khẩu</button>
+<div style="height:1px;background:#e5e7eb;margin:12px 0"></div>
+<div class="vi" style="font-size:.98rem;margin:0 0 6px">Đổi username</div>
+<div class="grid2">
+<input class="input" id="newUsername" placeholder="Username mới" maxlength="15" autocomplete="off">
+<button class="btn btn-primary" id="btnSaveNewUsername" style="justify-content:center">💾 Lưu</button>
+</div>
+<div style="height:1px;background:#e5e7eb;margin:12px 0"></div>
+<button class="btn btn-danger" id="btnLogout" style="justify-content:center;width:100%">🚪 Đăng xuất</button>
+</div>
+</div>
 <script>
-/* ================== CONFIG ================== */
-const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
-
-/* ================== STORAGE (match admin.html) ================== */
-const TOKEN_KEY_PRIMARY = "tk_token_v2";
-const TOKEN_KEYS = ["tk_token_v2","tk_token_v1","tk_token"];
-const TOKEN_COOKIE_PRIMARY = "tk_token_v2";
-const TOKEN_COOKIES = ["tk_token_v2","tk_token_v1","tk_token"];
-
-const ME_KEY = "tk_me_v2"; // cache để khỏi bị vòng lặp “login xong lại bắt login”
-
-/* ================== HELPERS ================== */
-function toast(msg){
-  const t=document.getElementById("toast");
-  t.textContent=String(msg||"");
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),1200);
-}
-function escapeHtml(s){
-  return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
-}
-function normUsername(u){
-  return String(u||"").trim().toLowerCase();
-}
-function validateUsername(u){
-  u = normUsername(u);
-  if(!u) return "Chưa nhập username.";
-  if(u.length>15) return "Username tối đa 15 ký tự.";
-  if(!/^[a-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z 0-9 và dấu _";
-  return null;
-}
-
-function getMeCache(){
-  try{
-    const raw = localStorage.getItem(ME_KEY);
-    if(!raw) return null;
-    const obj = JSON.parse(raw);
-    if(obj && obj.username) return obj;
-  }catch{}
-  return null;
-}
-function setMeCache(me){
-  try{
-    if(!me) localStorage.removeItem(ME_KEY);
-    else localStorage.setItem(ME_KEY, JSON.stringify(me));
-  }catch{}
-}
-
-function safeNextPath(){
-  try{
-    const u = new URL(location.href);
-    const n = (u.searchParams.get("next")||"").trim();
-    if(n.startsWith("/")) return n;
-  }catch{}
-  return "";
-}
-
-function isAdminUser(me){
-  if(!me) return false;
-  const u = String(me.username||"").toLowerCase();
-  return me.role==="admin" || u==="tuankhoi";
-}
-
-/* ===== persistent storage (optional, helps iOS/PWA) ===== */
-async function requestPersistentStorage(){
-  try{
-    if(navigator.storage && navigator.storage.persist){
-      await navigator.storage.persist();
-    }
-  }catch{}
-}
-
-/* ===== token persist (same idea as admin.html) ===== */
-function cookieDomainHint(){
-  const host = String(location.hostname||"").trim();
-  if(!host || host==="localhost" || host.endsWith(".localhost")) return "";
-  if(/^\d+\.\d+\.\d+\.\d+$/.test(host)) return "";
-  const parts = host.split(".").filter(Boolean);
-  if(parts.length < 2) return "";
-  return "." + parts.slice(-2).join(".");
-}
-function setCookie(name, value){
-  const v = encodeURIComponent(String(value||""));
-  const maxAge = 60*60*24*365*20;
-  const base = cookieDomainHint();
-  const common = `${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
-  document.cookie = common;
-  if(base && base !== location.hostname){
-    document.cookie = `${common}; Domain=${base}`;
-  }
-}
-function getCookie(name){
-  const cs = document.cookie ? document.cookie.split(";") : [];
-  let found = "";
-  for(const raw of cs){
-    const s = raw.trim();
-    if(!s) continue;
-    const eq = s.indexOf("=");
-    const k = (eq>=0 ? s.slice(0,eq) : s).trim();
-    if(k === name) found = (eq>=0 ? s.slice(eq+1) : "");
-  }
-  try{ return found ? decodeURIComponent(found) : ""; }catch{ return found || ""; }
-}
-function delCookie(name){
-  const base = cookieDomainHint();
-  document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
-  if(base && base !== location.hostname){
-    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax; Domain=${base}`;
-  }
-}
-
-function setToken(t){
-  t = String(t||"").trim();
-  if(!t) return;
-
-  for(const k of TOKEN_KEYS){
-    try{ localStorage.setItem(k, t); }catch{}
-    try{ sessionStorage.setItem(k, t); }catch{}
-  }
-  for(const c of TOKEN_COOKIES){
-    try{ setCookie(c, t); }catch{}
-  }
-  try{ window.name = "tk:" + t; }catch{}
-}
-function clearToken(){
-  for(const k of TOKEN_KEYS){
-    try{ localStorage.removeItem(k); }catch{}
-    try{ sessionStorage.removeItem(k); }catch{}
-  }
-  for(const c of TOKEN_COOKIES){
-    try{ delCookie(c); }catch{}
-  }
-  try{ if(String(window.name||"").startsWith("tk:")) window.name = ""; }catch{}
-}
-function getToken(){
-  let t = "";
-
-  // localStorage
-  for(const k of TOKEN_KEYS){
-    try{
-      t = (localStorage.getItem(k) || "").trim();
-      if(t) break;
-    }catch{}
-  }
-
-  // sessionStorage
-  if(!t){
-    for(const k of TOKEN_KEYS){
-      try{
-        t = (sessionStorage.getItem(k) || "").trim();
-        if(t) break;
-      }catch{}
-    }
-  }
-
-  // cookies
-  if(!t){
-    for(const c of TOKEN_COOKIES){
-      t = (getCookie(c) || "").trim();
-      if(t) break;
-    }
-  }
-
-  // window.name
-  if(!t){
-    const wn = String(window.name||"");
-    if(wn.startsWith("tk:")) t = wn.slice(3).trim();
-  }
-
-  // URL param / hash token (optional compat)
-  try{
-    const u = new URL(location.href);
-    if(!t){
-      const q = (u.searchParams.get("tk") || u.searchParams.get("token") || "").trim();
-      if(q) t = q;
-    }
-    if(!t && u.hash){
-      const hs = u.hash.replace(/^#/,"");
-      const p = new URLSearchParams(hs);
-      const q2 = (p.get("tk") || p.get("token") || "").trim();
-      if(q2) t = q2;
-    }
-  }catch{}
-
-  if(t) setToken(t); // migrate/sync all
-  return t;
-}
-
-/* ================== SORTING HELPERS ================== */
-function toTime(v){
-  const t = Date.parse(String(v||""));
-  return Number.isFinite(t) ? t : 0;
-}
-function sortQuizzes(list){
-  const arr = [...(list||[])];
-  arr.sort((a,b)=>{
-    const ap = a && a.pinned === true;
-    const bp = b && b.pinned === true;
-    if(ap !== bp) return bp ? 1 : -1; // pinned lên đầu
-    const at = Math.max(
-      toTime(a?.pinned_at || a?.pinnedAt),
-      toTime(a?.updated_at || a?.updatedAt),
-      toTime(a?.created_at || a?.createdAt)
-    );
-    const bt = Math.max(
-      toTime(b?.pinned_at || b?.pinnedAt),
-      toTime(b?.updated_at || b?.updatedAt),
-      toTime(b?.created_at || b?.createdAt)
-    );
-    if(at !== bt) return bt - at; // mới lên trên
-    return String(a?.quiz_id||"").localeCompare(String(b?.quiz_id||""));
-  });
-  return arr;
-}
-
-/* ================== SUPABASE (RPC + REST fallback) ================== */
-function sbHeaders(){
-  return {
-    "apikey": SUPABASE_ANON_KEY,
-    "Authorization": "Bearer " + SUPABASE_ANON_KEY,
-    "Content-Type":"application/json",
-    "Accept":"application/json"
-  };
-}
-
-async function rpc(fn, args){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{
-    method:"POST",
-    headers: sbHeaders(),
-    body: JSON.stringify(args||{})
-  });
-  const txt = await res.text();
-  let data=null;
-  try{ data = txt ? JSON.parse(txt) : null; }catch{}
-  if(!res.ok){
-    const msg = (data && (data.message||data.error||data.hint)) ? (data.message||data.error||data.hint) : txt;
-    throw new Error(msg || `RPC failed: ${fn}`);
-  }
-  return data;
-}
-
-/* === RPC try: thử nhiều function name + nhiều biến thể param === */
-async function rpcTry(fns, argsList){
-  let lastErr = null;
-  const fList = Array.isArray(fns) ? fns : [String(fns||"")].filter(Boolean);
-  const aList = (Array.isArray(argsList) && argsList.length) ? argsList : [{}];
-
-  for(const fn of fList){
-    for(const args of aList){
-      try{
-        return await rpc(fn, args || {});
-      }catch(e){
-        lastErr = e;
-      }
-    }
-  }
-  throw (lastErr || new Error("RPC failed"));
-}
-
-/* === REST SELECT fallback (khi RPC listStore không khớp) === */
-async function restSelect(pathWithQuery){
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${pathWithQuery}`,{
-    method:"GET",
-    headers: {
-      "apikey": SUPABASE_ANON_KEY,
-      "Authorization": "Bearer " + SUPABASE_ANON_KEY,
-      "Accept":"application/json"
-    }
-  });
-  const txt = await res.text();
-  let data=null;
-  try{ data = txt ? JSON.parse(txt) : null; }catch{}
-  if(!res.ok){
-    const msg = (data && (data.message||data.error||data.hint)) ? (data.message||data.error||data.hint) : txt;
-    throw new Error(msg || `REST failed`);
-  }
-  return data;
-}
-
-/* ================== NORMALIZE OUTPUT ================== */
-function firstObj(x){
-  if(Array.isArray(x)) return x[0] || null;
-  if(x && typeof x === "object") return x;
-  return null;
-}
-function pickToken(out){
-  const o = firstObj(out) || {};
-  return (
-    o.token || o.session_token || o.sessionToken ||
-    o.access_token || o.accessToken ||
-    o.app_token || o.appToken ||
-    o.tk || o.jwt || o.bearer ||
-    ""
-  );
-}
-function pickMe(out){
-  const o = firstObj(out) || {};
-  let me = o.me || o.user || o.profile || o.data || null;
-  if(Array.isArray(me)) me = me[0] || null;
-  if(me && typeof me === "object"){
-    return {
-      username: me.username || me.name || me.user || me.handle || "",
-      role: me.role || me.user_role || me.userRole || "user"
-    };
-  }
-  // một số RPC trả thẳng {username, role}
-  if(o.username){
-    return { username: o.username, role: o.role || "user" };
-  }
-  return null;
-}
-function asOk(out){
-  const o = firstObj(out) || {};
-  if(o && typeof o.ok === "boolean") return o.ok;
-  // không có ok nhưng có token thì coi như ok
-  if(!!pickToken(o)) return true;
-  // hoặc có username/me
-  if(!!pickMe(o)) return true;
-  return false;
-}
-function pickExists(ck){
-  const o = firstObj(ck) || {};
-  if(typeof o.exists === "boolean") return o.exists;
-  if(typeof o.is_exists === "boolean") return o.is_exists;
-  if(typeof o.found === "boolean") return o.found;
-  if(typeof o.available === "boolean") return !o.available; // available=true => exists=false
-  if(o.userId || o.user_id || o.id) return true;
-  if(o.ok === true && typeof o.exists === "boolean") return o.exists;
-  return null;
-}
-function pickPinLen(ck, username){
-  const u = normUsername(username);
-  if(u === "tuankhoi") return 6;
-
-  const o = firstObj(ck) || {};
-  const raw = (
-    o.pinLen ?? o.pin_len ?? o.pin_length ??
-    (o.user && (o.user.pinLen ?? o.user.pin_len ?? o.user.pin_length)) ??
-    4
-  );
-
-  let n = Number(raw) || 4;
-  if(!isFinite(n) || n < 4) n = 4;
-  if(n > 12) n = 12;
-  return n;
-}
-
-/* ================== API (FIX COMPAT) ================== */
-const API = {
-  me: async (token)=>{
-    const t = String(token||"").trim();
-    const out = await rpcTry(
-      ["api_me","me","app_me","api_whoami","api_profile","whoami"],
-      [
-        {p_token:t},
-        {token:t},
-        {p_session:t},
-        {session:t},
-        {session_token:t},
-        {p_session_token:t}
-      ]
-    );
-    // normalize về {ok, me, token?}
-    return {
-      ok: asOk(out),
-      me: pickMe(out),
-      token: pickToken(out) || ""
-    };
-  },
-
-  logout: async (token)=>{
-    const t = String(token||"").trim();
-    const out = await rpcTry(
-      ["api_logout","logout","api_signout","signout","api_log_out"],
-      [
-        {p_token:t},
-        {token:t},
-        {p_session:t},
-        {session:t},
-        {session_token:t}
-      ]
-    );
-    return { ok: asOk(out) || true };
-  },
-
-  checkUsername: async (username)=>{
-    const u = normUsername(username);
-    const out = await rpcTry(
-      ["api_check_username","check_username","api_user_exists","api_check_user","api_check_username_v2"],
-      [
-        {p_username:u},
-        {username:u},
-        {p_user:u},
-        {user:u},
-        {p_username_norm:u},
-        {username_norm:u}
-      ]
-    );
-    // pass-through; caller sẽ pickExists/pickPinLen/reserved...
-    return out;
-  },
-
-  login: async (username, pin)=>{
-    const u = normUsername(username);
-    const p = String(pin||"");
-    const out = await rpcTry(
-      ["api_login","login","api_signin","signin","api_login_user","api_login_v2"],
-      [
-        {p_username:u, p_pin:p},
-        {username:u, pin:p},
-        {p_user:u, p_pin:p},
-        {user:u, pin:p},
-        {p_username:u, p_password:p},
-        {username:u, password:p}
-      ]
-    );
-    return out;
-  },
-
-  register: async (username, pin)=>{
-    const u = normUsername(username);
-    const p = String(pin||"");
-    const out = await rpcTry(
-      ["api_register","register","api_signup","signup","api_create_user","api_register_v2"],
-      [
-        {p_username:u, p_pin:p},
-        {username:u, pin:p},
-        {p_user:u, p_pin:p},
-        {user:u, pin:p},
-        {p_username:u, p_password:p},
-        {username:u, password:p}
-      ]
-    );
-    return out;
-  },
-
-  listStore: async ()=>{
-    // 1) thử RPC trước
-    try{
-      const out = await rpcTry(
-        ["api_list_public_quizzes","list_public_quizzes","api_store_list","api_list_store","api_public_store"],
-        [ {}, {p_only_public:true}, {only_public:true} ]
-      );
-      return out;
-    }catch(e){
-      // 2) fallback REST select trực tiếp bảng quizzes (nếu RLS cho phép)
-      // lấy các cột cần dùng (thêm created/updated/pinned_at để sort)
-      const cols = [
-        "quiz_id","title","sub",
-        "is_public","is_hidden","show_in_store",
-        "require_login","require_access_code",
-        "pinned","pinned_at",
-        "created_at","updated_at"
-      ].join(",");
-      const q = [
-        `select=${encodeURIComponent(cols)}`,
-        `is_public=eq.true`,
-        `show_in_store=eq.true`,
-        `is_hidden=eq.false`,
-        `order=pinned.desc,updated_at.desc,created_at.desc`
-      ].join("&");
-
-      const rows = await restSelect(`quizzes?${q}`);
-      return { ok:true, items: rows };
-    }
-  },
-
-  // đổi username: thử nhiều biến thể args / function name (không sửa SQL)
-  changeUsername: async (token,newU)=>{
-    const t = String(token||"").trim();
-    const u = normUsername(newU);
-    return await rpcTry(
-      ["api_change_username","api_rename_username","api_update_username","change_username","rename_username"],
-      [
-        {p_token:t, p_new_username:u},
-        {p_token:t, p_username:u},
-        {token:t, new_username:u},
-        {token:t, username:u},
-        {session_token:t, new_username:u},
-        {p_session_token:t, p_new_username:u},
-      ]
-    );
-  },
-
-  // đổi pin: thử nhiều biến thể args / function name (không sửa SQL)
-  changePin: async (token,oldPin,newPin)=>{
-    const t = String(token||"").trim();
-    const o = String(oldPin||"");
-    const n = String(newPin||"");
-    return await rpcTry(
-      ["api_change_pin","api_update_pin","api_change_password","api_change_passcode","change_pin","change_password"],
-      [
-        {p_token:t, p_old_pin:o, p_new_pin:n},
-        {p_token:t, p_old:o, p_new:n},
-        {token:t, old_pin:o, new_pin:n},
-        {token:t, old:o, new:n},
-        {session_token:t, old_pin:o, new_pin:n},
-        {p_session_token:t, p_old_pin:o, p_new_pin:n},
-      ]
-    );
-  }
-};
-
-/* ================== STATE ================== */
-let ME = null;     // { username, role }
-let STORE = [];    // list quiz
-
-function requiresLogin(q){
-  const v = (q && (q.require_login ?? q.requireLogin ?? q.login_required ?? q.loginRequired ?? q.require_auth ?? q.requireAuth ?? q.requires_login ?? q.requiresLogin));
-  if(typeof v === "boolean") return v;
-
-  const open = (q && (q.allow_anonymous ?? q.allowAnonymous ?? q.public_open ?? q.publicOpen ?? q.open_access ?? q.openAccess ?? q.is_open ?? q.isOpen));
-  if(open === true) return false;
-
-  return true;
-}
-
-function pickExistsCompat(ck){
-  const v = pickExists(ck);
-  if(v !== null) return v;
-
-  const o = firstObj(ck) || {};
-  if(typeof o.ok === "boolean" && o.ok === false) return null;
-
-  // trường hợp trả về {available:true/false}
-  if(typeof o.available === "boolean") return !o.available;
-
-  return null;
-}
-
-/* ================== USER CORNER + PROFILE ================== */
-const userCorner = document.getElementById("userCorner");
-const userCornerName = document.getElementById("userCornerName");
-const userCornerAdmin = document.getElementById("userCornerAdmin");
-const statusPill = document.getElementById("statusPill");
-const adminLinkTop = document.getElementById("adminLinkTop");
-
-const profileBackdrop = document.getElementById("profileBackdrop");
-document.getElementById("btnCloseProfile").onclick = closeProfileModal;
-profileBackdrop.addEventListener("click",(e)=>{ if(e.target===profileBackdrop) closeProfileModal(); });
-
-function updateUserCorner(){
-  const isAdmin = isAdminUser(ME);
-  adminLinkTop.style.display = (ME && ME.username && isAdmin) ? "inline-flex" : "none";
-
-  if(!ME || !ME.username){
-    userCorner.style.display="none";
-    statusPill.textContent="Chưa đăng nhập";
-    return;
-  }
-  userCorner.style.display="inline-flex";
-  userCornerName.textContent = ME.username;
-  userCornerAdmin.style.display = isAdmin ? "inline-flex" : "none";
-
-  statusPill.innerHTML = `Xin chào <b>${escapeHtml(ME.username)}</b> ${isAdmin ? `<span class="adminBadgeInline">ADMIN</span>`:""}`;
-}
-userCorner.addEventListener("click", ()=>{ if(ME) openProfileModal(); });
-
-function openProfileModal(){
-  document.getElementById("profileUsername").textContent = ME.username;
-  document.getElementById("profileRole").textContent = isAdminUser(ME) ? "ADMIN" : "USER";
-
-  const isAdmin = isAdminUser(ME);
-  document.getElementById("profileHint").textContent =
-    isAdmin ? "Tài khoản admin (tuankhoi) dùng mật khẩu 6 số. Không đổi username/pin ở đây."
-            : "Bạn có thể đổi username và đổi pin 4 số.";
-
-  document.getElementById("newUsername").value = "";
-
-  document.getElementById("btnChangePin").disabled = isAdmin;
-  document.getElementById("btnSaveNewUsername").disabled = isAdmin;
-  document.getElementById("newUsername").disabled = isAdmin;
-
-  profileBackdrop.classList.add("show");
-  profileBackdrop.setAttribute("aria-hidden","false");
-}
-function closeProfileModal(){
-  profileBackdrop.classList.remove("show");
-  profileBackdrop.setAttribute("aria-hidden","true");
-}
-
-/* ================== REGISTER PROMPT ================== */
-const registerBackdrop = document.getElementById("registerBackdrop");
-const registerDesc = document.getElementById("registerDesc");
-document.getElementById("btnRegisterNo").onclick = ()=>closeRegisterPrompt(false);
-document.getElementById("btnRegisterYes").onclick = ()=>closeRegisterPrompt(true);
-registerBackdrop.addEventListener("click",(e)=>{ if(e.target===registerBackdrop) closeRegisterPrompt(false); });
-
-let REG_PROMPT = { open:false, resolve:null, username:"" };
-function openRegisterPrompt(username){
-  return new Promise((resolve)=>{
-    REG_PROMPT.open=true;
-    REG_PROMPT.resolve=resolve;
-    REG_PROMPT.username=username;
-    registerDesc.textContent = `Username "${username}" chưa đăng ký, bạn có muốn đăng ký không?`;
-    registerBackdrop.classList.add("show");
-    registerBackdrop.setAttribute("aria-hidden","false");
-  });
-}
-function closeRegisterPrompt(ans){
-  if(!REG_PROMPT.open) return;
-  registerBackdrop.classList.remove("show");
-  registerBackdrop.setAttribute("aria-hidden","true");
-  const r = REG_PROMPT.resolve;
-  REG_PROMPT.open=false;
-  REG_PROMPT.resolve=null;
-  REG_PROMPT.username="";
-  if(r) r(!!ans);
-}
-
-/* ================== PIN MODAL (keypad) ================== */
-const pinBackdrop = document.getElementById("pinBackdrop");
-const pinTitle = document.getElementById("pinTitle");
-const pinDesc = document.getElementById("pinDesc");
-const pinDots = document.getElementById("pinDots");
-const pinKeypad = document.getElementById("pinKeypad");
-const pinNote = document.getElementById("pinNote");
-const pinWrap = document.getElementById("pinWrap");
-document.getElementById("btnClosePin").onclick = ()=>closePin("cancel");
-pinBackdrop.addEventListener("click",(e)=>{ if(e.target===pinBackdrop) closePin("cancel"); });
-
-let PIN_KEYS_BUILT = false;
-let PIN = {
-  open:false, resolve:null, reject:null,
-  username:"", mode:"login", step:"one",
-  pinLen:4, value:"", first:"", old:"", submitting:false,
-  dotEls:[], payload:null
-};
-
-function buildPinKeypadOnce(){
-  if(PIN_KEYS_BUILT) return;
-  PIN_KEYS_BUILT=true;
-  pinKeypad.innerHTML="";
-  const keys=["1","2","3","4","5","6","7","8","9","CLEAR","0","⌫"];
-  keys.forEach(k=>{
-    const b=document.createElement("button");
-    b.type="button";
-    b.className="pinKey" + ((k==="CLEAR"||k==="⌫")?" small":"");
-    b.textContent=k;
-    b.onclick=()=>onPinKey(k);
-    pinKeypad.appendChild(b);
-  });
-}
-function buildDots(n){
-  pinDots.innerHTML="";
-  PIN.dotEls=[];
-  for(let i=0;i<n;i++){
-    const d=document.createElement("div");
-    d.className="dot";
-    pinDots.appendChild(d);
-    PIN.dotEls.push(d);
-  }
-}
-function updateDots(){
-  const len = PIN.value.length;
-  for(let i=0;i<PIN.dotEls.length;i++){
-    PIN.dotEls[i].classList.toggle("filled", i < len);
-  }
-}
-function setPinNote(msg,type=""){
-  if(type==="error") pinNote.classList.add("error");
-  else pinNote.classList.remove("error");
-  pinNote.textContent = String(msg||"");
-}
-function pinErrorPulse(msg){
-  PIN.value="";
-  updateDots();
-  pinDots.classList.add("error");
-  pinWrap.classList.remove("shake"); void pinWrap.offsetWidth; pinWrap.classList.add("shake");
-  setPinNote(msg||"Sai mật khẩu","error");
-  setTimeout(()=>{
-    pinDots.classList.remove("error");
-    pinWrap.classList.remove("shake");
-    updatePinHeader();
-  },520);
-}
-
-function updatePinHeader(){
-  const u = normUsername(PIN.username);
-  const note = (u==="tuankhoi") ? "Tài khoản tuankhoi dùng mật khẩu 6 số."
-                               : "Mật khẩu chỉ gồm số.";
-  if(PIN.mode==="login"){
-    pinTitle.textContent="Đăng nhập";
-    pinDesc.textContent=`Username: ${PIN.username}`;
-  }else if(PIN.mode==="set"){
-    if(PIN.step==="one"){ pinTitle.textContent="Đăng ký"; pinDesc.textContent=`Tạo mật khẩu ${PIN.pinLen} số`; }
-    else { pinTitle.textContent="Xác nhận mật khẩu"; pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`; }
-  }else if(PIN.mode==="change"){
-    if(PIN.step==="old"){ pinTitle.textContent="Đổi mật khẩu"; pinDesc.textContent="Nhập mật khẩu hiện tại"; }
-    else if(PIN.step==="new1"){ pinTitle.textContent="Mật khẩu mới"; pinDesc.textContent=`Nhập ${PIN.pinLen} số`; }
-    else { pinTitle.textContent="Xác nhận mật khẩu mới"; pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`; }
-  }
-  setPinNote(note);
-}
-
-function openPin({username, mode="login", pinLen=4}){
-  return new Promise((resolve,reject)=>{
-    PIN.open=true; PIN.resolve=resolve; PIN.reject=reject;
-    PIN.username=String(username||"");
-    PIN.mode=mode;
-    PIN.pinLen=Math.max(4, Number(pinLen)||4);
-    PIN.value=""; PIN.first=""; PIN.old=""; PIN.submitting=false; PIN.payload=null;
-    PIN.step = (mode==="set") ? "one" : (mode==="change" ? "old" : "one");
-    buildPinKeypadOnce();
-    buildDots(PIN.pinLen);
-    updatePinHeader();
-    updateDots();
-    pinBackdrop.classList.add("show");
-    pinBackdrop.setAttribute("aria-hidden","false");
-  });
-}
-
-function closePin(why){
-  if(!PIN.open) return;
-  pinBackdrop.classList.remove("show");
-  pinBackdrop.setAttribute("aria-hidden","true");
-  const rej = PIN.reject;
-  const res = PIN.resolve;
-  const payload = PIN.payload;
-  PIN.open=false; PIN.resolve=null; PIN.reject=null; PIN.payload=null;
-  if(why==="ok"){ if(res) res(payload); return; }
-  if(rej) rej(new Error("cancel"));
-}
-
-/* ================== AUTH FLOW (AUTO ADMIN PANEL) ================== */
-async function enterAfterAuth({ token, me, redirectNext=true }){
-  if(token) setToken(token);
-  if(me && me.username){
-    ME = me;
-    setMeCache(me);
-  }
-  updateUserCorner();
-
-  const next = redirectNext ? safeNextPath() : "";
-  if(next){
-    location.href = next;
-    return;
-  }
-
-  // ✅ nếu là admin -> tự chuyển sang admin panel
-  if(ME && isAdminUser(ME)){
-    location.href = "/";
-    return;
-  }
-
-  await loadStore();
-  renderStore();
-}
-
-function clearAuthLocal(){
-  clearToken();
-  setMeCache(null);
-  ME = null;
-  updateUserCorner();
-}
-
-/* === helper: normalize login/register output === */
-function normalizeAuthOut(out){
-  const o = firstObj(out) || {};
-  const ok = asOk(out);
-  const token = pickToken(out);
-  const me = pickMe(out);
-  const err = o.error || o.message || o.msg || "";
-  return { ok, token, me, error: err };
-}
-
-async function onPinKey(k){
-  if(!PIN.open || PIN.submitting) return;
-
-  if(k==="CLEAR"){ PIN.value=""; updateDots(); return; }
-  if(k==="⌫"){ PIN.value=PIN.value.slice(0,-1); updateDots(); return; }
-
-  if(PIN.value.length>=PIN.pinLen) return;
-  PIN.value += String(k);
-  updateDots();
-  if(PIN.value.length!==PIN.pinLen) return;
-
-  const val = PIN.value;
-
-  if(!/^[0-9]+$/.test(val)){
-    pinErrorPulse("Mật khẩu chỉ gồm số");
-    return;
-  }
-
-  if(PIN.mode==="login"){
-    PIN.submitting=true;
-    try{
-      setPinNote("Đang kiểm tra…");
-      const raw = await API.login(PIN.username, val);
-      const out = normalizeAuthOut(raw);
-
-      if(out.ok && out.token){
-        PIN.payload = val;
-        closePin("ok");
-        toast("Đăng nhập thành công");
-        await enterAfterAuth({ token: out.token, me: out.me, redirectNext:true });
-        return;
-      }
-
-      pinErrorPulse(out.error || "Sai mật khẩu");
-    }catch(e){
-      // nếu do mismatch RPC -> báo rõ hơn
-      const msg = String(e?.message||"Sai mật khẩu");
-      pinErrorPulse(msg.includes("function") ? "RPC login không khớp param/tên. Kiểm tra SQL function." : "Sai mật khẩu");
-    }finally{
-      PIN.submitting=false;
-    }
-    return;
-  }
-
-  if(PIN.mode==="set"){
-    if(PIN.step==="one"){
-      PIN.first = val;
-      PIN.value = "";
-      PIN.step="confirm";
-      updatePinHeader();
-      updateDots();
-      return;
-    }else{
-      if(PIN.first !== val){
-        pinErrorPulse("Mật khẩu không khớp");
-        PIN.first=""; PIN.step="one";
-        updatePinHeader(); updateDots();
-        return;
-      }
-      PIN.payload = val;
-      closePin("ok");
-      return;
-    }
-  }
-
-  if(PIN.mode==="change"){
-    if(PIN.step==="old"){
-      PIN.old = val;
-      PIN.value="";
-      PIN.step="new1";
-      updatePinHeader(); updateDots();
-      return;
-    }
-    if(PIN.step==="new1"){
-      PIN.first = val;
-      PIN.value="";
-      PIN.step="confirm";
-      updatePinHeader(); updateDots();
-      return;
-    }
-    if(PIN.first !== val){
-      pinErrorPulse("Mật khẩu mới không khớp");
-      PIN.first=""; PIN.step="new1";
-      updatePinHeader(); updateDots();
-      return;
-    }
-    PIN.payload = { oldPin: PIN.old, newPin: val };
-    closePin("ok");
-    return;
-  }
-}
-
-/* ================== RENDER ================== */
-const content = document.getElementById("content");
-
-function renderGate(){
-  const openQuizzes = sortQuizzes((STORE||[]).filter(q => !requiresLogin(q)));
-
-  const openSection = openQuizzes.length ? `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">Quiz mở (không cần đăng nhập)</p>
-        <div><span class="idx badge-open">OPEN</span></div>
-      </div>
-      <div style="margin-top:10px; display:grid; gap:10px;">
-        ${openQuizzes.map(q => {
-          const pinBadge = q.pinned ? `<span class="idx badge-pin">📌 PINNED</span>` : ``;
-          const codeBadge = q.require_access_code ? `<span class="idx badge-code">CÓ MÃ</span>` : ``;
-          const href = `/q/${encodeURIComponent(q.quiz_id)}`;
-          return `
-            <div class="card" style="box-shadow:none;border-width:1px;margin:0">
-              <div class="row1">
-                <div style="min-width:0">
-                  <div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div>
-                  <div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div>
-                  <div class="muted" style="margin-top:6px">
-                    <span class="idx">${escapeHtml(q.quiz_id)}</span>
-                    <span class="idx badge-open">OPEN</span>
-                    ${pinBadge} ${codeBadge}
-                  </div>
-                </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-                  <a href="${href}"><button class="btn btn-primary">Vào</button></a>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join("")}
-      </div>
-    </div>
-  ` : "";
-
-  content.innerHTML = `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">Nhập USERNAME</p>
-        <div><span class="idx">BẮT BUỘC</span></div>
-      </div>
-      <div class="muted" style="margin-top:6px; line-height:1.35">
-        Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b>.<br/>
-        - Username <b>đã có.</b> <b>Đăng nhập</b>.<br/>
-        - Username <b>chưa có.</b> <b>Đăng ký</b>.<br/>
-
-      <div style="margin-top:10px; display:grid; gap:10px;">
-        <input id="nameInput" class="input" placeholder="vd: tuankhoi123" maxlength="15" autocomplete="off"/>
-        <button id="btnContinue" class="btn btn-primary" style="justify-content:center;">➡️ Tiếp tục</button>
-        <div class="muted" id="gateStatus">Sẵn sàng.</div>
-      </div>
-    </div>
-
-    ${openSection}
-  `;
-
-  const nameInput = document.getElementById("nameInput");
-  const btnContinue = document.getElementById("btnContinue");
-  const gateStatus = document.getElementById("gateStatus");
-
-  nameInput.addEventListener("input",()=>{
-    const v = normUsername(nameInput.value);
-    if(nameInput.value!==v) nameInput.value=v;
-  },{passive:true});
-  try{ nameInput.focus(); }catch{}
-
-  const doFlow = async ()=>{
-    const u = normUsername(nameInput.value);
-    const err = validateUsername(u);
-    if(err){ toast(err); return; }
-
-    btnContinue.disabled=true; btnContinue.textContent="⏳";
-    gateStatus.textContent="Đang kiểm tra username…";
-    try{
-      const ck = await API.checkUsername(u);
-
-      const exists = pickExistsCompat(ck);
-      const pinLen = pickPinLen(ck, u);
-
-      const o = firstObj(ck) || {};
-      const reserved = !!(o.reserved === true || o.is_reserved === true || o.isReserved === true);
-
-      if(u === "tuankhoi"){
-        // bỏ qua cờ reserved nếu backend trả nhầm
-      } else {
-        // ✅ reserved chỉ nên chặn khi KHÔNG tồn tại user thật (thường là alias cũ)
-      if(reserved === true && exists !== true){
-        toast("Username này đã bị giữ lại (đổi tên rồi).");
-        gateStatus.textContent="Thử username khác.";
-        return;
-       }
-      }
-
-      // Nếu exists=true thì luôn cho nhập PIN để login
-     if(exists === true){
-       if(reserved === true && u !== "tuankhoi"){
-         // optional: cảnh báo nhẹ nhưng vẫn cho login
-         toast("Username đã đăng ký, bạn muốn đăng nhập…");
-       }
-       gateStatus.textContent="Đăng nhập: nhập mật khẩu…";
-       await openPin({username:u, mode:"login", pinLen});
-       return;
-      }
-
-      if(exists === true){
-        gateStatus.textContent="Đăng nhập: nhập mật khẩu…";
-        await openPin({username:u, mode:"login", pinLen});
-        return;
-      }
-
-      if(exists === false){
-        gateStatus.textContent=`Username "${u}" chưa đăng ký.`;
-        const ok = await openRegisterPrompt(u);
-        if(!ok){ gateStatus.textContent="Bạn có thể nhập username khác."; return; }
-
-        const regPinLen = (u==="tuankhoi") ? 6 : 4;
-        gateStatus.textContent="Đăng ký: tạo mật khẩu…";
-        const pin = await openPin({username:u, mode:"set", pinLen: regPinLen});
-
-        gateStatus.textContent="Đang tạo tài khoản…";
-        const raw = await API.register(u, pin);
-        const out = normalizeAuthOut(raw);
-
-        if(!out.ok || !out.token) throw new Error(out.error || "register fail");
-
-        toast("Đã đăng ký & đăng nhập");
-        await enterAfterAuth({ token: out.token, me: out.me, redirectNext:true });
-        return;
-      }
-
-      gateStatus.textContent="Không rõ trạng thái. Thử đăng nhập…";
-      const forcedLen = (u==="tuankhoi") ? 6 : 4;
-      await openPin({username:u, mode:"login", pinLen: forcedLen});
-
-    }catch(e){
-      if(!(e && e.message==="cancel")) toast(e.message||"Lỗi");
-      gateStatus.textContent="Sẵn sàng.";
-    }finally{
-      btnContinue.disabled=false; btnContinue.textContent="➡️ Tiếp tục";
-    }
-  };
-
-  btnContinue.onclick = doFlow;
-  nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); doFlow(); }});
-}
-
-function renderStore(){
-  updateUserCorner();
-
-  const isAdmin = isAdminUser(ME);
-  const adminBtn = (ME && isAdmin) ? `
-    <a href="/admin"><button class="btn btn-admin">Panel</button></a>
-  ` : ``;
-
-  content.innerHTML = `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">Danh sách quiz</p>
-        <div style="display:flex;gap:10px;align-items:center">${adminBtn}</div>
-      </div>
-      <div id="storeList" style="margin-top:10px"></div>
-    </div>
-  `;
-
-  const list = document.getElementById("storeList");
-  const sorted = sortQuizzes(STORE);
-
-  if(!sorted.length){
-    list.innerHTML = `<div class="muted">Chưa có quiz public.</div>`;
-    return;
-  }
-
-  list.innerHTML = sorted.map(q=>{
-    const needLogin = requiresLogin(q);
-    const openBadge = !needLogin ? `<span class="idx badge-open">OPEN</span>` : ``;
-    const codeBadge = q.require_access_code ? `<span class="idx badge-code">CÓ MÃ</span>` : ``;
-    const pinBadge = q.pinned ? `<span class="idx badge-pin">📌 PINNED</span>` : ``;
-
-    const href = `/q/${encodeURIComponent(q.quiz_id)}`;
-
-    return `
-      <div class="card" style="box-shadow:none;border-width:1px;margin:10px 0">
-        <div class="row1">
-          <div style="min-width:0">
-            <div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div>
-            <div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div>
-            <div class="muted" style="margin-top:6px">
-              <span class="idx">${escapeHtml(q.quiz_id)}</span>
-              ${openBadge} ${pinBadge} ${codeBadge}
-            </div>
-          </div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
-            <a href="${href}"><button class="btn btn-primary">Vào</button></a>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join("");
-}
-
-/* ================== STORE LOAD ================== */
-async function loadStore(){
-  try{
-    const raw = await API.listStore();
-    const o = firstObj(raw) || raw;
-
-    // nhiều dạng trả về:
-    // - {ok:true, items:[...]} / {ok:true, rows:[...]} / {ok:true, data:[...]}
-    // - hoặc trả thẳng array [...]
-    if(Array.isArray(raw)){
-      STORE = raw;
-      return;
-    }
-    if(o && o.ok){
-      STORE = o.items || o.rows || o.data || [];
-      return;
-    }
-    // nếu raw là object có key items/rows/data
-    if(o && (Array.isArray(o.items) || Array.isArray(o.rows) || Array.isArray(o.data))){
-      STORE = o.items || o.rows || o.data || [];
-      return;
-    }
-  }catch(e){
-    // im lặng để gate vẫn chạy
-  }
-  STORE = [];
-}
-
-/* ================== PROFILE ACTIONS ================== */
-document.getElementById("btnLogout").onclick = async ()=>{
-  const ok = confirm("Đăng xuất?");
-  if(!ok) return;
-
-  const t = getToken();
-  try{ if(t) await API.logout(t); }catch{}
-  clearAuthLocal();
-
-  closeProfileModal();
-  toast("Đã đăng xuất");
-  await boot();
-};
-
-document.getElementById("btnSaveNewUsername").onclick = async ()=>{
-  if(!ME) return;
-  if(isAdminUser(ME)){ toast("Admin không đổi username."); return; }
-
-  const newU = normUsername(document.getElementById("newUsername").value);
-  const err = validateUsername(newU);
-  if(err){ toast(err); return; }
-
-  try{
-    const out = await API.changeUsername(getToken(), newU);
-    const ok = asOk(out);
-    if(!ok) throw new Error((firstObj(out)?.error || firstObj(out)?.message) || "rename fail");
-
-    const me2 = pickMe(out) || (firstObj(out)?.me || firstObj(out)?.user) || { username: newU, role: ME.role || "user" };
-    ME = { username: (me2.username || newU), role: (me2.role || ME.role || "user") };
-    setMeCache(ME);
-
-    toast("Đã đổi username");
-    closeProfileModal();
-    updateUserCorner();
-    renderStore();
-  }catch(e){
-    toast(e.message||"Không đổi được");
-  }
-};
-
-document.getElementById("btnChangePin").onclick = async ()=>{
-  if(!ME) return;
-  if(isAdminUser(ME)){ toast("Admin không đổi pin."); return; }
-
-  try{
-    const payload = await openPin({username: ME.username, mode:"change", pinLen:4});
-    const out = await API.changePin(getToken(), payload.oldPin, payload.newPin);
-    const ok = asOk(out);
-    if(!ok) throw new Error((firstObj(out)?.error || firstObj(out)?.message) || "change pin fail");
-
-    toast("Đã đổi mật khẩu");
-    closeProfileModal();
-  }catch(e){
-    if(!(e && e.message==="cancel")) toast(e.message || "Đổi mật khẩu lỗi");
-  }
-};
-
-/* ================== BOOT ================== */
-async function boot(){
-  await requestPersistentStorage();
-
-  await loadStore();
-
-  ME = getMeCache();
-  updateUserCorner();
-
-  const t = getToken();
-
-  if(t && (!ME || !ME.username)){
-    try{
-      const meOut = await API.me(t);
-      if(meOut && meOut.ok && meOut.me && meOut.me.username){
-        ME = meOut.me;
-        setMeCache(ME);
-
-        // nếu me() trả token mới thì sync
-        if(meOut.token){
-          setToken(meOut.token);
-        }else{
-          setToken(t);
-        }
-      }
-    }catch{}
-  }else if(t){
-    // sync token to cookies/window.name for admin.html to pick up reliably
-    setToken(t);
-  }
-
-  updateUserCorner();
-
-  // Không auto chuyển /admin khi chỉ mở trang chủ.
-  // Chỉ auto chuyển khi vừa login (enterAfterAuth).
-  if(ME && ME.username) renderStore();
-  else renderGate();
-}
-
-if(SUPABASE_URL.includes("PASTE_") || SUPABASE_ANON_KEY.includes("PASTE_")){
-  toast("Chưa dán SUPABASE_URL / ANON_KEY trong index.html");
-}
-
+const SUPABASE_URL="https://aidvlydhbdtwunyreqak.supabase.co";
+const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
+const TOKEN_KEYS=["tk_token_v2","tk_token_v1","tk_token"];
+const TOKEN_COOKIES=["tk_token_v2","tk_token_v1","tk_token"];
+const ME_KEY="tk_me_v2";
+const USERNAME_COOLDOWN_DAYS=30;
+function toast(msg){const t=document.getElementById("toast");t.textContent=String(msg||"");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1200)}
+function escapeHtml(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
+function normUsername(u){return String(u||"").trim().toLowerCase()}
+function validateUsername(u){u=normUsername(u);if(!u)return"Chưa nhập username.";if(u.length>15)return"Username tối đa 15 ký tự.";if(!/^[a-z0-9_]+$/.test(u))return"Chỉ được dùng a-z 0-9 và dấu _";return null}
+function getMeCache(){try{const raw=localStorage.getItem(ME_KEY);if(!raw)return null;const obj=JSON.parse(raw);if(obj&&obj.username)return obj}catch{}return null}
+function setMeCache(me){try{if(!me)localStorage.removeItem(ME_KEY);else localStorage.setItem(ME_KEY,JSON.stringify(me))}catch{}}
+function safeNextPath(){try{const u=new URL(location.href);const n=(u.searchParams.get("next")||"").trim();if(n.startsWith("/"))return n}catch{}return""}
+function isAdminUser(me){if(!me)return false;const u=String(me.username||"").toLowerCase();return me.role==="admin"||u==="tuankhoi"}
+async function requestPersistentStorage(){try{if(navigator.storage&&navigator.storage.persist)await navigator.storage.persist()}catch{}}
+function cookieDomainHint(){const host=String(location.hostname||"").trim();if(!host||host==="localhost"||host.endsWith(".localhost"))return"";if(/^\d+\.\d+\.\d+\.\d+$/.test(host))return"";const parts=host.split(".").filter(Boolean);if(parts.length<2)return"";return"."+parts.slice(-2).join(".")}
+function setCookie(name,value){const v=encodeURIComponent(String(value||""));const maxAge=60*60*24*365*20;const base=cookieDomainHint();const common=`${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;document.cookie=common;if(base&&base!==location.hostname)document.cookie=`${common}; Domain=${base}`}
+function getCookie(name){const cs=document.cookie?document.cookie.split(";"):[];let found="";for(const raw of cs){const s=raw.trim();if(!s)continue;const eq=s.indexOf("=");const k=(eq>=0?s.slice(0,eq):s).trim();if(k===name)found=(eq>=0?s.slice(eq+1):"")}try{return found?decodeURIComponent(found):""}catch{return found||""}}
+function delCookie(name){const base=cookieDomainHint();document.cookie=`${name}=; Max-Age=0; Path=/; SameSite=Lax`;if(base&&base!==location.hostname)document.cookie=`${name}=; Max-Age=0; Path=/; SameSite=Lax; Domain=${base}`}
+function setToken(t){t=String(t||"").trim();if(!t)return;for(const k of TOKEN_KEYS){try{localStorage.setItem(k,t)}catch{}try{sessionStorage.setItem(k,t)}catch{}}for(const c of TOKEN_COOKIES){try{setCookie(c,t)}catch{}}try{window.name="tk:"+t}catch{}}
+function clearToken(){for(const k of TOKEN_KEYS){try{localStorage.removeItem(k)}catch{}try{sessionStorage.removeItem(k)}catch{}}for(const c of TOKEN_COOKIES){try{delCookie(c)}catch{}}try{if(String(window.name||"").startsWith("tk:"))window.name=""}catch{}}
+function getToken(){let t="";for(const k of TOKEN_KEYS){try{t=(localStorage.getItem(k)||"").trim();if(t)break}catch{}}if(!t){for(const k of TOKEN_KEYS){try{t=(sessionStorage.getItem(k)||"").trim();if(t)break}catch{}}}if(!t){for(const c of TOKEN_COOKIES){t=(getCookie(c)||"").trim();if(t)break}}if(!t){const wn=String(window.name||"");if(wn.startsWith("tk:"))t=wn.slice(3).trim()}try{const u=new URL(location.href);if(!t){const q=(u.searchParams.get("tk")||u.searchParams.get("token")||"").trim();if(q)t=q}if(!t&&u.hash){const hs=u.hash.replace(/^#/,"");const p=new URLSearchParams(hs);const q2=(p.get("tk")||p.get("token")||"").trim();if(q2)t=q2}}catch{}if(t)setToken(t);return t}
+function toTime(v){const t=Date.parse(String(v||""));return Number.isFinite(t)?t:0}
+function sortQuizzes(list){const arr=[...(list||[])];arr.sort((a,b)=>{const ap=a&&a.pinned===true;const bp=b&&b.pinned===true;if(ap!==bp)return bp?1:-1;const at=Math.max(toTime(a?.pinned_at||a?.pinnedAt),toTime(a?.updated_at||a?.updatedAt),toTime(a?.created_at||a?.createdAt));const bt=Math.max(toTime(b?.pinned_at||b?.pinnedAt),toTime(b?.updated_at||b?.updatedAt),toTime(b?.created_at||b?.createdAt));if(at!==bt)return bt-at;return String(a?.quiz_id||"").localeCompare(String(b?.quiz_id||""))});return arr}
+function sbHeaders(){return{"apikey":SUPABASE_ANON_KEY,"Authorization":"Bearer "+SUPABASE_ANON_KEY,"Content-Type":"application/json","Accept":"application/json"}}
+async function rpc(fn,args){const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{method:"POST",headers:sbHeaders(),body:JSON.stringify(args||{})});const txt=await res.text();let data=null;try{data=txt?JSON.parse(txt):null}catch{}if(!res.ok){const msg=(data&&(data.message||data.error||data.hint))?(data.message||data.error||data.hint):txt;throw new Error(msg||`RPC failed: ${fn}`)}return data}
+async function rpcTry(fns,argsList){let lastErr=null;const fList=Array.isArray(fns)?fns:[String(fns||"")].filter(Boolean);const aList=(Array.isArray(argsList)&&argsList.length)?argsList:[{}];for(const fn of fList){for(const args of aList){try{return await rpc(fn,args||{})}catch(e){lastErr=e}}}throw(lastErr||new Error("RPC failed"))}
+async function restSelect(pathWithQuery){const res=await fetch(`${SUPABASE_URL}/rest/v1/${pathWithQuery}`,{method:"GET",headers:{"apikey":SUPABASE_ANON_KEY,"Authorization":"Bearer "+SUPABASE_ANON_KEY,"Accept":"application/json"}});const txt=await res.text();let data=null;try{data=txt?JSON.parse(txt):null}catch{}if(!res.ok){const msg=(data&&(data.message||data.error||data.hint))?(data.message||data.error||data.hint):txt;throw new Error(msg||"REST failed")}return data}
+function firstObj(x){if(Array.isArray(x))return x[0]||null;if(x&&typeof x==="object")return x;return null}
+function pickToken(out){const o=firstObj(out)||{};return(o.token||o.session_token||o.sessionToken||o.access_token||o.accessToken||o.app_token||o.appToken||o.tk||o.jwt||o.bearer||"")}
+function parseAnyTime(v){if(v==null)return 0;if(typeof v==="number"&&isFinite(v))return v>1e12?v:v*1000;const n=Number(v);if(isFinite(n))return n>1e12?n:n*1000;const t=Date.parse(String(v));return Number.isFinite(t)?t:0}
+function pickMe(out){const o=firstObj(out)||{};let me=o.me||o.user||o.profile||o.data||null;if(Array.isArray(me))me=me[0]||null;if(me&&typeof me==="object"){const nextAt=parseAnyTime(me.username_next_change_at??me.usernameNextChangeAt??me.next_username_change_at??me.nextUsernameChangeAt??me.can_change_username_at??me.canChangeUsernameAt);const changedAt=parseAnyTime(me.username_changed_at??me.usernameChangedAt??me.last_username_change_at??me.lastUsernameChangeAt);return{username:me.username||me.name||me.user||me.handle||"",role:me.role||me.user_role||me.userRole||"user",usernameNextChangeAt:nextAt||0,usernameChangedAt:changedAt||0}}if(o.username){const nextAt=parseAnyTime(o.username_next_change_at??o.usernameNextChangeAt??o.next_username_change_at??o.nextUsernameChangeAt??o.can_change_username_at??o.canChangeUsernameAt);const changedAt=parseAnyTime(o.username_changed_at??o.usernameChangedAt??o.last_username_change_at??o.lastUsernameChangeAt);return{username:o.username,role:o.role||"user",usernameNextChangeAt:nextAt||0,usernameChangedAt:changedAt||0}}return null}
+function asOk(out){const o=firstObj(out)||{};if(o&&typeof o.ok==="boolean")return o.ok;if(!!pickToken(o))return true;if(!!pickMe(o))return true;return false}
+function pickExists(ck){const o=firstObj(ck)||{};if(typeof o.exists==="boolean")return o.exists;if(typeof o.is_exists==="boolean")return o.is_exists;if(typeof o.found==="boolean")return o.found;if(typeof o.available==="boolean")return!o.available;if(o.userId||o.user_id||o.id)return true;if(o.ok===true&&typeof o.exists==="boolean")return o.exists;return null}
+function pickPinLen(ck,username){const u=normUsername(username);if(u==="tuankhoi")return 6;const o=firstObj(ck)||{};const raw=(o.pinLen??o.pin_len??o.pin_length??(o.user&&(o.user.pinLen??o.user.pin_len??o.user.pin_length))??4);let n=Number(raw)||4;if(!isFinite(n)||n<4)n=4;if(n>12)n=12;return n}
+const API={me:async token=>{const t=String(token||"").trim();const out=await rpcTry(["api_me","me","app_me","api_whoami","api_profile","whoami"],[{p_token:t},{token:t},{p_session:t},{session:t},{session_token:t},{p_session_token:t}]);return{ok:asOk(out),me:pickMe(out),token:pickToken(out)||""}},logout:async token=>{const t=String(token||"").trim();const out=await rpcTry(["api_logout","logout","api_signout","signout","api_log_out"],[{p_token:t},{token:t},{p_session:t},{session:t},{session_token:t}]);return{ok:asOk(out)||true}},checkUsername:async username=>{const u=normUsername(username);return await rpcTry(["api_check_username","check_username","api_user_exists","api_check_user","api_check_username_v2"],[{p_username:u},{username:u},{p_user:u},{user:u},{p_username_norm:u},{username_norm:u}])},login:async(username,pin)=>{const u=normUsername(username);const p=String(pin||"");return await rpcTry(["api_login","login","api_signin","signin","api_login_user","api_login_v2"],[{p_username:u,p_pin:p},{username:u,pin:p},{p_user:u,p_pin:p},{user:u,pin:p},{p_username:u,p_password:p},{username:u,password:p}])},register:async(username,pin)=>{const u=normUsername(username);const p=String(pin||"");return await rpcTry(["api_register","register","api_signup","signup","api_create_user","api_register_v2"],[{p_username:u,p_pin:p},{username:u,pin:p},{p_user:u,p_pin:p},{user:u,pin:p},{p_username:u,p_password:p},{username:u,password:p}])},listStore:async()=>{try{const out=await rpcTry(["api_list_public_quizzes","list_public_quizzes","api_store_list","api_list_store","api_public_store"],[{},{"p_only_public":true},{"only_public":true}]);return out}catch{const cols=["quiz_id","title","sub","is_public","is_hidden","show_in_store","require_login","require_access_code","pinned","pinned_at","created_at","updated_at"].join(",");const q=[`select=${encodeURIComponent(cols)}`,"is_public=eq.true","show_in_store=eq.true","is_hidden=eq.false","order=pinned.desc,updated_at.desc,created_at.desc"].join("&");const rows=await restSelect(`quizzes?${q}`);return{ok:true,items:rows}}},changeUsername:async(token,newU)=>{const t=String(token||"").trim();const u=normUsername(newU);return await rpcTry(["api_change_username","api_rename_username","api_update_username","change_username","rename_username"],[{p_token:t,p_new_username:u},{p_token:t,p_username:u},{token:t,new_username:u},{token:t,username:u},{session_token:t,new_username:u},{p_session_token:t,p_new_username:u}])},changePin:async(token,oldPin,newPin)=>{const t=String(token||"").trim();const o=String(oldPin||"");const n=String(newPin||"");return await rpcTry(["api_change_pin","api_update_pin","api_change_password","api_change_passcode","change_pin","change_password"],[{p_token:t,p_old_pin:o,p_new_pin:n},{p_token:t,p_old:o,p_new:n},{token:t,old_pin:o,new_pin:n},{token:t,old:o,new:n},{session_token:t,old_pin:o,new_pin:n},{p_session_token:t,p_old_pin:o,p_new_pin:n}])}};
+let ME=null;
+let STORE=[];
+function requiresLogin(q){const v=(q&&(q.require_login??q.requireLogin??q.login_required??q.loginRequired??q.require_auth??q.requireAuth??q.requires_login??q.requiresLogin));if(typeof v==="boolean")return v;const open=(q&&(q.allow_anonymous??q.allowAnonymous??q.public_open??q.publicOpen??q.open_access??q.openAccess??q.is_open??q.isOpen));if(open===true)return false;return true}
+function pickExistsCompat(ck){const v=pickExists(ck);if(v!==null)return v;const o=firstObj(ck)||{};if(typeof o.ok==="boolean"&&o.ok===false)return null;if(typeof o.available==="boolean")return!o.available;return null}
+function usernameCooldownKey(u){return"tk_username_next_change_at_v1:"+normUsername(u||"")}
+function getUsernameNextAt(u,me){const key=usernameCooldownKey(u);let v=0;try{v=parseAnyTime(localStorage.getItem(key))}catch{}if(me&&me.usernameNextChangeAt)v=Math.max(v,parseAnyTime(me.usernameNextChangeAt));if(!v&&me&&me.usernameChangedAt){const ms=parseAnyTime(me.usernameChangedAt);if(ms)v=Math.max(v,ms+USERNAME_COOLDOWN_DAYS*86400000)}if(v){try{localStorage.setItem(key,String(v))}catch{}}return v}
+function setUsernameNextAt(u,ts){const key=usernameCooldownKey(u);try{localStorage.setItem(key,String(ts||0))}catch{}}
+function daysLeftFromMs(nextAt){const now=Date.now();if(!nextAt||nextAt<=now)return 0;return Math.max(1,Math.ceil((nextAt-now)/86400000))}
+function usernameHint(u,me){const nextAt=getUsernameNextAt(u,me);if(!nextAt||nextAt<=Date.now())return"Username có thể được đổi bây giờ";const d=daysLeftFromMs(nextAt);return`Username có thể được đổi sau ${d} ngày nữa`}
+const userCorner=document.getElementById("userCorner");
+const userCornerName=document.getElementById("userCornerName");
+const userCornerAdmin=document.getElementById("userCornerAdmin");
+const statusPill=document.getElementById("statusPill");
+const adminLinkTop=document.getElementById("adminLinkTop");
+const giftLinkTop=document.getElementById("giftLinkTop");
+const profileBackdrop=document.getElementById("profileBackdrop");
+document.getElementById("btnCloseProfile").onclick=closeProfileModal;
+profileBackdrop.addEventListener("click",e=>{if(e.target===profileBackdrop)closeProfileModal()});
+function updateUserCorner(){const isAdmin=isAdminUser(ME);adminLinkTop.style.display=(ME&&ME.username&&isAdmin)?"inline-flex":"none";giftLinkTop.style.display=(ME&&ME.username)?"inline-flex":"none";if(!ME||!ME.username){userCorner.style.display="none";statusPill.textContent="Chưa đăng nhập";return}userCorner.style.display="inline-flex";userCornerName.textContent=ME.username;userCornerAdmin.style.display=isAdmin?"inline-flex":"none";statusPill.innerHTML=`Xin chào <b>${escapeHtml(ME.username)}</b> ${isAdmin?`<span class="adminBadgeInline">ADMIN</span>`:""}`}
+userCorner.addEventListener("click",()=>{if(ME)openProfileModal()});
+function openProfileModal(){document.getElementById("profileUsername").textContent=ME.username;document.getElementById("profileRole").textContent=isAdminUser(ME)?"ADMIN":"USER";const isAdmin=isAdminUser(ME);const hintEl=document.getElementById("profileHint");if(isAdmin){hintEl.textContent="Tài khoản admin (tuankhoi) dùng mật khẩu 6 số. Không đổi username/pin ở đây."}else{hintEl.textContent=usernameHint(ME.username,ME)}document.getElementById("newUsername").value="";const canChange=!isAdmin&&(getUsernameNextAt(ME.username,ME)<=Date.now());document.getElementById("btnChangePin").disabled=isAdmin;document.getElementById("btnSaveNewUsername").disabled=isAdmin||!canChange;document.getElementById("newUsername").disabled=isAdmin||!canChange;profileBackdrop.classList.add("show");profileBackdrop.setAttribute("aria-hidden","false")}
+function closeProfileModal(){profileBackdrop.classList.remove("show");profileBackdrop.setAttribute("aria-hidden","true")}
+const registerBackdrop=document.getElementById("registerBackdrop");
+const registerDesc=document.getElementById("registerDesc");
+document.getElementById("btnRegisterNo").onclick=()=>closeRegisterPrompt(false);
+document.getElementById("btnRegisterYes").onclick=()=>closeRegisterPrompt(true);
+registerBackdrop.addEventListener("click",e=>{if(e.target===registerBackdrop)closeRegisterPrompt(false)});
+let REG_PROMPT={open:false,resolve:null,username:""};
+function openRegisterPrompt(username){return new Promise(resolve=>{REG_PROMPT.open=true;REG_PROMPT.resolve=resolve;REG_PROMPT.username=username;registerDesc.textContent=`Username "${username}" chưa đăng ký, bạn có muốn đăng ký không?`;registerBackdrop.classList.add("show");registerBackdrop.setAttribute("aria-hidden","false")})}
+function closeRegisterPrompt(ans){if(!REG_PROMPT.open)return;registerBackdrop.classList.remove("show");registerBackdrop.setAttribute("aria-hidden","true");const r=REG_PROMPT.resolve;REG_PROMPT.open=false;REG_PROMPT.resolve=null;REG_PROMPT.username="";if(r)r(!!ans)}
+const pinBackdrop=document.getElementById("pinBackdrop");
+const pinTitle=document.getElementById("pinTitle");
+const pinDesc=document.getElementById("pinDesc");
+const pinDots=document.getElementById("pinDots");
+const pinKeypad=document.getElementById("pinKeypad");
+const pinNote=document.getElementById("pinNote");
+const pinWrap=document.getElementById("pinWrap");
+document.getElementById("btnClosePin").onclick=()=>closePin("cancel");
+pinBackdrop.addEventListener("click",e=>{if(e.target===pinBackdrop)closePin("cancel")});
+let PIN_KEYS_BUILT=false;
+let PIN={open:false,resolve:null,reject:null,username:"",mode:"login",step:"one",pinLen:4,value:"",first:"",old:"",submitting:false,dotEls:[],payload:null};
+function buildPinKeypadOnce(){if(PIN_KEYS_BUILT)return;PIN_KEYS_BUILT=true;pinKeypad.innerHTML="";const keys=["1","2","3","4","5","6","7","8","9","CLEAR","0","⌫"];keys.forEach(k=>{const b=document.createElement("button");b.type="button";b.className="pinKey"+((k==="CLEAR"||k==="⌫")?" small":"");b.textContent=k;b.onclick=()=>onPinKey(k);pinKeypad.appendChild(b)})}
+function buildDots(n){pinDots.innerHTML="";PIN.dotEls=[];for(let i=0;i<n;i++){const d=document.createElement("div");d.className="dot";pinDots.appendChild(d);PIN.dotEls.push(d)}}
+function updateDots(){const len=PIN.value.length;for(let i=0;i<PIN.dotEls.length;i++)PIN.dotEls[i].classList.toggle("filled",i<len)}
+function setPinNote(msg,type=""){if(type==="error")pinNote.classList.add("error");else pinNote.classList.remove("error");pinNote.textContent=String(msg||"")}
+function pinErrorPulse(msg){PIN.value="";updateDots();pinDots.classList.add("error");pinWrap.classList.remove("shake");void pinWrap.offsetWidth;pinWrap.classList.add("shake");setPinNote(msg||"Sai mật khẩu","error");setTimeout(()=>{pinDots.classList.remove("error");pinWrap.classList.remove("shake");updatePinHeader()},520)}
+function updatePinHeader(){const u=normUsername(PIN.username);const note=(u==="tuankhoi")?"Tài khoản tuankhoi dùng mật khẩu 6 số.":"Mật khẩu chỉ gồm số.";if(PIN.mode==="login"){pinTitle.textContent="Đăng nhập";pinDesc.textContent=`Username: ${PIN.username}`}else if(PIN.mode==="set"){if(PIN.step==="one"){pinTitle.textContent="Đăng ký";pinDesc.textContent=`Tạo mật khẩu ${PIN.pinLen} số`}else{pinTitle.textContent="Xác nhận mật khẩu";pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`}}else if(PIN.mode==="change"){if(PIN.step==="old"){pinTitle.textContent="Đổi mật khẩu";pinDesc.textContent="Nhập mật khẩu hiện tại"}else if(PIN.step==="new1"){pinTitle.textContent="Mật khẩu mới";pinDesc.textContent=`Nhập ${PIN.pinLen} số`}else{pinTitle.textContent="Xác nhận mật khẩu mới";pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`}}setPinNote(note)}
+function openPin({username,mode="login",pinLen=4}){return new Promise((resolve,reject)=>{PIN.open=true;PIN.resolve=resolve;PIN.reject=reject;PIN.username=String(username||"");PIN.mode=mode;PIN.pinLen=Math.max(4,Number(pinLen)||4);PIN.value="";PIN.first="";PIN.old="";PIN.submitting=false;PIN.payload=null;PIN.step=(mode==="set")?"one":(mode==="change"?"old":"one");buildPinKeypadOnce();buildDots(PIN.pinLen);updatePinHeader();updateDots();pinBackdrop.classList.add("show");pinBackdrop.setAttribute("aria-hidden","false")})}
+function closePin(why){if(!PIN.open)return;pinBackdrop.classList.remove("show");pinBackdrop.setAttribute("aria-hidden","true");const rej=PIN.reject;const res=PIN.resolve;const payload=PIN.payload;PIN.open=false;PIN.resolve=null;PIN.reject=null;PIN.payload=null;if(why==="ok"){if(res)res(payload);return}if(rej)rej(new Error("cancel"))}
+function normalizeAuthOut(out){const o=firstObj(out)||{};const ok=asOk(out);const token=pickToken(out);const me=pickMe(out);const err=o.error||o.message||o.msg||"";return{ok,token,me,error:err}}
+async function onPinKey(k){if(!PIN.open||PIN.submitting)return;if(k==="CLEAR"){PIN.value="";updateDots();return}if(k==="⌫"){PIN.value=PIN.value.slice(0,-1);updateDots();return}if(PIN.value.length>=PIN.pinLen)return;PIN.value+=String(k);updateDots();if(PIN.value.length!==PIN.pinLen)return;const val=PIN.value;if(!/^[0-9]+$/.test(val)){pinErrorPulse("Mật khẩu chỉ gồm số");return}if(PIN.mode==="login"){PIN.submitting=true;try{setPinNote("Đang kiểm tra…");const raw=await API.login(PIN.username,val);const out=normalizeAuthOut(raw);if(out.ok&&out.token){PIN.payload=val;closePin("ok");toast("Đăng nhập thành công");await enterAfterAuth({token:out.token,me:out.me,redirectNext:true});return}pinErrorPulse(out.error||"Sai mật khẩu")}catch(e){const msg=String(e?.message||"Sai mật khẩu");pinErrorPulse(msg.includes("function")?"RPC login không khớp param/tên. Kiểm tra SQL function.":"Sai mật khẩu")}finally{PIN.submitting=false}return}if(PIN.mode==="set"){if(PIN.step==="one"){PIN.first=val;PIN.value="";PIN.step="confirm";updatePinHeader();updateDots();return}else{if(PIN.first!==val){pinErrorPulse("Mật khẩu không khớp");PIN.first="";PIN.step="one";updatePinHeader();updateDots();return}PIN.payload=val;closePin("ok");return}}if(PIN.mode==="change"){if(PIN.step==="old"){PIN.old=val;PIN.value="";PIN.step="new1";updatePinHeader();updateDots();return}if(PIN.step==="new1"){PIN.first=val;PIN.value="";PIN.step="confirm";updatePinHeader();updateDots();return}if(PIN.first!==val){pinErrorPulse("Mật khẩu mới không khớp");PIN.first="";PIN.step="new1";updatePinHeader();updateDots();return}PIN.payload={oldPin:PIN.old,newPin:val};closePin("ok");return}}
+const confirmBackdrop=document.getElementById("confirmBackdrop");
+const confirmTitle=document.getElementById("confirmTitle");
+const confirmMsg=document.getElementById("confirmMsg");
+const btnConfirmOk=document.getElementById("btnConfirmOk");
+const btnConfirmCancel=document.getElementById("btnConfirmCancel");
+confirmBackdrop.addEventListener("click",e=>{if(e.target===confirmBackdrop)closeConfirm(false)});
+let CONFIRM_STATE={open:false,resolve:null};
+function openConfirm({title,message,okText="Xác nhận",cancelText="Huỷ"}){return new Promise(resolve=>{CONFIRM_STATE.open=true;CONFIRM_STATE.resolve=resolve;confirmTitle.textContent=String(title||"Xác nhận");confirmMsg.textContent=String(message||"");btnConfirmOk.textContent=okText;btnConfirmCancel.textContent=cancelText;confirmBackdrop.classList.add("show");confirmBackdrop.setAttribute("aria-hidden","false")})}
+function closeConfirm(ans){if(!CONFIRM_STATE.open)return;confirmBackdrop.classList.remove("show");confirmBackdrop.setAttribute("aria-hidden","true");const r=CONFIRM_STATE.resolve;CONFIRM_STATE.open=false;CONFIRM_STATE.resolve=null;if(r)r(!!ans)}
+btnConfirmCancel.onclick=()=>closeConfirm(false);
+btnConfirmOk.onclick=()=>closeConfirm(true);
+async function enterAfterAuth({token,me,redirectNext=true}){if(token)setToken(token);if(me&&me.username){ME=me;setMeCache(me);const nextAt=getUsernameNextAt(me.username,me);if(nextAt) setUsernameNextAt(me.username,nextAt)}updateUserCorner();const next=redirectNext?safeNextPath():"";if(next){location.href=next;return}await loadStore();renderStore()}
+function clearAuthLocal(){clearToken();setMeCache(null);ME=null;updateUserCorner()}
+const content=document.getElementById("content");
+function renderGate(){const openQuizzes=sortQuizzes((STORE||[]).filter(q=>!requiresLogin(q)));const openSection=openQuizzes.length?`<div class="card"><div class="row1"><p class="vi">Quiz mở (không cần đăng nhập)</p><div><span class="idx badge-open">OPEN</span></div></div><div style="margin-top:10px;display:grid;gap:10px;">${openQuizzes.map(q=>{const pinBadge=q.pinned?`<span class="idx badge-pin">📌 PINNED</span>`:"";const codeBadge=q.require_access_code?`<span class="idx badge-code">CÓ MÃ</span>`:"";const href=`/q/${encodeURIComponent(q.quiz_id)}`;return`<div class="card" style="box-shadow:none;border-width:1px;margin:0"><div class="row1"><div style="min-width:0"><div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div><div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div><div class="muted" style="margin-top:6px"><span class="idx">${escapeHtml(q.quiz_id)}</span><span class="idx badge-open">OPEN</span>${pinBadge?` ${pinBadge}`:""}${codeBadge?` ${codeBadge}`:""}</div></div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end"><a href="${href}"><button class="btn btn-primary">Vào</button></a></div></div></div>`}).join("")}</div></div>`:"";content.innerHTML=`<div class="card"><div class="row1"><p class="vi">Nhập USERNAME</p><div><span class="idx">BẮT BUỘC</span></div></div><div class="muted" style="margin-top:6px;line-height:1.35">Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b>.<br>- Username <b>đã có.</b> <b>Đăng nhập</b>.<br>- Username <b>chưa có.</b> <b>Đăng ký</b>.</div><div style="margin-top:10px;display:grid;gap:10px;"><input id="nameInput" class="input" placeholder="vd: tuankhoi123" maxlength="15" autocomplete="off"><button id="btnContinue" class="btn btn-primary" style="justify-content:center">➡️ Tiếp tục</button><div class="muted" id="gateStatus">Sẵn sàng.</div></div></div>${openSection}`;const nameInput=document.getElementById("nameInput");const btnContinue=document.getElementById("btnContinue");const gateStatus=document.getElementById("gateStatus");nameInput.addEventListener("input",()=>{const v=normUsername(nameInput.value);if(nameInput.value!==v)nameInput.value=v},{passive:true});try{nameInput.focus()}catch{}const doFlow=async()=>{const u=normUsername(nameInput.value);const err=validateUsername(u);if(err){toast(err);return}btnContinue.disabled=true;btnContinue.textContent="⏳";gateStatus.textContent="Đang kiểm tra username…";try{const ck=await API.checkUsername(u);const exists=pickExistsCompat(ck);const pinLen=pickPinLen(ck,u);const o=firstObj(ck)||{};const reserved=!!(o.reserved===true||o.is_reserved===true||o.isReserved===true);if(u!=="tuankhoi"){if(reserved===true&&exists!==true){toast("Username này đã bị giữ lại (đổi tên rồi).");gateStatus.textContent="Thử username khác.";return}}if(exists===true){gateStatus.textContent="Đăng nhập: nhập mật khẩu…";await openPin({username:u,mode:"login",pinLen});return}if(exists===false){gateStatus.textContent=`Username "${u}" chưa đăng ký.`;const ok=await openRegisterPrompt(u);if(!ok){gateStatus.textContent="Bạn có thể nhập username khác.";return}const regPinLen=(u==="tuankhoi")?6:4;gateStatus.textContent="Đăng ký: tạo mật khẩu…";const pin=await openPin({username:u,mode:"set",pinLen:regPinLen});gateStatus.textContent="Đang tạo tài khoản…";const raw=await API.register(u,pin);const out=normalizeAuthOut(raw);if(!out.ok||!out.token)throw new Error(out.error||"register fail");toast("Đã đăng ký & đăng nhập");await enterAfterAuth({token:out.token,me:out.me,redirectNext:true});return}gateStatus.textContent="Không rõ trạng thái. Thử đăng nhập…";const forcedLen=(u==="tuankhoi")?6:4;await openPin({username:u,mode:"login",pinLen:forcedLen})}catch(e){if(!(e&&e.message==="cancel"))toast(e.message||"Lỗi");gateStatus.textContent="Sẵn sàng."}finally{btnContinue.disabled=false;btnContinue.textContent="➡️ Tiếp tục"}};btnContinue.onclick=doFlow;nameInput.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();doFlow()}})}
+function renderStore(){updateUserCorner();const isAdmin=isAdminUser(ME);const adminBtn=(ME&&isAdmin)?`<a href="/admin"><button class="btn btn-admin">Panel</button></a>`:"";content.innerHTML=`<div class="card"><div class="row1"><p class="vi">Danh sách quiz</p><div style="display:flex;gap:10px;align-items:center">${adminBtn}</div></div><div id="storeList" style="margin-top:10px"></div></div>`;const list=document.getElementById("storeList");const sorted=sortQuizzes(STORE);if(!sorted.length){list.innerHTML=`<div class="muted">Chưa có quiz public.</div>`;return}list.innerHTML=sorted.map(q=>{const needLogin=requiresLogin(q);const openBadge=!needLogin?`<span class="idx badge-open">OPEN</span>`:"";const codeBadge=q.require_access_code?`<span class="idx badge-code">CÓ MÃ</span>`:"";const pinBadge=q.pinned?`<span class="idx badge-pin">📌 PINNED</span>`:"";const href=`/q/${encodeURIComponent(q.quiz_id)}`;return`<div class="card" style="box-shadow:none;border-width:1px;margin:10px 0"><div class="row1"><div style="min-width:0"><div class="vi" style="font-size:1rem"><b>${escapeHtml(q.title||"")}</b></div><div class="muted" style="margin-top:4px">${escapeHtml(q.sub||"")}</div><div class="muted" style="margin-top:6px"><span class="idx">${escapeHtml(q.quiz_id)}</span>${openBadge?` ${openBadge}`:""}${pinBadge?` ${pinBadge}`:""}${codeBadge?` ${codeBadge}`:""}</div></div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end"><a href="${href}"><button class="btn btn-primary">Vào</button></a></div></div></div>`}).join("")}
+async function loadStore(){try{const raw=await API.listStore();const o=firstObj(raw)||raw;if(Array.isArray(raw)){STORE=raw;return}if(o&&o.ok){STORE=o.items||o.rows||o.data||[];return}if(o&&(Array.isArray(o.items)||Array.isArray(o.rows)||Array.isArray(o.data))){STORE=o.items||o.rows||o.data||[];return}}catch{}STORE=[]}
+document.getElementById("btnLogout").onclick=async()=>{const ok=confirm("Đăng xuất?");if(!ok)return;const t=getToken();try{if(t)await API.logout(t)}catch{}clearAuthLocal();closeProfileModal();toast("Đã đăng xuất");await boot()};
+document.getElementById("btnSaveNewUsername").onclick=async()=>{if(!ME)return;if(isAdminUser(ME)){toast("Admin không đổi username.");return}const nextAt=getUsernameNextAt(ME.username,ME);if(nextAt>Date.now()){toast(usernameHint(ME.username,ME));return}const newU=normUsername(document.getElementById("newUsername").value);const err=validateUsername(newU);if(err){toast(err);return}if(newU===normUsername(ME.username)){toast("Username mới trùng username hiện tại.");return}const ok=await openConfirm({title:"Đổi username",message:`Chỉ có thể đổi lại sau ${USERNAME_COOLDOWN_DAYS} ngày. Xác nhận đổi username thành "${newU}"?`,okText:"Xác nhận",cancelText:"Huỷ"});if(!ok)return;try{const out=await API.changeUsername(getToken(),newU);const ok2=asOk(out);if(!ok2)throw new Error((firstObj(out)?.error||firstObj(out)?.message)||"rename fail");const me2=pickMe(out)||(firstObj(out)?.me||firstObj(out)?.user)||{username:newU,role:ME.role||"user"};ME={username:(me2.username||newU),role:(me2.role||ME.role||"user"),usernameNextChangeAt:parseAnyTime(me2.usernameNextChangeAt)||0,usernameChangedAt:parseAnyTime(me2.usernameChangedAt)||0};setMeCache(ME);const now=Date.now();let nextAt2=getUsernameNextAt(ME.username,ME);if(!nextAt2||nextAt2<=now)nextAt2=now+USERNAME_COOLDOWN_DAYS*86400000;setUsernameNextAt(ME.username,nextAt2);toast("Đã đổi username");closeProfileModal();updateUserCorner();renderStore()}catch(e){toast(e.message||"Không đổi được")}};
+document.getElementById("btnChangePin").onclick=async()=>{if(!ME)return;if(isAdminUser(ME)){toast("Admin không đổi pin.");return}try{const payload=await openPin({username:ME.username,mode:"change",pinLen:4});const out=await API.changePin(getToken(),payload.oldPin,payload.newPin);const ok=asOk(out);if(!ok)throw new Error((firstObj(out)?.error||firstObj(out)?.message)||"change pin fail");toast("Đã đổi mật khẩu");closeProfileModal()}catch(e){if(!(e&&e.message==="cancel"))toast(e.message||"Đổi mật khẩu lỗi")}};
+async function boot(){await requestPersistentStorage();await loadStore();ME=getMeCache();updateUserCorner();const t=getToken();if(t&&(!ME||!ME.username)){try{const meOut=await API.me(t);if(meOut&&meOut.ok&&meOut.me&&meOut.me.username){ME=meOut.me;setMeCache(ME);if(meOut.token)setToken(meOut.token);else setToken(t);const nextAt=getUsernameNextAt(ME.username,ME);if(nextAt)setUsernameNextAt(ME.username,nextAt)}}catch{}}else if(t){setToken(t)}updateUserCorner();if(ME&&ME.username)renderStore();else renderGate()}
+if(SUPABASE_URL.includes("PASTE_")||SUPABASE_ANON_KEY.includes("PASTE_"))toast("Chưa dán SUPABASE_URL / ANON_KEY trong index.html");
 boot();
 </script>
 </body>
