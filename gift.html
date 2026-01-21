@@ -155,7 +155,7 @@ const TOKEN_COOKIES=["tk_token_v2","tk_token_v1","tk_token"];
 const ME_KEY="tk_me_v2";
 
 const PACKS=[
-  {points:50,  value:"10.000đ", mode:"request", title:"Gói 10k",  sub:"Cần duyệt (tránh lạm dụng)"},
+  {points:50,  value:"10.000đ", mode:"request", title:"Gói 10k",  sub:"Cần duyệt"},
   {points:100, value:"20.000đ", mode:"instant", title:"Gói 20k", sub:"Trừ điểm ngay"},
   {points:150, value:"30.000đ", mode:"instant", title:"Gói 30k", sub:"Trừ điểm ngay"},
   {points:200, value:"40.000đ", mode:"instant", title:"Gói 40k", sub:"Trừ điểm ngay"}
@@ -481,12 +481,12 @@ function renderGift(){
       <div class="row1">
         <p class="vi">Đổi quà</p>
         <div class="pillRow">
-          <span class="idx badge-pin">🎯 Điểm = số lần 100%</span>
+          <span class="idx badge-pin">🎯 Điểm = số lần đạt 100%</span>
         </div>
       </div>
       <div class="muted" style="margin-top:8px;line-height:1.35">
-        - Mỗi lần làm quiz đạt <b>100%</b> được <b>+1 điểm</b> (làm lại vẫn tính).<br>
-        - Gói <b>50 điểm</b> sẽ <b>gửi yêu cầu</b> để admin duyệt (chống lạm dụng).
+        - Mỗi lần làm quiz đạt <b>100%</b> được <b>+1 điểm.</b>
+        - Áp dụng cho <b> quiz </b> có thông báo cộng điểm.</b>
       </div>
 
       <div class="grid2" style="margin-top:12px">
@@ -523,7 +523,7 @@ function renderGift(){
         <div><span class="idx">${HISTORY.length} mục</span></div>
       </div>
       <div class="muted" style="margin-top:6px;line-height:1.35">
-        Nếu bị cảnh báo, vui lòng dùng điểm đúng cách (không lạm dụng).
+        Không lạm dụng điểm nha.
       </div>
       <div class="list" style="margin-top:12px">
         ${HISTORY.length? HISTORY.map(x=>{
