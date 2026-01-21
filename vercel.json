@@ -19,5 +19,8 @@
 
     { "source": "/q/:id.html", "destination": "/q/index.html" },
     { "source": "/q/:id.html/", "destination": "/q/index.html" }
+
+    { "source": "/gift", "destination": "/gift.html" },
+    { "source": "/gift/", "destination": "/gift.html" }
   ]
 }
