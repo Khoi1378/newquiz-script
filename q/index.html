@@ -18,6 +18,9 @@
       --shadow: 0 14px 40px rgba(0,0,0,.10);
       --radius: 18px;
       --admin: #2563eb;
+
+      /* ✅ dynamic viewport fix */
+      --vh: 1vh;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -34,7 +37,15 @@
     .btn, .btn-x, .pinKey { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     .hidden{ display:none !important; }
 
-    #shell { height: 100vh; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px 0 170px; touch-action: pan-y; }
+    /* ✅ FIX: dùng --vh để tránh iOS/Android bị hở/đẻ ra “thanh chắn” */
+    #shell {
+      height: calc(var(--vh, 1vh) * 100);
+      min-height: 100vh;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 12px 0 calc(170px + env(safe-area-inset-bottom, 0px));
+      touch-action: pan-y;
+    }
     .wrap { max-width: 980px; margin: 0 auto; padding: 0 14px; }
 
     .userCorner{
@@ -323,6 +334,18 @@
       padding:12px 8px;
     }
 
+    /* ✅ phone click-only: nhìn như ô nhập nhưng không bật bàn phím */
+    .short4.noKb{
+      caret-color: transparent;
+      cursor: pointer;
+    }
+    .short4.noKb:focus{
+      box-shadow:none !important;
+      border-color:#e5e7eb !important;
+      background:var(--soft) !important;
+      outline:none !important;
+    }
+
     /* keypad cho short4 */
     .keypad4{
       margin-top:10px;
@@ -435,9 +458,10 @@
     .submitbar{
       position:fixed;
       left:0; right:0;
-      bottom:calc(env(safe-area-inset-bottom) + 0px);
+      bottom:0; /* ✅ */
       z-index:20010;
       padding:10px 14px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); /* ✅ */
       background:rgba(255,255,255,.86);
       border-top:1px solid rgba(229,231,235,.9);
       backdrop-filter:blur(8px);
@@ -634,6 +658,22 @@ const RPC = {
 const TOKEN_KEY = "tk_token_v2";
 const ME_KEY = "tk_me_v2";
 const NAME_KEY = "tk_display_name_v1";
+
+/* ✅ Device flags */
+const UA = navigator.userAgent || "";
+const IS_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(UA);
+const SHORT4_CLICK_ONLY = IS_MOBILE; // ✅ phone/tablet: chỉ bấm keypad, không bật bàn phím
+
+/* ✅ Dynamic viewport height fix (đỡ lỗi “thanh chắn”/hở dưới) */
+function setVhVar(){
+  const h = (window.visualViewport && window.visualViewport.height) ? window.visualViewport.height : window.innerHeight;
+  document.documentElement.style.setProperty("--vh", (h * 0.01) + "px");
+}
+setVhVar();
+window.addEventListener("resize", setVhVar, {passive:true});
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize", setVhVar, {passive:true});
+}
 
 /* ================== HARD DEBUG ================== */
 function renderFatal(err){
@@ -1618,14 +1658,17 @@ function renderEssay(q, locked){
   `;
 }
 
-/* ✅ FIX: short4 inputmode numeric để mobile hiện keypad số */
+/* ✅ FIX: desktop hiện nút backspace là "<"; phone click-only không bật bàn phím */
 function renderShort4(q, locked){
   const raw = String(state.answers[q.id] || "");
   const chars = [raw[0]||"", raw[1]||"", raw[2]||"", raw[3]||""];
 
-  // 1 2 3 4 5 , -
-  // 6 7 8 9 0 ⌫ CLR
-  const keys = ["1","2","3","4","5",",","-","6","7","8","9","0","⌫","CLR"];
+  const BK = SHORT4_CLICK_ONLY ? "⌫" : "<"; // ✅ theo yêu cầu
+  const keys = ["1","2","3","4","5",",","-","6","7","8","9","0",BK,"CLR"];
+
+  const inputExtra = SHORT4_CLICK_ONLY
+    ? `readonly inputmode="none" tabindex="-1" class="input boxDigit short4 noKb"`
+    : `inputmode="numeric" pattern="[0-9]*" class="input boxDigit short4"`;
 
   return `
     <div style="margin-top:10px">
@@ -1633,12 +1676,10 @@ function renderShort4(q, locked){
       <div class="boxes4">
         ${chars.map((c,i)=>`
           <input
-            class="input boxDigit short4"
+            ${inputExtra}
             data-id="${q.id}" data-k="${i}"
             maxlength="1"
             type="text"
-            inputmode="numeric"
-            pattern="[0-9]*"
             autocomplete="off"
             value="${escapeHtml(c)}"
             ${locked?"disabled":""}/>
@@ -1648,7 +1689,7 @@ function renderShort4(q, locked){
       <div class="keypad4" role="group" aria-label="short4 keypad">
         ${keys.map(x=>{
           const label = escapeHtml(x);
-          const cls = (x==="CLR" || x==="⌫") ? "kpBtn small" : "kpBtn";
+          const cls = (x==="CLR" || x===BK) ? "kpBtn small" : "kpBtn";
           return `<button class="${cls}" data-kpid="${q.id}" data-kpkey="${escapeHtml(x)}" ${locked?"disabled":""} type="button">${label}</button>`;
         }).join("")}
       </div>
@@ -1692,15 +1733,30 @@ function scrollToHashIfAny(){
 /* ================== EVENTS (NO JUMP) ================== */
 let SHORT4_FOCUS = { id: null, k: 0 };
 
+/* ✅ phone: chạm vào ô short4 chỉ chọn ô, không bật bàn phím */
 content.addEventListener("focusin",(e)=>{
   const t = e.target;
   if(t && t.classList && t.classList.contains("short4")){
     SHORT4_FOCUS.id = Number(t.getAttribute("data-id"));
     SHORT4_FOCUS.k = Number(t.getAttribute("data-k"));
+    if(SHORT4_CLICK_ONLY){
+      try{ t.blur(); }catch{}
+    }
   }
 },{passive:true});
 
 content.addEventListener("click", (e)=>{
+  const s4 = e.target.closest(".short4");
+  if(s4){
+    SHORT4_FOCUS.id = Number(s4.getAttribute("data-id"));
+    SHORT4_FOCUS.k = Number(s4.getAttribute("data-k"));
+    if(SHORT4_CLICK_ONLY){
+      e.preventDefault();
+      try{ s4.blur(); }catch{}
+    }
+    return;
+  }
+
   const img = e.target.closest("[data-img]");
   if(img){
     openImg(img.getAttribute("data-img"));
@@ -1769,7 +1825,6 @@ content.addEventListener("click", (e)=>{
       arr[0]=arr[1]=arr[2]=arr[3]="";
       cursor = 0;
 
-    /* ✅ FIX: backspace key là "⌫" (không phải "<") */
     }else if(key === "⌫" || key === "<" || key === "BACK" || key === "DEL"){
       cursor = clamp(cursor);
       if(arr[cursor]){
@@ -1816,11 +1871,15 @@ content.addEventListener("click", (e)=>{
       inp.value = arr[k] || "";
     });
 
-    const next = card.querySelector(`.short4[data-id="${id}"][data-k="${cursor}"]`);
-    if(next){
-      try{ next.focus(); }catch{}
-      SHORT4_FOCUS.id = id;
-      SHORT4_FOCUS.k = cursor;
+    SHORT4_FOCUS.id = id;
+    SHORT4_FOCUS.k = cursor;
+
+    /* ✅ desktop: focus để gõ; phone: KHÔNG focus để tránh bật bàn phím */
+    if(!SHORT4_CLICK_ONLY){
+      const next = card.querySelector(`.short4[data-id="${id}"][data-k="${cursor}"]`);
+      if(next){
+        try{ next.focus(); }catch{}
+      }
     }
     return;
   }
@@ -1885,6 +1944,14 @@ content.addEventListener("input", (e)=>{
     const k = Number(t.getAttribute("data-k"));
     if(state.finalized) return;
 
+    /* ✅ phone: không cho gõ tay */
+    if(SHORT4_CLICK_ONLY){
+      const raw = String(state.answers[id] || "");
+      const arr = [raw[0]||"", raw[1]||"", raw[2]||"", raw[3]||""];
+      t.value = arr[k] || "";
+      return;
+    }
+
     SHORT4_FOCUS.id = id;
     SHORT4_FOCUS.k = k;
 
@@ -1919,6 +1986,10 @@ content.addEventListener("input", (e)=>{
 content.addEventListener("keydown",(e)=>{
   const t = e.target;
   if(!t || !t.classList || !t.classList.contains("short4")) return;
+
+  /* ✅ phone: không xử lý gõ */
+  if(SHORT4_CLICK_ONLY) return;
+
   const id = Number(t.getAttribute("data-id"));
   const k = Number(t.getAttribute("data-k"));
   if(e.key === "Backspace"){
