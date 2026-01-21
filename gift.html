@@ -1,1 +1,757 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
+<title>tuankhoi.site - Quà tặng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg1:#ffecd2;--bg2:#fcb69f;--card:#fff;--text:#1f2937;--muted:#6b7280;--primary:#7c3aed;--ok:#16a34a;--bad:#dc2626;--border:#e5e7eb;--soft:#f8fafc;--shadow:0 14px 40px rgba(0,0,0,.10);--radius:18px;--admin:#2563eb}
+*{box-sizing:border-box}
+html,body{height:100%}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:radial-gradient(1200px 600px at 20% 10%,#fff 0%,rgba(255,255,255,0) 55%),linear-gradient(120deg,var(--bg1) 0%,var(--bg2) 100%);overflow:hidden;touch-action:pan-x pan-y}
+a{color:inherit;text-decoration:none}
+a:hover,a:active,a:visited{text-decoration:none}
+a:focus-visible{outline:3px solid rgba(124,58,237,.25);outline-offset:3px;border-radius:14px}
+.btn,.btn-x{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px;touch-action:pan-y}
+.wrap{max-width:980px;margin:0 auto;padding:0 14px}
+
+.userCorner{position:fixed;top:10px;left:12px;z-index:10010;display:none;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.55);border:1px solid rgba(229,231,235,.65);backdrop-filter:blur(6px);box-shadow:0 10px 22px rgba(0,0,0,.06);user-select:none;max-width:calc(100vw - 24px);cursor:pointer}
+.userCorner .name{font-weight:950;font-size:.88rem;color:rgba(31,41,55,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:58vw}
+.userCorner .adminBadge{padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin);white-space:nowrap}
+
+.btn{border:0;cursor:pointer;border-radius:999px;padding:10px 14px;font-weight:900;font-size:.9rem;transition:transform .16s ease,filter .16s ease;display:inline-flex;align-items:center;gap:8px;user-select:none;white-space:nowrap;box-shadow:0 12px 24px rgba(0,0,0,.12);background:#fff;color:#111827;border:1px solid #e5e7eb}
+.btn:hover{transform:translateY(-1px);filter:brightness(.98)}
+.btn:active{transform:translateY(0)}
+.btn-primary{background:linear-gradient(135deg,#7c3aed,#fb7185);color:#fff;border:0;box-shadow:0 12px 24px rgba(124,58,237,.18)}
+.btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
+.btn-danger{background:var(--bad);color:#fff;border:0}
+.btn[disabled]{opacity:.6;cursor:not-allowed;transform:none !important;filter:none !important}
+.btn-admin{background:linear-gradient(135deg,#2563eb,#22c55e);color:#fff;border:0;box-shadow:0 12px 24px rgba(37,99,235,.16)}
+
+.topbar{margin-top:10px;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.9);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.06);padding:14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
+.logo{width:42px;height:42px;border-radius:16px;background:linear-gradient(135deg,#a78bfa,#fb7185);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;box-shadow:0 10px 22px rgba(124,58,237,.18);user-select:none}
+.titles h1{font-size:1.02rem;margin:0;font-weight:800}
+.titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
+.actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex:1 1 320px;flex-wrap:wrap}
+
+.statusPill{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;background:rgba(255,255,255,.75);border:1px solid rgba(229,231,235,.9);color:rgba(31,41,55,.8);font-weight:800;font-size:.9rem;box-shadow:0 10px 22px rgba(0,0,0,.05);user-select:none;max-width:72vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.content{padding:12px 0 0}
+.card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin:12px 0}
+.row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25}
+.muted{color:var(--muted);font-weight:650}
+.idx{font-size:.78rem;font-weight:900;padding:6px 10px;border-radius:999px;background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;white-space:nowrap}
+.badge-ok{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
+.badge-warn{background:#fff7ed;color:#9a3412;border-color:#fed7aa}
+.badge-bad{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+.badge-pin{background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe}
+
+.input{width:100%;border-radius:14px;border:2px solid #e5e7eb;padding:11px 12px;font-size:.95rem;font-weight:700;outline:none;background:var(--soft);transition:border-color .15s ease,box-shadow .15s ease}
+.input:focus{border-color:rgba(124,58,237,.55);box-shadow:0 0 0 5px rgba(124,58,237,.10);background:#fff}
+
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(17,24,39,.92);color:#fff;padding:10px 12px;border-radius:14px;font-weight:800;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;max-width:calc(100% - 28px);z-index:20050;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:20000}
+.modal-backdrop.show{display:flex}
+.modal{width:100%;max-width:620px;background:#fff;border-radius:18px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,.18);padding:14px;max-height:82vh;overflow:auto;-webkit-overflow-scrolling:touch}
+.modal h3{margin:4px 0 6px;font-size:1.02rem}
+.modal p{margin:0 0 12px;color:var(--muted);font-weight:650;font-size:.92rem;line-height:1.35}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.xclose{position:sticky;top:0;display:flex;justify-content:flex-end;z-index:2;margin-bottom:4px}
+.btn-x{width:56px;height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-weight:1000;font-size:1.8rem;line-height:1;box-shadow:0 12px 24px rgba(0,0,0,.10)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:720px){.grid2{grid-template-columns:1fr}}
+.kpi{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.kpi .big{font-size:2rem;font-weight:1000;letter-spacing:-.02em}
+.kpi .sub{color:var(--muted);font-weight:750;line-height:1.35}
+.hr{height:1px;background:#e5e7eb;margin:12px 0}
+.list{display:grid;gap:10px}
+.item{border:1px solid #e5e7eb;border-radius:16px;padding:12px;background:rgba(248,250,252,.7)}
+.itemTop{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.itemTitle{font-weight:950}
+.itemMeta{color:var(--muted);font-weight:700;font-size:.88rem;line-height:1.35}
+.pillRow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.smallBtn{padding:8px 12px;font-size:.86rem}
+.adminBadgeInline{padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin);white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="userCorner" id="userCorner" title="Bấm để mở tài khoản">
+  <span class="name" id="userCornerName">—</span>
+  <span class="adminBadge" id="userCornerAdmin" style="display:none;">ADMIN</span>
+</div>
+
+<div id="shell">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="titlebox">
+        <div class="logo">🎁</div>
+        <div class="titles">
+          <h1>Quà tặng</h1>
+          <div class="tiny">Đổi quà bằng điểm 100%</div>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="statusPill" id="statusPill">—</div>
+        <a href="/" id="homeLinkTop"><button class="btn btn-ghost">🏠 Trang chủ</button></a>
+        <a href="/admin" id="adminLinkTop" style="display:none;"><button class="btn btn-admin">Panel</button></a>
+      </div>
+    </div>
+
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Confirm -->
+<div class="modal-backdrop" id="confirmBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <h3 id="confirmTitle">Xác nhận</h3>
+    <p id="confirmMsg"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btnConfirmCancel">Huỷ</button>
+      <button class="btn btn-primary" id="btnConfirmOk">Xác nhận</button>
+    </div>
+  </div>
+</div>
+
+<!-- Phone modal -->
+<div class="modal-backdrop" id="phoneBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="phoneTitle">
+    <div class="xclose">
+      <button class="btn-x" id="btnClosePhone" aria-label="Đóng">✕</button>
+    </div>
+    <h3 id="phoneTitle">Nhập SĐT nhận quà</h3>
+    <p id="phoneDesc">Nhập số điện thoại/MoMo/ZaloPay (tuỳ bạn dùng). Admin sẽ chuyển theo SĐT này.</p>
+    <div class="card" style="margin:10px 0 0;box-shadow:none">
+      <div class="vi" style="font-size:.98rem;margin:0 0 8px">SĐT</div>
+      <input class="input" id="phoneInput" placeholder="vd: 09xxxxxxxx" inputmode="tel" autocomplete="tel">
+      <div class="muted" style="margin-top:8px;line-height:1.35" id="phoneHint">—</div>
+    </div>
+    <div class="modal-actions" style="margin-top:12px">
+      <button class="btn btn-ghost" id="btnPhoneCancel">Huỷ</button>
+      <button class="btn btn-primary" id="btnPhoneOk">Tiếp tục</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/*** CONFIG ***/
+const SUPABASE_URL="https://aidvlydhbdtwunyreqak.supabase.co";
+const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
+
+const TOKEN_KEYS=["tk_token_v2","tk_token_v1","tk_token"];
+const TOKEN_COOKIES=["tk_token_v2","tk_token_v1","tk_token"];
+const ME_KEY="tk_me_v2";
+
+const PACKS=[
+  {points:50,  value:"10.000đ", mode:"request", title:"Gói 10k",  sub:"Cần duyệt (tránh lạm dụng)"},
+  {points:100, value:"20.000đ", mode:"instant", title:"Gói 20k", sub:"Trừ điểm ngay"},
+  {points:150, value:"30.000đ", mode:"instant", title:"Gói 30k", sub:"Trừ điểm ngay"},
+  {points:200, value:"40.000đ", mode:"instant", title:"Gói 40k", sub:"Trừ điểm ngay"}
+];
+
+/*** UI helpers ***/
+function toast(msg){const t=document.getElementById("toast");t.textContent=String(msg||"");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1300)}
+function escapeHtml(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
+function normUsername(u){return String(u||"").trim().toLowerCase()}
+function setMeCache(me){try{if(!me)localStorage.removeItem(ME_KEY);else localStorage.setItem(ME_KEY,JSON.stringify(me))}catch{}}
+function getMeCache(){try{const raw=localStorage.getItem(ME_KEY);if(!raw)return null;const obj=JSON.parse(raw);if(obj&&obj.username)return obj}catch{}return null}
+function isAdminUser(me){if(!me)return false;const u=String(me.username||"").toLowerCase();return me.role==="admin"||u==="tuankhoi"}
+async function requestPersistentStorage(){try{if(navigator.storage&&navigator.storage.persist)await navigator.storage.persist()}catch{}}
+
+function cookieDomainHint(){const host=String(location.hostname||"").trim();if(!host||host==="localhost"||host.endsWith(".localhost"))return"";if(/^\d+\.\d+\.\d+\.\d+$/.test(host))return"";const parts=host.split(".").filter(Boolean);if(parts.length<2)return"";return"."+parts.slice(-2).join(".")}
+function setCookie(name,value){const v=encodeURIComponent(String(value||""));const maxAge=60*60*24*365*20;const base=cookieDomainHint();const common=`${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;document.cookie=common;if(base&&base!==location.hostname)document.cookie=`${common}; Domain=${base}`}
+function getCookie(name){const cs=document.cookie?document.cookie.split(";"):[];let found="";for(const raw of cs){const s=raw.trim();if(!s)continue;const eq=s.indexOf("=");const k=(eq>=0?s.slice(0,eq):s).trim();if(k===name)found=(eq>=0?s.slice(eq+1):"")}try{return found?decodeURIComponent(found):""}catch{return found||""}}
+function delCookie(name){const base=cookieDomainHint();document.cookie=`${name}=; Max-Age=0; Path=/; SameSite=Lax`;if(base&&base!==location.hostname)document.cookie=`${name}=; Max-Age=0; Path=/; SameSite=Lax; Domain=${base}`}
+
+function setToken(t){t=String(t||"").trim();if(!t)return;for(const k of TOKEN_KEYS){try{localStorage.setItem(k,t)}catch{}try{sessionStorage.setItem(k,t)}catch{}}for(const c of TOKEN_COOKIES){try{setCookie(c,t)}catch{}}try{window.name="tk:"+t}catch{}}
+function clearToken(){for(const k of TOKEN_KEYS){try{localStorage.removeItem(k)}catch{}try{sessionStorage.removeItem(k)}catch{}}for(const c of TOKEN_COOKIES){try{delCookie(c)}catch{}}try{if(String(window.name||"").startsWith("tk:"))window.name=""}catch{}}
+function getToken(){
+  let t="";
+  for(const k of TOKEN_KEYS){try{t=(localStorage.getItem(k)||"").trim();if(t)break}catch{}}
+  if(!t){for(const k of TOKEN_KEYS){try{t=(sessionStorage.getItem(k)||"").trim();if(t)break}catch{}}}
+  if(!t){for(const c of TOKEN_COOKIES){t=(getCookie(c)||"").trim();if(t)break}}
+  if(!t){const wn=String(window.name||"");if(wn.startsWith("tk:"))t=wn.slice(3).trim()}
+  try{
+    const u=new URL(location.href);
+    if(!t){
+      const q=(u.searchParams.get("tk")||u.searchParams.get("token")||"").trim();
+      if(q)t=q;
+    }
+    if(!t&&u.hash){
+      const hs=u.hash.replace(/^#/,"");
+      const p=new URLSearchParams(hs);
+      const q2=(p.get("tk")||p.get("token")||"").trim();
+      if(q2)t=q2;
+    }
+  }catch{}
+  if(t)setToken(t);
+  return t;
+}
+
+function sbHeaders(){return{"apikey":SUPABASE_ANON_KEY,"Authorization":"Bearer "+SUPABASE_ANON_KEY,"Content-Type":"application/json","Accept":"application/json"}}
+async function rpc(fn,args){
+  const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{method:"POST",headers:sbHeaders(),body:JSON.stringify(args||{})});
+  const txt=await res.text();
+  let data=null;try{data=txt?JSON.parse(txt):null}catch{}
+  if(!res.ok){
+    const msg=(data&&(data.message||data.error||data.hint))?(data.message||data.error||data.hint):txt;
+    throw new Error(msg||`RPC failed: ${fn}`);
+  }
+  return data;
+}
+async function rpcTry(fns,argsList){
+  let lastErr=null;
+  const fList=Array.isArray(fns)?fns:[String(fns||"")].filter(Boolean);
+  const aList=(Array.isArray(argsList)&&argsList.length)?argsList:[{}];
+  for(const fn of fList){
+    for(const args of aList){
+      try{return await rpc(fn,args||{})}catch(e){lastErr=e}
+    }
+  }
+  throw(lastErr||new Error("RPC failed"));
+}
+function firstObj(x){if(Array.isArray(x))return x[0]||null;if(x&&typeof x==="object")return x;return null}
+function pickToken(out){const o=firstObj(out)||{};return(o.token||o.session_token||o.sessionToken||o.access_token||o.accessToken||o.app_token||o.appToken||o.tk||o.jwt||o.bearer||"")}
+function parseAnyTime(v){if(v==null)return 0;if(typeof v==="number"&&isFinite(v))return v>1e12?v:v*1000;const n=Number(v);if(isFinite(n))return n>1e12?n:n*1000;const t=Date.parse(String(v));return Number.isFinite(t)?t:0}
+function pickMe(out){
+  const o=firstObj(out)||{};
+  let me=o.me||o.user||o.profile||o.data||null;
+  if(Array.isArray(me))me=me[0]||null;
+  if(me&&typeof me==="object"){
+    return{username:me.username||me.name||me.user||me.handle||"",role:me.role||me.user_role||me.userRole||"user"};
+  }
+  if(o.username){return{username:o.username,role:o.role||"user"}}
+  return null;
+}
+function asOk(out){
+  const o=firstObj(out)||{};
+  if(o&&typeof o.ok==="boolean")return o.ok;
+  if(!!pickToken(o))return true;
+  if(!!pickMe(o))return true;
+  return false;
+}
+
+/*** Gift pickers (tolerant keys) ***/
+function pickPoints(out){
+  const o=firstObj(out)||out||{};
+  const cands=[
+    o.points,o.point,o.score,o.gift_points,o.giftPoints,
+    o.full_score_count,o.fullScoreCount,o.perfect_count,o.perfectCount,
+    o.count_100,o.total_100,o.times_100,o.fullscore_times,o.fullScoreTimes
+  ];
+  for(const v of cands){const n=Number(v);if(isFinite(n))return Math.max(0,Math.floor(n))}
+  return 0;
+}
+function pickTimes100(out){
+  const o=firstObj(out)||out||{};
+  const cands=[o.full_score_count,o.fullScoreCount,o.count_100,o.total_100,o.times_100,o.fullscore_times,o.fullScoreTimes,o.points];
+  for(const v of cands){const n=Number(v);if(isFinite(n))return Math.max(0,Math.floor(n))}
+  return 0;
+}
+function pickHistory(out){
+  const o=firstObj(out)||out||{};
+  const arr = o.items||o.rows||o.data||o.history||o.list||out;
+  return Array.isArray(arr)?arr:[];
+}
+
+/*** API (RPC names are flexible giống index) ***/
+const API={
+  me: async token=>{
+    const t=String(token||"").trim();
+    const out=await rpcTry(["api_me","me","app_me","api_whoami","api_profile","whoami"],[
+      {p_token:t},{token:t},{p_session:t},{session:t},{session_token:t},{p_session_token:t}
+    ]);
+    return {ok:asOk(out), me:pickMe(out), token:pickToken(out)||""};
+  },
+
+  giftStatus: async token=>{
+    const t=String(token||"").trim();
+    return await rpcTry(
+      ["api_gift_status","gift_status","api_points","api_gift_points","api_gift_me","gift_me"],
+      [{p_token:t},{token:t},{session_token:t},{p_session_token:t},{p_session:t},{session:t}]
+    );
+  },
+
+  giftHistory: async token=>{
+    const t=String(token||"").trim();
+    return await rpcTry(
+      ["api_gift_history","gift_history","api_my_gifts","my_gifts","api_gift_log","gift_log"],
+      [{p_token:t},{token:t},{session_token:t},{p_session_token:t},{p_session:t},{session:t}]
+    );
+  },
+
+  giftRedeem: async (token,points,phone,mode)=>{
+    const t=String(token||"").trim();
+    const p=Math.max(0,Number(points)||0);
+    const ph=String(phone||"").trim();
+    const m=String(mode||"").trim();
+    return await rpcTry(
+      ["api_gift_redeem","gift_redeem","api_redeem_gift","redeem_gift","api_gift_exchange","gift_exchange"],
+      [
+        {p_token:t,p_points:p,p_phone:ph,p_mode:m},
+        {token:t,points:p,phone:ph,mode:m},
+        {session_token:t,points:p,phone:ph,mode:m},
+        {p_session_token:t,p_points:p,p_phone:ph,p_mode:m}
+      ]
+    );
+  },
+
+  adminPending: async token=>{
+    const t=String(token||"").trim();
+    return await rpcTry(
+      ["api_admin_gift_pending","admin_gift_pending","api_gift_pending","gift_pending"],
+      [{p_token:t},{token:t},{session_token:t},{p_session_token:t}]
+    );
+  },
+
+  adminAction: async (token,reqId,action,note)=>{
+    const t=String(token||"").trim();
+    const id=reqId;
+    const a=String(action||"").trim(); // approve | warn | reject | done
+    const n=String(note||"").trim();
+    return await rpcTry(
+      ["api_admin_gift_action","admin_gift_action","api_gift_action","gift_action"],
+      [
+        {p_token:t,p_request_id:id,p_action:a,p_note:n},
+        {token:t,request_id:id,action:a,note:n},
+        {session_token:t,request_id:id,action:a,note:n}
+      ]
+    );
+  }
+};
+
+/*** State ***/
+let ME=null;
+let STATUS={points:0,times100:0};
+let HISTORY=[];
+let ADMIN_PENDING=[];
+
+/*** Header UI ***/
+const userCorner=document.getElementById("userCorner");
+const userCornerName=document.getElementById("userCornerName");
+const userCornerAdmin=document.getElementById("userCornerAdmin");
+const statusPill=document.getElementById("statusPill");
+const adminLinkTop=document.getElementById("adminLinkTop");
+function updateHeader(){
+  const isAdmin=isAdminUser(ME);
+  adminLinkTop.style.display=(ME&&ME.username&&isAdmin)?"inline-flex":"none";
+  if(!ME||!ME.username){
+    userCorner.style.display="none";
+    statusPill.textContent="Chưa đăng nhập";
+    return;
+  }
+  userCorner.style.display="inline-flex";
+  userCornerName.textContent=ME.username;
+  userCornerAdmin.style.display=isAdmin?"inline-flex":"none";
+  statusPill.innerHTML=`Xin chào <b>${escapeHtml(ME.username)}</b> ${isAdmin?`<span class="adminBadgeInline">ADMIN</span>`:""}`;
+}
+
+/*** Confirm modal ***/
+const confirmBackdrop=document.getElementById("confirmBackdrop");
+const confirmTitle=document.getElementById("confirmTitle");
+const confirmMsg=document.getElementById("confirmMsg");
+const btnConfirmOk=document.getElementById("btnConfirmOk");
+const btnConfirmCancel=document.getElementById("btnConfirmCancel");
+confirmBackdrop.addEventListener("click",e=>{if(e.target===confirmBackdrop)closeConfirm(false)});
+let CONFIRM_STATE={open:false,resolve:null};
+function openConfirm({title,message,okText="Xác nhận",cancelText="Huỷ"}){
+  return new Promise(resolve=>{
+    CONFIRM_STATE.open=true;CONFIRM_STATE.resolve=resolve;
+    confirmTitle.textContent=String(title||"Xác nhận");
+    confirmMsg.textContent=String(message||"");
+    btnConfirmOk.textContent=okText; btnConfirmCancel.textContent=cancelText;
+    confirmBackdrop.classList.add("show"); confirmBackdrop.setAttribute("aria-hidden","false");
+  });
+}
+function closeConfirm(ans){
+  if(!CONFIRM_STATE.open)return;
+  confirmBackdrop.classList.remove("show"); confirmBackdrop.setAttribute("aria-hidden","true");
+  const r=CONFIRM_STATE.resolve; CONFIRM_STATE.open=false; CONFIRM_STATE.resolve=null;
+  if(r)r(!!ans);
+}
+btnConfirmCancel.onclick=()=>closeConfirm(false);
+btnConfirmOk.onclick=()=>closeConfirm(true);
+
+/*** Phone modal ***/
+const phoneBackdrop=document.getElementById("phoneBackdrop");
+const phoneInput=document.getElementById("phoneInput");
+const phoneHint=document.getElementById("phoneHint");
+document.getElementById("btnClosePhone").onclick=()=>closePhone(null);
+document.getElementById("btnPhoneCancel").onclick=()=>closePhone(null);
+phoneBackdrop.addEventListener("click",e=>{if(e.target===phoneBackdrop)closePhone(null)});
+let PHONE_STATE={open:false,resolve:null,pack:null};
+function cleanPhone(v){return String(v||"").replace(/[^\d+]/g,"").trim()}
+function validatePhone(v){
+  v=cleanPhone(v);
+  if(!v) return "Chưa nhập SĐT.";
+  const digits=v.replace(/\D/g,"");
+  if(digits.length<9||digits.length>12) return "SĐT nên 9-12 số.";
+  return null;
+}
+function openPhone(pack){
+  return new Promise(resolve=>{
+    PHONE_STATE.open=true; PHONE_STATE.resolve=resolve; PHONE_STATE.pack=pack;
+    phoneInput.value="";
+    phoneHint.textContent=`Bạn đang chọn: ${pack.title} • ${pack.points} điểm → ${pack.value}`;
+    phoneBackdrop.classList.add("show"); phoneBackdrop.setAttribute("aria-hidden","false");
+    setTimeout(()=>{try{phoneInput.focus()}catch{}},10);
+  });
+}
+function closePhone(val){
+  if(!PHONE_STATE.open)return;
+  phoneBackdrop.classList.remove("show"); phoneBackdrop.setAttribute("aria-hidden","true");
+  const r=PHONE_STATE.resolve;
+  PHONE_STATE.open=false; PHONE_STATE.resolve=null; PHONE_STATE.pack=null;
+  if(r)r(val);
+}
+document.getElementById("btnPhoneOk").onclick=()=>{
+  const v=cleanPhone(phoneInput.value);
+  const err=validatePhone(v);
+  if(err){toast(err);return}
+  closePhone(v);
+};
+
+/*** Render ***/
+const content=document.getElementById("content");
+
+function fmtTime(ts){
+  const t=parseAnyTime(ts);
+  if(!t) return "";
+  try{
+    const d=new Date(t);
+    return d.toLocaleString("vi-VN",{hour12:false});
+  }catch{return ""}
+}
+function maskPhone(p){
+  const s=String(p||"").trim();
+  const digits=s.replace(/\D/g,"");
+  if(digits.length<6) return s? "****" : "";
+  const head=digits.slice(0,3);
+  const tail=digits.slice(-2);
+  return head+"*****"+tail;
+}
+function statusBadge(status){
+  const s=String(status||"").toUpperCase();
+  if(s.includes("PEND")) return `<span class="idx badge-warn">PENDING</span>`;
+  if(s.includes("APPROV")||s.includes("DONE")||s.includes("PAID")||s.includes("SUCCESS")) return `<span class="idx badge-ok">OK</span>`;
+  if(s.includes("WARN")||s.includes("ABUSE")) return `<span class="idx badge-warn">WARN</span>`;
+  if(s.includes("REJECT")||s.includes("DENY")||s.includes("FAIL")) return `<span class="idx badge-bad">REJECT</span>`;
+  return `<span class="idx">${escapeHtml(s||"—")}</span>`;
+}
+
+function renderNeedLogin(){
+  const next=encodeURIComponent("/gift");
+  content.innerHTML=`
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Bạn cần đăng nhập</p>
+        <div><span class="idx badge-warn">BẮT BUỘC</span></div>
+      </div>
+      <div class="muted" style="margin-top:8px;line-height:1.35">
+        Trang quà tặng dùng điểm tích luỹ theo tài khoản (mỗi lần đạt <b>100%</b> được <b>+1 điểm</b>).<br>
+        Hãy đăng nhập ở trang chủ, rồi quay lại đây.
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+        <a href="/?next=${next}"><button class="btn btn-primary">🔐 Đăng nhập</button></a>
+        <a href="/"><button class="btn btn-ghost">🏠 Trang chủ</button></a>
+      </div>
+    </div>
+  `;
+}
+
+function renderGift(){
+  const isAdmin=isAdminUser(ME);
+  const pts=STATUS.points||0;
+  const times=STATUS.times100||0;
+
+  const packHtml = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Đổi quà</p>
+        <div class="pillRow">
+          <span class="idx badge-pin">🎯 Điểm = số lần 100%</span>
+        </div>
+      </div>
+      <div class="muted" style="margin-top:8px;line-height:1.35">
+        - Mỗi lần làm quiz đạt <b>100%</b> được <b>+1 điểm</b> (làm lại vẫn tính).<br>
+        - Gói <b>50 điểm</b> sẽ <b>gửi yêu cầu</b> để admin duyệt (chống lạm dụng).
+      </div>
+
+      <div class="grid2" style="margin-top:12px">
+        ${PACKS.map(pk=>{
+          const ok=pts>=pk.points;
+          const btnText = pk.mode==="request" ? "📩 Gửi yêu cầu" : "⚡ Đổi ngay";
+          const badge = pk.mode==="request" ? `<span class="idx badge-warn">CẦN DUYỆT</span>` : `<span class="idx badge-ok">NHANH</span>`;
+          return `
+            <div class="item">
+              <div class="itemTop">
+                <div style="min-width:0">
+                  <div class="itemTitle">${escapeHtml(pk.title)} • <b>${escapeHtml(pk.value)}</b></div>
+                  <div class="itemMeta" style="margin-top:4px">${escapeHtml(pk.sub)} • Cần <b>${pk.points}</b> điểm</div>
+                  <div class="pillRow" style="margin-top:8px">
+                    ${badge}
+                    <span class="idx">${ok? "ĐỦ ĐIỂM":"CHƯA ĐỦ"}</span>
+                  </div>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+                  <button class="btn btn-primary smallBtn" data-pack="${pk.points}" ${ok?"":"disabled"}>${btnText}</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    </div>
+  `;
+
+  const historyHtml = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Lịch sử đổi quà</p>
+        <div><span class="idx">${HISTORY.length} mục</span></div>
+      </div>
+      <div class="muted" style="margin-top:6px;line-height:1.35">
+        Nếu bị cảnh báo, vui lòng dùng điểm đúng cách (không lạm dụng).
+      </div>
+      <div class="list" style="margin-top:12px">
+        ${HISTORY.length? HISTORY.map(x=>{
+          const status = x.status||x.state||x.result||x.approval_status||x.approve_status||"";
+          const ptsUsed = Number(x.points||x.points_used||x.cost_points||x.cost||x.spend||0)||0;
+          const val = x.value||x.amount||x.reward||x.money||"";
+          const phone = x.phone||x.phone_number||x.sdt||"";
+          const created = x.created_at||x.createdAt||x.time||x.ts||"";
+          const note = x.note||x.admin_note||x.message||"";
+          return `
+            <div class="item">
+              <div class="itemTop">
+                <div style="min-width:0">
+                  <div class="itemTitle">🎁 ${ptsUsed||"?"} điểm → ${escapeHtml(String(val||"—"))}</div>
+                  <div class="itemMeta" style="margin-top:4px">
+                    ⏱ ${escapeHtml(fmtTime(created)||"—")} • 📱 ${escapeHtml(maskPhone(phone)||"—")}
+                  </div>
+                  ${note? `<div class="itemMeta" style="margin-top:6px">📝 ${escapeHtml(note)}</div>`:""}
+                </div>
+                <div class="pillRow">
+                  ${statusBadge(status)}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("") : `<div class="muted">Chưa có lịch sử.</div>`}
+      </div>
+    </div>
+  `;
+
+  const adminHtml = !isAdmin ? "" : `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Admin • Duyệt yêu cầu quà tặng</p>
+        <div><span class="idx badge-pin">ADMIN</span></div>
+      </div>
+      <div class="muted" style="margin-top:6px;line-height:1.35">
+        Danh sách yêu cầu đang chờ duyệt. Bạn có thể <b>Duyệt</b> hoặc <b>Cảnh báo</b> (lạm dụng).
+      </div>
+      <div class="list" style="margin-top:12px">
+        ${ADMIN_PENDING.length? ADMIN_PENDING.map(x=>{
+          const rid = x.id||x.request_id||x.requestId||x.gift_id||x.giftId||x.pk||x.uuid;
+          const u = x.username||x.user||x.handle||x.name||"—";
+          const phone = x.phone||x.phone_number||x.sdt||"";
+          const ptsUsed = Number(x.points||x.points_used||x.cost_points||x.cost||x.spend||0)||0;
+          const created = x.created_at||x.createdAt||x.time||x.ts||"";
+          const times100 = Number(x.full_score_count||x.fullScoreCount||x.count_100||x.times_100||x.score100||0)||0;
+          return `
+            <div class="item">
+              <div class="itemTop">
+                <div style="min-width:0">
+                  <div class="itemTitle">👤 ${escapeHtml(u)} • <b>${ptsUsed}</b> điểm</div>
+                  <div class="itemMeta" style="margin-top:4px">
+                    ⏱ ${escapeHtml(fmtTime(created)||"—")} • 📱 ${escapeHtml(maskPhone(phone)||"—")} • 🎯 100%: <b>${times100}</b>
+                  </div>
+                </div>
+                <div class="pillRow">
+                  <button class="btn btn-primary smallBtn" data-admin-action="approve" data-rid="${escapeHtml(String(rid||""))}">✅ Duyệt</button>
+                  <button class="btn btn-danger smallBtn" data-admin-action="warn" data-rid="${escapeHtml(String(rid||""))}">⚠️ Cảnh báo</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("") : `<div class="muted">Không có yêu cầu chờ duyệt.</div>`}
+      </div>
+    </div>
+  `;
+
+  content.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Điểm của bạn</p>
+        <div class="pillRow">
+          <span class="idx badge-ok">ĐANG HOẠT ĐỘNG</span>
+        </div>
+      </div>
+      <div class="kpi" style="margin-top:10px">
+        <div>
+          <div class="big">${pts}</div>
+          <div class="sub">điểm hiện có</div>
+        </div>
+        <div style="text-align:right">
+          <div class="big">${times}</div>
+          <div class="sub">lần đạt 100%</div>
+        </div>
+      </div>
+      <div class="hr"></div>
+      <div class="muted" style="line-height:1.35">
+        Gợi ý: Làm lại quiz để lấy thêm điểm — mỗi lần đạt 100% vẫn được +1.
+      </div>
+    </div>
+
+    ${packHtml}
+    ${historyHtml}
+    ${adminHtml}
+  `;
+
+  // pack click
+  content.querySelectorAll('button[data-pack]').forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const p=Number(btn.getAttribute("data-pack")||0)||0;
+      const pack=PACKS.find(x=>x.points===p);
+      if(!pack) return;
+
+      // ask phone (required for all to receive money)
+      const phone = await openPhone(pack);
+      if(!phone) return;
+
+      const isReq = pack.mode==="request";
+      const ok = await openConfirm({
+        title: isReq ? "Gửi yêu cầu đổi quà" : "Đổi quà ngay",
+        message: isReq
+          ? `Gửi yêu cầu đổi ${pack.points} điểm → ${pack.value} (SĐT: ${phone}). Admin sẽ duyệt.`
+          : `Đổi ${pack.points} điểm → ${pack.value} (SĐT: ${phone}). Trừ điểm ngay. Xác nhận?`,
+        okText: isReq ? "Gửi" : "Đổi",
+        cancelText: "Huỷ"
+      });
+      if(!ok) return;
+
+      try{
+        btn.disabled=true; btn.textContent="⏳";
+        const out = await API.giftRedeem(getToken(), pack.points, phone, pack.mode);
+        if(!asOk(out)) throw new Error((firstObj(out)?.error||firstObj(out)?.message)||"Đổi quà thất bại");
+        toast(isReq ? "Đã gửi yêu cầu" : "Đã đổi quà");
+        await reloadAll();
+      }catch(e){
+        toast(e?.message||"Lỗi");
+      }finally{
+        btn.disabled=false;
+        btn.textContent = pack.mode==="request" ? "📩 Gửi yêu cầu" : "⚡ Đổi ngay";
+      }
+    }, {passive:true});
+  });
+
+  // admin actions
+  content.querySelectorAll('button[data-admin-action]').forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const action=String(btn.getAttribute("data-admin-action")||"").trim();
+      const rid=btn.getAttribute("data-rid");
+      if(!rid){toast("Thiếu request_id");return}
+      const note = (prompt("Ghi chú (tuỳ chọn):","")||"").trim();
+
+      const ok = await openConfirm({
+        title: action==="approve" ? "Duyệt yêu cầu" : "Cảnh báo",
+        message: action==="approve"
+          ? `Duyệt yêu cầu #${rid}?`
+          : `Cảnh báo/lạm dụng cho yêu cầu #${rid}?`,
+        okText: action==="approve" ? "Duyệt" : "Cảnh báo",
+        cancelText: "Huỷ"
+      });
+      if(!ok) return;
+
+      try{
+        btn.disabled=true; btn.textContent="⏳";
+        const out = await API.adminAction(getToken(), rid, action, note);
+        if(!asOk(out)) throw new Error((firstObj(out)?.error||firstObj(out)?.message)||"Thao tác thất bại");
+        toast("Đã cập nhật");
+        await reloadAll();
+      }catch(e){
+        toast(e?.message||"Lỗi");
+      }finally{
+        btn.disabled=false;
+        btn.textContent = action==="approve" ? "✅ Duyệt" : "⚠️ Cảnh báo";
+      }
+    }, {passive:true});
+  });
+}
+
+/*** Loaders ***/
+async function loadStatus(){
+  const raw = await API.giftStatus(getToken());
+  STATUS.points = pickPoints(raw);
+  STATUS.times100 = pickTimes100(raw);
+}
+async function loadHistory(){
+  const raw = await API.giftHistory(getToken());
+  HISTORY = pickHistory(raw);
+  // sort newest first (best-effort)
+  HISTORY.sort((a,b)=>parseAnyTime(b.created_at||b.createdAt||b.ts||b.time)-parseAnyTime(a.created_at||a.createdAt||a.ts||a.time));
+}
+async function loadAdminPending(){
+  if(!isAdminUser(ME)){ADMIN_PENDING=[];return}
+  const raw = await API.adminPending(getToken());
+  ADMIN_PENDING = pickHistory(raw);
+  ADMIN_PENDING.sort((a,b)=>parseAnyTime(b.created_at||b.createdAt||b.ts||b.time)-parseAnyTime(a.created_at||a.createdAt||a.ts||a.time));
+}
+async function reloadAll(){
+  updateHeader();
+  await Promise.allSettled([loadStatus(),loadHistory(),loadAdminPending()]);
+  renderGift();
+}
+
+/*** Boot ***/
+async function boot(){
+  await requestPersistentStorage();
+
+  ME=getMeCache();
+  const t=getToken();
+
+  if(t){
+    try{
+      const meOut=await API.me(t);
+      if(meOut&&meOut.ok&&meOut.me&&meOut.me.username){
+        ME=meOut.me; setMeCache(ME);
+        if(meOut.token) setToken(meOut.token); else setToken(t);
+      }
+    }catch{}
+  }
+
+  updateHeader();
+
+  if(!ME||!ME.username){
+    renderNeedLogin();
+    return;
+  }
+
+  try{
+    await reloadAll();
+  }catch(e){
+    toast(e?.message||"Lỗi tải dữ liệu");
+    // show at least UI
+    renderGift();
+  }
+}
+
+if(SUPABASE_URL.includes("PASTE_")||SUPABASE_ANON_KEY.includes("PASTE_")) toast("Chưa dán SUPABASE_URL / ANON_KEY trong gift.html");
+boot();
+</script>
+</body>
+</html>
 
