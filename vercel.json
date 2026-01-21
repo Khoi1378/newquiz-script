@@ -4,22 +4,16 @@
   "rewrites": [
     { "source": "/admin", "destination": "/admin.html" },
     { "source": "/admin/", "destination": "/admin.html" },
-
     { "source": "/spin1", "destination": "/spin1/index.html" },
     { "source": "/spin1/", "destination": "/spin1/index.html" },
-
     { "source": "/q/dalat", "destination": "/dalat.html" },
     { "source": "/q/dalat/", "destination": "/dalat.html" },
-
     { "source": "/q", "destination": "/q/index.html" },
     { "source": "/q/", "destination": "/q/index.html" },
-
     { "source": "/q/:id", "destination": "/q/index.html" },
     { "source": "/q/:id/", "destination": "/q/index.html" },
-
     { "source": "/q/:id.html", "destination": "/q/index.html" },
-    { "source": "/q/:id.html/", "destination": "/q/index.html" }
-
+    { "source": "/q/:id.html/", "destination": "/q/index.html" },
     { "source": "/gift", "destination": "/gift.html" },
     { "source": "/gift/", "destination": "/gift.html" }
   ]
