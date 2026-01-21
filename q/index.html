@@ -345,7 +345,7 @@
     .kpBtn:active{ transform: translateY(0); }
     .kpBtn.small{ min-width:74px; }
 
-    /* ✅ Mobile layout đúng như bạn muốn (2 hàng, 7 cột) */
+    /* ✅ Mobile layout đúng (2 hàng, 7 cột) */
     @media (max-width: 520px){
       .keypad4{
         display:grid;
@@ -1055,9 +1055,14 @@ function looseEq(user, expected){
   if (u.replace(/\s/g,"") === a.replace(/\s/g,"")) return true;
   return false;
 }
+
+/* ✅ FIX: ưu tiên meta.answers, và đọc luôn meta.answers */
 function acceptedAnswersFromQuestion(q){
   const t = qTypeOf(q);
   const out = [];
+
+  // ưu tiên meta.answers (admin panel thường set ở đây)
+  if (Array.isArray(q?.meta?.answers)) out.push(...q.meta.answers);
 
   // short4: nếu admin nhập dạng 4 ô ["1","2","3","4"] thì join thành "1234"
   if(t === "short4" && Array.isArray(q.answers) && q.answers.length === 4){
@@ -1069,7 +1074,7 @@ function acceptedAnswersFromQuestion(q){
 
   if(Array.isArray(q.answers)) out.push(...q.answers);
 
-  // cho phép set đáp án trong meta
+  // cho phép set đáp án trong meta (dạng 1 string)
   const metaAns = q?.meta?.answer || q?.meta?.correct || q?.meta?.expected;
   if(metaAns) out.push(String(metaAns));
 
@@ -1084,6 +1089,7 @@ function acceptedAnswersFromQuestion(q){
   }
   return uniq;
 }
+
 function pointsOf(q){
   const p = Number(q.points ?? 0);
   return (isFinite(p) && p > 0) ? p : 1;
@@ -1611,11 +1617,12 @@ function renderEssay(q, locked){
     </div>
   `;
 }
+
+/* ✅ FIX: short4 inputmode numeric để mobile hiện keypad số */
 function renderShort4(q, locked){
   const raw = String(state.answers[q.id] || "");
   const chars = [raw[0]||"", raw[1]||"", raw[2]||"", raw[3]||""];
 
-  // ✅ đúng layout mobile bạn yêu cầu:
   // 1 2 3 4 5 , -
   // 6 7 8 9 0 ⌫ CLR
   const keys = ["1","2","3","4","5",",","-","6","7","8","9","0","⌫","CLR"];
@@ -1625,15 +1632,23 @@ function renderShort4(q, locked){
       <div class="muted">Nhập 4 ô (0-9, dấu -, dấu ,).</div>
       <div class="boxes4">
         ${chars.map((c,i)=>`
-          <input class="input boxDigit short4" data-id="${q.id}" data-k="${i}" maxlength="1" inputmode="text"
-            value="${escapeHtml(c)}" ${locked?"disabled":""}/>
+          <input
+            class="input boxDigit short4"
+            data-id="${q.id}" data-k="${i}"
+            maxlength="1"
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            autocomplete="off"
+            value="${escapeHtml(c)}"
+            ${locked?"disabled":""}/>
         `).join("")}
       </div>
 
       <div class="keypad4" role="group" aria-label="short4 keypad">
         ${keys.map(x=>{
-          const label = (x === "<") ? "&lt;" : escapeHtml(x);
-          const cls = (x==="CLR" || x==="<") ? "kpBtn small" : "kpBtn";
+          const label = escapeHtml(x);
+          const cls = (x==="CLR" || x==="⌫") ? "kpBtn small" : "kpBtn";
           return `<button class="${cls}" data-kpid="${q.id}" data-kpkey="${escapeHtml(x)}" ${locked?"disabled":""} type="button">${label}</button>`;
         }).join("")}
       </div>
@@ -1753,7 +1768,9 @@ content.addEventListener("click", (e)=>{
     if(key === "CLR"){
       arr[0]=arr[1]=arr[2]=arr[3]="";
       cursor = 0;
-    }else if(key === "<"){
+
+    /* ✅ FIX: backspace key là "⌫" (không phải "<") */
+    }else if(key === "⌫" || key === "<" || key === "BACK" || key === "DEL"){
       cursor = clamp(cursor);
       if(arr[cursor]){
         arr[cursor] = "";
@@ -1762,6 +1779,7 @@ content.addEventListener("click", (e)=>{
         while(j>=0 && !arr[j]) j--;
         if(j>=0){ arr[j]=""; cursor=j; }
       }
+
     }else{
       let pos = clamp(cursor);
       if(arr[pos]){
@@ -2113,7 +2131,6 @@ async function doSubmitNow(){
     state.attempt_id = attemptId;
     saveLocalProgress();
   }catch(e){
-    // ✅ show lỗi thật để biết RLS/GRANT đang chặn gì
     toast("Không lưu DB: " + (e?.message || "unknown"));
   }
 
@@ -2182,6 +2199,7 @@ async function loadMeIfAny(){
   }
 }
 
+/* ✅ FIX: loadQuiz map answers từ meta.answers nếu answers trống */
 async function loadQuiz(){
   const token = getToken() || "";
   const out = await sbRpc(RPC.getQuiz, { p_quiz_id: quizId, p_token: token, p_access_code: "" });
@@ -2197,15 +2215,27 @@ async function loadQuiz(){
     sub: q.sub || "",
     require_login: (q.require_login !== false),
     shuffle_mode: String(q.shuffle_mode || "none"),
-    items: items.map(x=>({
-      id: Number(x.id),
-      no: x.no,
-      q_type: String(x.q_type || "essay"),
-      prompt: String(x.prompt || ""),
-      answers: Array.isArray(x.answers) ? x.answers : [],
-      points: x.points ?? 1,
-      meta: (x.meta && typeof x.meta === "object") ? x.meta : {}
-    }))
+    items: items.map(x=>{
+      const meta = (x.meta && typeof x.meta === "object") ? x.meta : {};
+
+      // ưu tiên meta.answers nếu x.answers rỗng
+      let answers = [];
+      if(Array.isArray(x.answers) && x.answers.length){
+        answers = x.answers;
+      }else if(Array.isArray(meta.answers)){
+        answers = meta.answers;
+      }
+
+      return {
+        id: Number(x.id),
+        no: x.no,
+        q_type: String(x.q_type || "essay"),
+        prompt: String(x.prompt || ""),
+        answers,
+        points: x.points ?? 1,
+        meta
+      };
+    })
   };
 }
 
