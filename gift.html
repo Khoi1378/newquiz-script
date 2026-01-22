@@ -662,14 +662,15 @@ function renderGift(){
   content.querySelectorAll('button[data-pack]').forEach(btn=>{
     bindFastTap(btn, async ()=>{
       if(btn.disabled) return;
-      if(REDEEM_BUSY) return;
+      if(FLOW_LOCK) return;       // ✅ dùng FLOW_LOCK thay REDEEM_BUSY
+      FLOW_LOCK = true;
 
       const p=Number(btn.getAttribute("data-pack")||0)||0;
       const pack=PACKS.find(x=>x.points===p);
-      if(!pack) return;
+      if(!pack){ FLOW_LOCK=false; return; }
 
       const phone = await openPhone(pack);
-      if(!phone) return;
+      if(!phone){ FLOW_LOCK=false; return; }
 
       const ok = await openConfirm({
         title: "Đổi quà",
@@ -677,12 +678,10 @@ function renderGift(){
         okText: "Đổi ngay",
         cancelText: "Huỷ"
       });
-      if(!ok) return;
+      if(!ok){ FLOW_LOCK=false; return; }
 
       try{
-        REDEEM_BUSY=true;
-        // disable ALL pack buttons để khỏi bấm nhiều lần
-        content.querySelectorAll('button[data-pack]').forEach(b=>{b.disabled=true});
+        lockPackButtons(true);          // ✅ khoá đúng trạng thái nút (không bật bậy)
         btn.textContent="⏳ Đang gửi...";
 
         const out = await API.giftRedeem(getToken(), pack.points, phone);
@@ -693,13 +692,13 @@ function renderGift(){
       }catch(e){
         toast(e?.message||"Lỗi");
       }finally{
-        REDEEM_BUSY=false;
-        // bật lại nút (renderGift sẽ vẽ lại theo điểm mới, nhưng fallback vẫn bật lại)
-        content.querySelectorAll('button[data-pack]').forEach(b=>{b.disabled=false});
+        lockPackButtons(false);
         btn.textContent="⚡ Đổi ngay";
+        FLOW_LOCK = false;
       }
     });
   });
+
 
   // admin actions
   content.querySelectorAll('button[data-admin-action]').forEach(btn=>{
