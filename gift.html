@@ -316,7 +316,39 @@ let ME=null;
 let STATUS={points:0,times100:0};
 let HISTORY=[];
 let ADMIN_PENDING=[];
-let REDEEM_BUSY=false;
+
+let FLOW_LOCK=false;   // ✅ khóa luồng đổi quà để không bị bấm nhiều lần
+let ADMIN_LOCK=false;  // ✅ khóa thao tác admin
+
+function lockPackButtons(lock){
+  document.querySelectorAll('button[data-pack]').forEach(btn=>{
+    if(lock){
+      btn.dataset._prevDisabled = btn.disabled ? "1" : "0";
+      btn.disabled = true;
+    }else{
+      const prev = btn.dataset._prevDisabled;
+      if(prev != null){
+        btn.disabled = (prev === "1");
+        delete btn.dataset._prevDisabled;
+      }
+    }
+  });
+}
+
+function lockAdminButtons(lock){
+  document.querySelectorAll('button[data-admin-action]').forEach(btn=>{
+    if(lock){
+      btn.dataset._prevDisabled = btn.disabled ? "1" : "0";
+      btn.disabled = true;
+    }else{
+      const prev = btn.dataset._prevDisabled;
+      if(prev != null){
+        btn.disabled = (prev === "1");
+        delete btn.dataset._prevDisabled;
+      }
+    }
+  });
+}
 
 /*** Header UI ***/
 const userCorner=document.getElementById("userCorner");
