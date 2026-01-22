@@ -376,7 +376,12 @@ const confirmTitle=document.getElementById("confirmTitle");
 const confirmMsg=document.getElementById("confirmMsg");
 const btnConfirmOk=document.getElementById("btnConfirmOk");
 const btnConfirmCancel=document.getElementById("btnConfirmCancel");
-confirmBackdrop.addEventListener("click",e=>{if(e.target===confirmBackdrop)closeConfirm(false)});
+confirmBackdrop.addEventListener("click", e=>{
+  // ✅ tránh ghost click làm confirm tắt ngay
+  if(e.target===confirmBackdrop){
+    // không đóng bằng click nền
+  }
+});
 let CONFIRM_STATE={open:false,resolve:null};
 function openConfirm({title,message,okText="Xác nhận",cancelText="Huỷ"}){
   return new Promise(resolve=>{
@@ -402,7 +407,13 @@ const phoneInput=document.getElementById("phoneInput");
 const phoneHint=document.getElementById("phoneHint");
 document.getElementById("btnClosePhone").onclick=()=>closePhone(null);
 document.getElementById("btnPhoneCancel").onclick=()=>closePhone(null);
-phoneBackdrop.addEventListener("click",e=>{if(e.target===phoneBackdrop)closePhone(null)});
+phoneBackdrop.addEventListener("click", e=>{
+  if(e.target===phoneBackdrop){
+    // ✅ chặn ghost click trong 400ms đầu
+    if(Date.now() - (PHONE_STATE.openedAt||0) < 400) return;
+    closePhone(null);
+  }
+});
 let PHONE_STATE={open:false,resolve:null,pack:null};
 function cleanPhone(v){return String(v||"").replace(/[^\d+]/g,"").trim()}
 function validatePhone(v){
@@ -414,7 +425,8 @@ function validatePhone(v){
 }
 function openPhone(pack){
   return new Promise(resolve=>{
-    PHONE_STATE.open=true; PHONE_STATE.resolve=resolve; PHONE_STATE.pack=pack;
+    PHONE_STATE.open=true;PHONE_STATE.resolve=resolve;PHONE_STATE.pack=pack;
+    PHONE_STATE.openedAt = Date.now(); // ✅
     phoneInput.value="";
     phoneHint.textContent=`Bạn đang chọn: ${pack.title} • ${pack.points} điểm → ${pack.value}`;
     phoneBackdrop.classList.add("show"); phoneBackdrop.setAttribute("aria-hidden","false");
