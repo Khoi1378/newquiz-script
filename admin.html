@@ -676,8 +676,13 @@ const RPC={
   adminImportQuestions:"admin_import_questions_v3",
   adminListUsers:"admin_list_users",
   adminDeleteUser:"admin_delete_user",
+
+  // NOTE: rename/pin có thể có bản v2 ở backend (hoặc chạy song song 2 hệ user khác nhau).
+  // Admin sẽ gọi cả v1 + v2 (cái nào tồn tại thì chạy) để đảm bảo đổi có hiệu lực “thật”.
   adminForceRename:"admin_force_rename",
-  adminForceSetPin:"admin_force_set_pin"
+  adminForceRename2:"admin_force_rename_v2",
+  adminForceSetPin:"admin_force_set_pin",
+  adminForceSetPin2:"admin_force_set_pin_v2"
 };
 
 function toast(msg){
@@ -799,6 +804,36 @@ async function rpc(fn,args){
     throw new Error(msg||`RPC failed: ${fn}`);
   }
   return data;
+}
+
+// gọi RPC “tùy chọn”: nếu backend không có hàm (v2/v1) thì bỏ qua; còn lỗi thật thì throw.
+function looksLikeMissingRpc(msg){
+  const s=String(msg||"");
+  return /PGRST202|Could not find the function|does not exist|Not Found|404|schema cache/i.test(s);
+}
+async function rpcOptional(fn,args){
+  if(!fn) return null;
+  try{
+    const out=await rpc(fn,args);
+    if(out && typeof out==="object" && ("ok" in out) && out.ok===false){
+      throw new Error(out.error||out.message||"RPC ok=false");
+    }
+    return out;
+  }catch(e){
+    const msg=String(e?.message||"");
+    if(looksLikeMissingRpc(msg)) return null;
+    throw e;
+  }
+}
+async function rpcEnsureAtLeastOne(fns,args){
+  let any=false;
+  let last=null;
+  for(const fn of (fns||[])){
+    const out=await rpcOptional(fn,args);
+    if(out!==null){ any=true; last=out; }
+  }
+  if(!any) throw new Error("Backend không có RPC rename/pin phù hợp (v1/v2).");
+  return last;
 }
 
 function publicObjectUrl(bucket,path){
@@ -2160,21 +2195,51 @@ async function delUser(id){
   toast("Deleted user");
   await reloadUsers();
 }
+
+// FIX #1: Rename “thật”
+// - validate username
+// - confirm
+// - gọi cả v2 + v1 (cái nào tồn tại sẽ chạy) để tránh trường hợp hệ thống đang dùng 2 bảng user khác nhau.
 async function renameUser(id){
-  const newU=prompt("New username (lowercase, a-z0-9_):");
+  const u=USERS.find(x=>String(x.id)===String(id));
+  const oldU=String(u?.username||"").trim();
+  let newU=prompt("New username (lowercase, a-z0-9_).", oldU||"");
   if(!newU) return;
-  const token=getToken();
-  await rpc(RPC.adminForceRename,{p_token:token,p_user_id:id,p_new_username:newU});
-  toast("Renamed");
-  await reloadUsers();
+  newU=String(newU||"").trim().toLowerCase();
+  if(!/^[a-z0-9_]{3,24}$/.test(newU)) return toast("Username không hợp lệ (a-z0-9_ , 3-24 ký tự).");
+  if(oldU && newU===oldU.toLowerCase()) return toast("Không có thay đổi.");
+
+  const ok=confirm(`Đổi username:\n${oldU||"(unknown)"}  →  ${newU}\n\nLưu ý: user sẽ dùng username mới để đăng nhập.`);
+  if(!ok) return;
+
+  try{
+    const token=getToken();
+    await rpcEnsureAtLeastOne([RPC.adminForceRename2,RPC.adminForceRename],{p_token:token,p_user_id:id,p_new_username:newU});
+    toast("Renamed");
+    await reloadUsers();
+  }catch(e){
+    toast(e.message||"Rename error");
+  }
 }
+
+// FIX #1 (phụ): Reset PIN gọi cả v2 + v1 nếu có.
 async function resetPin(id){
-  const pin=prompt("Tạo PIN mới (4 digits).");
+  let pin=prompt("Tạo PIN mới (4 digits).");
   if(!pin) return;
-  const token=getToken();
-  await rpc(RPC.adminForceSetPin,{p_token:token,p_user_id:id,p_new_pin:pin});
-  toast("PIN reset");
-  await reloadUsers();
+  pin=String(pin||"").trim();
+  if(!/^\d{4}$/.test(pin)) return toast("PIN phải đúng 4 số.");
+
+  const ok=confirm("Reset PIN cho user này?");
+  if(!ok) return;
+
+  try{
+    const token=getToken();
+    await rpcEnsureAtLeastOne([RPC.adminForceSetPin2,RPC.adminForceSetPin],{p_token:token,p_user_id:id,p_new_pin:pin});
+    toast("PIN reset");
+    await reloadUsers();
+  }catch(e){
+    toast(e.message||"PIN reset error");
+  }
 }
 
 const latexModalBack=document.getElementById("latexModalBack");
@@ -2183,51 +2248,77 @@ const latexPreviewSrc=document.getElementById("latexPreviewSrc");
 const latexPreview=document.getElementById("latexPreview");
 let LATEX_TARGET_EL=null;
 
+/* ===========================
+   FIX #2: LaTeX insert “thông minh”
+   - Không tự sinh thêm $$ khi chèn vào latex có sẵn
+   - Không “ăn mất” $$ khi chèn sau 1 cụm latex đã đóng
+   - Áp dụng cho cả ô preview trong modal + ô đang gõ
+   =========================== */
+
+function isEscapedAt(s,i){
+  let bs=0;
+  for(let k=i-1;k>=0&&s[k]==="\\";k--) bs++;
+  return (bs%2===1);
+}
+
+// parser đơn giản nhưng ổn hơn bản cũ: khi đang ở $$...$$ thì bỏ qua $ đơn; chỉ đóng bằng $$.
 function detectMathContext(text,pos){
   const s=String(text||"");
-  let mode="";
-  function isEscapedDollar(i){
-    let bs=0;
-    for(let k=i-1;k>=0&&s[k]==="\\";k--) bs++;
-    return (bs%2===1);
-  }
-  for(let i=0;i<pos;i++){
+  let mode=""; // "", "$", "$$", "\\(", "\\["
+  let i=0;
+  while(i<pos){
     const ch=s[i];
+    const nxt=s[i+1];
+
+    // handle \( \) \[ \]
     if(ch==="\\"){
-      const nxt=s[i+1];
       if(nxt==="("){
         if(!mode) mode="\\(";
         else if(mode==="\\(") mode="";
-        i++;
-        continue;
+        i+=2; continue;
       }
       if(nxt===")"){
         if(mode==="\\(") mode="";
-        i++;
-        continue;
+        i+=2; continue;
       }
       if(nxt==="["){
         if(!mode) mode="\\[";
         else if(mode==="\\[") mode="";
-        i++;
-        continue;
+        i+=2; continue;
       }
       if(nxt==="]"){
         if(mode==="\\[") mode="";
-        i++;
-        continue;
+        i+=2; continue;
       }
     }
-    if(ch==="$"&&!isEscapedDollar(i)){
-      const isDouble=(s[i+1]==="$");
-      const tok=isDouble?"$$":"$";
-      if(isDouble) i++;
-      if(!mode) mode=tok;
-      else if(mode===tok) mode="";
+
+    // handle $ / $$
+    if(ch==="$" && !isEscapedAt(s,i)){
+      const isDouble=(nxt==="$");
+      if(mode==="$$"){
+        if(isDouble){
+          mode=""; i+=2; continue;
+        }
+        // đang trong $$...$$ thì bỏ qua $ đơn
+        i+=1; continue;
+      }
+      if(mode==="$"){
+        if(!isDouble){
+          mode=""; i+=1; continue;
+        }
+        // gặp $$ khi đang trong $...$ => đóng $ ở ký tự đầu, rồi mở $$ ở ký tự thứ 2
+        mode="$$"; i+=2; continue;
+      }
+      // mode===""
+      if(isDouble){ mode="$$"; i+=2; continue; }
+      mode="$"; i+=1; continue;
     }
+
+    i+=1;
   }
   return mode;
 }
+
 function stripOuterMathDelims(s){
   let t=String(s||"").trim();
   if(!t) return t;
@@ -2238,6 +2329,53 @@ function stripOuterMathDelims(s){
   return t;
 }
 
+function looksWrappedMath(t){
+  const s=String(t||"").trim();
+  if(!s) return false;
+  if((s.startsWith("$$") && s.endsWith("$$") && s.length>4)) return true;
+  if((s.startsWith("$") && s.endsWith("$") && !s.startsWith("$$") && s.length>2)) return true;
+  if((s.startsWith("\\(") && s.endsWith("\\)") && s.length>4)) return true;
+  if((s.startsWith("\\[") && s.endsWith("\\]") && s.length>4)) return true;
+  return false;
+}
+
+// chống dính biên tạo "$$$$" hoặc "$$...$$$$...$$" khi chèn sát dấu $
+function dedupeMathDelims(before,insert,after){
+  let ins=String(insert||"");
+  const b=String(before||"");
+  const a=String(after||"");
+
+  const b2=b.slice(-2);
+  const b1=b.slice(-1);
+  const a2=a.slice(0,2);
+  const a1=a.slice(0,1);
+  const i2=ins.slice(0,2);
+  const i1=ins.slice(0,1);
+  const e2=ins.slice(-2);
+  const e1=ins.slice(-1);
+
+  // left dedupe
+  if(b2==="$$" && i2==="$$") ins=ins.slice(2);
+  else if(b1==="$" && b2!=="$$" && i1==="$" && i2!=="$$") ins=ins.slice(1);
+
+  // right dedupe
+  if(e2==="$$" && a2==="$$") ins=ins.slice(0,-2);
+  else if(e1==="$" && e2!=="$$" && a1==="$" && a2!=="$$") ins=ins.slice(0,-1);
+
+  return ins;
+}
+
+function isTextField(el){
+  if(!el) return false;
+  const tag=(el.tagName||"").toUpperCase();
+  if(tag==="TEXTAREA") return true;
+  if(tag==="INPUT"){
+    const t=String(el.type||"text").toLowerCase();
+    return !["button","submit","checkbox","radio","file","hidden"].includes(t);
+  }
+  return false;
+}
+
 function getActiveTextTarget(){
   const active=document.activeElement;
   if(isTextField(active)&&qAllHost.contains(active)) return active;
@@ -2245,6 +2383,7 @@ function getActiveTextTarget(){
   if(!el) toast("Click vào ô nhập trước");
   return el;
 }
+
 function insertAtCursor(el,text){
   const start=el.selectionStart??el.value.length;
   const end=el.selectionEnd??el.value.length;
@@ -2254,7 +2393,34 @@ function insertAtCursor(el,text){
   const pos=before.length+text.length;
   el.focus();
   if(typeof el.setSelectionRange==="function") el.setSelectionRange(pos,pos);
+  try{ el.dispatchEvent(new Event("input",{bubbles:true})); }catch{}
 }
+
+// insert LaTeX “khôn”: nếu đang ở trong math context thì strip vỏ; nếu không thì giữ nguyên,
+// đồng thời chống dính biên gây thêm $$ không mong muốn.
+function insertLatexSmart(el, snippet){
+  if(!el) return;
+  const start=el.selectionStart??el.value.length;
+  const end=el.selectionEnd??el.value.length;
+  const full=String(el.value||"");
+  const before=full.slice(0,start);
+  const after=full.slice(end);
+  const ctx=detectMathContext(full,start);
+
+  let ins=String(snippet||"");
+  if(ctx){
+    ins=stripOuterMathDelims(ins);
+  }else{
+    // nếu user gõ latex thuần (có \, ^, _, { } ...) mà không bọc, tự bọc $...$ cho tiện
+    const t=ins.trim();
+    if(t && !looksWrappedMath(t) && /[\\^_{}]|\\[a-zA-Z]+/.test(t)){
+      ins="$"+t+"$";
+    }
+    ins=dedupeMathDelims(before,ins,after);
+  }
+  insertAtCursor(el,ins);
+}
+
 function updateLatexPreview(){
   const s=String(latexPreviewSrc.value||"").trim();
   latexPreview.textContent=s?s:" ";
@@ -2287,15 +2453,14 @@ document.getElementById("btnLatexClear").onclick=()=>{
   updateLatexPreview();
   toast("Đã clear");
 };
+
+// FIX #2: dùng insertLatexSmart thay vì logic cũ (tránh sinh $$ sai / mất $$ sai)
 document.getElementById("btnLatexInsert").onclick=()=>{
   const el=LATEX_TARGET_EL||getActiveTextTarget();
   if(!el) return;
   const s=String(latexPreviewSrc.value||"").trim();
   if(!s) return toast("Chưa có LaTeX để chèn");
-  const pos=el.selectionStart??0;
-  const ctx=detectMathContext(el.value,pos);
-  const insertText=ctx?stripOuterMathDelims(s):s;
-  insertAtCursor(el,insertText);
+  insertLatexSmart(el,s);
   const card=el.closest(".qCard");
   if(card) syncQuestionFromCard(card);
   closeLatexModal();
@@ -2328,10 +2493,12 @@ const LATEX_TEMPLATES=[
   {label:"Hàm 3/1",tpl:"$y = \\dfrac{ax^3 + bx^2 + cx + d}{ex + f}$"}
 ];
 latexGrid.innerHTML=LATEX_TEMPLATES.map(x=>`<button class="latexChip" type="button" data-tpl="${esc(x.tpl)}">${esc(x.label)}</button>`).join("");
+
+// FIX #2: chèn template vào ô preview cũng “khôn” để không tạo thêm $$ lạ khi đang chỉnh 1 latex có sẵn
 latexGrid.addEventListener("click",(e)=>{
   const b=e.target.closest("[data-tpl]");
   if(!b) return;
-  insertAtCursor(latexPreviewSrc,b.getAttribute("data-tpl"));
+  insertLatexSmart(latexPreviewSrc, b.getAttribute("data-tpl"));
   updateLatexPreview();
 });
 
