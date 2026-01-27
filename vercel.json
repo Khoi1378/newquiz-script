@@ -18,7 +18,6 @@
     { "source": "/gift/", "destination": "/gift.html" },
     { "source": "/code/:id([a-z]{5})", "destination": "/code/index.html" },
     { "source": "/code", "destination": "/code/index.html" },
-    { "source": "/code/:path*", "destination": "/code/index.html" },
     { "source": "/code/html/:id([a-z]{5})", "destination": "/code/html.html" },
     { "source": "/code/html", "destination": "/code/html.html" },
     { "source": "/code/html/:path*", "destination": "/code/html.html" }
