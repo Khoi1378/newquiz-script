@@ -15,7 +15,7 @@
     { "source": "/q/:id.html", "destination": "/q/index.html" },
     { "source": "/q/:id.html/", "destination": "/q/index.html" },
     { "source": "/gift", "destination": "/gift.html" },
-    { "source": "/gift/", "destination": "/gift.html" }
+    { "source": "/gift/", "destination": "/gift.html" },
     { "source": "/code/:id([a-z]{5})", "destination": "/code/index.html" },
     { "source": "/code", "destination": "/code/index.html" },
     { "source": "/code/:path*", "destination": "/code/index.html" }
