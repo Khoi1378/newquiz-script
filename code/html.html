@@ -1,1 +1,984 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no" />
+  <title>tuankhoi.site - HTML Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg1:#ffecd2; --bg2:#fcb69f;
+      --card:#fff; --text:#1f2937; --muted:#6b7280;
+      --border:#e5e7eb; --soft:#f8fafc;
+      --shadow:0 14px 40px rgba(0,0,0,.10);
+      --radius:18px;
+      --bad:#dc2626;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+      --codeBg:#0b1020;
+      --codeText:#e5e7eb;
+      --codeMuted:rgba(255,255,255,.55);
+      --codeSoft:rgba(255,255,255,.06);
+
+      --fs:13px;
+      --lh:22px;
+      --pad:12px;
+      --gutterW:44px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    html{-webkit-text-size-adjust:100%}
+    body{
+      margin:0;
+      font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% 10%,#fff 0%,rgba(255,255,255,0) 55%),
+        linear-gradient(120deg,var(--bg1) 0%,var(--bg2) 100%);
+      overflow-x:hidden;
+      touch-action:pan-y;
+      -webkit-overflow-scrolling:touch;
+      user-select:none;
+    }
+
+    .wrap{max-width:980px;margin:0 auto;padding:12px 14px 26px}
+    .card{
+      background:var(--card);
+      border:2px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:12px;
+      margin:12px 0;
+    }
+
+    .toolbar{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:nowrap;
+      overflow:hidden;
+      user-select:none;
+    }
+
+    .badge{
+      flex:0 0 auto;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(229,231,235,.9);
+      background:rgba(255,255,255,.78);
+      font-weight:900;
+      font-size:.88rem;
+      white-space:nowrap;
+    }
+
+    .fileInfo{
+      min-width:0;
+      flex:1 1 auto;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      overflow:hidden;
+    }
+    .fileName{
+      font-weight:900;
+      font-size:.92rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      user-select:none;
+    }
+    .fileSub{
+      font-weight:750;
+      font-size:.82rem;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      user-select:none;
+    }
+
+    .findGroup{
+      flex:0 1 360px;
+      min-width:160px;
+      display:flex;
+      gap:8px;
+      flex-wrap:nowrap;
+      align-items:center;
+    }
+
+    .input{
+      width:100%;
+      border-radius:14px;
+      border:2px solid #e5e7eb;
+      padding:9px 10px;
+      font-size:.9rem;
+      font-weight:750;
+      outline:none;
+      background:var(--soft);
+      transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
+      user-select:text;
+    }
+    .input:focus{
+      border-color:rgba(124,58,237,.55);
+      box-shadow:0 0 0 5px rgba(124,58,237,.10);
+      background:#fff;
+    }
+
+    .btn{
+      flex:0 0 auto;
+      border:0;
+      cursor:pointer;
+      border-radius:999px;
+      padding:9px 12px;
+      font-weight:900;
+      font-size:.88rem;
+      background:#fff;
+      color:#111827;
+      border:1px solid #e5e7eb;
+      user-select:none;
+      white-space:nowrap;
+      -webkit-tap-highlight-color:transparent;
+      touch-action:manipulation;
+      transition:transform .16s ease,filter .16s ease;
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
+    .btn:active{transform:translateY(0)}
+    .btnPrimary{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff;
+      border:0;
+    }
+    .btnGhost{
+      background:#fff;
+      color:#111827;
+      border:1px solid #e5e7eb;
+    }
+    .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none !important;filter:none !important}
+
+    .errorBar{
+      margin-top:10px;
+      display:none;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(220,38,38,.35);
+      background:rgba(254,242,242,.85);
+      color:#7f1d1d;
+      font-weight:900;
+      font-size:.9rem;
+      user-select:none;
+      cursor:pointer;
+    }
+    .errorBar.show{display:block}
+
+    .editorFrame{
+      margin-top:10px;
+      border-radius:16px;
+      border:2px solid #e5e7eb;
+      overflow:hidden;
+      background:var(--codeBg);
+      box-shadow:0 14px 34px rgba(0,0,0,.18);
+      display:flex;
+      align-items:stretch;
+    }
+
+    .gutter{
+      width:var(--gutterW);
+      flex:0 0 var(--gutterW);
+      padding:var(--pad) 6px;
+      background:var(--codeSoft);
+      border-right:1px solid rgba(255,255,255,.10);
+      color:var(--codeMuted);
+      font-family:var(--mono);
+      font-size:var(--fs);
+      line-height:var(--lh);
+      text-align:right;
+      user-select:none;
+    }
+    .gline{
+      height:var(--lh);
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      padding-right:2px;
+    }
+    .gline.err{
+      background:rgba(220,38,38,.18);
+      border-radius:8px;
+      padding-right:6px;
+      margin-right:-2px;
+      margin-left:-2px;
+    }
+
+    textarea.code{
+      flex:1 1 auto;
+      width:100%;
+      border:0;
+      outline:none;
+      resize:none;
+      padding:var(--pad);
+      background:transparent;
+      color:var(--codeText);
+      font-family:var(--mono);
+      font-size:var(--fs);
+      line-height:var(--lh);
+      tab-size:2;
+      caret-color:#fff;
+
+      overflow:hidden;
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+
+      user-select:text;
+      touch-action:pan-y;
+    }
+    textarea.code::selection{background:rgba(124,58,237,.35)}
+
+    .previewCard{padding:12px}
+    .previewHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      user-select:none;
+    }
+    .previewLabel{
+      font-weight:950;
+      color:rgba(31,41,55,.65);
+      font-size:.88rem;
+      user-select:none;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .previewBox{
+      margin-top:10px;
+      border-radius:16px;
+      border:2px solid #e5e7eb;
+      background:#fff;
+      overflow:hidden;
+      height:30vh;
+      min-height:200px;
+      box-shadow:0 10px 22px rgba(0,0,0,.06);
+    }
+    .previewBox iframe{width:100%;height:100%;border:0;background:#fff}
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform:translateX(-50%);
+      background:rgba(17,24,39,.92);
+      color:#fff;
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      font-size:.9rem;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .18s ease,transform .18s ease;
+      max-width:calc(100% - 28px);
+      z-index:20050;
+      text-align:center;
+      user-select:none;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+
+    @media(max-width:520px){
+      :root{ --gutterW:40px; --fs:12.5px; --lh:21px; }
+      .findGroup{flex:0 1 220px}
+      .btn{padding:9px 10px}
+      .previewBox{height:34vh}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="toolbar" id="toolbar">
+        <div class="badge" id="docBadge">HTML</div>
+
+        <div class="fileInfo">
+          <div class="fileName" id="fileName">—</div>
+          <div class="fileSub" id="fileSub">—</div>
+        </div>
+
+        <div class="findGroup" id="findGroup">
+          <input class="input" id="findInput" placeholder="Tìm trong code" autocomplete="off" />
+          <button class="btn btnGhost" id="btnFind" type="button">Tìm</button>
+        </div>
+
+        <button class="btn btnGhost" id="btnRevert" type="button">Hoàn tác</button>
+        <button class="btn btnPrimary" id="btnSave" type="button">Lưu</button>
+        <button class="btn btnGhost" id="btnDownload" type="button">Tải</button>
+      </div>
+
+      <div class="errorBar" id="errorBar"></div>
+
+      <div class="editorFrame" id="editorFrame">
+        <div class="gutter" id="gutter"></div>
+        <textarea class="code" id="code" spellcheck="false" wrap="soft"></textarea>
+      </div>
+    </div>
+
+    <div class="card previewCard">
+      <div class="previewHead">
+        <div class="previewLabel" id="previewLabel">Xem trước</div>
+      </div>
+      <div class="previewBox">
+        <iframe id="preview" sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div id="measure" style="
+    position:absolute; left:-99999px; top:-99999px; visibility:hidden;
+    white-space:pre-wrap; overflow-wrap:anywhere; word-break:break-word;
+    font-family: var(--mono); font-size: var(--fs); line-height: var(--lh);
+    tab-size:2; padding:0; margin:0;
+  "></div>
+
+  <script>
+    const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
+
+    const TOKEN_KEYS = ["tk_token_v2","tk_token_v1","tk_token"];
+    const TOKEN_COOKIES = ["tk_token_v2","tk_token_v1","tk_token"];
+    const ME_KEY = "tk_me_v2";
+    const DRAFT_KEY_PREFIX = "tk_code_draft_v2:";
+
+    const FILE_ID_RE = /^[a-z]{5}$/;
+
+    const VOID_TAGS = new Set(["area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"]);
+
+    const el = {
+      fileName: document.getElementById("fileName"),
+      fileSub: document.getElementById("fileSub"),
+      code: document.getElementById("code"),
+      gutter: document.getElementById("gutter"),
+      preview: document.getElementById("preview"),
+      errorBar: document.getElementById("errorBar"),
+      toast: document.getElementById("toast"),
+      findInput: document.getElementById("findInput"),
+      btnFind: document.getElementById("btnFind"),
+      btnSave: document.getElementById("btnSave"),
+      btnRevert: document.getElementById("btnRevert"),
+      btnDownload: document.getElementById("btnDownload"),
+      measure: document.getElementById("measure"),
+    };
+
+    const STATE = {
+      fileId: "",
+      meta: null,
+      remote: "",
+      content: "",
+      lineStartRow: [],
+      errLines: new Set(),
+      findPos: 0,
+      lastFind: "",
+      saving: false,
+      updateTimer: null,
+      lastLayoutW: 0,
+    };
+
+    function toast(msg){
+      el.toast.textContent = String(msg || "");
+      el.toast.classList.add("show");
+      setTimeout(() => el.toast.classList.remove("show"), 1200);
+    }
+
+    function norm(s){ return String(s || "").trim(); }
+
+    function cookieDomainHint(){
+      const host = String(location.hostname || "").trim();
+      if(!host || host === "localhost" || host.endsWith(".localhost")) return "";
+      if(/^\d+\.\d+\.\d+\.\d+$/.test(host)) return "";
+      const parts = host.split(".").filter(Boolean);
+      if(parts.length < 2) return "";
+      return "." + parts.slice(-2).join(".");
+    }
+
+    function setCookie(name, value){
+      const v = encodeURIComponent(String(value || ""));
+      const maxAge = 60 * 60 * 24 * 365 * 20;
+      const base = cookieDomainHint();
+      const common = `${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
+      document.cookie = common;
+      if(base && base !== location.hostname) document.cookie = `${common}; Domain=${base}`;
+    }
+
+    function getCookie(name){
+      const cs = document.cookie ? document.cookie.split(";") : [];
+      let found = "";
+      for(const raw of cs){
+        const s = raw.trim();
+        if(!s) continue;
+        const eq = s.indexOf("=");
+        const k = (eq >= 0 ? s.slice(0, eq) : s).trim();
+        if(k === name) found = (eq >= 0 ? s.slice(eq + 1) : "");
+      }
+      try{ return found ? decodeURIComponent(found) : ""; }catch{ return found || ""; }
+    }
+
+    function getToken(){
+      let t = "";
+      for(const k of TOKEN_KEYS){
+        try{ t = (localStorage.getItem(k) || "").trim(); if(t) break; }catch{}
+      }
+      if(!t){
+        for(const k of TOKEN_KEYS){
+          try{ t = (sessionStorage.getItem(k) || "").trim(); if(t) break; }catch{}
+        }
+      }
+      if(!t){
+        for(const c of TOKEN_COOKIES){
+          t = (getCookie(c) || "").trim();
+          if(t) break;
+        }
+      }
+      try{
+        const u = new URL(location.href);
+        if(!t){
+          const q = (u.searchParams.get("tk") || u.searchParams.get("token") || "").trim();
+          if(q) t = q;
+        }
+        if(!t && u.hash){
+          const hs = u.hash.replace(/^#/,"");
+          const p = new URLSearchParams(hs);
+          const q2 = (p.get("tk") || p.get("token") || "").trim();
+          if(q2) t = q2;
+        }
+      }catch{}
+      if(t){
+        for(const k of TOKEN_KEYS){
+          try{ localStorage.setItem(k, t); }catch{}
+          try{ sessionStorage.setItem(k, t); }catch{}
+        }
+        for(const c of TOKEN_COOKIES){
+          try{ setCookie(c, t); }catch{}
+        }
+      }
+      return t;
+    }
+
+    function getMeCache(){
+      try{
+        const raw = localStorage.getItem(ME_KEY);
+        if(!raw) return null;
+        const obj = JSON.parse(raw);
+        if(obj && obj.username) return obj;
+      }catch{}
+      return null;
+    }
+
+    function setMeCache(me){
+      try{
+        if(!me) localStorage.removeItem(ME_KEY);
+        else localStorage.setItem(ME_KEY, JSON.stringify(me));
+      }catch{}
+    }
+
+    function firstObj(x){
+      if(Array.isArray(x)) return x[0] || null;
+      if(x && typeof x === "object") return x;
+      return null;
+    }
+
+    function pickToken(out){
+      const o = firstObj(out) || {};
+      return (o.token || o.session_token || o.sessionToken || o.access_token || o.accessToken || o.app_token || o.appToken || o.tk || o.jwt || o.bearer || "");
+    }
+
+    function pickMe(out){
+      const o = firstObj(out) || {};
+      let me = o.me || o.user || o.profile || o.data || null;
+      if(Array.isArray(me)) me = me[0] || null;
+      if(me && typeof me === "object"){
+        return {
+          username: me.username || me.name || me.user || me.handle || "",
+          role: me.role || me.user_role || me.userRole || "user",
+        };
+      }
+      if(o.username){
+        return { username: o.username, role: o.role || "user" };
+      }
+      return null;
+    }
+
+    function asOk(out){
+      const o = firstObj(out) || {};
+      if(o && typeof o.ok === "boolean") return o.ok;
+      if(!!pickToken(o)) return true;
+      if(!!pickMe(o)) return true;
+      return false;
+    }
+
+    function sbHeaders(){
+      return {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      };
+    }
+
+    async function rpc(fn, args){
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+        method: "POST",
+        headers: sbHeaders(),
+        body: JSON.stringify(args || {})
+      });
+      const txt = await res.text();
+      let data = null;
+      try{ data = txt ? JSON.parse(txt) : null; }catch{}
+      if(!res.ok){
+        const msg = (data && (data.message || data.error || data.hint)) ? (data.message || data.error || data.hint) : txt;
+        throw new Error(msg || ("RPC failed: " + fn));
+      }
+      return data;
+    }
+
+    async function rpcTry(fns, argsList){
+      let lastErr = null;
+      const fList = Array.isArray(fns) ? fns : [String(fns || "")].filter(Boolean);
+      const aList = (Array.isArray(argsList) && argsList.length) ? argsList : [{}];
+      for(const fn of fList){
+        for(const args of aList){
+          try{ return await rpc(fn, args || {}); }
+          catch(e){ lastErr = e; }
+        }
+      }
+      throw (lastErr || new Error("RPC failed"));
+    }
+
+    const API = {
+      me: async (token) => {
+        const t = String(token || "").trim();
+        const out = await rpcTry(
+          ["api_me","me","app_me","api_whoami","api_profile","whoami"],
+          [{p_token:t},{token:t},{p_session:t},{session:t},{session_token:t},{p_session_token:t}]
+        );
+        return { ok: asOk(out), me: pickMe(out), token: pickToken(out) || "" };
+      }
+    };
+
+    const CODEAPI = {
+      getFile: async (token, codeId) => {
+        const t = String(token || "").trim();
+        const id = String(codeId || "").trim();
+        return await rpcTry(
+          ["api_code_get_file","code_get_file","api_code_get"],
+          [{p_token:t,p_code_id:id},{token:t,code_id:id},{p_session_token:t,p_code_id:id}]
+        );
+      },
+      saveFile: async (token, codeId, content) => {
+        const t = String(token || "").trim();
+        const id = String(codeId || "").trim();
+        return await rpcTry(
+          ["api_code_save_file","code_save_file","api_code_save"],
+          [{p_token:t,p_code_id:id,p_content:content},{token:t,code_id:id,content},{p_session_token:t,p_code_id:id,p_content:content}]
+        );
+      }
+    };
+
+    function getFileIdFromUrl(){
+      try{
+        const u = new URL(location.href);
+        const raw = (u.searchParams.get("f") || u.searchParams.get("file") || "").trim().toLowerCase();
+        return FILE_ID_RE.test(raw) ? raw : null;
+      }catch{
+        return null;
+      }
+    }
+
+    function draftKey(fileId){ return DRAFT_KEY_PREFIX + String(fileId || ""); }
+
+    function loadDraft(fileId){
+      try{
+        const raw = localStorage.getItem(draftKey(fileId));
+        if(!raw) return null;
+        const o = JSON.parse(raw);
+        if(!o || typeof o.content !== "string") return null;
+        return o;
+      }catch{ return null; }
+    }
+
+    function saveDraft(fileId, content){
+      try{
+        localStorage.setItem(draftKey(fileId), JSON.stringify({ content: String(content || ""), ts: Date.now() }));
+      }catch{}
+    }
+
+    function clearDraft(fileId){
+      try{ localStorage.removeItem(draftKey(fileId)); }catch{}
+    }
+
+    function lintHtml(code){
+      const lines = String(code || "").split("\n");
+      const stack = [];
+      const errLines = new Set();
+      let firstErrLine = 0;
+
+      for(let i=0;i<lines.length;i++){
+        const line = lines[i];
+        const cleaned = line.replace(/<!--.*?-->/g, "");
+        const re = /<\s*(\/)?\s*([a-zA-Z][\w:-]*)([^>]*)>/g;
+        let m;
+        while((m = re.exec(cleaned))){
+          const closing = !!m[1];
+          const tag = (m[2] || "").toLowerCase();
+          const rest = (m[3] || "");
+          const selfClose = /\/\s*$/.test(rest) || VOID_TAGS.has(tag);
+
+          if(selfClose) continue;
+
+          if(!closing){
+            stack.push({ tag, line: i+1 });
+          }else{
+            if(stack.length === 0){
+              errLines.add(i+1);
+              if(!firstErrLine) firstErrLine = i+1;
+              continue;
+            }
+            const top = stack[stack.length - 1];
+            if(top.tag !== tag){
+              errLines.add(i+1);
+              errLines.add(top.line);
+              if(!firstErrLine) firstErrLine = i+1;
+
+              let found = -1;
+              for(let k = stack.length - 1; k >= 0; k--){
+                if(stack[k].tag === tag){ found = k; break; }
+              }
+              if(found >= 0) stack.splice(found, 1);
+              else stack.pop();
+              continue;
+            }
+            stack.pop();
+          }
+        }
+      }
+
+      if(stack.length){
+        for(const x of stack) errLines.add(x.line);
+        if(!firstErrLine) firstErrLine = stack[stack.length - 1].line;
+      }
+
+      return { ok: errLines.size === 0, errLines, firstErrLine };
+    }
+
+    function computeWrapCounts(lines, textWidthPx, lineHeightPx){
+      el.measure.style.width = Math.max(20, textWidthPx) + "px";
+      const counts = new Array(lines.length);
+      for(let i=0;i<lines.length;i++){
+        const s = lines[i];
+        el.measure.textContent = (s.length ? s : " ");
+        const h = el.measure.scrollHeight;
+        const wraps = Math.max(1, Math.ceil(h / lineHeightPx));
+        counts[i] = wraps;
+      }
+      return counts;
+    }
+
+    function rebuildGutterAndHeight(){
+      const ta = el.code;
+
+      const cs = getComputedStyle(ta);
+      const padL = parseFloat(cs.paddingLeft) || 0;
+      const padR = parseFloat(cs.paddingRight) || 0;
+      const lh = parseFloat(cs.lineHeight) || 22;
+
+      const textWidth = Math.max(20, ta.clientWidth - padL - padR);
+
+      const text = ta.value || "";
+      const lines = text.split("\n");
+
+      const wrapCounts = computeWrapCounts(lines, textWidth, lh);
+
+      let out = [];
+      let rowIndex = 0;
+      STATE.lineStartRow = new Array(lines.length);
+
+      for(let i=0;i<lines.length;i++){
+        const ln = i + 1;
+        const wraps = wrapCounts[i];
+        STATE.lineStartRow[i] = rowIndex;
+
+        for(let w=0; w<wraps; w++){
+          const first = (w === 0);
+          const isErr = first && STATE.errLines.has(ln);
+          const cls = "gline" + (isErr ? " err" : "");
+          const label = first ? String(ln) : "";
+          out.push(`<div class="${cls}" data-row="${rowIndex}" data-line="${ln}">${label}</div>`);
+          rowIndex++;
+        }
+      }
+
+      el.gutter.innerHTML = out.join("");
+
+      ta.style.height = "auto";
+      ta.style.height = ta.scrollHeight + "px";
+    }
+
+    function renderErrorBar(){
+      const bar = el.errorBar;
+      const errArr = [...STATE.errLines].sort((a,b)=>a-b);
+
+      if(errArr.length === 0){
+        bar.classList.remove("show");
+        bar.textContent = "";
+        return;
+      }
+
+      const first = errArr[0];
+      bar.textContent = `Phát hiện ${errArr.length} lỗi ở dòng ${first}`;
+      bar.classList.add("show");
+    }
+
+    function scrollToLine(lineNo){
+      const idx = Math.max(1, Number(lineNo) || 1);
+      const startRow = STATE.lineStartRow[idx - 1] ?? 0;
+      const target = el.gutter.querySelector(`.gline[data-row="${startRow}"]`);
+      if(target) target.scrollIntoView({ block:"center", behavior:"smooth" });
+
+      const text = el.code.value || "";
+      let pos = 0;
+      if(idx > 1){
+        let p = 0;
+        for(let i=1;i<idx;i++){
+          const n = text.indexOf("\n", p);
+          if(n < 0){ p = text.length; break; }
+          p = n + 1;
+        }
+        pos = p;
+      }
+      try{
+        el.code.focus();
+        el.code.setSelectionRange(pos, pos);
+      }catch{}
+    }
+
+    function updatePreview(){
+      el.preview.srcdoc = String(el.code.value || "");
+    }
+
+    function scheduleUpdate(){
+      if(STATE.updateTimer) clearTimeout(STATE.updateTimer);
+      STATE.updateTimer = setTimeout(() => {
+        STATE.updateTimer = null;
+        const v = el.code.value || "";
+        STATE.content = v;
+
+        saveDraft(STATE.fileId, v);
+
+        const lint = lintHtml(v);
+        STATE.errLines = lint.errLines;
+
+        renderErrorBar();
+        rebuildGutterAndHeight();
+        updatePreview();
+      }, 120);
+    }
+
+    async function doSave(){
+      if(STATE.saving) return;
+      STATE.saving = true;
+      el.btnSave.disabled = true;
+
+      try{
+        const token = getToken();
+        if(!token) throw new Error("Chưa đăng nhập");
+
+        const html = el.code.value || "";
+        const out = await CODEAPI.saveFile(token, STATE.fileId, html);
+        const o = firstObj(out) || out || {};
+        if(o.ok !== true) throw new Error(o.error || o.message || "Lưu lỗi");
+
+        STATE.remote = html;
+        clearDraft(STATE.fileId);
+        toast("Đã lưu");
+      }catch(e){
+        toast(String(e && e.message ? e.message : "Lưu lỗi"));
+      }finally{
+        el.btnSave.disabled = false;
+        STATE.saving = false;
+      }
+    }
+
+    async function doRevert(){
+      const ok = confirm("Quay lại bản đã lưu?");
+      if(!ok) return;
+      clearDraft(STATE.fileId);
+      el.code.value = STATE.remote || "";
+      STATE.content = el.code.value;
+      toast("Đã hoàn tác");
+      scheduleUpdate();
+    }
+
+    function doDownload(){
+      const name = (STATE.meta && STATE.meta.name) ? String(STATE.meta.name) : "file.html";
+      const blob = new Blob([el.code.value || ""], { type:"text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name.toLowerCase().endsWith(".html") ? name : (name + ".html");
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 500);
+      toast("Đang tải");
+    }
+
+    function doFind(){
+      const q = String(el.findInput.value || "");
+      if(!q){ toast("Chưa nhập từ khoá"); return; }
+
+      const text = el.code.value || "";
+      if(!text){ toast("Không tìm thấy"); return; }
+
+      if(q !== STATE.lastFind){
+        STATE.lastFind = q;
+        STATE.findPos = 0;
+      }
+
+      let idx = text.indexOf(q, STATE.findPos);
+      if(idx < 0) idx = text.indexOf(q, 0);
+      if(idx < 0){
+        toast("Không tìm thấy");
+        STATE.findPos = 0;
+        return;
+      }
+
+      const end = idx + q.length;
+      STATE.findPos = end;
+
+      try{
+        el.code.focus();
+        el.code.setSelectionRange(idx, end);
+      }catch{}
+
+      const before = text.slice(0, idx);
+      const lineNo = before.split("\n").length;
+      scrollToLine(lineNo);
+    }
+
+    function bindShortcuts(){
+      document.addEventListener("keydown", (e) => {
+        const isMac = /Mac|iPhone|iPad|iPod/i.test(navigator.platform);
+        const mod = isMac ? e.metaKey : e.ctrlKey;
+
+        if(mod && (e.key === "s" || e.key === "S")){
+          e.preventDefault();
+          doSave();
+        }
+        if(mod && (e.key === "f" || e.key === "F")){
+          e.preventDefault();
+          el.findInput.focus();
+          el.findInput.select?.();
+        }
+      }, { passive:false });
+    }
+
+    async function boot(){
+      const fileId = getFileIdFromUrl();
+      if(!fileId){
+        toast("Thiếu hoặc sai f (5 chữ).");
+        location.replace("/code");
+        return;
+      }
+      STATE.fileId = fileId;
+
+      const token = getToken();
+      if(!token){
+        location.replace("/code");
+        return;
+      }
+
+      const cachedMe = getMeCache();
+      if(!cachedMe || !cachedMe.username){
+        try{
+          const meOut = await API.me(token);
+          if(meOut && meOut.ok && meOut.me && meOut.me.username){
+            setMeCache(meOut.me);
+          }
+        }catch{}
+      }
+
+      try{
+        const raw = await CODEAPI.getFile(token, fileId);
+        const o = firstObj(raw) || raw || {};
+        if(o.ok !== true) throw new Error(o.error || o.message || "Không mở được file");
+
+        STATE.meta = o.node || o.file || o.meta || {};
+        STATE.remote = String(o.content || "");
+
+        const name = String((STATE.meta && STATE.meta.name) ? STATE.meta.name : ("file-" + fileId + ".html"));
+        const path = String(o.full_path || o.path || name);
+
+        el.fileName.textContent = name;
+        el.fileSub.textContent = path;
+
+        const draft = loadDraft(fileId);
+        if(draft && typeof draft.content === "string" && draft.content !== STATE.remote){
+          el.code.value = draft.content;
+        }else{
+          el.code.value = STATE.remote;
+        }
+
+        const lint = lintHtml(el.code.value || "");
+        STATE.errLines = lint.errLines;
+
+        renderErrorBar();
+        rebuildGutterAndHeight();
+        updatePreview();
+
+        try{ el.code.focus(); }catch{}
+
+      }catch(e){
+        toast(String(e && e.message ? e.message : "Không mở được file"));
+        location.replace("/code");
+        return;
+      }
+
+      el.code.addEventListener("input", scheduleUpdate, { passive:true });
+
+      el.btnSave.addEventListener("click", doSave);
+      el.btnRevert.addEventListener("click", doRevert);
+      el.btnDownload.addEventListener("click", doDownload);
+
+      el.btnFind.addEventListener("click", doFind);
+      el.findInput.addEventListener("keydown", (e) => {
+        if(e.key === "Enter"){
+          e.preventDefault();
+          doFind();
+        }
+      });
+
+      el.errorBar.addEventListener("click", () => {
+        const arr = [...STATE.errLines].sort((a,b)=>a-b);
+        if(arr.length) scrollToLine(arr[0]);
+      });
+
+      bindShortcuts();
+
+      window.addEventListener("resize", () => {
+        if(STATE.updateTimer) clearTimeout(STATE.updateTimer);
+        STATE.updateTimer = setTimeout(() => {
+          STATE.updateTimer = null;
+          rebuildGutterAndHeight();
+        }, 80);
+      }, { passive:true });
+    }
+
+    boot();
+  </script>
+</body>
+</html>
 
