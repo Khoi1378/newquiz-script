@@ -27,22 +27,30 @@
       --lh:22px;
       --pad:12px;
       --gutterW:44px;
+
+      --blue:#2563eb;
     }
 
     *{box-sizing:border-box}
     html,body{height:100%}
     html{-webkit-text-size-adjust:100%}
+
     body{
       margin:0;
       font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       color:var(--text);
-      background:
-        radial-gradient(1200px 600px at 20% 10%,#fff 0%,rgba(255,255,255,0) 55%),
-        linear-gradient(120deg,var(--bg1) 0%,var(--bg2) 100%);
       overflow-x:hidden;
       touch-action:pan-y;
       -webkit-overflow-scrolling:touch;
       user-select:none;
+
+      background-color: var(--bg1);
+      background-image:
+        radial-gradient(1200px 600px at 20% 10%,#fff 0%,rgba(255,255,255,0) 55%),
+        linear-gradient(120deg,var(--bg1) 0%,var(--bg2) 100%);
+      background-attachment: fixed, fixed;
+      background-repeat: no-repeat, no-repeat;
+      background-size: cover, cover;
     }
 
     .wrap{max-width:980px;margin:0 auto;padding:12px 14px 26px}
@@ -64,7 +72,44 @@
       user-select:none;
     }
 
-    .badge{
+    .btn{
+      flex:0 0 auto;
+      border:0;
+      cursor:pointer;
+      border-radius:999px;
+      padding:9px 12px;
+      font-weight:900;
+      font-size:.88rem;
+      background:#fff;
+      color:#111827;
+      border:1px solid #e5e7eb;
+      user-select:none;
+      white-space:nowrap;
+      -webkit-tap-highlight-color:transparent;
+      touch-action:manipulation;
+      transition:transform .16s ease,filter .16s ease;
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
+    .btn:active{transform:translateY(0)}
+    .btnGhost{
+      background:#fff;
+      color:#111827;
+      border:1px solid #e5e7eb;
+    }
+    .btnPrimary{
+      background:linear-gradient(135deg,#7c3aed,#fb7185);
+      color:#fff;
+      border:0;
+    }
+    .btnBlue{
+      background:var(--blue);
+      color:#fff;
+      border:0;
+      box-shadow:0 12px 24px rgba(37,99,235,.18);
+    }
+    .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none !important;filter:none !important}
+
+    .badgeBtn{
       flex:0 0 auto;
       padding:8px 10px;
       border-radius:999px;
@@ -73,7 +118,13 @@
       font-weight:900;
       font-size:.88rem;
       white-space:nowrap;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color:transparent;
+      touch-action:manipulation;
     }
+    .badgeBtn:active{transform:translateY(0)}
+    .badgeBtn:hover{filter:brightness(.98)}
 
     .fileInfo{
       min-width:0;
@@ -127,37 +178,6 @@
       box-shadow:0 0 0 5px rgba(124,58,237,.10);
       background:#fff;
     }
-
-    .btn{
-      flex:0 0 auto;
-      border:0;
-      cursor:pointer;
-      border-radius:999px;
-      padding:9px 12px;
-      font-weight:900;
-      font-size:.88rem;
-      background:#fff;
-      color:#111827;
-      border:1px solid #e5e7eb;
-      user-select:none;
-      white-space:nowrap;
-      -webkit-tap-highlight-color:transparent;
-      touch-action:manipulation;
-      transition:transform .16s ease,filter .16s ease;
-    }
-    .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
-    .btn:active{transform:translateY(0)}
-    .btnPrimary{
-      background:linear-gradient(135deg,#7c3aed,#fb7185);
-      color:#fff;
-      border:0;
-    }
-    .btnGhost{
-      background:#fff;
-      color:#111827;
-      border:1px solid #e5e7eb;
-    }
-    .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none !important;filter:none !important}
 
     .errorBar{
       margin-top:10px;
@@ -235,6 +255,7 @@
 
       user-select:text;
       touch-action:pan-y;
+      -webkit-overflow-scrolling:touch;
     }
     textarea.code::selection{background:rgba(124,58,237,.35)}
 
@@ -301,7 +322,9 @@
   <div class="wrap">
     <div class="card">
       <div class="toolbar" id="toolbar">
-        <div class="badge" id="docBadge">HTML</div>
+        <button class="btn btnGhost" id="btnExit" type="button">Thoát</button>
+
+        <button class="badgeBtn" id="docBadge" type="button">Thoát</button>
 
         <div class="fileInfo">
           <div class="fileName" id="fileName">—</div>
@@ -315,7 +338,7 @@
 
         <button class="btn btnGhost" id="btnRevert" type="button">Hoàn tác</button>
         <button class="btn btnPrimary" id="btnSave" type="button">Lưu</button>
-        <button class="btn btnGhost" id="btnDownload" type="button">Tải</button>
+        <button class="btn btnBlue" id="btnDownload" type="button">Tải về máy</button>
       </div>
 
       <div class="errorBar" id="errorBar"></div>
@@ -358,7 +381,11 @@
 
     const VOID_TAGS = new Set(["area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"]);
 
+    const DEFAULT_START = "<!doctype html>\n";
+
     const el = {
+      btnExit: document.getElementById("btnExit"),
+      docBadge: document.getElementById("docBadge"),
       fileName: document.getElementById("fileName"),
       fileSub: document.getElementById("fileSub"),
       code: document.getElementById("code"),
@@ -385,7 +412,6 @@
       lastFind: "",
       saving: false,
       updateTimer: null,
-      lastLayoutW: 0,
     };
 
     function toast(msg){
@@ -393,8 +419,6 @@
       el.toast.classList.add("show");
       setTimeout(() => el.toast.classList.remove("show"), 1200);
     }
-
-    function norm(s){ return String(s || "").trim(); }
 
     function cookieDomainHint(){
       const host = String(location.hostname || "").trim();
@@ -501,10 +525,7 @@
       let me = o.me || o.user || o.profile || o.data || null;
       if(Array.isArray(me)) me = me[0] || null;
       if(me && typeof me === "object"){
-        return {
-          username: me.username || me.name || me.user || me.handle || "",
-          role: me.role || me.user_role || me.userRole || "user",
-        };
+        return { username: me.username || me.name || me.user || me.handle || "", role: me.role || me.user_role || me.userRole || "user" };
       }
       if(o.username){
         return { username: o.username, role: o.role || "user" };
@@ -706,9 +727,13 @@
       let rowIndex = 0;
       STATE.lineStartRow = new Array(lines.length);
 
-      for(let i=0;i<lines.length;i++){
+      const needMin = Math.max(10, lines.length);
+
+      for(let i=0;i<needMin;i++){
         const ln = i + 1;
-        const wraps = wrapCounts[i];
+        const lineText = (i < lines.length) ? lines[i] : "";
+        const wraps = (i < wrapCounts.length) ? wrapCounts[i] : 1;
+
         STATE.lineStartRow[i] = rowIndex;
 
         for(let w=0; w<wraps; w++){
@@ -816,7 +841,7 @@
       const ok = confirm("Quay lại bản đã lưu?");
       if(!ok) return;
       clearDraft(STATE.fileId);
-      el.code.value = STATE.remote || "";
+      el.code.value = STATE.remote || DEFAULT_START;
       STATE.content = el.code.value;
       toast("Đã hoàn tác");
       scheduleUpdate();
@@ -886,6 +911,10 @@
       }, { passive:false });
     }
 
+    function goExit(){
+      location.href = "/code";
+    }
+
     async function boot(){
       const fileId = getFileIdFromUrl();
       if(!fileId){
@@ -926,10 +955,11 @@
         el.fileSub.textContent = path;
 
         const draft = loadDraft(fileId);
-        if(draft && typeof draft.content === "string" && draft.content !== STATE.remote){
+        if(draft && typeof draft.content === "string"){
           el.code.value = draft.content;
         }else{
-          el.code.value = STATE.remote;
+          const r = (STATE.remote || "").trim();
+          el.code.value = r ? STATE.remote : DEFAULT_START;
         }
 
         const lint = lintHtml(el.code.value || "");
@@ -946,6 +976,9 @@
         location.replace("/code");
         return;
       }
+
+      el.btnExit.addEventListener("click", goExit);
+      el.docBadge.addEventListener("click", goExit);
 
       el.code.addEventListener("input", scheduleUpdate, { passive:true });
 
@@ -981,4 +1014,3 @@
   </script>
 </body>
 </html>
-
