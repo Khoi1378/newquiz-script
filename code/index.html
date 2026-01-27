@@ -187,7 +187,9 @@ if(exists===true){gateStatus.textContent="Đăng nhập: nhập mật khẩu…"
 if(exists===false){gateStatus.textContent=`Username "${u}" chưa đăng ký.`;const ok=await openRegisterPrompt(u);if(!ok){gateStatus.textContent="Bạn có thể nhập username khác.";return}
 const regPinLen=(u==="tuankhoi")?6:4;gateStatus.textContent="Đăng ký: tạo mật khẩu…";const pin=await openPin({username:u,mode:"set",pinLen:regPinLen});gateStatus.textContent="Đang tạo tài khoản…";const raw=await API.register(u,pin),out=normalizeAuthOut(raw);if(!out.ok||!out.token)throw new Error(out.error||"register fail");toast("Đã đăng ký");await enterAfterAuth({token:out.token,me:out.me});return}
 gateStatus.textContent="Không rõ trạng thái. Thử đăng nhập…";const forcedLen=(u==="tuankhoi")?6:4;await openPin({username:u,mode:"login",pinLen:forcedLen})}catch(e){if(!(e&&e.message==="cancel"))toast(e.message||"Lỗi");gateStatus.textContent="Sẵn sàng."}finally{btnContinue.disabled=false;btnContinue.textContent="Tiếp tục"}};btnContinue.onclick=doFlow;nameInput.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();doFlow()}})}
+
 async function loadDashboard(dirId){const t=getToken(),raw=await CODEAPI.list(t,dirId),o=firstObj(raw)||raw||{};if(o.ok!==true)throw new Error(o.error||o.message||"Không load được");STATE.dirId=dirId||null;STATE.breadcrumb=o.breadcrumb||[];STATE.items=o.items||[]}
+
 function dashboardSkeleton(){content.innerHTML=`<div class="card" id="dashCard"><div class="row"><div class="rowLeft"><button class="btn btn-ghost" id="btnBack">Back</button><div class="selCount" id="selCount">Đã chọn 0</div></div><div class="rowRight" id="hdrBtns"><button class="btn btn-ghost" id="btnSelectMulti">Chọn nhiều</button><button class="btn btn-ghost" id="btnPasteSolo">Dán</button><button class="btn btn-ghost" id="btnNewFile">+ file</button><button class="btn btn-ghost" id="btnNewFolder">+ thư mục</button></div></div><div class="pathRow"><button class="btn btn-ghost" id="btnHome">/</button><div class="pathBox" id="pathBox"></div></div><div class="toolbarLine" id="selToolbar"><div class="toolbarLeft"><button class="btn btn-ghost" id="btnCopy">Copy</button><button class="btn btn-ghost" id="btnCut">Cắt</button><button class="btn btn-ghost" id="btnPaste">Dán</button><button class="btn btn-ghost" id="btnRename">Rename</button><button class="btn btn-ghost" id="btnDownloadSel">Tải về</button></div><div class="toolbarRight2"><button class="btn btn-ghost" id="btnExitSelect">Bỏ chọn</button><button class="btn btn-danger" id="btnDeleteSel">Xoá</button></div></div><div class="listBox" id="listBox"></div></div>`;UI.card=document.getElementById("dashCard");UI.list=document.getElementById("listBox");UI.btnBack=document.getElementById("btnBack");UI.btnSelect=document.getElementById("btnSelectMulti");UI.btnPasteSolo=document.getElementById("btnPasteSolo");UI.btnNewFile=document.getElementById("btnNewFile");UI.btnNewFolder=document.getElementById("btnNewFolder");UI.btnHome=document.getElementById("btnHome");UI.pathBox=document.getElementById("pathBox");UI.selCount=document.getElementById("selCount");UI.selToolbar=document.getElementById("selToolbar");UI.btnCopy=document.getElementById("btnCopy");UI.btnCut=document.getElementById("btnCut");UI.btnPaste=document.getElementById("btnPaste");UI.btnRename=document.getElementById("btnRename");UI.btnDeleteSel=document.getElementById("btnDeleteSel");UI.btnExitSel=document.getElementById("btnExitSelect");UI.btnDownloadSel=document.getElementById("btnDownloadSel");
 UI.btnHome.onclick=()=>navToDashboard(null,false);
 UI.btnBack.onclick=()=>{const p=getParentId();navToDashboard(p||null,false)};
@@ -196,70 +198,349 @@ UI.btnNewFolder.onclick=onNewFolder;
 UI.btnNewFile.onclick=onNewFile;
 UI.btnPasteSolo.onclick=onPaste;
 UI.btnExitSel.onclick=()=>{exitSelectMode();updateSelectionUI()};
-UI.btnCopy.onclick=()=>setClipboardMode("copy");
-UI.btnCut.onclick=()=>setClipboardMode("cut");
+UI.btnCopy.onclick=()=>{setClipboardMode("copy");autoExitAfterAction()};
+UI.btnCut.onclick=()=>{setClipboardMode("cut");autoExitAfterAction()};
 UI.btnPaste.onclick=onPaste;
 UI.btnDeleteSel.onclick=onDeleteSelected;
 UI.btnRename.onclick=onRenameSelected;
-UI.btnDownloadSel.onclick=onDownloadSelected;
+UI.btnDownloadSel.onclick=()=>onDownloadSelected().finally(()=>{autoExitAfterAction()});
 bindListDelegation()
 }
+
 function getParentId(){const bc=Array.isArray(STATE.breadcrumb)?STATE.breadcrumb:[];if(bc.length>=2)return bc[bc.length-2]?.id||null;return null}
 function renderPathBox(){const bc=Array.isArray(STATE.breadcrumb)?STATE.breadcrumb:[];let html="";if(!bc.length){html=`<span class="pathCur">/</span>`}else{for(let i=0;i<bc.length;i++){const c=bc[i],name=escapeHtml(c?.name||"");if(i>0)html+=`<span class="pathSep">/</span>`;if(i<bc.length-1)html+=`<button class="pathBtn" data-path="${escapeHtml(c?.id||"")}">${name}</button>`;else html+=`<span class="pathCur">${name}</span>`}}UI.pathBox.innerHTML=html;UI.pathBox.querySelectorAll("[data-path]").forEach(b=>{b.onclick=()=>{const id=String(b.getAttribute("data-path")||"").trim();navToDashboard(id||null,false)}})}
+
 function itemHtml(item){const id=String(item.id||""),kind=String(item.kind||""),name=escapeHtml(item.name||"");const src=(kind==="folder")?ICON_FOLDER:ICON_FILE;return `<div class="swipe" data-id="${id}" data-kind="${kind}"><div class="swipeBehind"><button class="btnDel" data-del="${id}">Xoá</button></div><div class="itemFront" data-open="${id}"><div class="itemIcon"><img alt="" draggable="false" src="${src}"></div><div class="itemName">${name}</div><div class="checkCircle" data-check="${id}"><div class="checkDot"></div></div></div></div>`}
+
 function buildList(){UI.itemMap.clear();UI.list.innerHTML=STATE.items&&STATE.items.length?STATE.items.map(itemHtml).join(""):`<div class="muted">Trống.</div>`;UI.list.querySelectorAll(".checkCircle").forEach(el=>{UI.itemMap.set(String(el.getAttribute("data-check")||""),el)});STATE.selected.forEach(id=>setItemSelected(id,true))}
+
 function setItemSelected(id,on){const el=UI.itemMap.get(id);if(el)el.classList.toggle("on",!!on)}
-function enterSelectMode(){STATE.selectMode=true;UI.card.classList.add("selectMode")}
-function exitSelectMode(){STATE.selectMode=false;STATE.selected=new Set();UI.card.classList.remove("selectMode")}
-function toggleSelect(id){const has=STATE.selected.has(id);if(has){STATE.selected.delete(id);setItemSelected(id,false)}else{STATE.selected.add(id);setItemSelected(id,true)}if(STATE.selected.size===0)exitSelectMode();updateSelectionUI()}
-function updateSelectionUI(){UI.selCount.textContent=`Đã chọn ${STATE.selected.size}`;const clip=STATE.clipboard||loadClipboard();const canPaste=!!(clip&&Array.isArray(clip.ids)&&clip.ids.length);UI.btnPasteSolo.style.display=canPaste&&!STATE.selectMode?"inline-flex":"none";UI.btnPaste.style.display=canPaste&&STATE.selectMode?"inline-flex":"none";UI.btnRename.style.display=(STATE.selectMode&&STATE.selected.size===1)?"inline-flex":"none";UI.btnBack.style.display=(!STATE.selectMode&&!!STATE.dirId)?"inline-flex":"none";UI.btnPasteSolo.disabled=!canPaste;UI.btnPaste.disabled=!canPaste}
+
+function enterSelectMode(){STATE.selectMode=true;UI.card.classList.add("selectMode");UI.list.querySelectorAll(".checkCircle").forEach(el=>{el.style.display="flex"})}
+function exitSelectMode(){STATE.selectMode=false;STATE.selected=new Set();UI.card.classList.remove("selectMode");UI.list.querySelectorAll(".checkCircle").forEach(el=>{el.style.display=""})}
+
+function autoExitAfterAction(){exitSelectMode();updateSelectionUI()}
+
+function toggleSelect(id){
+  const has=STATE.selected.has(id);
+  if(has){STATE.selected.delete(id);setItemSelected(id,false)}else{STATE.selected.add(id);setItemSelected(id,true)}
+  if(STATE.selected.size===0)exitSelectMode();
+  updateSelectionUI()
+}
+
+function updateSelectionUI(){
+  UI.selCount.textContent=`Đã chọn ${STATE.selected.size}`;
+  const clip=STATE.clipboard||loadClipboard();
+  const canPaste=!!(clip&&Array.isArray(clip.ids)&&clip.ids.length);
+  UI.btnPasteSolo.style.display=canPaste&&!STATE.selectMode?"inline-flex":"none";
+  UI.btnPaste.style.display=canPaste&&STATE.selectMode?"inline-flex":"none";
+  UI.btnRename.style.display=(STATE.selectMode&&STATE.selected.size===1)?"inline-flex":"none";
+  UI.btnBack.style.display=(!STATE.selectMode&&!!STATE.dirId)?"inline-flex":"none";
+  UI.btnPasteSolo.disabled=!canPaste;
+  UI.btnPaste.disabled=!canPaste
+}
+
 function getItemById(id){return (STATE.items||[]).find(x=>String(x.id||"")===String(id||""))||null}
 function getItemName(id){const it=getItemById(id);return it?it.name:id}
-function setClipboardMode(mode){const ids=[...STATE.selected];if(!ids.length){toast("Chưa chọn");return}const clip={mode,ids,ts:Date.now()};STATE.clipboard=clip;saveClipboard(clip);toast(mode==="copy"?"Đã copy":"Đã cắt");updateSelectionUI()}
-async function onPaste(){const clip=STATE.clipboard||loadClipboard();if(!clip||!clip.ids||!clip.ids.length){toast("Chưa có gì để dán");return}const ok=await openConfirm({title:"Dán",message:`Dán ${clip.ids.length} mục vào thư mục hiện tại?`,okText:"Dán",cancelText:"Huỷ"});if(!ok)return;const t=getToken();try{if(clip.mode==="cut"){for(const id of clip.ids)await CODEAPI.moveNode(t,id,STATE.dirId);saveClipboard(null);STATE.clipboard=null;toast("Đã dán")}else{for(const id of clip.ids)await CODEAPI.cloneTree(t,id,STATE.dirId,null);toast("Đã dán")}await refreshDashboard();exitSelectMode();updateSelectionUI()}catch(e){toast(e.message||"Dán lỗi")}}
-async function onDeleteSelected(){const ids=[...STATE.selected];if(!ids.length){toast("Chưa chọn");return}const ok=await openConfirm({title:"Xoá",message:`Xoá ${ids.length} mục đã chọn?`,okText:"Xoá",cancelText:"Huỷ"});if(!ok)return;try{for(const id of ids)await doDelete(id,false);await refreshDashboard();exitSelectMode();updateSelectionUI()}catch(e){toast(e.message||"Xoá lỗi")}}
-async function onRenameSelected(){if(STATE.selected.size!==1){toast("Chọn 1 mục");return}const id=[...STATE.selected][0],it=getItemById(id);if(!it){toast("Không tìm thấy");return}const isFolder=String(it.kind||"")==="folder";const name=await openPromptValidated({title:"Rename",desc:"Nhập tên mới.",placeholder:isFolder?"vd: folder":"vd: bai1.html",okText:"Đổi",validate:isFolder?validateFolderName:validateFileName,value:String(it.name||"")});if(name==null)return;try{const t=getToken();await CODEAPI.renameNode(t,id,String(name).trim());toast("Đã đổi");await refreshDashboard();exitSelectMode();updateSelectionUI()}catch(e){toast(e.message||"Rename lỗi")}}
+
+function setClipboardMode(mode){
+  const ids=[...STATE.selected];
+  if(!ids.length){toast("Chưa chọn");return}
+  const clip={mode,ids,ts:Date.now()};
+  STATE.clipboard=clip;
+  saveClipboard(clip);
+  toast(mode==="copy"?"Đã copy":"Đã cắt");
+  updateSelectionUI()
+}
+
+function baseNameAndExt(name){
+  const s=String(name||"").trim();
+  const dot=s.lastIndexOf(".");
+  if(dot<=0||dot===s.length-1) return {base:s,ext:""};
+  return {base:s.slice(0,dot),ext:s.slice(dot)};
+}
+function nameWithSuffix(name,n){
+  const p=baseNameAndExt(name);
+  return `${p.base} (${n})${p.ext}`;
+}
+function makeNameSet(items){
+  const set=new Set();
+  for(const it of (items||[])){
+    const nm=String(it?.name||"").trim().toLowerCase();
+    if(nm) set.add(nm);
+  }
+  return set;
+}
+async function pickUniqueNameInTarget(token,targetDirId,desiredName){
+  const raw=await CODEAPI.list(token,targetDirId||null);
+  const o=firstObj(raw)||raw||{};
+  const items=Array.isArray(o.items)?o.items:[];
+  const taken=makeNameSet(items);
+  const base=String(desiredName||"").trim();
+  if(!base) return base;
+
+  const low=base.toLowerCase();
+  if(!taken.has(low)) return base;
+
+  let i=1;
+  while(i<9999){
+    const cand=nameWithSuffix(base,i);
+    if(!taken.has(cand.toLowerCase())) return cand;
+    i++;
+  }
+  return nameWithSuffix(base,Date.now()%10000);
+}
+
+async function onPaste(){
+  const clip=STATE.clipboard||loadClipboard();
+  if(!clip||!clip.ids||!clip.ids.length){toast("Chưa có gì để dán");return}
+  const ok=await openConfirm({title:"Dán",message:`Dán ${clip.ids.length} mục vào thư mục hiện tại?`,okText:"Dán",cancelText:"Huỷ"});
+  if(!ok)return;
+
+  const t=getToken();
+  try{
+    if(clip.mode==="cut"){
+      for(const id of clip.ids) await CODEAPI.moveNode(t,id,STATE.dirId);
+      saveClipboard(null);STATE.clipboard=null;toast("Đã dán");
+    }else{
+      for(const id of clip.ids){
+        const it=getItemById(id) || {id,kind:"file",name:getItemName(id)};
+        let newName=null;
+        if(String(it.kind||"")!=="folder"){
+          newName=await pickUniqueNameInTarget(t,STATE.dirId,String(it.name||""));
+        }
+        await CODEAPI.cloneTree(t,id,STATE.dirId,newName);
+      }
+      toast("Đã dán");
+    }
+    await refreshDashboard();
+    autoExitAfterAction();
+  }catch(e){
+    toast(e.message||"Dán lỗi")
+  }
+}
+
+async function onDeleteSelected(){
+  const ids=[...STATE.selected];
+  if(!ids.length){toast("Chưa chọn");return}
+  const ok=await openConfirm({title:"Xoá",message:`Xoá ${ids.length} mục đã chọn?`,okText:"Xoá",cancelText:"Huỷ"});
+  if(!ok)return;
+  try{
+    for(const id of ids) await doDelete(id,false);
+    await refreshDashboard();
+    autoExitAfterAction();
+  }catch(e){
+    toast(e.message||"Xoá lỗi")
+  }
+}
+
+async function onRenameSelected(){
+  if(STATE.selected.size!==1){toast("Chọn 1 mục");return}
+  const id=[...STATE.selected][0],it=getItemById(id);
+  if(!it){toast("Không tìm thấy");return}
+  const isFolder=String(it.kind||"")==="folder";
+  const name=await openPromptValidated({title:"Rename",desc:"Nhập tên mới.",placeholder:isFolder?"vd: folder":"vd: bai1.html",okText:"Đổi",validate:isFolder?validateFolderName:validateFileName,value:String(it.name||"")});
+  if(name==null)return;
+  try{
+    const t=getToken();
+    await CODEAPI.renameNode(t,id,String(name).trim());
+    toast("Đã đổi");
+    await refreshDashboard();
+    autoExitAfterAction();
+  }catch(e){
+    toast(e.message||"Rename lỗi")
+  }
+}
+
 async function doDelete(id,refresh=true){const t=getToken();await CODEAPI.deleteNode(t,id);if(refresh){toast("Đã xoá");await refreshDashboard()}}
 async function refreshDashboard(){await loadDashboard(STATE.dirId);renderDashboard(true)}
-async function onNewFolder(){const name=await openPromptValidated({title:"Tạo thư mục",desc:"Nhập tên thư mục.",placeholder:"vd: portfolio",okText:"Tạo",validate:validateFolderName});if(name==null)return;try{const t=getToken(),raw=await CODEAPI.createFolder(t,STATE.dirId,String(name).trim()),o=firstObj(raw)||raw||{};if(o.ok!==true)throw new Error(o.error||o.message||"Không tạo được");toast("Đã tạo");const id=o.node?.id||o.id||o.folder_id||o.code_id;if(id&&FILE_ID_RE.test(id)){navToDashboard(id,false);return}await refreshDashboard()}catch(e){toast(e.message||"Tạo lỗi")}}
-async function onNewFile(){const name=await openPromptValidated({title:"Tạo file",desc:"Bắt buộc .html",placeholder:"vd: bai1.html",okText:"Tạo",validate:validateFileName});if(name==null)return;try{const t=getToken(),raw=await CODEAPI.createFile(t,STATE.dirId,String(name).trim()),o=firstObj(raw)||raw||{};if(o.ok!==true)throw new Error(o.error||o.message||"Không tạo được");toast("Đã tạo");const id=o.node?.id||o.id||o.file_id||o.code_id;if(id&&FILE_ID_RE.test(id)){toEditor(id);return}await refreshDashboard()}catch(e){toast(e.message||"Tạo lỗi")}}
-async function onDownloadSelected(){const ids=[...STATE.selected];if(!ids.length){toast("Chưa chọn");return}const ok=await openConfirm({title:"Tải về",message:`Tải ${ids.length} mục đã chọn?`,okText:"Tải",cancelText:"Huỷ"});if(!ok)return;const t=getToken();try{if(typeof JSZip==="undefined"){toast("Thiếu JSZip");return}const zip=new JSZip(),rootName=(ids.length===1)?(getItemName(ids[0])||"download"):"download",root=zip.folder(safeZipName(rootName));for(const id of ids){const it=getItemById(id)||{id,kind:"file",name:getItemName(id)};await addNodeToZip(root,t,it)}const blob=await zip.generateAsync({type:"blob"}),url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=safeZipName(rootName)+".zip";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),800);toast("Đang tải")}catch(e){toast(e.message||"Tải lỗi")}}
+
+async function onNewFolder(){
+  const name=await openPromptValidated({title:"Tạo thư mục",desc:"Nhập tên thư mục.",placeholder:"vd: portfolio",okText:"Tạo",validate:validateFolderName});
+  if(name==null)return;
+  try{
+    const t=getToken(),raw=await CODEAPI.createFolder(t,STATE.dirId,String(name).trim()),o=firstObj(raw)||raw||{};
+    if(o.ok!==true)throw new Error(o.error||o.message||"Không tạo được");
+    toast("Đã tạo");
+    const id=o.node?.id||o.id||o.folder_id||o.code_id;
+    if(id&&FILE_ID_RE.test(id)){navToDashboard(id,false);return}
+    await refreshDashboard()
+  }catch(e){toast(e.message||"Tạo lỗi")}
+}
+
+async function onNewFile(){
+  const name=await openPromptValidated({title:"Tạo file",desc:"Bắt buộc .html",placeholder:"vd: bai1.html",okText:"Tạo",validate:validateFileName});
+  if(name==null)return;
+  try{
+    const t=getToken(),raw=await CODEAPI.createFile(t,STATE.dirId,String(name).trim()),o=firstObj(raw)||raw||{};
+    if(o.ok!==true)throw new Error(o.error||o.message||"Không tạo được");
+    toast("Đã tạo");
+    const id=o.node?.id||o.id||o.file_id||o.code_id;
+    if(id&&FILE_ID_RE.test(id)){toEditor(id);return}
+    await refreshDashboard()
+  }catch(e){toast(e.message||"Tạo lỗi")}
+}
+
+async function onDownloadSelected(){
+  const ids=[...STATE.selected];
+  if(!ids.length){toast("Chưa chọn");return}
+  const ok=await openConfirm({title:"Tải về",message:`Tải ${ids.length} mục đã chọn?`,okText:"Tải",cancelText:"Huỷ"});
+  if(!ok)return;
+  const t=getToken();
+  try{
+    if(typeof JSZip==="undefined"){toast("Thiếu JSZip");return}
+    const zip=new JSZip(),rootName=(ids.length===1)?(getItemName(ids[0])||"download"):"download",root=zip.folder(safeZipName(rootName));
+    for(const id of ids){const it=getItemById(id)||{id,kind:"file",name:getItemName(id)};await addNodeToZip(root,t,it)}
+    const blob=await zip.generateAsync({type:"blob"}),url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download=safeZipName(rootName)+".zip";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),800);
+    toast("Đang tải")
+  }catch(e){toast(e.message||"Tải lỗi")}
+}
+
 function safeZipName(name){const s=String(name||"download").trim()||"download";return s.replace(/[<>:"\\|?*\x00-\x1F]/g,"_").slice(0,120)}
 async function addNodeToZip(zipFolder,token,item){const kind=String(item.kind||""),name=safeZipName(item.name||item.id);if(kind==="folder"){const sub=zipFolder.folder(name);const raw=await CODEAPI.list(token,item.id),o=firstObj(raw)||raw||{},children=Array.isArray(o.items)?o.items:[];for(const ch of children)await addNodeToZip(sub,token,ch);return}const raw=await CODEAPI.getFile(token,item.id),o=firstObj(raw)||raw||{},content=String(o.content||"");zipFolder.file(name,content)}
-let SW={active:false,pid:null,front:null,sw:null,startX:0,curX:0,targetX:0,moved:false,raf:0,longT:0,revealEl:null};
+
+let SW={active:false,pid:null,front:null,sw:null,startX:0,curX:0,targetX:0,moved:false,raf:0,longT:0,revealEl:null,lpId:null};
+
 function bindListDelegation(){
-UI.list.addEventListener("click",async e=>{const del=e.target.closest?.("[data-del]");if(del){e.preventDefault();e.stopPropagation();const id=String(del.getAttribute("data-del")||"");const ok=await openConfirm({title:"Xoá",message:`Xoá "${getItemName(id)}"?`,okText:"Xoá",cancelText:"Huỷ"});if(!ok)return;await doDelete(id,true);return}
-const chk=e.target.closest?.(".checkCircle");if(chk){e.preventDefault();e.stopPropagation();const id=String(chk.getAttribute("data-check")||"");if(!STATE.selectMode)enterSelectMode();toggleSelect(id);return}
-const front=e.target.closest?.(".itemFront");if(!front)return;const sw=front.closest(".swipe");if(!sw)return;const id=String(sw.getAttribute("data-id")||""),kind=String(sw.getAttribute("data-kind")||"");if(STATE.selectMode){toggleSelect(id);return}
-if(sw.classList.contains("reveal")){sw.classList.remove("reveal");return}
-if(kind==="folder")navToDashboard(id,false);else toEditor(id)});
-UI.list.addEventListener("pointerdown",e=>{const front=e.target.closest?.(".itemFront");if(!front)return;if(STATE.selectMode)return;const sw=front.closest(".swipe");if(!sw)return;if(e.pointerType==="mouse"&&e.button!==0)return;if(SW.revealEl&&SW.revealEl!==sw)SW.revealEl.classList.remove("reveal");SW.revealEl=sw;SW.active=true;SW.pid=e.pointerId;SW.front=front;SW.sw=sw;SW.startX=e.clientX;SW.curX=0;SW.targetX=0;SW.moved=false;SW.front.style.willChange="transform";try{front.setPointerCapture?.(e.pointerId)}catch{}
-if(isCoarse()){SW.longT=setTimeout(()=>{SW.longT=0;if(!SW.active||SW.moved)return;enterSelectMode();STATE.selected.add(String(sw.getAttribute("data-id")||""));setItemSelected(String(sw.getAttribute("data-id")||""),true);updateSelectionUI()},LONGPRESS_MS)}},{passive:true});
-UI.list.addEventListener("pointermove",e=>{if(!SW.active||e.pointerId!==SW.pid||!SW.front)return;const dx=e.clientX-SW.startX;if(Math.abs(dx)>6)SW.moved=true;if(SW.moved&&SW.longT){clearTimeout(SW.longT);SW.longT=0}const tx=Math.max(-120,Math.min(0,dx));SW.targetX=tx;if(!SW.raf){SW.raf=requestAnimationFrame(()=>{SW.raf=0;SW.curX=SW.targetX;SW.front.style.transition="none";SW.front.style.transform=`translate3d(${SW.curX}px,0,0)`})}},{passive:true});
-function endSwipe(){if(!SW.active)return;SW.active=false;if(SW.longT){clearTimeout(SW.longT);SW.longT=0}if(SW.raf){cancelAnimationFrame(SW.raf);SW.raf=0}if(SW.front&&SW.sw){SW.front.style.transition="";SW.front.style.transform="";SW.front.style.willChange="";if(SW.curX<-70)SW.sw.classList.add("reveal");else SW.sw.classList.remove("reveal")}SW.front=null;SW.sw=null;SW.pid=null;SW.curX=0;SW.targetX=0;SW.moved=false}
-UI.list.addEventListener("pointerup",endSwipe,{passive:true});
-UI.list.addEventListener("pointercancel",endSwipe,{passive:true});
+  UI.list.addEventListener("click",async e=>{
+    const del=e.target.closest?.("[data-del]");
+    if(del){
+      e.preventDefault();e.stopPropagation();
+      const id=String(del.getAttribute("data-del")||"");
+      const ok=await openConfirm({title:"Xoá",message:`Xoá "${getItemName(id)}"?`,okText:"Xoá",cancelText:"Huỷ"});
+      if(!ok)return;
+      await doDelete(id,true);
+      return
+    }
+    const chk=e.target.closest?.(".checkCircle");
+    if(chk){
+      e.preventDefault();e.stopPropagation();
+      const id=String(chk.getAttribute("data-check")||"");
+      if(!STATE.selectMode) enterSelectMode();
+      toggleSelect(id);
+      return
+    }
+    const front=e.target.closest?.(".itemFront");
+    if(!front)return;
+    const sw=front.closest(".swipe");
+    if(!sw)return;
+    const id=String(sw.getAttribute("data-id")||""),kind=String(sw.getAttribute("data-kind")||"");
+    if(STATE.selectMode){toggleSelect(id);return}
+    if(sw.classList.contains("reveal")){sw.classList.remove("reveal");return}
+    if(kind==="folder")navToDashboard(id,false);else toEditor(id)
+  });
+
+  UI.list.addEventListener("pointerdown",e=>{
+    const front=e.target.closest?.(".itemFront");
+    if(!front)return;
+    const sw=front.closest(".swipe");
+    if(!sw)return;
+    if(e.pointerType==="mouse"&&e.button!==0)return;
+
+    if(SW.revealEl&&SW.revealEl!==sw)SW.revealEl.classList.remove("reveal");
+    SW.revealEl=sw;
+
+    SW.active=true;
+    SW.pid=e.pointerId;
+    SW.front=front;
+    SW.sw=sw;
+    SW.startX=e.clientX;
+    SW.curX=0;
+    SW.targetX=0;
+    SW.moved=false;
+    SW.front.style.willChange="transform";
+    try{front.setPointerCapture?.(e.pointerId)}catch{}
+
+    if(isCoarse()){
+      const id=String(sw.getAttribute("data-id")||"");
+      SW.lpId=id;
+      SW.longT=setTimeout(()=>{
+        SW.longT=0;
+        if(!SW.active||SW.moved)return;
+        if(!STATE.selectMode) enterSelectMode();
+        STATE.selected.add(id);
+        setItemSelected(id,true);
+        updateSelectionUI();
+      },LONGPRESS_MS)
+    }
+  },{passive:true});
+
+  UI.list.addEventListener("pointermove",e=>{
+    if(!SW.active||e.pointerId!==SW.pid||!SW.front)return;
+    if(STATE.selectMode) return;
+
+    const dx=e.clientX-SW.startX;
+    if(Math.abs(dx)>6)SW.moved=true;
+    if(SW.moved&&SW.longT){clearTimeout(SW.longT);SW.longT=0}
+    const tx=Math.max(-120,Math.min(0,dx));
+    SW.targetX=tx;
+    if(!SW.raf){
+      SW.raf=requestAnimationFrame(()=>{
+        SW.raf=0;
+        SW.curX=SW.targetX;
+        SW.front.style.transition="none";
+        SW.front.style.transform=`translate3d(${SW.curX}px,0,0)`
+      })
+    }
+  },{passive:true});
+
+  function endSwipe(){
+    if(!SW.active)return;
+    const wasSelect=STATE.selectMode;
+    SW.active=false;
+    if(SW.longT){clearTimeout(SW.longT);SW.longT=0}
+    if(SW.raf){cancelAnimationFrame(SW.raf);SW.raf=0}
+    if(SW.front&&SW.sw){
+      SW.front.style.transition="";
+      SW.front.style.transform="";
+      SW.front.style.willChange="";
+      if(!wasSelect){
+        if(SW.curX<-70)SW.sw.classList.add("reveal");
+        else SW.sw.classList.remove("reveal");
+      }
+    }
+    SW.front=null;SW.sw=null;SW.pid=null;SW.curX=0;SW.targetX=0;SW.moved=false;SW.lpId=null
+  }
+
+  UI.list.addEventListener("pointerup",endSwipe,{passive:true});
+  UI.list.addEventListener("pointercancel",endSwipe,{passive:true});
 }
+
 function renderDashboard(rebuild=false){
-topTitle.textContent="Code";renderTopbar();
-if(!UI.card||rebuild)dashboardSkeleton();
-STATE.clipboard=loadClipboard();
-if(!rebuild){exitSelectMode();updateSelectionUI()}
-renderPathBox();buildList();
-UI.btnBack.style.display=(!STATE.selectMode&&!!STATE.dirId)?"inline-flex":"none";
-updateSelectionUI()
+  topTitle.textContent="Code";
+  renderTopbar();
+  if(!UI.card||rebuild)dashboardSkeleton();
+  STATE.clipboard=loadClipboard();
+  if(!rebuild){exitSelectMode();updateSelectionUI()}
+  renderPathBox();
+  buildList();
+  UI.btnBack.style.display=(!STATE.selectMode&&!!STATE.dirId)?"inline-flex":"none";
+  updateSelectionUI()
 }
+
 async function renderByRoute(){
-ME=getMeCache();
-const t=getToken();
-const {fileId,dirId}=parseRoute();
-if(fileId){location.replace(`/code/html?f=${encodeURIComponent(fileId)}`);return}
-if(t&&(!ME||!ME.username)){try{const meOut=await API.me(t);if(meOut&&meOut.ok&&meOut.me&&meOut.me.username){ME=meOut.me;setMeCache(ME);if(meOut.token)setToken(meOut.token);else setToken(t)}}catch{}}
-if(!ME||!ME.username){renderGate();return}
-STATE.selectMode=false;STATE.selected=new Set();STATE.clipboard=loadClipboard();
-try{await loadDashboard(dirId||null);renderDashboard(true)}catch(e){toast(e.message||"Không load được");renderDashboard(true)}
+  ME=getMeCache();
+  const t=getToken();
+  const {fileId,dirId}=parseRoute();
+  if(fileId){location.replace(`/code/html?f=${encodeURIComponent(fileId)}`);return}
+  if(t&&(!ME||!ME.username)){try{const meOut=await API.me(t);if(meOut&&meOut.ok&&meOut.me&&meOut.me.username){ME=meOut.me;setMeCache(ME);if(meOut.token)setToken(meOut.token);else setToken(t)}}catch{}}
+  if(!ME||!ME.username){renderGate();return}
+  STATE.selectMode=false;STATE.selected=new Set();STATE.clipboard=loadClipboard();
+  try{await loadDashboard(dirId||null);renderDashboard(true)}catch(e){toast(e.message||"Không load được");renderDashboard(true)}
 }
+
 document.addEventListener("contextmenu",e=>{if(e.target&&e.target.closest&&e.target.closest(".swipe"))e.preventDefault()},{capture:true});
 document.addEventListener("selectstart",e=>{if(e.target&&e.target.closest&&e.target.closest(".swipe"))e.preventDefault()},{capture:true});
-(async function boot(){await requestPersistentStorage();try{const p=String(location.pathname||"");if(p.endsWith("/code/index.html"))history.replaceState({},"","/code");if(p.endsWith("/code/"))history.replaceState({},"","/code")}catch{}if(SUPABASE_URL.includes("PASTE_")||SUPABASE_ANON_KEY.includes("PASTE_"))toast("Thiếu SUPABASE_URL / ANON_KEY");renderByRoute()})();
+
+(async function boot(){
+  await requestPersistentStorage();
+  try{
+    const p=String(location.pathname||"");
+    if(p.endsWith("/code/index.html"))history.replaceState({},"","/code");
+    if(p.endsWith("/code/"))history.replaceState({},"","/code")
+  }catch{}
+  if(SUPABASE_URL.includes("PASTE_")||SUPABASE_ANON_KEY.includes("PASTE_"))toast("Thiếu SUPABASE_URL / ANON_KEY");
+  renderByRoute()
+})();
 </script></body></html>
