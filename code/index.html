@@ -1,736 +1,186 @@
-<!doctype html>
-<html lang="vi">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
-  <title>tuankhoi.site - Code Editor</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg1:#ffecd2;--bg2:#fcb69f;--card:#fff;--text:#1f2937;--muted:#6b7280;--primary:#7c3aed;
-      --ok:#16a34a;--bad:#dc2626;--border:#e5e7eb;--soft:#f8fafc;--shadow:0 14px 40px rgba(0,0,0,.10);
-      --radius:18px;--admin:#2563eb;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    html{-webkit-text-size-adjust:100%}
-    body{
-      margin:0;
-      font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(1200px 600px at 20% 10%,#fff 0%,rgba(255,255,255,0) 55%),
-        linear-gradient(120deg,var(--bg1) 0%,var(--bg2) 100%);
-      overflow:hidden;
-      touch-action:pan-x pan-y;
-    }
-    a{color:inherit;text-decoration:none}
-    a:hover,a:active,a:visited{text-decoration:none}
-    a:focus-visible{outline:3px solid rgba(124,58,237,.25);outline-offset:3px;border-radius:14px}
-    .btn,.pinKey,.btn-x,.itemFront,.kebabBtn{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no"><title>tuankhoi.site - Code</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet"><style>
+:root{--bg1:#ffecd2;--bg2:#fcb69f;--card:#fff;--text:#1f2937;--muted:#6b7280;--primary:#7c3aed;--ok:#16a34a;--bad:#dc2626;--border:#e5e7eb;--soft:#f8fafc;--shadow:0 14px 40px rgba(0,0,0,.10);--radius:18px;--admin:#2563eb}
+*{box-sizing:border-box}
+html,body{height:100%}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:radial-gradient(1200px 600px at 20% 10%,#fff 0%,rgba(255,255,255,0) 55%),linear-gradient(120deg,var(--bg1) 0%,var(--bg2) 100%);overflow:hidden;touch-action:pan-x pan-y}
+a{color:inherit;text-decoration:none}
+a:hover,a:active,a:visited{text-decoration:none}
+a:focus-visible{outline:3px solid rgba(124,58,237,.25);outline-offset:3px;border-radius:14px}
+.btn,.pinKey,.btn-x,.itemFront,.kebabBtn,.crumb{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px;touch-action:pan-y}
+.wrap{max-width:980px;margin:0 auto;padding:0 14px}
 
-    #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px;touch-action:pan-y}
-    .wrap{max-width:980px;margin:0 auto;padding:0 14px}
+.btn{border:0;cursor:pointer;border-radius:999px;padding:10px 14px;font-weight:900;font-size:.9rem;transition:transform .16s ease,filter .16s ease;display:inline-flex;align-items:center;gap:8px;user-select:none;white-space:nowrap;box-shadow:0 12px 24px rgba(0,0,0,.12);background:#fff;color:#111827;border:1px solid #e5e7eb}
+.btn:hover{transform:translateY(-1px);filter:brightness(.98)}
+.btn:active{transform:translateY(0)}
+.btn-primary{background:linear-gradient(135deg,#7c3aed,#fb7185);color:#fff;border:0;box-shadow:0 12px 24px rgba(124,58,237,.18)}
+.btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
+.btn-danger{background:var(--bad);color:#fff;border:0}
+.btn[disabled]{opacity:.6;cursor:not-allowed;transform:none!important;filter:none!important}
+.btn-admin{background:linear-gradient(135deg,#2563eb,#22c55e);color:#fff;border:0;box-shadow:0 12px 24px rgba(37,99,235,.16)}
 
-    .btn{
-      border:0;cursor:pointer;border-radius:999px;padding:10px 14px;font-weight:900;font-size:.9rem;
-      transition:transform .16s ease,filter .16s ease;
-      display:inline-flex;align-items:center;gap:8px;user-select:none;white-space:nowrap;
-      box-shadow:0 12px 24px rgba(0,0,0,.12);
-      background:#fff;color:#111827;border:1px solid #e5e7eb;
-    }
-    .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
-    .btn:active{transform:translateY(0)}
-    .btn-primary{background:linear-gradient(135deg,#7c3aed,#fb7185);color:#fff;border:0;box-shadow:0 12px 24px rgba(124,58,237,.18)}
-    .btn-ghost{background:#fff;color:#111827;border:1px solid #e5e7eb;box-shadow:none}
-    .btn-danger{background:var(--bad);color:#fff;border:0}
-    .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none !important;filter:none !important}
-    .btn-admin{background:linear-gradient(135deg,#2563eb,#22c55e);color:#fff;border:0;box-shadow:0 12px 24px rgba(37,99,235,.16)}
+.topbar{margin-top:10px;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.9);border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.06);padding:12px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:nowrap;min-width:0}
+.topTitle{font-weight:900;font-size:1.02rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.topRight{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:nowrap}
+.content{padding:12px 0 0}
+.card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin:12px 0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:nowrap;min-width:0}
+.rowLeft{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-width:0}
+.rowRight{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
+.vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.muted{color:var(--muted);font-weight:650}
+.input{width:100%;border-radius:14px;border:2px solid #e5e7eb;padding:11px 12px;font-size:.95rem;font-weight:700;outline:none;background:var(--soft);transition:border-color .15s ease,box-shadow .15s ease}
+.input:focus{border-color:rgba(124,58,237,.55);box-shadow:0 0 0 5px rgba(124,58,237,.10);background:#fff}
+.input.invalid{border-color:rgba(220,38,38,.65);box-shadow:0 0 0 5px rgba(220,38,38,.10);background:#fff}
+.promptErr{margin-top:8px;color:var(--bad);font-weight:850;font-size:.9rem;line-height:1.25;display:none}
+.promptErr.show{display:block}
 
-    .topbar{
-      margin-top:10px;background:rgba(255,255,255,.86);border:1px solid rgba(229,231,235,.9);
-      border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.06);
-      padding:14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap
-    }
-    .titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
-    .logo{
-      width:42px;height:42px;border-radius:16px;background:linear-gradient(135deg,#a78bfa,#fb7185);
-      display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;
-      box-shadow:0 10px 22px rgba(124,58,237,.18);user-select:none
-    }
-    .titles h1{font-size:1.02rem;margin:0;font-weight:800}
-    .titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
-    .actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex:1 1 320px;flex-wrap:wrap}
-    .statusPill{
-      display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;
-      background:rgba(255,255,255,.75);border:1px solid rgba(229,231,235,.9);
-      color:rgba(31,41,55,.8);font-weight:800;font-size:.9rem;
-      box-shadow:0 10px 22px rgba(0,0,0,.05);user-select:none;max-width:72vw;
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis
-    }
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(17,24,39,.92);color:#fff;padding:10px 12px;border-radius:14px;font-weight:800;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;max-width:calc(100% - 28px);z-index:20050;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
-    .content{padding:12px 0 0}
-    .card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin:12px 0}
-    .row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
-    .vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25}
-    .muted{color:var(--muted);font-weight:650}
-    .idx{font-size:.78rem;font-weight:900;padding:6px 10px;border-radius:999px;background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;white-space:nowrap}
-    .input{
-      width:100%;border-radius:14px;border:2px solid #e5e7eb;padding:11px 12px;font-size:.95rem;font-weight:700;
-      outline:none;background:var(--soft);transition:border-color .15s ease,box-shadow .15s ease
-    }
-    .input:focus{border-color:rgba(124,58,237,.55);box-shadow:0 0 0 5px rgba(124,58,237,.10);background:#fff}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:20000}
+.modal-backdrop.show{display:flex}
+.modal{width:100%;max-width:620px;background:#fff;border-radius:18px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,.18);padding:14px;max-height:82vh;overflow:auto;-webkit-overflow-scrolling:touch}
+.modal h3{margin:4px 0 6px;font-size:1.02rem}
+.modal p{margin:0 0 12px;color:var(--muted);font-weight:650;font-size:.92rem;line-height:1.35}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:nowrap}
+.xclose{position:sticky;top:0;display:flex;justify-content:flex-end;z-index:2;margin-bottom:4px}
+.btn-x{width:56px;height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-weight:1000;font-size:1.8rem;line-height:1;box-shadow:0 12px 24px rgba(0,0,0,.10)}
 
-    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:20000}
-    .modal-backdrop.show{display:flex}
-    .modal{width:100%;max-width:620px;background:#fff;border-radius:18px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,.18);padding:14px;max-height:82vh;overflow:auto;-webkit-overflow-scrolling:touch}
-    .modal h3{margin:4px 0 6px;font-size:1.02rem}
-    .modal p{margin:0 0 12px;color:var(--muted);font-weight:650;font-size:.92rem;line-height:1.35}
-    .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
-    .xclose{position:sticky;top:0;display:flex;justify-content:flex-end;z-index:2;margin-bottom:4px}
-    .btn-x{width:56px;height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-weight:1000;font-size:1.8rem;line-height:1;box-shadow:0 12px 24px rgba(0,0,0,.10)}
+.pinWrap{display:grid;gap:12px}
+.pinDots{display:flex;justify-content:center;gap:10px;padding:8px 0 2px;user-select:none}
+.dot{width:14px;height:14px;border-radius:999px;border:2px solid #e5e7eb;background:#fff;box-shadow:0 10px 22px rgba(0,0,0,.08)}
+.dot.filled{background:linear-gradient(135deg,#7c3aed,#fb7185);border-color:rgba(124,58,237,.25)}
+.pinKeypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pinKey{height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;font-weight:1000;font-size:1.25rem;cursor:pointer;box-shadow:0 10px 22px rgba(0,0,0,.08);transition:transform .12s ease,filter .12s ease;user-select:none}
+.pinKey:hover{transform:translateY(-1px);filter:brightness(.99)}
+.pinKey:active{transform:translateY(0)}
+.pinKey.small{font-size:.95rem;font-weight:950;letter-spacing:.02em}
+.pinNote{text-align:center;color:var(--muted);font-weight:750;font-size:.9rem;line-height:1.35}
+@keyframes shakeX{0%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-4px)}90%{transform:translateX(4px)}100%{transform:translateX(0)}}
+.pinWrap.shake{animation:shakeX .5s ease}
+.pinDots.error .dot{border-color:rgba(220,38,38,.65)}
+.pinDots.error .dot.filled{background:linear-gradient(135deg,#fca5a5,#dc2626);border-color:rgba(220,38,38,.55)}
+.pinNote.error{color:var(--bad)}
 
-    .toast{
-      position:fixed;left:50%;bottom:18px;transform:translateX(-50%);
-      background:rgba(17,24,39,.92);color:#fff;padding:10px 12px;border-radius:14px;font-weight:800;font-size:.9rem;
-      opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;
-      max-width:calc(100% - 28px);z-index:20050;text-align:center
-    }
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+.crumbs{display:flex;gap:8px;flex-wrap:nowrap;margin-top:10px;overflow:auto;-webkit-overflow-scrolling:touch}
+.crumb{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.75);border:1px solid rgba(229,231,235,.9);box-shadow:0 10px 22px rgba(0,0,0,.04);font-weight:900;font-size:.86rem;cursor:pointer;user-select:none;white-space:nowrap;flex:0 0 auto}
+.crumb:hover{filter:brightness(.98)}
 
-    /* PIN modal */
-    .pinWrap{display:grid;gap:12px}
-    .pinDots{display:flex;justify-content:center;gap:10px;padding:8px 0 2px;user-select:none}
-    .dot{width:14px;height:14px;border-radius:999px;border:2px solid #e5e7eb;background:#fff;box-shadow:0 10px 22px rgba(0,0,0,.08)}
-    .dot.filled{background:linear-gradient(135deg,#7c3aed,#fb7185);border-color:rgba(124,58,237,.25)}
-    .pinKeypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    .pinKey{height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;font-weight:1000;font-size:1.25rem;cursor:pointer;box-shadow:0 10px 22px rgba(0,0,0,.08);transition:transform .12s ease,filter .12s ease;user-select:none}
-    .pinKey:hover{transform:translateY(-1px);filter:brightness(.99)}
-    .pinKey:active{transform:translateY(0)}
-    .pinKey.small{font-size:.95rem;font-weight:950;letter-spacing:.02em}
-    .pinNote{text-align:center;color:var(--muted);font-weight:750;font-size:.9rem;line-height:1.35}
-    @keyframes shakeX{0%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-4px)}90%{transform:translateX(4px)}100%{transform:translateX(0)}}
-    .pinWrap.shake{animation:shakeX .5s ease}
-    .pinDots.error .dot{border-color:rgba(220,38,38,.65)}
-    .pinDots.error .dot.filled{background:linear-gradient(135deg,#fca5a5,#dc2626);border-color:rgba(220,38,38,.55)}
-    .pinNote.error{color:var(--bad)}
+.toolbarLine{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:nowrap;overflow:auto;-webkit-overflow-scrolling:touch}
+.toolbarLeft,.toolbarRight2{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;white-space:nowrap}
+.toolbarLine::-webkit-scrollbar{display:none}
 
-    /* Dashboard */
-    .crumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    .crumb{
-      padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.75);
-      border:1px solid rgba(229,231,235,.9);box-shadow:0 10px 22px rgba(0,0,0,.04);
-      font-weight:900;font-size:.86rem;cursor:pointer;user-select:none
-    }
-    .crumb:hover{filter:brightness(.98)}
-    .toolbarRight{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .labelGrey{font-weight:900;color:rgba(31,41,55,.45);user-select:none}
+.listBox{margin-top:10px;display:grid;gap:10px}
+.swipe{position:relative;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;background:#fff;box-shadow:0 10px 22px rgba(0,0,0,.06)}
+.swipeBehind{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;background:transparent;color:#fff;font-weight:1000;padding-right:16px;user-select:none}
+.swipe.reveal .swipeBehind{background:var(--bad)}
+.swipeBehind button{border:0;background:transparent;color:#fff;font-weight:1000;font-size:1rem;cursor:pointer;padding:12px 10px;border-radius:14px}
+.swipeBehind button:active{transform:scale(.98)}
+.itemFront{position:relative;background:#fff;padding:12px 12px;border-radius:16px;transform:translateX(0);transition:transform .14s ease;display:flex;align-items:center;gap:10px;user-select:none;cursor:pointer;-webkit-user-select:none;-webkit-touch-callout:none}
+.swipe.reveal .itemFront{transform:translateX(-92px)}
+.itemIcon{font-weight:1000;font-size:.92rem;min-width:44px;display:flex;justify-content:center;opacity:.75;letter-spacing:.02em}
+.itemName{font-weight:950;font-size:.98rem;min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.checkCircle{width:28px;height:28px;border-radius:999px;border:2px solid #e5e7eb;background:#fff;display:none;align-items:center;justify-content:center;flex:0 0 auto}
+.checkCircle.on{border-color:rgba(124,58,237,.55);background:rgba(124,58,237,.12)}
+.checkDot{width:14px;height:14px;border-radius:999px;background:rgba(124,58,237,.95);opacity:0}
+.checkCircle.on .checkDot{opacity:1}
+.selectMode .checkCircle{display:flex}
+.selectMode .itemFront{padding-right:10px}
 
-    .listBox{margin-top:10px;display:grid;gap:10px}
-    .swipe{
-      position:relative;border-radius:16px;overflow:hidden;
-      border:1px solid #e5e7eb;background:#fff;box-shadow:0 10px 22px rgba(0,0,0,.06);
-    }
-    .swipeBehind{
-      position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;
-      background:var(--bad);color:#fff;font-weight:1000;padding-right:16px;user-select:none
-    }
-    .swipeBehind button{
-      border:0;background:transparent;color:#fff;font-weight:1000;font-size:1rem;cursor:pointer;
-      padding:12px 10px;border-radius:14px
-    }
-    .swipeBehind button:active{transform:scale(.98)}
-    .itemFront{
-      position:relative;background:#fff;padding:12px 12px;border-radius:16px;
-      transform:translateX(0);transition:transform .14s ease;
-      display:flex;align-items:center;gap:10px;user-select:none;cursor:pointer
-    }
-    .swipe.reveal .itemFront{transform:translateX(-92px)}
-    .itemIcon{font-weight:1000;font-size:1.15rem;width:28px;display:flex;justify-content:center}
-    .itemName{font-weight:950;font-size:.98rem;min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .checkCircle{
-      width:28px;height:28px;border-radius:999px;border:2px solid #e5e7eb;background:#fff;
-      display:none;align-items:center;justify-content:center;flex:0 0 auto
-    }
-    .checkCircle.on{border-color:rgba(124,58,237,.55);background:rgba(124,58,237,.12)}
-    .checkDot{width:14px;height:14px;border-radius:999px;background:rgba(124,58,237,.95);opacity:0}
-    .checkCircle.on .checkDot{opacity:1}
-    .selectMode .checkCircle{display:flex}
-    .selectMode .itemFront{padding-right:10px}
-    .hintRow{margin-top:10px;color:rgba(31,41,55,.55);font-weight:800;font-size:.88rem;line-height:1.35}
+.noSelect{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.allowSelect,input,textarea{user-select:text;-webkit-user-select:text;-webkit-touch-callout:default}
+@media(max-width:520px){
+  .btn{padding:9px 12px;font-size:.86rem}
+  .itemIcon{min-width:38px;font-size:.86rem}
+}
+</style></head><body class="noSelect">
+<div id="shell"><div class="wrap">
+<div class="topbar" id="topbar"><div class="topTitle" id="topTitle">Dashboard</div><div class="topRight" id="topRight"></div></div>
+<div class="content" id="content"></div>
+</div></div>
 
-    /* Editor */
-    .editorTop{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap
-    }
-    .filePathWrap{display:flex;align-items:center;gap:10px;flex:1 1 440px;min-width:240px}
-    .pathInput{
-      width:100%;border-radius:14px;border:2px solid #e5e7eb;padding:10px 12px;
-      font-size:.92rem;font-weight:900;outline:none;background:var(--soft);
-      transition:border-color .15s ease,box-shadow .15s ease
-    }
-    .pathInput:focus{border-color:rgba(124,58,237,.55);box-shadow:0 0 0 5px rgba(124,58,237,.10);background:#fff}
-    .editorActions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+<div class="toast" id="toast"></div>
 
-    .previewCard{margin-top:12px}
-    .previewHead{display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .previewLabel{font-weight:950;color:rgba(31,41,55,.65);font-size:.88rem;user-select:none}
-    .previewBox{
-      margin-top:10px;border-radius:16px;border:2px solid #e5e7eb;background:#fff;overflow:hidden;
-      box-shadow:0 10px 22px rgba(0,0,0,.06);
-      height:25vh;min-height:180px
-    }
-    .previewBox iframe{width:100%;height:100%;border:0;background:#fff}
-    .previewEmpty{
-      height:100%;display:flex;align-items:center;justify-content:center;
-      color:rgba(31,41,55,.35);font-weight:1000;font-size:.98rem;letter-spacing:.02em
-    }
+<div class="modal-backdrop" id="registerBackdrop" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="registerTitle"><h3 id="registerTitle">Đăng ký tài khoản?</h3><p id="registerDesc">Username chưa đăng ký. Bạn có muốn đăng ký không?</p><div class="modal-actions"><button class="btn btn-ghost" id="btnRegisterNo">Nhập lại</button><button class="btn btn-primary" id="btnRegisterYes">Đăng ký</button></div></div></div>
 
-    .codeCard{margin-top:12px}
-    .codeHead{display:flex;align-items:center;justify-content:space-between;gap:10px}
-    .codeTitle{font-weight:1000;color:rgba(31,41,55,.75);font-size:.9rem;user-select:none}
-    .kebabBtn{
-      width:44px;height:44px;border-radius:14px;border:1px solid #e5e7eb;background:#fff;
-      cursor:pointer;font-weight:1000;font-size:1.35rem;line-height:1;
-      box-shadow:0 10px 22px rgba(0,0,0,.06)
-    }
-    .kebabWrap{position:relative}
-    .dropdown{
-      position:absolute;right:0;top:48px;min-width:200px;
-      background:#fff;border:1px solid #e5e7eb;border-radius:14px;
-      box-shadow:0 18px 44px rgba(0,0,0,.14);
-      padding:8px;display:none;z-index:20
-    }
-    .dropdown.show{display:block}
-    .dropItem{
-      width:100%;text-align:left;border:0;background:#fff;cursor:pointer;
-      padding:10px 10px;border-radius:12px;font-weight:950
-    }
-    .dropItem:hover{background:#f8fafc}
-    .searchRow{margin-top:10px;display:flex;gap:10px;align-items:center}
-    .codePane{
-      margin-top:10px;border-radius:16px;border:2px solid #e5e7eb;background:#0b1020;
-      box-shadow:0 14px 34px rgba(0,0,0,.18);
-      overflow:hidden;
-      height:52vh;min-height:320px
-    }
-    .editorGrid{display:grid;grid-template-columns:64px 1fr; height:100%}
-    .lineNums{
-      background:rgba(255,255,255,.06);
-      border-right:1px solid rgba(255,255,255,.10);
-      color:rgba(255,255,255,.55);
-      font-family:var(--mono);font-size:.86rem;
-      padding:12px 10px;overflow:auto;line-height:1.6;
-      user-select:none
-    }
-    .lineNums .ln{height:1.6em;display:flex;align-items:center;justify-content:flex-end;padding-right:4px}
-    .lineNums .ln.err{background:rgba(220,38,38,.18);border-radius:8px}
+<div class="modal-backdrop" id="pinBackdrop" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinTitle"><div class="xclose"><button class="btn-x" id="btnClosePin" aria-label="Đóng">×</button></div><h3 id="pinTitle">Mật khẩu</h3><p id="pinDesc">Nhập mật khẩu số.</p><div class="pinWrap" id="pinWrap"><div class="pinDots" id="pinDots"></div><div class="pinKeypad" id="pinKeypad"></div><div class="pinNote" id="pinNote"></div></div></div></div>
 
-    .codeStack{position:relative;overflow:hidden}
-    .codePre{
-      position:absolute;inset:0;
-      margin:0;padding:12px;
-      font-family:var(--mono);font-size:.92rem;line-height:1.6;
-      color:#dbeafe;
-      overflow:auto;
-      white-space:pre;
-      pointer-events:none;
-    }
-    .codePre .line{display:block}
-    .codePre .line.err{background:rgba(220,38,38,.18);border-radius:10px;padding:0 6px}
-    .tok-tag{color:#93c5fd}
-    .tok-attr{color:#fcd34d}
-    .tok-str{color:#86efac}
-    .tok-com{color:rgba(255,255,255,.35)}
-    .tok-txt{color:#e5e7eb}
-    .tok-pun{color:rgba(255,255,255,.55)}
+<div class="modal-backdrop" id="confirmBackdrop" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle"><h3 id="confirmTitle">Xác nhận</h3><p id="confirmMsg"></p><div class="modal-actions"><button class="btn btn-ghost" id="btnConfirmCancel">Huỷ</button><button class="btn btn-primary" id="btnConfirmOk">Xác nhận</button></div></div></div>
 
-    .codeArea{
-      position:absolute;inset:0;
-      margin:0;padding:12px;
-      font-family:var(--mono);font-size:.92rem;line-height:1.6;
-      color:transparent;
-      caret-color:#fff;
-      background:transparent;
-      border:0;outline:none;resize:none;
-      overflow:auto;
-      white-space:pre;
-      tab-size:2;
-    }
-    .codeArea::selection{background:rgba(124,58,237,.35)}
-    .lintBar{
-      margin-top:10px;
-      padding:10px 12px;border-radius:14px;
-      border:1px solid rgba(229,231,235,.9);
-      background:rgba(255,255,255,.78);
-      color:rgba(31,41,55,.8);
-      font-weight:900;font-size:.9rem;
-      box-shadow:0 10px 22px rgba(0,0,0,.05);
-      display:none
-    }
-    .lintBar.err{display:block;border-color:rgba(220,38,38,.35);background:rgba(254,242,242,.85);color:#7f1d1d}
-    .lintBar.ok{display:block;border-color:rgba(22,163,74,.25);background:rgba(236,253,245,.85);color:#065f46}
+<div class="modal-backdrop" id="promptBackdrop" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="promptTitle"><h3 id="promptTitle"></h3><p id="promptDesc"></p><input class="input allowSelect" id="promptInput" placeholder="" autocomplete="off"><div class="promptErr" id="promptErr"></div><div class="modal-actions" style="margin-top:12px"><button class="btn btn-ghost" id="btnPromptCancel">Huỷ</button><button class="btn btn-primary" id="btnPromptOk">Tạo</button></div></div></div>
 
-    /* Prompt modal input */
-    #promptBackdrop{z-index:20060}
-    .promptInput{margin-top:10px}
-
-    /* Preview fullscreen */
-    #previewBackdrop{z-index:20070}
-    .bigPreview{height:78vh;border-radius:16px;border:1px solid #e5e7eb;overflow:hidden}
-    .bigPreview iframe{width:100%;height:100%;border:0;background:#fff}
-
-    @media(max-width:520px){
-      .previewBox{height:30vh}
-      .editorGrid{grid-template-columns:56px 1fr}
-    }
-  </style>
-</head>
-<body>
-  <div id="shell">
-    <div class="wrap">
-      <div class="topbar" id="topbar">
-        <div class="titlebox" id="titlebox">
-          <div class="logo" id="logoBox">⌘</div>
-          <div class="titles">
-            <h1 id="topTitle">Code Editor</h1>
-            <div class="tiny" id="topTiny">Soạn HTML + xem trước trực tiếp</div>
-          </div>
-        </div>
-        <div class="actions" id="actions">
-          <div class="statusPill" id="statusPill">—</div>
-        </div>
-      </div>
-
-      <div class="content" id="content"></div>
-    </div>
-  </div>
-
-  <div class="toast" id="toast"></div>
-
-  <!-- Register confirm -->
-  <div class="modal-backdrop" id="registerBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="registerTitle">
-      <h3 id="registerTitle">Đăng ký tài khoản?</h3>
-      <p id="registerDesc">Username chưa đăng ký. Bạn có muốn đăng ký không?</p>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="btnRegisterNo">Nhập lại</button>
-        <button class="btn btn-primary" id="btnRegisterYes">Đăng ký</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PIN modal -->
-  <div class="modal-backdrop" id="pinBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pinTitle">
-      <div class="xclose"><button class="btn-x" id="btnClosePin" aria-label="Đóng">✕</button></div>
-      <h3 id="pinTitle">Mật khẩu</h3>
-      <p id="pinDesc">Nhập mật khẩu số.</p>
-      <div class="pinWrap" id="pinWrap">
-        <div class="pinDots" id="pinDots"></div>
-        <div class="pinKeypad" id="pinKeypad"></div>
-        <div class="pinNote" id="pinNote"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Confirm modal -->
-  <div class="modal-backdrop" id="confirmBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
-      <h3 id="confirmTitle">Xác nhận</h3>
-      <p id="confirmMsg"></p>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="btnConfirmCancel">Huỷ</button>
-        <button class="btn btn-primary" id="btnConfirmOk">Xác nhận</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Prompt modal (name folder/file) -->
-  <div class="modal-backdrop" id="promptBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="promptTitle">
-      <h3 id="promptTitle">—</h3>
-      <p id="promptDesc">—</p>
-      <input class="input promptInput" id="promptInput" placeholder="—" autocomplete="off">
-      <div class="modal-actions" style="margin-top:12px">
-        <button class="btn btn-ghost" id="btnPromptCancel">Huỷ</button>
-        <button class="btn btn-primary" id="btnPromptOk">Tạo</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Preview fullscreen -->
-  <div class="modal-backdrop" id="previewBackdrop" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
-      <div class="xclose"><button class="btn-x" id="btnClosePreview" aria-label="Đóng">✕</button></div>
-      <h3 id="previewTitle">Xem trước</h3>
-      <p class="muted" id="previewSub">—</p>
-      <div class="bigPreview"><iframe id="previewBigFrame" sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts"></iframe></div>
-    </div>
-  </div>
-
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script>
-/** =========================
- *  CONFIG
- *  ========================= */
 const SUPABASE_URL="https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
-
 const TOKEN_KEYS=["tk_token_v2","tk_token_v1","tk_token"];
 const TOKEN_COOKIES=["tk_token_v2","tk_token_v1","tk_token"];
 const ME_KEY="tk_me_v2";
-
 const CODE_CLIP_KEY="tk_code_clipboard_v1";
-const DRAFT_KEY_PREFIX="tk_code_draft_v1:";
 const ROUTE_BASE="/code";
 const FILE_ID_RE=/^[a-z]{5}$/;
 const LONGPRESS_MS=450;
 
-/** =========================
- *  UTIL
- *  ========================= */
-function toast(msg){
-  const t=document.getElementById("toast");
-  t.textContent=String(msg||"");
-  t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),1200);
-}
-function escapeHtml(s){
-  return String(s??"")
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
-}
+function toast(msg){const t=document.getElementById("toast");t.textContent=String(msg||"");t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1200)}
+function escapeHtml(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
 function normUsername(u){return String(u||"").trim().toLowerCase()}
-function validateUsername(u){
-  u=normUsername(u);
-  if(!u) return "Chưa nhập username.";
-  if(u.length>15) return "Username tối đa 15 ký tự.";
-  if(!/^[a-z0-9_]+$/.test(u)) return "Chỉ được dùng a-z 0-9 và dấu _";
-  return null;
-}
-function validateFileName(name){
-  name=String(name||"").trim();
-  if(!name) return "Chưa nhập tên file.";
-  if(name.length>80) return "Tên file quá dài.";
-  if(!name.toLowerCase().endsWith(".html")) return "File phải có đuôi .html (vd: bai1.html)";
-  if(/[\\]/.test(name)) return "Không dùng ký tự \\";
-  if(name.includes("..")) return "Không dùng ..";
-  return null;
-}
-function validateFolderName(name){
-  name=String(name||"").trim();
-  if(!name) return "Chưa nhập tên thư mục.";
-  if(name.length>60) return "Tên thư mục quá dài.";
-  if(/[\/\\]/.test(name)) return "Tên thư mục không được có dấu /";
-  if(name.includes("..")) return "Không dùng ..";
-  return null;
-}
+function validateUsername(u){u=normUsername(u);if(!u)return"Chưa nhập username.";if(u.length>15)return"Username tối đa 15 ký tự.";if(!/^[a-z0-9_]+$/.test(u))return"Chỉ được dùng a-z 0-9 và dấu _";return null}
+function validateFileName(name){name=String(name||"").trim();if(!name)return"Chưa nhập tên file.";if(name.length>80)return"Tên file quá dài.";if(!name.toLowerCase().endsWith(".html"))return"File phải có đuôi .html (vd: bai1.html)";if(/[\\]/.test(name))return"Không dùng ký tự \\";if(name.includes(".."))return"Không dùng ..";if(name.includes("/"))return"Không dùng dấu /";return null}
+function validateFolderName(name){name=String(name||"").trim();if(!name)return"Chưa nhập tên thư mục.";if(name.length>60)return"Tên thư mục quá dài.";if(/[\/\\]/.test(name))return"Tên thư mục không được có dấu /";if(name.includes(".."))return"Không dùng ..";return null}
+async function requestPersistentStorage(){try{if(navigator.storage&&navigator.storage.persist)await navigator.storage.persist()}catch{}}
+function cookieDomainHint(){const host=String(location.hostname||"").trim();if(!host||host==="localhost"||host.endsWith(".localhost"))return"";if(/^\d+\.\d+\.\d+\.\d+$/.test(host))return"";const parts=host.split(".").filter(Boolean);if(parts.length<2)return"";return"."+parts.slice(-2).join(".")}
+function setCookie(name,value){const v=encodeURIComponent(String(value||""));const maxAge=60*60*24*365*20;const base=cookieDomainHint();const common=`${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;document.cookie=common;if(base&&base!==location.hostname)document.cookie=`${common}; Domain=${base}`}
+function getCookie(name){const cs=document.cookie?document.cookie.split(";"):[];let found="";for(const raw of cs){const s=raw.trim();if(!s)continue;const eq=s.indexOf("=");const k=(eq>=0?s.slice(0,eq):s).trim();if(k===name)found=(eq>=0?s.slice(eq+1):"")}try{return found?decodeURIComponent(found):""}catch{return found||""}}
+function delCookie(name){const base=cookieDomainHint();document.cookie=`${name}=; Max-Age=0; Path=/; SameSite=Lax`;if(base&&base!==location.hostname)document.cookie=`${name}=; Max-Age=0; Path=/; SameSite=Lax; Domain=${base}`}
+function setToken(t){t=String(t||"").trim();if(!t)return;for(const k of TOKEN_KEYS){try{localStorage.setItem(k,t)}catch{}try{sessionStorage.setItem(k,t)}catch{}}for(const c of TOKEN_COOKIES){try{setCookie(c,t)}catch{}}try{window.name="tk:"+t}catch{}}
+function clearToken(){for(const k of TOKEN_KEYS){try{localStorage.removeItem(k)}catch{}try{sessionStorage.removeItem(k)}catch{}}for(const c of TOKEN_COOKIES){try{delCookie(c)}catch{}}try{if(String(window.name||"").startsWith("tk:"))window.name=""}catch{}}
+function getToken(){let t="";for(const k of TOKEN_KEYS){try{t=(localStorage.getItem(k)||"").trim();if(t)break}catch{}}if(!t){for(const k of TOKEN_KEYS){try{t=(sessionStorage.getItem(k)||"").trim();if(t)break}catch{}}}if(!t){for(const c of TOKEN_COOKIES){t=(getCookie(c)||"").trim();if(t)break}}if(!t){const wn=String(window.name||"");if(wn.startsWith("tk:"))t=wn.slice(3).trim()}try{const u=new URL(location.href);if(!t){const q=(u.searchParams.get("tk")||u.searchParams.get("token")||"").trim();if(q)t=q}if(!t&&u.hash){const hs=u.hash.replace(/^#/,"");const p=new URLSearchParams(hs);const q2=(p.get("tk")||p.get("token")||"").trim();if(q2)t=q2}}catch{}if(t)setToken(t);return t}
+function getMeCache(){try{const raw=localStorage.getItem(ME_KEY);if(!raw)return null;const obj=JSON.parse(raw);if(obj&&obj.username)return obj}catch{}return null}
+function setMeCache(me){try{if(!me)localStorage.removeItem(ME_KEY);else localStorage.setItem(ME_KEY,JSON.stringify(me))}catch{}}
+function isAdminUser(me){if(!me)return false;const u=String(me.username||"").toLowerCase();return me.role==="admin"||u==="tuankhoi"}
+function firstObj(x){if(Array.isArray(x))return x[0]||null;if(x&&typeof x==="object")return x;return null}
+function pickToken(out){const o=firstObj(out)||{};return(o.token||o.session_token||o.sessionToken||o.access_token||o.accessToken||o.app_token||o.appToken||o.tk||o.jwt||o.bearer||"")}
+function parseAnyTime(v){if(v==null)return 0;if(typeof v==="number"&&isFinite(v))return v>1e12?v:v*1000;const n=Number(v);if(isFinite(n))return n>1e12?n:n*1000;const t=Date.parse(String(v));return Number.isFinite(t)?t:0}
+function pickMe(out){const o=firstObj(out)||{};let me=o.me||o.user||o.profile||o.data||null;if(Array.isArray(me))me=me[0]||null;if(me&&typeof me==="object"){return{username:me.username||me.name||me.user||me.handle||"",role:me.role||me.user_role||me.userRole||"user",usernameNextChangeAt:parseAnyTime(me.username_next_change_at??me.usernameNextChangeAt),usernameChangedAt:parseAnyTime(me.username_changed_at??me.usernameChangedAt)}}if(o.username){return{username:o.username,role:o.role||"user",usernameNextChangeAt:parseAnyTime(o.username_next_change_at??o.usernameNextChangeAt),usernameChangedAt:parseAnyTime(o.username_changed_at??o.usernameChangedAt)}}return null}
+function asOk(out){const o=firstObj(out)||{};if(o&&typeof o.ok==="boolean")return o.ok;if(!!pickToken(o))return true;if(!!pickMe(o))return true;return false}
+function sbHeaders(){return{"apikey":SUPABASE_ANON_KEY,"Authorization":"Bearer "+SUPABASE_ANON_KEY,"Content-Type":"application/json","Accept":"application/json"}}
+async function rpc(fn,args){const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{method:"POST",headers:sbHeaders(),body:JSON.stringify(args||{})});const txt=await res.text();let data=null;try{data=txt?JSON.parse(txt):null}catch{}if(!res.ok){const msg=(data&&(data.message||data.error||data.hint))?(data.message||data.error||data.hint):txt;throw new Error(msg||`RPC failed: ${fn}`)}return data}
+async function rpcTry(fns,argsList){let lastErr=null;const fList=Array.isArray(fns)?fns:[String(fns||"")].filter(Boolean);const aList=(Array.isArray(argsList)&&argsList.length)?argsList:[{}];for(const fn of fList){for(const args of aList){try{return await rpc(fn,args||{})}catch(e){lastErr=e}}}throw(lastErr||new Error("RPC failed"))}
 
-async function requestPersistentStorage(){
-  try{ if(navigator.storage && navigator.storage.persist) await navigator.storage.persist(); }catch{}
-}
-function cookieDomainHint(){
-  const host=String(location.hostname||"").trim();
-  if(!host||host==="localhost"||host.endsWith(".localhost"))return"";
-  if(/^\d+\.\d+\.\d+\.\d+$/.test(host))return"";
-  const parts=host.split(".").filter(Boolean);
-  if(parts.length<2)return"";
-  return"."+parts.slice(-2).join(".");
-}
-function setCookie(name,value){
-  const v=encodeURIComponent(String(value||""));
-  const maxAge=60*60*24*365*20;
-  const base=cookieDomainHint();
-  const common=`${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;
-  document.cookie=common;
-  if(base&&base!==location.hostname) document.cookie=`${common}; Domain=${base}`;
-}
-function getCookie(name){
-  const cs=document.cookie?document.cookie.split(";"):[];
-  let found="";
-  for(const raw of cs){
-    const s=raw.trim(); if(!s)continue;
-    const eq=s.indexOf("=");
-    const k=(eq>=0?s.slice(0,eq):s).trim();
-    if(k===name) found=(eq>=0?s.slice(eq+1):"");
-  }
-  try{return found?decodeURIComponent(found):""}catch{return found||""}
-}
-function delCookie(name){
-  const base=cookieDomainHint();
-  document.cookie=`${name}=; Max-Age=0; Path=/; SameSite=Lax`;
-  if(base&&base!==location.hostname) document.cookie=`${name}=; Max-Age=0; Path=/; SameSite=Lax; Domain=${base}`;
-}
-function setToken(t){
-  t=String(t||"").trim(); if(!t) return;
-  for(const k of TOKEN_KEYS){ try{localStorage.setItem(k,t)}catch{} try{sessionStorage.setItem(k,t)}catch{} }
-  for(const c of TOKEN_COOKIES){ try{setCookie(c,t)}catch{} }
-  try{window.name="tk:"+t}catch{}
-}
-function clearToken(){
-  for(const k of TOKEN_KEYS){ try{localStorage.removeItem(k)}catch{} try{sessionStorage.removeItem(k)}catch{} }
-  for(const c of TOKEN_COOKIES){ try{delCookie(c)}catch{} }
-  try{ if(String(window.name||"").startsWith("tk:")) window.name=""; }catch{}
-}
-function getToken(){
-  let t="";
-  for(const k of TOKEN_KEYS){ try{t=(localStorage.getItem(k)||"").trim(); if(t)break}catch{} }
-  if(!t){ for(const k of TOKEN_KEYS){ try{t=(sessionStorage.getItem(k)||"").trim(); if(t)break}catch{} } }
-  if(!t){ for(const c of TOKEN_COOKIES){ t=(getCookie(c)||"").trim(); if(t)break } }
-  if(!t){ const wn=String(window.name||""); if(wn.startsWith("tk:")) t=wn.slice(3).trim(); }
-  try{
-    const u=new URL(location.href);
-    if(!t){ const q=(u.searchParams.get("tk")||u.searchParams.get("token")||"").trim(); if(q) t=q; }
-    if(!t && u.hash){
-      const hs=u.hash.replace(/^#/,"");
-      const p=new URLSearchParams(hs);
-      const q2=(p.get("tk")||p.get("token")||"").trim();
-      if(q2) t=q2;
-    }
-  }catch{}
-  if(t) setToken(t);
-  return t;
-}
-function getMeCache(){
-  try{
-    const raw=localStorage.getItem(ME_KEY);
-    if(!raw) return null;
-    const obj=JSON.parse(raw);
-    if(obj && obj.username) return obj;
-  }catch{}
-  return null;
-}
-function setMeCache(me){
-  try{ if(!me) localStorage.removeItem(ME_KEY); else localStorage.setItem(ME_KEY,JSON.stringify(me)); }catch{}
-}
-function isAdminUser(me){
-  if(!me) return false;
-  const u=String(me.username||"").toLowerCase();
-  return me.role==="admin" || u==="tuankhoi";
-}
-function firstObj(x){ if(Array.isArray(x)) return x[0]||null; if(x&&typeof x==="object") return x; return null; }
-function pickToken(out){
-  const o=firstObj(out)||{};
-  return (o.token||o.session_token||o.sessionToken||o.access_token||o.accessToken||o.app_token||o.appToken||o.tk||o.jwt||o.bearer||"");
-}
-function parseAnyTime(v){
-  if(v==null) return 0;
-  if(typeof v==="number"&&isFinite(v)) return v>1e12?v:v*1000;
-  const n=Number(v);
-  if(isFinite(n)) return n>1e12?n:n*1000;
-  const t=Date.parse(String(v));
-  return Number.isFinite(t)?t:0;
-}
-function pickMe(out){
-  const o=firstObj(out)||{};
-  let me=o.me||o.user||o.profile||o.data||null;
-  if(Array.isArray(me)) me=me[0]||null;
-  if(me&&typeof me==="object"){
-    return{
-      username:me.username||me.name||me.user||me.handle||"",
-      role:me.role||me.user_role||me.userRole||"user",
-      usernameNextChangeAt:parseAnyTime(me.username_next_change_at??me.usernameNextChangeAt),
-      usernameChangedAt:parseAnyTime(me.username_changed_at??me.usernameChangedAt),
-    };
-  }
-  if(o.username){
-    return{
-      username:o.username,
-      role:o.role||"user",
-      usernameNextChangeAt:parseAnyTime(o.username_next_change_at??o.usernameNextChangeAt),
-      usernameChangedAt:parseAnyTime(o.username_changed_at??o.usernameChangedAt),
-    };
-  }
-  return null;
-}
-function asOk(out){
-  const o=firstObj(out)||{};
-  if(o && typeof o.ok==="boolean") return o.ok;
-  if(!!pickToken(o)) return true;
-  if(!!pickMe(o)) return true;
-  return false;
-}
+const API={me:async token=>{const t=String(token||"").trim();const out=await rpcTry(["api_me","me","app_me","api_whoami","api_profile","whoami"],[{p_token:t},{token:t},{p_session:t},{session:t},{session_token:t},{p_session_token:t}]);return{ok:asOk(out),me:pickMe(out),token:pickToken(out)||""}},logout:async token=>{const t=String(token||"").trim();const out=await rpcTry(["api_logout","logout","api_signout","signout","api_log_out"],[{p_token:t},{token:t},{p_session:t},{session:t},{session_token:t}]);return{ok:asOk(out)||true}},checkUsername:async username=>{const u=normUsername(username);return await rpcTry(["api_check_username","check_username","api_user_exists","api_check_user","api_check_username_v2"],[{p_username:u},{username:u},{p_user:u},{user:u},{p_username_norm:u},{username_norm:u}])},login:async(username,pin)=>{const u=normUsername(username);const p=String(pin||"");return await rpcTry(["api_login","login","api_signin","signin","api_login_user","api_login_v2"],[{p_username:u,p_pin:p},{username:u,pin:p},{p_user:u,p_pin:p},{user:u,pin:p},{p_username:u,p_password:p},{username:u,password:p}])},register:async(username,pin)=>{const u=normUsername(username);const p=String(pin||"");return await rpcTry(["api_register","register","api_signup","signup","api_create_user","api_register_v2"],[{p_username:u,p_pin:p},{username:u,pin:p},{p_user:u,p_pin:p},{user:u,pin:p},{p_username:u,p_password:p},{username:u,password:p}])}};
+const CODEAPI={list:async(token,parentId)=>{const t=String(token||"").trim();const pid=(parentId==null||parentId==="")?null:String(parentId);return await rpcTry(["api_code_list","code_list","api_list_code","api_code_ls"],[{p_token:t,p_parent_id:pid},{token:t,parent_id:pid},{p_session_token:t,p_parent_id:pid}])},createFolder:async(token,parentId,name)=>{const t=String(token||"").trim();const pid=(parentId==null||parentId==="")?null:String(parentId);return await rpcTry(["api_code_create_folder","code_create_folder","api_create_code_folder"],[{p_token:t,p_parent_id:pid,p_name:name},{token:t,parent_id:pid,name},{p_session_token:t,p_parent_id:pid,p_name:name}])},createFile:async(token,parentId,name)=>{const t=String(token||"").trim();const pid=(parentId==null||parentId==="")?null:String(parentId);return await rpcTry(["api_code_create_file","code_create_file","api_create_code_file"],[{p_token:t,p_parent_id:pid,p_name:name},{token:t,parent_id:pid,name},{p_session_token:t,p_parent_id:pid,p_name:name}])},getFile:async(token,codeId)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();return await rpcTry(["api_code_get_file","code_get_file","api_code_get"],[{p_token:t,p_code_id:id},{token:t,code_id:id},{p_session_token:t,p_code_id:id}])},moveNode:async(token,codeId,newParentId)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();const pid=(newParentId==null||newParentId==="")?null:String(newParentId);return await rpcTry(["api_code_move_node","code_move_node","api_code_mv"],[{p_token:t,p_code_id:id,p_new_parent_id:pid},{token:t,code_id:id,new_parent_id:pid}])},deleteNode:async(token,codeId)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();return await rpcTry(["api_code_delete_node","code_delete_node","api_code_rm"],[{p_token:t,p_code_id:id},{token:t,code_id:id}])},cloneTree:async(token,sourceId,targetParentId,newName=null)=>{const t=String(token||"").trim();const sid=String(sourceId||"").trim();const pid=(targetParentId==null||targetParentId==="")?null:String(targetParentId);return await rpcTry(["api_code_clone_tree","code_clone_tree","api_code_copy"],[{p_token:t,p_source_id:sid,p_target_parent_id:pid,p_new_name:newName},{token:t,source_id:sid,target_parent_id:pid,new_name:newName}])}};
 
-function sbHeaders(){
-  return{
-    "apikey":SUPABASE_ANON_KEY,
-    "Authorization":"Bearer "+SUPABASE_ANON_KEY,
-    "Content-Type":"application/json",
-    "Accept":"application/json"
-  };
-}
-async function rpc(fn,args){
-  const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{method:"POST",headers:sbHeaders(),body:JSON.stringify(args||{})});
-  const txt=await res.text();
-  let data=null; try{data=txt?JSON.parse(txt):null}catch{}
-  if(!res.ok){
-    const msg=(data&&(data.message||data.error||data.hint))?(data.message||data.error||data.hint):txt;
-    throw new Error(msg||`RPC failed: ${fn}`);
-  }
-  return data;
-}
-async function rpcTry(fns,argsList){
-  let lastErr=null;
-  const fList=Array.isArray(fns)?fns:[String(fns||"")].filter(Boolean);
-  const aList=(Array.isArray(argsList)&&argsList.length)?argsList:[{}];
-  for(const fn of fList){
-    for(const args of aList){
-      try{ return await rpc(fn,args||{}); }
-      catch(e){ lastErr=e; }
-    }
-  }
-  throw (lastErr||new Error("RPC failed"));
-}
+const content=document.getElementById("content");
+const topTitle=document.getElementById("topTitle");
+const topRight=document.getElementById("topRight");
 
-/** =========================
- *  AUTH API (giống index)
- *  ========================= */
-const API={
-  me:async token=>{
-    const t=String(token||"").trim();
-    const out=await rpcTry(
-      ["api_me","me","app_me","api_whoami","api_profile","whoami"],
-      [{p_token:t},{token:t},{p_session:t},{session:t},{session_token:t},{p_session_token:t}]
-    );
-    return{ok:asOk(out),me:pickMe(out),token:pickToken(out)||""};
-  },
-  logout:async token=>{
-    const t=String(token||"").trim();
-    const out=await rpcTry(
-      ["api_logout","logout","api_signout","signout","api_log_out"],
-      [{p_token:t},{token:t},{p_session:t},{session:t},{session_token:t}]
-    );
-    return{ok:asOk(out)||true};
-  },
-  checkUsername:async username=>{
-    const u=normUsername(username);
-    return await rpcTry(
-      ["api_check_username","check_username","api_user_exists","api_check_user","api_check_username_v2"],
-      [{p_username:u},{username:u},{p_user:u},{user:u},{p_username_norm:u},{username_norm:u}]
-    );
-  },
-  login:async(username,pin)=>{
-    const u=normUsername(username); const p=String(pin||"");
-    return await rpcTry(
-      ["api_login","login","api_signin","signin","api_login_user","api_login_v2"],
-      [{p_username:u,p_pin:p},{username:u,pin:p},{p_user:u,p_pin:p},{user:u,pin:p},{p_username:u,p_password:p},{username:u,password:p}]
-    );
-  },
-  register:async(username,pin)=>{
-    const u=normUsername(username); const p=String(pin||"");
-    return await rpcTry(
-      ["api_register","register","api_signup","signup","api_create_user","api_register_v2"],
-      [{p_username:u,p_pin:p},{username:u,pin:p},{p_user:u,p_pin:p},{user:u,pin:p},{p_username:u,p_password:p},{username:u,password:p}]
-    );
-  }
-};
+function parseRoute(){const path=String(location.pathname||"");const seg=path.split("/").filter(Boolean);const last=seg[seg.length-1]||"";let fileId=null;if(seg.length>=2&&seg[0]==="code"&&FILE_ID_RE.test(last))fileId=last;let dirId=null;try{const u=new URL(location.href);const d=(u.searchParams.get("dir")||"").trim();if(FILE_ID_RE.test(d))dirId=d}catch{}return{fileId,dirId}}
+function navToDashboard(dirId=null,replace=false){const url=dirId?`${ROUTE_BASE}?dir=${encodeURIComponent(dirId)}`:`${ROUTE_BASE}`;if(replace)history.replaceState({},"",url);else history.pushState({},"",url);renderByRoute()}
+function toEditor(fileId){const id=String(fileId||"").trim();if(!FILE_ID_RE.test(id)){toast("ID file không hợp lệ");return}location.href=`/code/html?f=${encodeURIComponent(id)}`}
+window.addEventListener("popstate",()=>renderByRoute());
 
-/** =========================
- *  CODE API (RPC mới)
- *  ========================= */
-const CODEAPI={
-  list: async (token,parentId)=>{
-    const t=String(token||"").trim();
-    const pid=(parentId==null||parentId==="")?null:String(parentId);
-    return await rpcTry(
-      ["api_code_list","code_list","api_list_code","api_code_ls"],
-      [{p_token:t,p_parent_id:pid},{token:t,parent_id:pid},{p_session_token:t,p_parent_id:pid}]
-    );
-  },
-  createFolder: async (token,parentId,name)=>{
-    const t=String(token||"").trim();
-    const pid=(parentId==null||parentId==="")?null:String(parentId);
-    return await rpcTry(
-      ["api_code_create_folder","code_create_folder","api_create_code_folder"],
-      [{p_token:t,p_parent_id:pid,p_name:name},{token:t,parent_id:pid,name},{p_session_token:t,p_parent_id:pid,p_name:name}]
-    );
-  },
-  createFile: async (token,parentId,name)=>{
-    const t=String(token||"").trim();
-    const pid=(parentId==null||parentId==="")?null:String(parentId);
-    return await rpcTry(
-      ["api_code_create_file","code_create_file","api_create_code_file"],
-      [{p_token:t,p_parent_id:pid,p_name:name},{token:t,parent_id:pid,name},{p_session_token:t,p_parent_id:pid,p_name:name}]
-    );
-  },
-  getFile: async (token,codeId)=>{
-    const t=String(token||"").trim();
-    const id=String(codeId||"").trim();
-    return await rpcTry(
-      ["api_code_get_file","code_get_file","api_code_get"],
-      [{p_token:t,p_code_id:id},{token:t,code_id:id},{p_session_token:t,p_code_id:id}]
-    );
-  },
-  saveFile: async (token,codeId,content)=>{
-    const t=String(token||"").trim();
-    const id=String(codeId||"").trim();
-    return await rpcTry(
-      ["api_code_save_file","code_save_file","api_code_save"],
-      [{p_token:t,p_code_id:id,p_content:content},{token:t,code_id:id,content},{p_session_token:t,p_code_id:id,p_content:content}]
-    );
-  },
-  renameNode: async (token,codeId,newName)=>{
-    const t=String(token||"").trim();
-    const id=String(codeId||"").trim();
-    return await rpcTry(
-      ["api_code_rename_node","code_rename_node","api_code_rename"],
-      [{p_token:t,p_code_id:id,p_new_name:newName},{token:t,code_id:id,new_name:newName}]
-    );
-  },
-  moveNode: async (token,codeId,newParentId)=>{
-    const t=String(token||"").trim();
-    const id=String(codeId||"").trim();
-    const pid=(newParentId==null||newParentId==="")?null:String(newParentId);
-    return await rpcTry(
-      ["api_code_move_node","code_move_node","api_code_mv"],
-      [{p_token:t,p_code_id:id,p_new_parent_id:pid},{token:t,code_id:id,new_parent_id:pid}]
-    );
-  },
-  deleteNode: async (token,codeId)=>{
-    const t=String(token||"").trim();
-    const id=String(codeId||"").trim();
-    return await rpcTry(
-      ["api_code_delete_node","code_delete_node","api_code_rm"],
-      [{p_token:t,p_code_id:id},{token:t,code_id:id}]
-    );
-  },
-  cloneTree: async (token,sourceId,targetParentId,newName=null)=>{
-    const t=String(token||"").trim();
-    const sid=String(sourceId||"").trim();
-    const pid=(targetParentId==null||targetParentId==="")?null:String(targetParentId);
-    return await rpcTry(
-      ["api_code_clone_tree","code_clone_tree","api_code_copy"],
-      [{p_token:t,p_source_id:sid,p_target_parent_id:pid,p_new_name:newName},{token:t,source_id:sid,target_parent_id:pid,new_name:newName}]
-    );
-  }
-};
+let ME=null;
+const STATE={dirId:null,breadcrumb:[],items:[],selectMode:false,selected:new Set(),clipboard:null};
 
-/** =========================
- *  MODALS: Register / PIN / Confirm / Prompt / Preview
- *  ========================= */
+function loadClipboard(){try{const raw=localStorage.getItem(CODE_CLIP_KEY);if(!raw)return null;const o=JSON.parse(raw);if(!o||!Array.isArray(o.ids)||!o.mode)return null;return o}catch{return null}}
+function saveClipboard(obj){try{if(!obj)localStorage.removeItem(CODE_CLIP_KEY);else localStorage.setItem(CODE_CLIP_KEY,JSON.stringify(obj))}catch{}}
+
+function renderTopbar(){topRight.innerHTML="";if(ME&&isAdminUser(ME)){const a=document.createElement("a");a.href="/admin";a.innerHTML=`<button class="btn btn-admin">Quản lý</button>`;topRight.appendChild(a)}}
+
+function pickExists(ck){const o=firstObj(ck)||{};if(typeof o.exists==="boolean")return o.exists;if(typeof o.is_exists==="boolean")return o.is_exists;if(typeof o.found==="boolean")return o.found;if(typeof o.available==="boolean")return!o.available;if(o.userId||o.user_id||o.id)return true;if(o.ok===true&&typeof o.exists==="boolean")return o.exists;return null}
+function pickExistsCompat(ck){const v=pickExists(ck);if(v!==null)return v;const o=firstObj(ck)||{};if(typeof o.ok==="boolean"&&o.ok===false)return null;if(typeof o.available==="boolean")return!o.available;return null}
+function pickPinLen(ck,username){const u=normUsername(username);if(u==="tuankhoi")return 6;const o=firstObj(ck)||{};const raw=(o.pinLen??o.pin_len??o.pin_length??(o.user&&(o.user.pinLen??o.user.pin_len??o.user.pin_length))??4);let n=Number(raw)||4;if(!isFinite(n)||n<4)n=4;if(n>12)n=12;return n}
+
 const registerBackdrop=document.getElementById("registerBackdrop");
 const registerDesc=document.getElementById("registerDesc");
 document.getElementById("btnRegisterNo").onclick=()=>closeRegisterPrompt(false);
 document.getElementById("btnRegisterYes").onclick=()=>closeRegisterPrompt(true);
 registerBackdrop.addEventListener("click",e=>{if(e.target===registerBackdrop)closeRegisterPrompt(false)});
 let REG_PROMPT={open:false,resolve:null,username:""};
-function openRegisterPrompt(username){
-  return new Promise(resolve=>{
-    REG_PROMPT.open=true; REG_PROMPT.resolve=resolve; REG_PROMPT.username=username;
-    registerDesc.textContent=`Username "${username}" chưa đăng ký, bạn có muốn đăng ký không?`;
-    registerBackdrop.classList.add("show"); registerBackdrop.setAttribute("aria-hidden","false");
-  });
-}
-function closeRegisterPrompt(ans){
-  if(!REG_PROMPT.open) return;
-  registerBackdrop.classList.remove("show"); registerBackdrop.setAttribute("aria-hidden","true");
-  const r=REG_PROMPT.resolve;
-  REG_PROMPT.open=false; REG_PROMPT.resolve=null; REG_PROMPT.username="";
-  if(r) r(!!ans);
-}
+function openRegisterPrompt(username){return new Promise(resolve=>{REG_PROMPT.open=true;REG_PROMPT.resolve=resolve;REG_PROMPT.username=username;registerDesc.textContent=`Username "${username}" chưa đăng ký, bạn có muốn đăng ký không?`;registerBackdrop.classList.add("show");registerBackdrop.setAttribute("aria-hidden","false")})}
+function closeRegisterPrompt(ans){if(!REG_PROMPT.open)return;registerBackdrop.classList.remove("show");registerBackdrop.setAttribute("aria-hidden","true");const r=REG_PROMPT.resolve;REG_PROMPT.open=false;REG_PROMPT.resolve=null;REG_PROMPT.username="";if(r)r(!!ans)}
 
 const pinBackdrop=document.getElementById("pinBackdrop");
 const pinTitle=document.getElementById("pinTitle");
@@ -742,150 +192,19 @@ const pinWrap=document.getElementById("pinWrap");
 document.getElementById("btnClosePin").onclick=()=>closePin("cancel");
 pinBackdrop.addEventListener("click",e=>{if(e.target===pinBackdrop)closePin("cancel")});
 let PIN_KEYS_BUILT=false;
-let PIN={open:false,resolve:null,reject:null,username:"",mode:"login",step:"one",pinLen:4,value:"",first:"",old:"",submitting:false,dotEls:[],payload:null};
-function buildPinKeypadOnce(){
-  if(PIN_KEYS_BUILT) return;
-  PIN_KEYS_BUILT=true;
-  pinKeypad.innerHTML="";
-  const keys=["1","2","3","4","5","6","7","8","9","CLEAR","0","⌫"];
-  keys.forEach(k=>{
-    const b=document.createElement("button");
-    b.type="button";
-    b.className="pinKey"+((k==="CLEAR"||k==="⌫")?" small":"");
-    b.textContent=k;
-    b.onclick=()=>onPinKey(k);
-    pinKeypad.appendChild(b);
-  });
-}
-function buildDots(n){
-  pinDots.innerHTML="";
-  PIN.dotEls=[];
-  for(let i=0;i<n;i++){
-    const d=document.createElement("div");
-    d.className="dot";
-    pinDots.appendChild(d);
-    PIN.dotEls.push(d);
-  }
-}
-function updateDots(){
-  const len=PIN.value.length;
-  for(let i=0;i<PIN.dotEls.length;i++) PIN.dotEls[i].classList.toggle("filled",i<len);
-}
-function setPinNote(msg,type=""){
-  if(type==="error") pinNote.classList.add("error");
-  else pinNote.classList.remove("error");
-  pinNote.textContent=String(msg||"");
-}
-function pinErrorPulse(msg){
-  PIN.value=""; updateDots();
-  pinDots.classList.add("error");
-  pinWrap.classList.remove("shake"); void pinWrap.offsetWidth; pinWrap.classList.add("shake");
-  setPinNote(msg||"Sai mật khẩu","error");
-  setTimeout(()=>{
-    pinDots.classList.remove("error");
-    pinWrap.classList.remove("shake");
-    updatePinHeader();
-  },520);
-}
-function updatePinHeader(){
-  const u=normUsername(PIN.username);
-  const note=(u==="tuankhoi")?"Tài khoản tuankhoi dùng mật khẩu 6 số.":"Mật khẩu chỉ gồm số.";
-  if(PIN.mode==="login"){
-    pinTitle.textContent="Đăng nhập";
-    pinDesc.textContent=`Username: ${PIN.username}`;
-  }else if(PIN.mode==="set"){
-    if(PIN.step==="one"){
-      pinTitle.textContent="Đăng ký";
-      pinDesc.textContent=`Tạo mật khẩu ${PIN.pinLen} số`;
-    }else{
-      pinTitle.textContent="Xác nhận mật khẩu";
-      pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`;
-    }
-  }
-  setPinNote(note);
-}
-function openPin({username,mode="login",pinLen=4}){
-  return new Promise((resolve,reject)=>{
-    PIN.open=true; PIN.resolve=resolve; PIN.reject=reject;
-    PIN.username=String(username||""); PIN.mode=mode;
-    PIN.pinLen=Math.max(4,Number(pinLen)||4);
-    PIN.value=""; PIN.first=""; PIN.old=""; PIN.submitting=false; PIN.payload=null;
-    PIN.step=(mode==="set")?"one":"one";
-    buildPinKeypadOnce(); buildDots(PIN.pinLen); updatePinHeader(); updateDots();
-    pinBackdrop.classList.add("show"); pinBackdrop.setAttribute("aria-hidden","false");
-  });
-}
-function closePin(why){
-  if(!PIN.open) return;
-  pinBackdrop.classList.remove("show"); pinBackdrop.setAttribute("aria-hidden","true");
-  const rej=PIN.reject, res=PIN.resolve, payload=PIN.payload;
-  PIN.open=false; PIN.resolve=null; PIN.reject=null; PIN.payload=null;
-  if(why==="ok"){ if(res) res(payload); return; }
-  if(rej) rej(new Error("cancel"));
-}
-function normalizeAuthOut(out){
-  const o=firstObj(out)||{};
-  const ok=asOk(out);
-  const token=pickToken(out);
-  const me=pickMe(out);
-  const err=o.error||o.message||o.msg||"";
-  return {ok,token,me,error:err};
-}
-async function onPinKey(k){
-  if(!PIN.open||PIN.submitting) return;
-  if(k==="CLEAR"){ PIN.value=""; updateDots(); return; }
-  if(k==="⌫"){ PIN.value=PIN.value.slice(0,-1); updateDots(); return; }
-  if(PIN.value.length>=PIN.pinLen) return;
-  PIN.value+=String(k); updateDots();
-  if(PIN.value.length!==PIN.pinLen) return;
-
-  const val=PIN.value;
-  if(!/^[0-9]+$/.test(val)){ pinErrorPulse("Mật khẩu chỉ gồm số"); return; }
-
-  if(PIN.mode==="login"){
-    PIN.submitting=true;
-    try{
-      setPinNote("Đang kiểm tra…");
-      const raw=await API.login(PIN.username,val);
-      const out=normalizeAuthOut(raw);
-      if(out.ok && out.token){
-        PIN.payload=val;
-        closePin("ok");
-        toast("Đăng nhập thành công");
-        await enterAfterAuth({token:out.token,me:out.me});
-        return;
-      }
-      pinErrorPulse(out.error||"Sai mật khẩu");
-    }catch(e){
-      const msg=String(e?.message||"Sai mật khẩu");
-      pinErrorPulse(msg.includes("function")?"RPC login không khớp param/tên. Kiểm tra SQL function.":"Sai mật khẩu");
-    }finally{
-      PIN.submitting=false;
-    }
-    return;
-  }
-
-  if(PIN.mode==="set"){
-    if(PIN.step==="one"){
-      PIN.first=val;
-      PIN.value="";
-      PIN.step="confirm";
-      pinTitle.textContent="Xác nhận mật khẩu";
-      pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`;
-      updateDots();
-      return;
-    }else{
-      if(PIN.first!==val){
-        pinErrorPulse("Mật khẩu không khớp");
-        PIN.first=""; PIN.step="one"; updatePinHeader(); updateDots();
-        return;
-      }
-      PIN.payload=val;
-      closePin("ok");
-      return;
-    }
-  }
-}
+let PIN={open:false,resolve:null,reject:null,username:"",mode:"login",step:"one",pinLen:4,value:"",first:"",submitting:false,dotEls:[],payload:null};
+function buildPinKeypadOnce(){if(PIN_KEYS_BUILT)return;PIN_KEYS_BUILT=true;pinKeypad.innerHTML="";const keys=["1","2","3","4","5","6","7","8","9","CLEAR","0","⌫"];keys.forEach(k=>{const b=document.createElement("button");b.type="button";b.className="pinKey"+((k==="CLEAR"||k==="⌫")?" small":"");b.textContent=k;b.onclick=()=>onPinKey(k);pinKeypad.appendChild(b)})}
+function buildDots(n){pinDots.innerHTML="";PIN.dotEls=[];for(let i=0;i<n;i++){const d=document.createElement("div");d.className="dot";pinDots.appendChild(d);PIN.dotEls.push(d)}}
+function updateDots(){const len=PIN.value.length;for(let i=0;i<PIN.dotEls.length;i++)PIN.dotEls[i].classList.toggle("filled",i<len)}
+function setPinNote(msg,type=""){if(type==="error")pinNote.classList.add("error");else pinNote.classList.remove("error");pinNote.textContent=String(msg||"")}
+function pinErrorPulse(msg){PIN.value="";updateDots();pinDots.classList.add("error");pinWrap.classList.remove("shake");void pinWrap.offsetWidth;pinWrap.classList.add("shake");setPinNote(msg||"Sai mật khẩu","error");setTimeout(()=>{pinDots.classList.remove("error");pinWrap.classList.remove("shake");updatePinHeader()},520)}
+function updatePinHeader(){const u=normUsername(PIN.username);const note=(u==="tuankhoi")?"Tài khoản tuankhoi dùng mật khẩu 6 số.":"Mật khẩu chỉ gồm số.";if(PIN.mode==="login"){pinTitle.textContent="Đăng nhập";pinDesc.textContent=`Username: ${PIN.username}`}else{if(PIN.step==="one"){pinTitle.textContent="Đăng ký";pinDesc.textContent=`Tạo mật khẩu ${PIN.pinLen} số`}else{pinTitle.textContent="Xác nhận mật khẩu";pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`}}setPinNote(note)}
+function openPin({username,mode="login",pinLen=4}){return new Promise((resolve,reject)=>{PIN.open=true;PIN.resolve=resolve;PIN.reject=reject;PIN.username=String(username||"");PIN.mode=mode;PIN.pinLen=Math.max(4,Number(pinLen)||4);PIN.value="";PIN.first="";PIN.submitting=false;PIN.payload=null;PIN.step=(mode==="set")?"one":"one";buildPinKeypadOnce();buildDots(PIN.pinLen);updatePinHeader();updateDots();pinBackdrop.classList.add("show");pinBackdrop.setAttribute("aria-hidden","false")})}
+function closePin(why){if(!PIN.open)return;pinBackdrop.classList.remove("show");pinBackdrop.setAttribute("aria-hidden","true");const rej=PIN.reject,res=PIN.resolve,payload=PIN.payload;PIN.open=false;PIN.resolve=null;PIN.reject=null;PIN.payload=null;if(why==="ok"){if(res)res(payload);return}if(rej)rej(new Error("cancel"))}
+function normalizeAuthOut(out){const o=firstObj(out)||{};const ok=asOk(out);const token=pickToken(out);const me=pickMe(out);const err=o.error||o.message||o.msg||"";return{ok,token,me,error:err}}
+async function onPinKey(k){if(!PIN.open||PIN.submitting)return;if(k==="CLEAR"){PIN.value="";updateDots();return}if(k==="⌫"){PIN.value=PIN.value.slice(0,-1);updateDots();return}if(PIN.value.length>=PIN.pinLen)return;PIN.value+=String(k);updateDots();if(PIN.value.length!==PIN.pinLen)return;const val=PIN.value;if(!/^[0-9]+$/.test(val)){pinErrorPulse("Mật khẩu chỉ gồm số");return}
+if(PIN.mode==="login"){PIN.submitting=true;try{setPinNote("Đang kiểm tra…");const raw=await API.login(PIN.username,val);const out=normalizeAuthOut(raw);if(out.ok&&out.token){PIN.payload=val;closePin("ok");toast("Đăng nhập thành công");await enterAfterAuth({token:out.token,me:out.me});return}pinErrorPulse(out.error||"Sai mật khẩu")}catch(e){const msg=String(e?.message||"Sai mật khẩu");pinErrorPulse(msg.includes("function")?"RPC login không khớp param/tên.":"Sai mật khẩu")}finally{PIN.submitting=false}return}
+if(PIN.mode==="set"){if(PIN.step==="one"){PIN.first=val;PIN.value="";PIN.step="confirm";pinTitle.textContent="Xác nhận mật khẩu";pinDesc.textContent=`Nhập lại ${PIN.pinLen} số`;updateDots();return}else{if(PIN.first!==val){pinErrorPulse("Mật khẩu không khớp");PIN.first="";PIN.step="one";updatePinHeader();updateDots();return}PIN.payload=val;closePin("ok");return}}}
 
 const confirmBackdrop=document.getElementById("confirmBackdrop");
 const confirmTitle=document.getElementById("confirmTitle");
@@ -894,447 +213,151 @@ const btnConfirmOk=document.getElementById("btnConfirmOk");
 const btnConfirmCancel=document.getElementById("btnConfirmCancel");
 confirmBackdrop.addEventListener("click",e=>{if(e.target===confirmBackdrop)closeConfirm(false)});
 let CONFIRM_STATE={open:false,resolve:null};
-function openConfirm({title,message,okText="Xác nhận",cancelText="Huỷ"}){
-  return new Promise(resolve=>{
-    CONFIRM_STATE.open=true; CONFIRM_STATE.resolve=resolve;
-    confirmTitle.textContent=String(title||"Xác nhận");
-    confirmMsg.textContent=String(message||"");
-    btnConfirmOk.textContent=okText;
-    btnConfirmCancel.textContent=cancelText;
-    confirmBackdrop.classList.add("show"); confirmBackdrop.setAttribute("aria-hidden","false");
-  });
-}
-function closeConfirm(ans){
-  if(!CONFIRM_STATE.open) return;
-  confirmBackdrop.classList.remove("show"); confirmBackdrop.setAttribute("aria-hidden","true");
-  const r=CONFIRM_STATE.resolve;
-  CONFIRM_STATE.open=false; CONFIRM_STATE.resolve=null;
-  if(r) r(!!ans);
-}
+function openConfirm({title,message,okText="Xác nhận",cancelText="Huỷ"}){return new Promise(resolve=>{CONFIRM_STATE.open=true;CONFIRM_STATE.resolve=resolve;confirmTitle.textContent=String(title||"Xác nhận");confirmMsg.textContent=String(message||"");btnConfirmOk.textContent=okText;btnConfirmCancel.textContent=cancelText;confirmBackdrop.classList.add("show");confirmBackdrop.setAttribute("aria-hidden","false")})}
+function closeConfirm(ans){if(!CONFIRM_STATE.open)return;confirmBackdrop.classList.remove("show");confirmBackdrop.setAttribute("aria-hidden","true");const r=CONFIRM_STATE.resolve;CONFIRM_STATE.open=false;CONFIRM_STATE.resolve=null;if(r)r(!!ans)}
 btnConfirmCancel.onclick=()=>closeConfirm(false);
 btnConfirmOk.onclick=()=>closeConfirm(true);
 
-/* Prompt */
 const promptBackdrop=document.getElementById("promptBackdrop");
 const promptTitle=document.getElementById("promptTitle");
 const promptDesc=document.getElementById("promptDesc");
 const promptInput=document.getElementById("promptInput");
+const promptErr=document.getElementById("promptErr");
 const btnPromptCancel=document.getElementById("btnPromptCancel");
 const btnPromptOk=document.getElementById("btnPromptOk");
+let PROMPT_STATE={open:false,resolve:null,validate:null};
+function openPromptValidated({title,desc,placeholder,okText="Tạo",validate}){return new Promise(resolve=>{PROMPT_STATE.open=true;PROMPT_STATE.resolve=resolve;PROMPT_STATE.validate=validate||null;promptTitle.textContent=String(title||"Nhập");promptDesc.textContent=String(desc||"");promptInput.value="";promptInput.placeholder=String(placeholder||"");btnPromptOk.textContent=okText;promptErr.textContent="";promptErr.classList.remove("show");promptInput.classList.remove("invalid");promptBackdrop.classList.add("show");promptBackdrop.setAttribute("aria-hidden","false");setTimeout(()=>{try{promptInput.focus()}catch{}},0)})}
+function closePrompt(val){if(!PROMPT_STATE.open)return;promptBackdrop.classList.remove("show");promptBackdrop.setAttribute("aria-hidden","true");const r=PROMPT_STATE.resolve;PROMPT_STATE.open=false;PROMPT_STATE.resolve=null;PROMPT_STATE.validate=null;if(r)r(val)}
+function setPromptError(msg){promptErr.textContent=String(msg||"");promptErr.classList.toggle("show",!!msg);promptInput.classList.toggle("invalid",!!msg)}
 promptBackdrop.addEventListener("click",e=>{if(e.target===promptBackdrop)closePrompt(null)});
 btnPromptCancel.onclick=()=>closePrompt(null);
-btnPromptOk.onclick=()=>closePrompt(promptInput.value);
-let PROMPT_STATE={open:false,resolve:null};
-function openPrompt({title,desc,placeholder,okText="Tạo"}){
-  return new Promise(resolve=>{
-    PROMPT_STATE.open=true; PROMPT_STATE.resolve=resolve;
-    promptTitle.textContent=String(title||"Nhập");
-    promptDesc.textContent=String(desc||"");
-    promptInput.value="";
-    promptInput.placeholder=String(placeholder||"");
-    btnPromptOk.textContent=okText;
-    promptBackdrop.classList.add("show"); promptBackdrop.setAttribute("aria-hidden","false");
-    setTimeout(()=>{try{promptInput.focus()}catch{}},0);
-  });
-}
-function closePrompt(val){
-  if(!PROMPT_STATE.open) return;
-  promptBackdrop.classList.remove("show"); promptBackdrop.setAttribute("aria-hidden","true");
-  const r=PROMPT_STATE.resolve;
-  PROMPT_STATE.open=false; PROMPT_STATE.resolve=null;
-  if(r) r(val);
-}
+btnPromptOk.onclick=()=>{const v=String(promptInput.value||"");const fn=PROMPT_STATE.validate;const err=fn?fn(v):null;if(err){setPromptError(err);return}closePrompt(v)};
+promptInput.addEventListener("input",()=>{if(promptErr.classList.contains("show"))setPromptError("")},{passive:true});
+promptInput.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();btnPromptOk.click()}});
 
-/* Preview fullscreen */
-const previewBackdrop=document.getElementById("previewBackdrop");
-const previewBigFrame=document.getElementById("previewBigFrame");
-document.getElementById("btnClosePreview").onclick=closePreview;
-previewBackdrop.addEventListener("click",e=>{if(e.target===previewBackdrop)closePreview()});
-function openPreviewBig({title,sub,html}){
-  document.getElementById("previewTitle").textContent=String(title||"Xem trước");
-  document.getElementById("previewSub").textContent=String(sub||"");
-  previewBigFrame.srcdoc = String(html||"");
-  previewBackdrop.classList.add("show");
-  previewBackdrop.setAttribute("aria-hidden","false");
-}
-function closePreview(){
-  previewBackdrop.classList.remove("show");
-  previewBackdrop.setAttribute("aria-hidden","true");
-  previewBigFrame.srcdoc="";
-}
+async function enterAfterAuth({token,me}){if(token)setToken(token);if(me&&me.username){ME=me;setMeCache(me)}renderByRoute()}
+async function clearAuth(){const t=getToken();try{if(t)await API.logout(t)}catch{}clearToken();setMeCache(null);ME=null}
 
-/** =========================
- *  ROUTER
- *  ========================= */
-function parseRoute(){
-  // /code or /code/abcde or /code?dir=xxxxx
-  const path=String(location.pathname||"");
-  const seg=path.split("/").filter(Boolean);
-  const last=seg[seg.length-1]||"";
-  let fileId=null;
-  if(seg.length>=2 && seg[0]==="code" && FILE_ID_RE.test(last)) fileId=last;
-
-  let dirId=null;
-  try{
-    const u=new URL(location.href);
-    const d=(u.searchParams.get("dir")||"").trim();
-    if(FILE_ID_RE.test(d)) dirId=d;
-  }catch{}
-  return {fileId,dirId};
-}
-function navToDashboard(dirId=null,replace=false){
-  const url = dirId ? `${ROUTE_BASE}?dir=${encodeURIComponent(dirId)}` : `${ROUTE_BASE}`;
-  if(replace) history.replaceState({},"",url);
-  else history.pushState({},"",url);
-  renderByRoute();
-}
-function navToEditor(fileId,replace=false){
-  const url = `${ROUTE_BASE}/${encodeURIComponent(fileId)}`;
-  if(replace) history.replaceState({},"",url);
-  else history.pushState({},"",url);
-  renderByRoute();
-}
-window.addEventListener("popstate",()=>renderByRoute());
-
-/** =========================
- *  STATE
- *  ========================= */
-let ME=null;
-
-const STATE={
-  view:"gate",            // gate|dashboard|editor
-  dirId:null,             // current folder id (dashboard)
-  breadcrumb:[],          // [{id,name}]
-  items:[],               // nodes list
-  selectMode:false,
-  selected:new Set(),
-  clipboard:null,         // {mode:'copy'|'cut', ids:[...], ts}
-  // editor
-  fileId:null,
-  fileMeta:null,
-  fileContentRemote:"",
-  fileContent:"",
-  filePathText:"",
-  lint:{ok:true,msg:""},
-  errs:new Set(),         // error lines
-  dropdownOpen:false,
-  previewHtml:"",
-};
-
-function loadClipboard(){
-  try{
-    const raw=localStorage.getItem(CODE_CLIP_KEY);
-    if(!raw) return null;
-    const o=JSON.parse(raw);
-    if(!o||!Array.isArray(o.ids)||!o.mode) return null;
-    return o;
-  }catch{ return null; }
-}
-function saveClipboard(obj){
-  try{
-    if(!obj) localStorage.removeItem(CODE_CLIP_KEY);
-    else localStorage.setItem(CODE_CLIP_KEY,JSON.stringify(obj));
-  }catch{}
-}
-
-/** =========================
- *  TOPBAR
- *  ========================= */
-const statusPill=document.getElementById("statusPill");
-function renderTopbarGate(){
-  document.getElementById("logoBox").textContent="⌘";
-  document.getElementById("topTitle").textContent="Code Editor";
-  document.getElementById("topTiny").textContent="Đăng nhập để dùng Dashboard + soạn HTML";
-  statusPill.style.display="inline-flex";
-  statusPill.textContent = ME&&ME.username ? `Xin chào ${ME.username}` : "Chưa đăng nhập";
-  const actions=document.getElementById("actions");
-  actions.innerHTML="";
-  actions.appendChild(statusPill);
-}
-function renderTopbarAuthed({forEditor=false}={}){
-  // yêu cầu: trên cùng chỉ có nút Trang chủ bên trái, admin có nút Quản lý bên phải, không hiện Xin chào
-  statusPill.style.display="none";
-  const titlebox=document.getElementById("titlebox");
-  titlebox.innerHTML = `
-    <a href="/" title="Trang chủ"><button class="btn btn-ghost">🏠 Trang chủ</button></a>
-    <div class="titles" style="margin-left:2px">
-      <h1 style="margin:0;font-size:1.02rem">${forEditor ? "Soạn file" : "Dashboard"}</h1>
-      <div class="tiny" style="margin-top:3px">${forEditor ? "HTML + xem trước trực tiếp" : "File & thư mục đã lưu"}</div>
-    </div>
-  `;
-  const actions=document.getElementById("actions");
-  actions.innerHTML="";
-  if(ME && isAdminUser(ME)){
-    const a=document.createElement("a");
-    a.href="/admin";
-    a.innerHTML=`<button class="btn btn-admin">Quản lý</button>`;
-    actions.appendChild(a);
-  }
-}
-
-/** =========================
- *  GATE (login/register giống index)
- *  ========================= */
-const content=document.getElementById("content");
-
-function pickExists(ck){
-  const o=firstObj(ck)||{};
-  if(typeof o.exists==="boolean") return o.exists;
-  if(typeof o.is_exists==="boolean") return o.is_exists;
-  if(typeof o.found==="boolean") return o.found;
-  if(typeof o.available==="boolean") return !o.available;
-  if(o.userId||o.user_id||o.id) return true;
-  if(o.ok===true&&typeof o.exists==="boolean") return o.exists;
-  return null;
-}
-function pickExistsCompat(ck){
-  const v=pickExists(ck);
-  if(v!==null) return v;
-  const o=firstObj(ck)||{};
-  if(typeof o.ok==="boolean" && o.ok===false) return null;
-  if(typeof o.available==="boolean") return !o.available;
-  return null;
-}
-function pickPinLen(ck,username){
-  const u=normUsername(username);
-  if(u==="tuankhoi") return 6;
-  const o=firstObj(ck)||{};
-  const raw=(o.pinLen??o.pin_len??o.pin_length??(o.user&&(o.user.pinLen??o.user.pin_len??o.user.pin_length))??4);
-  let n=Number(raw)||4;
-  if(!isFinite(n)||n<4) n=4;
-  if(n>12) n=12;
-  return n;
-}
 function renderGate(){
-  renderTopbarGate();
-  content.innerHTML = `
-    <div class="card">
-      <div class="row1">
-        <p class="vi">Nhập USERNAME</p>
-        <div><span class="idx">BẮT BUỘC</span></div>
-      </div>
-      <div class="muted" style="margin-top:6px;line-height:1.35">
-        Tối đa 15 ký tự, chỉ <b>a-z 0-9 _</b>.<br>
-        - Username <b>đã có</b> → <b>Đăng nhập</b><br>
-        - Username <b>chưa có</b> → <b>Đăng ký</b>
-      </div>
-
-      <div style="margin-top:10px;display:grid;gap:10px;">
-        <input id="nameInput" class="input" placeholder="vd: tuankhoi123" maxlength="15" autocomplete="off">
-        <button id="btnContinue" class="btn btn-primary" style="justify-content:center">➡️ Tiếp tục</button>
-        <div class="muted" id="gateStatus">Sẵn sàng.</div>
-      </div>
-    </div>
-  `;
-
+  topTitle.textContent="Dashboard";
+  renderTopbar();
+  content.innerHTML=`<div class="card"><div class="row"><p class="vi">Username</p><div class="muted" style="white-space:nowrap">bắt buộc</div></div><div class="muted" style="margin-top:8px;line-height:1.35">Tối đa 15 ký tự, chỉ a-z 0-9 _</div><div style="margin-top:10px;display:grid;gap:10px"><input id="nameInput" class="input allowSelect" placeholder="vd: tuankhoi123" maxlength="15" autocomplete="off"><button id="btnContinue" class="btn btn-primary" style="justify-content:center;width:100%">Tiếp tục</button><div class="muted" id="gateStatus">Sẵn sàng.</div></div></div>`;
   const nameInput=document.getElementById("nameInput");
   const btnContinue=document.getElementById("btnContinue");
   const gateStatus=document.getElementById("gateStatus");
-
-  nameInput.addEventListener("input",()=>{
-    const v=normUsername(nameInput.value);
-    if(nameInput.value!==v) nameInput.value=v;
-  },{passive:true});
+  nameInput.addEventListener("input",()=>{const v=normUsername(nameInput.value);if(nameInput.value!==v)nameInput.value=v},{passive:true});
   try{nameInput.focus()}catch{}
-
-  const doFlow=async()=>{
-    const u=normUsername(nameInput.value);
-    const err=validateUsername(u);
-    if(err){ toast(err); return; }
-    btnContinue.disabled=true;
-    btnContinue.textContent="⏳";
-    gateStatus.textContent="Đang kiểm tra username…";
-
+  const doFlow=async()=>{const u=normUsername(nameInput.value);const err=validateUsername(u);if(err){toast(err);return}btnContinue.disabled=true;btnContinue.textContent="...";gateStatus.textContent="Đang kiểm tra username…";
     try{
       const ck=await API.checkUsername(u);
       const exists=pickExistsCompat(ck);
       const pinLen=pickPinLen(ck,u);
       const o=firstObj(ck)||{};
       const reserved=!!(o.reserved===true||o.is_reserved===true||o.isReserved===true);
-
-      if(u!=="tuankhoi"){
-        if(reserved===true && exists!==true){
-          toast("Username này đã bị giữ lại (đổi tên rồi).");
-          gateStatus.textContent="Thử username khác.";
-          return;
-        }
-      }
-
-      if(exists===true){
-        gateStatus.textContent="Đăng nhập: nhập mật khẩu…";
-        await openPin({username:u,mode:"login",pinLen});
-        return;
-      }
-
+      if(u!=="tuankhoi"){if(reserved===true&&exists!==true){toast("Username này đã bị giữ lại.");gateStatus.textContent="Thử username khác.";return}}
+      if(exists===true){gateStatus.textContent="Đăng nhập: nhập mật khẩu…";await openPin({username:u,mode:"login",pinLen});return}
       if(exists===false){
         gateStatus.textContent=`Username "${u}" chưa đăng ký.`;
         const ok=await openRegisterPrompt(u);
-        if(!ok){ gateStatus.textContent="Bạn có thể nhập username khác."; return; }
+        if(!ok){gateStatus.textContent="Bạn có thể nhập username khác.";return}
         const regPinLen=(u==="tuankhoi")?6:4;
         gateStatus.textContent="Đăng ký: tạo mật khẩu…";
         const pin=await openPin({username:u,mode:"set",pinLen:regPinLen});
         gateStatus.textContent="Đang tạo tài khoản…";
         const raw=await API.register(u,pin);
         const out=normalizeAuthOut(raw);
-        if(!out.ok || !out.token) throw new Error(out.error||"register fail");
-        toast("Đã đăng ký & đăng nhập");
+        if(!out.ok||!out.token)throw new Error(out.error||"register fail");
+        toast("Đã đăng ký");
         await enterAfterAuth({token:out.token,me:out.me});
-        return;
+        return
       }
-
       gateStatus.textContent="Không rõ trạng thái. Thử đăng nhập…";
       const forcedLen=(u==="tuankhoi")?6:4;
       await openPin({username:u,mode:"login",pinLen:forcedLen});
     }catch(e){
-      if(!(e&&e.message==="cancel")) toast(e.message||"Lỗi");
-      gateStatus.textContent="Sẵn sàng.";
+      if(!(e&&e.message==="cancel"))toast(e.message||"Lỗi");
+      gateStatus.textContent="Sẵn sàng."
     }finally{
       btnContinue.disabled=false;
-      btnContinue.textContent="➡️ Tiếp tục";
+      btnContinue.textContent="Tiếp tục"
     }
   };
-
   btnContinue.onclick=doFlow;
-  nameInput.addEventListener("keydown",e=>{
-    if(e.key==="Enter"){ e.preventDefault(); doFlow(); }
-  });
-}
-
-/** =========================
- *  AFTER AUTH
- *  ========================= */
-async function enterAfterAuth({token,me}){
-  if(token) setToken(token);
-  if(me && me.username){
-    ME=me; setMeCache(me);
-  }
-  renderByRoute();
-}
-async function clearAuth(){
-  const t=getToken();
-  try{ if(t) await API.logout(t); }catch{}
-  clearToken(); setMeCache(null); ME=null;
-}
-
-/** =========================
- *  DASHBOARD
- *  ========================= */
-function dashboardHeaderHtml(){
-  const selectMode=STATE.selectMode;
-  if(!selectMode){
-    return `
-      <div class="row1">
-        <p class="vi">Dashboard</p>
-        <div class="toolbarRight">
-          <span class="labelGrey">Thêm:</span>
-          <button class="btn btn-ghost" id="btnNewFile">File</button>
-          <button class="btn btn-ghost" id="btnNewFolder">Thư mục</button>
-        </div>
-      </div>
-    `;
-  }
-  return `
-    <div class="row1">
-      <p class="vi">Đã chọn: ${STATE.selected.size}</p>
-      <div class="toolbarRight">
-        <button class="btn btn-ghost" id="btnCopy">Copy</button>
-        <button class="btn btn-ghost" id="btnCut">Cắt</button>
-        <button class="btn btn-ghost" id="btnPaste">Dán</button>
-        <button class="btn btn-danger" id="btnDeleteSel">Xoá</button>
-        <button class="btn btn-ghost" id="btnClearSel" style="margin-left:20px">Bỏ chọn</button>
-      </div>
-    </div>
-  `;
-}
-function breadcrumbHtml(){
-  const bc=Array.isArray(STATE.breadcrumb)?STATE.breadcrumb:[];
-  const chips = [{id:null,name:"Dashboard"}, ...bc];
-  return `
-    <div class="crumbs">
-      ${chips.map((c,i)=>`<div class="crumb" data-crumb="${c.id||""}">${escapeHtml(c.name||"")}</div>`).join("")}
-    </div>
-  `;
-}
-function itemRowHtml(item){
-  const icon = item.kind==="folder" ? "☰" : "︙";
-  return `
-    <div class="swipe" data-id="${item.id}" data-kind="${item.kind}">
-      <div class="swipeBehind"><button class="btnDel" data-del="${item.id}">Xoá</button></div>
-      <div class="itemFront" data-open="${item.id}">
-        <div class="itemIcon">${icon}</div>
-        <div class="itemName">${escapeHtml(item.name||"")}</div>
-        <div class="checkCircle ${STATE.selected.has(item.id)?"on":""}" data-check="${item.id}">
-          <div class="checkDot"></div>
-        </div>
-      </div>
-    </div>
-  `;
+  nameInput.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();doFlow()}});
 }
 
 async function loadDashboard(dirId){
   const t=getToken();
   const raw=await CODEAPI.list(t,dirId);
   const o=firstObj(raw)||raw||{};
-  if(o.ok!==true) throw new Error(o.error||o.message||"Không load được dashboard");
-  STATE.dirId = dirId||null;
-  STATE.breadcrumb = o.breadcrumb||[];
-  STATE.items = o.items||[];
+  if(o.ok!==true)throw new Error(o.error||o.message||"Không load được dashboard");
+  STATE.dirId=dirId||null;
+  STATE.breadcrumb=o.breadcrumb||[];
+  STATE.items=o.items||[];
+}
+
+function breadcrumbHtml(){
+  const bc=Array.isArray(STATE.breadcrumb)?STATE.breadcrumb:[];
+  const chips=[{id:null,name:"Gốc"},...bc];
+  return `<div class="crumbs">${chips.map(c=>`<div class="crumb" data-crumb="${c.id||""}">${escapeHtml(c.name||"")}</div>`).join("")}</div>`
+}
+
+function itemRowHtml(item){
+  const icon=item.kind==="folder"?"FOLDER":"FILE";
+  return `<div class="swipe" data-id="${item.id}" data-kind="${item.kind}"><div class="swipeBehind"><button class="btnDel" data-del="${item.id}">Xoá</button></div><div class="itemFront" data-open="${item.id}"><div class="itemIcon">${icon}</div><div class="itemName">${escapeHtml(item.name||"")}</div><div class="checkCircle ${STATE.selected.has(item.id)?"on":""}" data-check="${item.id}"><div class="checkDot"></div></div></div></div>`
+}
+
+function dashboardTitleText(){
+  if(STATE.dirId) return "";
+  return "Dashboard";
 }
 
 function renderDashboard(){
-  renderTopbarAuthed({forEditor:false});
-  const selectCls = STATE.selectMode ? "selectMode" : "";
-  content.innerHTML = `
-    <div class="card ${selectCls}" id="dashCard">
-      ${dashboardHeaderHtml()}
-      ${breadcrumbHtml()}
-      <div class="listBox" id="listBox"></div>
-      <div class="hintRow">
-        - Kéo item qua trái để hiện <b>Xoá</b>.<br>
-        - Ấn giữ (giữ lâu) để chọn nhiều → Copy/Cắt/Dán/Xoá.
-      </div>
-      <div style="height:1px;background:#e5e7eb;margin:12px 0"></div>
-      <button class="btn btn-danger" id="btnLogout" style="justify-content:center;width:100%">🚪 Đăng xuất</button>
-    </div>
-  `;
-
-  const list=document.getElementById("listBox");
-  if(!STATE.items.length){
-    list.innerHTML=`<div class="muted">Chưa có file/thư mục.</div>`;
+  topTitle.textContent=dashboardTitleText()||"";
+  renderTopbar();
+  const selectCls=STATE.selectMode?"selectMode":"";
+  const showBack=!!STATE.dirId;
+  const clip=STATE.clipboard||loadClipboard();
+  const canPaste=!!(clip&&Array.isArray(clip.ids)&&clip.ids.length);
+  let header1="";
+  if(!STATE.selectMode){
+    header1=`<div class="row"><div class="rowLeft">${showBack?`<button class="btn btn-ghost" id="btnBack">Quay lại</button>`:`<p class="vi">Dashboard</p>`}</div><div class="rowRight">${canPaste?`<button class="btn btn-ghost" id="btnPasteSolo">Dán</button>`:""}<button class="btn btn-ghost" id="btnNewFile">File</button><button class="btn btn-ghost" id="btnNewFolder">Thư mục</button></div></div>`;
   }else{
-    list.innerHTML = STATE.items.map(itemRowHtml).join("");
+    header1=`<div class="row"><div class="rowLeft"><p class="vi">Đã chọn ${STATE.selected.size}</p></div><div class="rowRight"><button class="btn btn-ghost" id="btnExitSelect">Bỏ chọn</button></div></div>`;
+  }
+  let header2="";
+  if(STATE.selectMode){
+    header2=`<div class="toolbarLine"><div class="toolbarLeft"><button class="btn btn-ghost" id="btnCopy">Copy</button><button class="btn btn-ghost" id="btnCut">Cắt</button><button class="btn btn-ghost" id="btnPaste">Dán</button><button class="btn btn-ghost" id="btnDownloadSel">Tải về</button></div><div class="toolbarRight2"><button class="btn btn-danger" id="btnDeleteSel">Xoá</button></div></div>`;
+  }else{
+    header2=`<div style="height:0"></div>`;
   }
 
-  // breadcrumb click
-  document.querySelectorAll(".crumb").forEach(el=>{
-    el.onclick=()=>{
-      const id=String(el.getAttribute("data-crumb")||"").trim();
-      navToDashboard(id||null,false);
-    };
-  });
+  content.innerHTML=`<div class="card ${selectCls}" id="dashCard">${header1}${breadcrumbHtml()}${header2}<div class="listBox" id="listBox"></div><div style="height:1px;background:#e5e7eb;margin:12px 0"></div><button class="btn btn-danger" id="btnLogout" style="justify-content:center;width:100%">Đăng xuất</button></div>`;
 
-  // logout
-  document.getElementById("btnLogout").onclick=async ()=>{
-    const ok=await openConfirm({title:"Đăng xuất",message:"Bạn chắc chắn muốn đăng xuất?",okText:"Đăng xuất",cancelText:"Huỷ"});
-    if(!ok) return;
-    await clearAuth();
-    toast("Đã đăng xuất");
-    navToDashboard(null,true);
-  };
+  const list=document.getElementById("listBox");
+  if(!STATE.items.length) list.innerHTML=`<div class="muted">Trống.</div>`;
+  else list.innerHTML=STATE.items.map(itemRowHtml).join("");
 
-  // action buttons
+  document.querySelectorAll(".crumb").forEach(el=>{el.onclick=()=>{const id=String(el.getAttribute("data-crumb")||"").trim();navToDashboard(id||null,false)}});
+
   if(!STATE.selectMode){
+    if(showBack){
+      document.getElementById("btnBack").onclick=()=>{const parent=STATE.breadcrumb?.length?STATE.breadcrumb[STATE.breadcrumb.length-1]?.id:null;navToDashboard(parent||null,false)};
+    }
     document.getElementById("btnNewFolder").onclick=onNewFolder;
     document.getElementById("btnNewFile").onclick=onNewFile;
+    if(canPaste) document.getElementById("btnPasteSolo").onclick=onPaste;
   }else{
     document.getElementById("btnCopy").onclick=()=>setClipboardMode("copy");
     document.getElementById("btnCut").onclick=()=>setClipboardMode("cut");
     document.getElementById("btnPaste").onclick=onPaste;
     document.getElementById("btnDeleteSel").onclick=onDeleteSelected;
-    document.getElementById("btnClearSel").onclick=exitSelectMode;
+    document.getElementById("btnExitSelect").onclick=exitSelectMode;
+    document.getElementById("btnDownloadSel").onclick=onDownloadSelected;
   }
 
-  // bind items swipe + open + longpress
+  document.getElementById("btnLogout").onclick=async()=>{const ok=await openConfirm({title:"Đăng xuất",message:"Bạn chắc chắn muốn đăng xuất?",okText:"Đăng xuất",cancelText:"Huỷ"});if(!ok)return;await clearAuth();toast("Đã đăng xuất");navToDashboard(null,true)};
+
   bindDashboardInteractions();
 }
 
@@ -1344,701 +367,219 @@ function bindDashboardInteractions(){
     const id=String(sw.getAttribute("data-id")||"");
     const kind=String(sw.getAttribute("data-kind")||"");
     const delBtn=sw.querySelector(".btnDel");
-
-    // delete click
-    delBtn.onclick=async (e)=>{
-      e.stopPropagation();
-      const ok=await openConfirm({title:"Xoá",message:`Xoá "${getItemName(id)}"?`,okText:"Xoá",cancelText:"Huỷ"});
-      if(!ok) return;
-      await doDelete(id);
-    };
-
-    // swipe
-    let startX=0, curX=0, dragging=false, moved=false;
-    let pressTimer=null;
-
-    const clearPress=()=>{ if(pressTimer){clearTimeout(pressTimer); pressTimer=null;} };
-    const onDown=(e)=>{
-      if(e.pointerType==="mouse" && e.button!==0) return;
-      dragging=true; moved=false;
-      startX=e.clientX; curX=0;
-      front.setPointerCapture?.(e.pointerId);
-
-      // long press
+    delBtn.onclick=async e=>{e.stopPropagation();const ok=await openConfirm({title:"Xoá",message:`Xoá "${getItemName(id)}"?`,okText:"Xoá",cancelText:"Huỷ"});if(!ok)return;await doDelete(id)};
+    let startX=0,curX=0,dragging=false,moved=false,pressTimer=null;
+    const clearPress=()=>{if(pressTimer){clearTimeout(pressTimer);pressTimer=null}};
+    const onDown=e=>{
+      if(e.pointerType==="mouse"&&e.button!==0)return;
+      dragging=true;moved=false;startX=e.clientX;curX=0;
+      try{front.setPointerCapture?.(e.pointerId)}catch{}
       clearPress();
-      pressTimer=setTimeout(()=>{
-        pressTimer=null;
-        if(!STATE.selectMode){
-          enterSelectMode();
-          toggleSelect(id,true);
-          renderDashboard(); // refresh check circles + header
-        }
-      }, LONGPRESS_MS);
+      pressTimer=setTimeout(()=>{pressTimer=null;if(!STATE.selectMode){enterSelectMode();toggleSelect(id,true);renderDashboard()}},LONGPRESS_MS);
     };
-    const onMove=(e)=>{
-      if(!dragging) return;
+    const onMove=e=>{
+      if(!dragging)return;
       const dx=e.clientX-startX;
-      if(Math.abs(dx)>6) moved=true;
-      if(moved) clearPress();
-
-      // only allow swipe left
+      if(Math.abs(dx)>6)moved=true;
+      if(moved)clearPress();
       const tx=Math.max(-120,Math.min(0,dx));
       curX=tx;
       front.style.transition="none";
       front.style.transform=`translateX(${tx}px)`;
     };
     const onUp=()=>{
-      if(!dragging) return;
-      dragging=false; clearPress();
+      if(!dragging)return;
+      dragging=false;clearPress();
       front.style.transition="";
-      if(curX<-70) sw.classList.add("reveal");
-      else sw.classList.remove("reveal");
+      if(curX<-70)sw.classList.add("reveal");else sw.classList.remove("reveal");
       front.style.transform="";
       curX=0;
     };
-
     front.addEventListener("pointerdown",onDown);
     front.addEventListener("pointermove",onMove);
     front.addEventListener("pointerup",onUp);
     front.addEventListener("pointercancel",onUp);
-
-    // click open / select toggle
-    front.onclick=(e)=>{
+    front.addEventListener("contextmenu",e=>e.preventDefault());
+    front.onclick=e=>{
       e.preventDefault();
-      if(STATE.selectMode){
-        toggleSelect(id,false);
-        renderDashboard();
-        return;
-      }
-      if(kind==="folder") navToDashboard(id,false);
-      else navToEditor(id,false);
+      if(STATE.selectMode){toggleSelect(id,false);renderDashboard();return}
+      if(kind==="folder")navToDashboard(id,false);else toEditor(id);
     };
-
-    // click check circle (when select mode)
     const chk=sw.querySelector(".checkCircle");
-    chk.onclick=(e)=>{
-      e.stopPropagation();
-      toggleSelect(id,false);
-      renderDashboard();
-    };
+    chk.onclick=e=>{e.stopPropagation();toggleSelect(id,false);renderDashboard()};
   });
 }
 
-function enterSelectMode(){
-  STATE.selectMode=true;
-  STATE.selected=new Set();
-}
-function exitSelectMode(){
-  STATE.selectMode=false;
-  STATE.selected=new Set();
-  renderDashboard();
-}
+function enterSelectMode(){STATE.selectMode=true;STATE.selected=new Set()}
+function exitSelectMode(){STATE.selectMode=false;STATE.selected=new Set();renderDashboard()}
 function toggleSelect(id,forceOn){
   const has=STATE.selected.has(id);
-  if(forceOn===true && !has) STATE.selected.add(id);
-  else if(forceOn===false){
-    if(has) STATE.selected.delete(id);
-    else STATE.selected.add(id);
-  }else{
-    if(has) STATE.selected.delete(id);
-    else STATE.selected.add(id);
-  }
-  if(STATE.selected.size===0) STATE.selectMode=false;
+  if(forceOn===true&&!has)STATE.selected.add(id);
+  else if(forceOn===false){if(has)STATE.selected.delete(id);else STATE.selected.add(id)}
+  else{if(has)STATE.selected.delete(id);else STATE.selected.add(id)}
+  if(STATE.selected.size===0)STATE.selectMode=false;
 }
-function getItemName(id){
-  const it=(STATE.items||[]).find(x=>x.id===id);
-  return it ? it.name : id;
-}
+function getItemName(id){const it=(STATE.items||[]).find(x=>x.id===id);return it?it.name:id}
 
 function setClipboardMode(mode){
   const ids=[...STATE.selected];
-  if(!ids.length){ toast("Chưa chọn gì"); return; }
+  if(!ids.length){toast("Chưa chọn");return}
   const clip={mode,ids,ts:Date.now()};
   STATE.clipboard=clip;
   saveClipboard(clip);
-  toast(mode==="copy"?"Đã Copy":"Đã Cắt");
+  toast(mode==="copy"?"Đã copy":"Đã cắt");
 }
 async function onPaste(){
-  const clip=STATE.clipboard || loadClipboard();
-  if(!clip||!clip.ids||!clip.ids.length){ toast("Chưa có gì để dán"); return; }
+  const clip=STATE.clipboard||loadClipboard();
+  if(!clip||!clip.ids||!clip.ids.length){toast("Chưa có gì để dán");return}
   const t=getToken();
-  const ok=await openConfirm({
-    title:"Dán",
-    message:`Dán ${clip.ids.length} mục vào thư mục hiện tại?`,
-    okText:"Dán",cancelText:"Huỷ"
-  });
-  if(!ok) return;
-
+  const ok=await openConfirm({title:"Dán",message:`Dán ${clip.ids.length} mục vào thư mục hiện tại?`,okText:"Dán",cancelText:"Huỷ"});
+  if(!ok)return;
   try{
     if(clip.mode==="cut"){
-      // move
-      for(const id of clip.ids){
-        await CODEAPI.moveNode(t,id,STATE.dirId);
-      }
-      saveClipboard(null);
-      STATE.clipboard=null;
-      toast("Đã dán (Cắt)");
+      for(const id of clip.ids)await CODEAPI.moveNode(t,id,STATE.dirId);
+      saveClipboard(null);STATE.clipboard=null;
+      toast("Đã dán");
     }else{
-      // copy -> clone tree
-      for(const id of clip.ids){
-        await CODEAPI.cloneTree(t,id,STATE.dirId,null);
-      }
-      toast("Đã dán (Copy)");
+      for(const id of clip.ids)await CODEAPI.cloneTree(t,id,STATE.dirId,null);
+      toast("Đã dán");
     }
     await refreshDashboard();
     exitSelectMode();
-  }catch(e){
-    toast(e.message||"Dán lỗi");
-  }
+  }catch(e){toast(e.message||"Dán lỗi")}
 }
 async function onDeleteSelected(){
   const ids=[...STATE.selected];
-  if(!ids.length){ toast("Chưa chọn gì"); return; }
-  const ok=await openConfirm({
-    title:"Xoá",
-    message:`Xoá ${ids.length} mục đã chọn?`,
-    okText:"Xoá",cancelText:"Huỷ"
-  });
-  if(!ok) return;
+  if(!ids.length){toast("Chưa chọn");return}
+  const ok=await openConfirm({title:"Xoá",message:`Xoá ${ids.length} mục đã chọn?`,okText:"Xoá",cancelText:"Huỷ"});
+  if(!ok)return;
   try{
-    for(const id of ids) await doDelete(id);
+    for(const id of ids)await doDelete(id,false);
     await refreshDashboard();
     exitSelectMode();
-  }catch(e){
-    toast(e.message||"Xoá lỗi");
-  }
+  }catch(e){toast(e.message||"Xoá lỗi")}
 }
-
-async function doDelete(id){
+async function doDelete(id,refresh=true){
   const t=getToken();
   await CODEAPI.deleteNode(t,id);
-  toast("Đã xoá");
-  await refreshDashboard();
+  if(refresh){toast("Đã xoá");await refreshDashboard()}
 }
-async function refreshDashboard(){
-  await loadDashboard(STATE.dirId);
-  renderDashboard();
-}
+async function refreshDashboard(){await loadDashboard(STATE.dirId);renderDashboard()}
 
 async function onNewFolder(){
-  const name=await openPrompt({
-    title:"Tạo thư mục",
-    desc:"Nhập tên thư mục (không có dấu /).",
-    placeholder:"vd: portfolio",
-    okText:"Tạo"
-  });
-  if(name==null) return;
-  const err=validateFolderName(name);
-  if(err){ toast(err); return; }
+  const name=await openPromptValidated({title:"Tạo thư mục",desc:"Nhập tên thư mục.",placeholder:"vd: portfolio",okText:"Tạo",validate:validateFolderName});
+  if(name==null)return;
   try{
     const t=getToken();
-    const raw=await CODEAPI.createFolder(t,STATE.dirId,name.trim());
+    const raw=await CODEAPI.createFolder(t,STATE.dirId,String(name).trim());
     const o=firstObj(raw)||raw||{};
-    if(o.ok!==true) throw new Error(o.error||o.message||"Không tạo được");
-    toast("Đã tạo thư mục");
-    // nhảy vào thư mục
-    const id=o.node?.id || o.id || o.folder_id || o.code_id;
-    if(id && FILE_ID_RE.test(id)){
-      navToDashboard(id,false);
-      return;
-    }
+    if(o.ok!==true)throw new Error(o.error||o.message||"Không tạo được");
+    toast("Đã tạo");
+    const id=o.node?.id||o.id||o.folder_id||o.code_id;
+    if(id&&FILE_ID_RE.test(id)){navToDashboard(id,false);return}
     await refreshDashboard();
-  }catch(e){
-    toast(e.message||"Tạo thư mục lỗi");
-  }
+  }catch(e){toast(e.message||"Tạo lỗi")}
 }
 async function onNewFile(){
-  const name=await openPrompt({
-    title:"Tạo file",
-    desc:"Nhập tên file (bắt buộc .html).",
-    placeholder:"vd: bai1.html",
-    okText:"Tạo"
-  });
-  if(name==null) return;
-  const err=validateFileName(name);
-  if(err){ toast(err); return; }
+  const name=await openPromptValidated({title:"Tạo file",desc:"Bắt buộc .html",placeholder:"vd: bai1.html",okText:"Tạo",validate:validateFileName});
+  if(name==null)return;
   try{
     const t=getToken();
-    const raw=await CODEAPI.createFile(t,STATE.dirId,name.trim());
+    const raw=await CODEAPI.createFile(t,STATE.dirId,String(name).trim());
     const o=firstObj(raw)||raw||{};
-    if(o.ok!==true) throw new Error(o.error||o.message||"Không tạo được file");
-    toast("Đã tạo file");
-    const id=o.node?.id || o.id || o.file_id || o.code_id;
-    if(id && FILE_ID_RE.test(id)){
-      // yêu cầu: link riêng /code/abcde
-      navToEditor(id,false);
-      return;
-    }
+    if(o.ok!==true)throw new Error(o.error||o.message||"Không tạo được");
+    toast("Đã tạo");
+    const id=o.node?.id||o.id||o.file_id||o.code_id;
+    if(id&&FILE_ID_RE.test(id)){toEditor(id);return}
     await refreshDashboard();
-  }catch(e){
-    toast(e.message||"Tạo file lỗi");
-  }
+  }catch(e){toast(e.message||"Tạo lỗi")}
 }
 
-/** =========================
- *  EDITOR
- *  ========================= */
-function draftKey(fileId){ return DRAFT_KEY_PREFIX + String(fileId||""); }
-function loadDraft(fileId){
-  try{
-    const raw=localStorage.getItem(draftKey(fileId));
-    if(!raw) return null;
-    const o=JSON.parse(raw);
-    if(!o||typeof o.content!=="string") return null;
-    return o;
-  }catch{ return null; }
-}
-function saveDraft(fileId,content){
-  try{
-    localStorage.setItem(draftKey(fileId), JSON.stringify({content:String(content||""),ts:Date.now()}));
-  }catch{}
-}
-function clearDraft(fileId){
-  try{ localStorage.removeItem(draftKey(fileId)); }catch{}
-}
-
-async function loadEditor(fileId){
+async function onDownloadSelected(){
+  const ids=[...STATE.selected];
+  if(!ids.length){toast("Chưa chọn");return}
+  const ok=await openConfirm({title:"Tải về",message:`Tải ${ids.length} mục đã chọn?`,okText:"Tải",cancelText:"Huỷ"});
+  if(!ok)return;
   const t=getToken();
-  const raw=await CODEAPI.getFile(t,fileId);
-  const o=firstObj(raw)||raw||{};
-  if(o.ok!==true) throw new Error(o.error||o.message||"Không mở được file");
-
-  STATE.fileId=fileId;
-  STATE.fileMeta=o.node||o.file||o.meta||{};
-  STATE.fileContentRemote=String(o.content||"");
-  STATE.filePathText=String(o.full_path||o.path||STATE.fileMeta.name||"");
-
-  // draft
-  const draft=loadDraft(fileId);
-  if(draft && typeof draft.ts==="number"){
-    // ưu tiên draft nếu khác remote
-    if(draft.content !== STATE.fileContentRemote){
-      STATE.fileContent = draft.content;
-      toast("Đang dùng bản nháp (F5 vẫn giữ).");
-    }else{
-      STATE.fileContent = STATE.fileContentRemote;
+  try{
+    if(typeof JSZip==="undefined"){toast("Thiếu JSZip");return}
+    const zip=new JSZip();
+    const rootName=(ids.length===1)?(getItemName(ids[0])||"download"):"download";
+    const root=zip.folder(safeZipName(rootName));
+    for(const id of ids){
+      const it=findItemAny(id) || {id,kind:"file",name:getItemName(id)};
+      await addNodeToZip(root,t,it,"");
     }
-  }else{
-    STATE.fileContent = STATE.fileContentRemote;
-  }
-
-  STATE.breadcrumb = o.breadcrumb||[];
-  STATE.previewHtml = STATE.fileContent;
-}
-
-function buildFullPathFromBreadcrumb(bc,name){
-  const seg = (Array.isArray(bc)?bc:[]).map(x=>String(x?.name||"").trim()).filter(Boolean);
-  const fn = String(name||"").trim();
-  return seg.length ? (seg.join("/") + "/" + fn) : fn;
-}
-
-function renderEditor(){
-  renderTopbarAuthed({forEditor:true});
-
-  const filePath=escapeHtml(STATE.filePathText||"");
-  content.innerHTML = `
-    <div class="card">
-      <div class="editorTop">
-        <button class="btn btn-ghost" id="btnExitEditor">⏎ Thoát</button>
-
-        <div class="filePathWrap">
-          <input class="pathInput" id="filePathInput" value="${filePath}" spellcheck="false">
-        </div>
-
-        <div class="editorActions">
-          <button class="btn btn-ghost" id="btnRevert">Huỷ thay đổi</button>
-          <button class="btn btn-primary" id="btnSave">Lưu</button>
-        </div>
-      </div>
-
-      <div class="previewCard">
-        <div class="previewHead">
-          <div class="previewLabel">XEM TRƯỚC</div>
-          <button class="btn btn-ghost" id="btnBigPreview">⌘ Phóng to</button>
-        </div>
-        <div class="previewBox" id="previewBox"></div>
-      </div>
-
-      <div class="codeCard">
-        <div class="codeHead">
-          <div class="codeTitle">SOẠN CODE HTML</div>
-          <div class="kebabWrap">
-            <button class="kebabBtn" id="btnKebab" title="Tuỳ chọn">⋯</button>
-            <div class="dropdown" id="dropdown">
-              <button class="dropItem" id="btnDownload">⬇️ Tải file</button>
-              <button class="dropItem" id="btnCopyAll">📋 Sao chép</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="searchRow">
-          <input class="input" id="findInput" placeholder="Tìm trong code..." autocomplete="off">
-          <button class="btn btn-ghost" id="btnFind">Tìm</button>
-        </div>
-
-        <div class="codePane">
-          <div class="editorGrid">
-            <div class="lineNums" id="lineNums"></div>
-            <div class="codeStack">
-              <pre class="codePre" id="codePre"></pre>
-              <textarea class="codeArea" id="codeArea" spellcheck="false"></textarea>
-            </div>
-          </div>
-        </div>
-
-        <div class="lintBar" id="lintBar"></div>
-      </div>
-    </div>
-  `;
-
-  // exit
-  document.getElementById("btnExitEditor").onclick=()=>{
-    // về dashboard theo parent nếu có, hoặc root
-    const parentId=STATE.fileMeta?.parent_id || null;
-    navToDashboard(parentId||null,false);
-  };
-
-  const filePathInput=document.getElementById("filePathInput");
-  const codeArea=document.getElementById("codeArea");
-  const codePre=document.getElementById("codePre");
-  const lineNums=document.getElementById("lineNums");
-  const lintBar=document.getElementById("lintBar");
-  const dropdown=document.getElementById("dropdown");
-  const btnKebab=document.getElementById("btnKebab");
-
-  // init value
-  codeArea.value = STATE.fileContent || "";
-  filePathInput.value = STATE.filePathText || "";
-
-  // dropdown
-  const closeDropdown=()=>{dropdown.classList.remove("show"); STATE.dropdownOpen=false;};
-  btnKebab.onclick=(e)=>{
-    e.stopPropagation();
-    STATE.dropdownOpen=!STATE.dropdownOpen;
-    dropdown.classList.toggle("show",STATE.dropdownOpen);
-  };
-  document.addEventListener("click",()=>closeDropdown(),{passive:true});
-
-  // download
-  document.getElementById("btnDownload").onclick=()=>{
-    closeDropdown();
-    const name=(filePathInput.value||"file.html").split("/").pop()||"file.html";
-    const blob=new Blob([codeArea.value],{type:"text/html;charset=utf-8"});
+    const blob=await zip.generateAsync({type:"blob"});
     const url=URL.createObjectURL(blob);
     const a=document.createElement("a");
-    a.href=url; a.download=name;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),500);
-    toast("Đang tải…");
-  };
-
-  // copy all
-  document.getElementById("btnCopyAll").onclick=async ()=>{
-    closeDropdown();
-    try{
-      await navigator.clipboard.writeText(codeArea.value||"");
-      toast("Đã sao chép");
-    }catch{
-      // fallback
-      codeArea.focus();
-      codeArea.select();
-      document.execCommand("copy");
-      toast("Đã sao chép");
-    }
-  };
-
-  // find
-  let findPos=0;
-  document.getElementById("btnFind").onclick=()=>{
-    const q=String(document.getElementById("findInput").value||"");
-    if(!q){ toast("Chưa nhập từ khoá"); return; }
-    const text=codeArea.value||"";
-    const idx=text.indexOf(q,findPos);
-    const idx2=(idx<0)?text.indexOf(q,0):idx;
-    if(idx2<0){ toast("Không tìm thấy"); findPos=0; return; }
-    codeArea.focus();
-    codeArea.setSelectionRange(idx2,idx2+q.length);
-    findPos=idx2+q.length;
-    // scroll to selection
-    const before=text.slice(0,idx2);
-    const line=before.split("\n").length;
-    // rough scroll
-    codeArea.scrollTop=Math.max(0,(line-3)*18);
-  };
-
-  // live preview + highlight + lint (debounce)
-  let tmr=null;
-  const doUpdate=()=>{
-    const v=codeArea.value||"";
-    STATE.fileContent=v;
-    STATE.previewHtml=v;
-
-    // draft always
-    saveDraft(STATE.fileId,v);
-
-    // update preview
-    renderPreviewInto("previewBox",v,filePathInput.value);
-
-    // lint + highlight + lines
-    const lint=lintHtml(v);
-    STATE.lint=lint;
-    STATE.errs=lint.errLines || new Set();
-    renderEditorVisuals({code:v,codePre,lineNums,errs:STATE.errs});
-    renderLintBar(lintBar,lint);
-  };
-  const schedule=()=>{
-    if(tmr) clearTimeout(tmr);
-    tmr=setTimeout(()=>{tmr=null; doUpdate();},120);
-  };
-
-  codeArea.addEventListener("input",schedule);
-
-  // scroll sync
-  const syncScroll=()=>{
-    codePre.scrollTop=codeArea.scrollTop;
-    codePre.scrollLeft=codeArea.scrollLeft;
-    lineNums.scrollTop=codeArea.scrollTop;
-  };
-  codeArea.addEventListener("scroll",syncScroll,{passive:true});
-
-  // buttons save/revert
-  document.getElementById("btnRevert").onclick=async ()=>{
-    const ok=await openConfirm({title:"Huỷ thay đổi",message:"Quay lại bản đã lưu?",okText:"Huỷ thay đổi",cancelText:"Không"});
-    if(!ok) return;
-    clearDraft(STATE.fileId);
-    codeArea.value=STATE.fileContentRemote||"";
-    STATE.fileContent=codeArea.value;
-    toast("Đã khôi phục");
-    doUpdate();
-  };
-
-  document.getElementById("btnSave").onclick=async ()=>{
-    try{
-      const html=codeArea.value||"";
-      const t=getToken();
-
-      // rename if changed (chỉ đổi tên segment cuối, và phải .html)
-      const wantPath=String(filePathInput.value||"").trim();
-      if(!wantPath){ toast("Tên file trống"); return; }
-      if(!wantPath.toLowerCase().endsWith(".html")){ toast("Tên file phải .html"); return; }
-
-      // nếu user sửa path có dấu / -> chỉ lấy filename cuối, giữ nguyên thư mục (an toàn)
-      // (muốn move theo path thì nâng cấp thêm sau)
-      const newName = wantPath.split("/").filter(Boolean).pop();
-
-      if(newName && newName!==STATE.fileMeta?.name){
-        const err=validateFileName(newName);
-        if(err){ toast(err); return; }
-        await CODEAPI.renameNode(t,STATE.fileId,newName);
-        STATE.fileMeta.name=newName;
-        // update path text
-        const full=buildFullPathFromBreadcrumb(STATE.breadcrumb,newName);
-        STATE.filePathText=full;
-        filePathInput.value=full;
-      }
-
-      const out=await CODEAPI.saveFile(t,STATE.fileId,html);
-      const o=firstObj(out)||out||{};
-      if(o.ok!==true) throw new Error(o.error||o.message||"Lưu lỗi");
-      STATE.fileContentRemote=html;
-      clearDraft(STATE.fileId);
-      toast("Đã lưu");
-    }catch(e){
-      toast(e.message||"Lưu lỗi");
-    }
-  };
-
-  // preview big
-  document.getElementById("btnBigPreview").onclick=()=>{
-    openPreviewBig({
-      title:"Xem trước",
-      sub: filePathInput.value || "",
-      html: codeArea.value || ""
-    });
-  };
-
-  // first paint
-  doUpdate();
-  try{codeArea.focus()}catch{}
+    a.href=url;
+    a.download=safeZipName(rootName)+".zip";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),800);
+    toast("Đang tải");
+  }catch(e){toast(e.message||"Tải lỗi")}
 }
-
-function renderPreviewInto(containerId,html,filePath){
-  const box=document.getElementById(containerId);
-  if(!box) return;
-  const v=String(html||"");
-  if(!v.trim()){
-    box.innerHTML=`<div class="previewEmpty">XEM TRƯỚC</div>`;
+function safeZipName(name){
+  const s=String(name||"download").trim()||"download";
+  return s.replace(/[<>:"\\|?*\x00-\x1F]/g,"_").slice(0,120);
+}
+function findItemAny(id){
+  const stack=[...(STATE.items||[])];
+  const seen=new Set();
+  while(stack.length){
+    const x=stack.pop();
+    if(!x||seen.has(x.id))continue;
+    seen.add(x.id);
+    if(x.id===id)return x;
+  }
+  return null;
+}
+async function addNodeToZip(zipFolder,token,item,pathPrefix){
+  const kind=String(item.kind||"");
+  const name=safeZipName(item.name||item.id);
+  if(kind==="folder"){
+    const sub=zipFolder.folder((pathPrefix?pathPrefix:"")+name);
+    const raw=await CODEAPI.list(token,item.id);
+    const o=firstObj(raw)||raw||{};
+    const children=Array.isArray(o.items)?o.items:[];
+    for(const ch of children) await addNodeToZip(sub,token,ch,"");
     return;
   }
-  box.innerHTML = `<iframe sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts"></iframe>`;
-  const iframe=box.querySelector("iframe");
-  iframe.srcdoc=v;
-  iframe.title=String(filePath||"preview");
+  const raw=await CODEAPI.getFile(token,item.id);
+  const o=firstObj(raw)||raw||{};
+  const content=String(o.content||"");
+  zipFolder.file((pathPrefix?pathPrefix:"")+name,content);
 }
 
-/** =========================
- *  HTML highlight + lint
- *  ========================= */
-function highlightHtmlToLines(code){
-  // highlight basic: tags, attrs, strings, comments
-  const esc=escapeHtml(code);
-  // comments
-  let s=esc.replace(/(&lt;!--[\s\S]*?--&gt;)/g, m=>`<span class="tok-com">${m}</span>`);
-  // strings
-  s=s.replace(/(&quot;.*?&quot;)/g, m=>`<span class="tok-str">${m}</span>`);
-  s=s.replace(/(&#39;.*?&#39;)/g, m=>`<span class="tok-str">${m}</span>`);
-  // tag punctuation + name + attrs (rough)
-  s=s.replace(/(&lt;\/?)([a-zA-Z][\w:-]*)([\s\S]*?)(&gt;)/g, (m,p1,p2,p3,p4)=>{
-    const attrs=p3
-      .replace(/([a-zA-Z_:][\w:.-]*)(=)/g, `<span class="tok-attr">$1</span><span class="tok-pun">$2</span>`);
-    return `<span class="tok-pun">${p1}</span><span class="tok-tag">${p2}</span>${attrs}<span class="tok-pun">${p4}</span>`;
-  });
-  // plain text
-  return s.split("\n");
-}
-
-const VOID_TAGS=new Set(["area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"]);
-
-function lintHtml(code){
-  const lines=String(code||"").split("\n");
-  const stack=[];
-  const errLines=new Set();
-  let firstErr=null;
-
-  // VERY rough tag scan
-  for(let i=0;i<lines.length;i++){
-    const line=lines[i];
-    // ignore comments partially (rough)
-    const cleaned=line.replace(/<!--.*?-->/g,"");
-
-    const re=/<\s*(\/)?\s*([a-zA-Z][\w:-]*)([^>]*)>/g;
-    let m;
-    while((m=re.exec(cleaned))){
-      const closing=!!m[1];
-      const tag=(m[2]||"").toLowerCase();
-      const rest=(m[3]||"");
-      const selfClose=/\/\s*$/.test(rest) || VOID_TAGS.has(tag);
-      if(selfClose) continue;
-
-      if(!closing){
-        stack.push({tag,line:i+1});
-      }else{
-        // pop
-        if(stack.length===0){
-          errLines.add(i+1);
-          if(!firstErr) firstErr={line:i+1,msg:`Dòng ${i+1}: gặp </${tag}> nhưng không có thẻ mở.`};
-          continue;
-        }
-        const top=stack[stack.length-1];
-        if(top.tag!==tag){
-          errLines.add(i+1);
-          errLines.add(top.line);
-          if(!firstErr) firstErr={line:i+1,msg:`Dòng ${i+1}: đóng </${tag}> nhưng đang mở <${top.tag}> (mở ở dòng ${top.line}).`};
-          // attempt recover: pop until match
-          let found=-1;
-          for(let k=stack.length-1;k>=0;k--){
-            if(stack[k].tag===tag){ found=k; break; }
-          }
-          if(found>=0) stack.splice(found,1);
-          else stack.pop();
-          continue;
-        }
-        stack.pop();
-      }
-    }
-  }
-
-  if(stack.length){
-    // unclosed tags: mark their lines
-    for(const x of stack) errLines.add(x.line);
-    if(!firstErr){
-      const last=stack[stack.length-1];
-      firstErr={line:last.line,msg:`Thiếu thẻ đóng cho <${last.tag}> (mở ở dòng ${last.line}).`};
-    }
-  }
-
-  if(errLines.size){
-    return {ok:false,msg:firstErr?firstErr.msg:"HTML có lỗi thẻ.",errLines};
-  }
-  return {ok:true,msg:"OK: Không thấy lỗi thẻ cơ bản.",errLines:new Set()};
-}
-
-function renderEditorVisuals({code,codePre,lineNums,errs}){
-  const lines=String(code||"").split("\n");
-  // line numbers
-  lineNums.innerHTML = lines.map((_,i)=>{
-    const ln=i+1;
-    const cls = errs.has(ln) ? "ln err" : "ln";
-    return `<div class="${cls}">${ln}</div>`;
-  }).join("");
-
-  // highlighted lines
-  const hl=highlightHtmlToLines(code);
-  codePre.innerHTML = hl.map((htmlLine,i)=>{
-    const ln=i+1;
-    const cls = errs.has(ln) ? "line err" : "line";
-    // keep empty line height
-    const safe = htmlLine.length ? htmlLine : " ";
-    return `<span class="${cls}">${safe}</span>`;
-  }).join("\n");
-}
-
-function renderLintBar(el,lint){
-  if(!el) return;
-  if(lint.ok){
-    el.className="lintBar ok";
-    el.textContent=lint.msg || "OK";
-  }else{
-    el.className="lintBar err";
-    el.textContent=lint.msg || "Có lỗi HTML";
-  }
-}
-
-/** =========================
- *  MAIN renderByRoute
- *  ========================= */
 async function renderByRoute(){
-  // load auth state (cache first)
-  ME = getMeCache();
+  ME=getMeCache();
   const t=getToken();
+  const {fileId,dirId}=parseRoute();
 
-  if(t && (!ME || !ME.username)){
+  if(fileId){
+    location.replace(`/code/html?f=${encodeURIComponent(fileId)}`);
+    return;
+  }
+
+  if(t&&(!ME||!ME.username)){
     try{
       const meOut=await API.me(t);
-      if(meOut && meOut.ok && meOut.me && meOut.me.username){
+      if(meOut&&meOut.ok&&meOut.me&&meOut.me.username){
         ME=meOut.me;
         setMeCache(ME);
-        if(meOut.token) setToken(meOut.token);
-        else setToken(t);
+        if(meOut.token)setToken(meOut.token);else setToken(t)
       }
     }catch{}
   }
 
-  const {fileId,dirId}=parseRoute();
-
-  // not logged in -> gate always
-  if(!ME || !ME.username){
-    STATE.view="gate";
+  if(!ME||!ME.username){
     renderGate();
     return;
   }
 
-  // logged in
-  if(fileId){
-    STATE.view="editor";
-    try{
-      await loadEditor(fileId);
-      renderEditor();
-    }catch(e){
-      toast(e.message||"Không mở được file");
-      // fallback dashboard
-      navToDashboard(dirId||null,true);
-    }
-    return;
-  }
-
-  // dashboard
-  STATE.view="dashboard";
   STATE.selectMode=false;
   STATE.selected=new Set();
   STATE.clipboard=loadClipboard();
@@ -2047,26 +588,22 @@ async function renderByRoute(){
     await loadDashboard(dirId||null);
     renderDashboard();
   }catch(e){
-    toast(e.message||"Không load được dashboard");
+    toast(e.message||"Không load được");
     renderDashboard();
   }
 }
 
-/** =========================
- *  BOOT
- *  ========================= */
+document.addEventListener("contextmenu",e=>{if(e.target&&e.target.closest&&e.target.closest(".swipe"))e.preventDefault()},{capture:true});
+document.addEventListener("selectstart",e=>{if(e.target&&e.target.closest&&e.target.closest(".swipe"))e.preventDefault()},{capture:true});
+
 (async function boot(){
   await requestPersistentStorage();
-  // đảm bảo luôn nằm đúng /code route (nếu mở /code/index.html)
   try{
     const p=String(location.pathname||"");
-    if(p.endsWith("/code/index.html")){
-      history.replaceState({}, "", "/code");
-    }
+    if(p.endsWith("/code/index.html"))history.replaceState({},"","/code");
+    if(p.endsWith("/code/"))history.replaceState({},"","/code");
   }catch{}
-  if(SUPABASE_URL.includes("PASTE_")||SUPABASE_ANON_KEY.includes("PASTE_")) toast("Chưa dán SUPABASE_URL / ANON_KEY");
+  if(SUPABASE_URL.includes("PASTE_")||SUPABASE_ANON_KEY.includes("PASTE_"))toast("Thiếu SUPABASE_URL / ANON_KEY");
   renderByRoute();
 })();
-</script>
-</body>
-</html>
+</script></body></html>
