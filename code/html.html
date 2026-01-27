@@ -63,13 +63,79 @@
       margin:12px 0;
     }
 
-    .toolbar{
+    .toolbarTop,.toolbarBottom{
       display:flex;
       align-items:center;
       gap:10px;
       flex-wrap:nowrap;
       overflow:hidden;
       user-select:none;
+    }
+    .toolbarTop{justify-content:space-between}
+    .toolbarBottom{justify-content:space-between}
+
+    .toolbarLeft{display:flex;align-items:center;gap:10px;min-width:0}
+    .toolbarRight{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+
+    .toolbarDivider{
+      height:1px;
+      background:rgba(229,231,235,.9);
+      margin:10px 0;
+      border-radius:999px;
+    }
+
+    .fileInfo{
+      min-width:0;
+      flex:1 1 auto;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      overflow:hidden;
+      padding:0 2px;
+    }
+    .fileName{
+      font-weight:900;
+      font-size:.92rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      user-select:none;
+    }
+    .fileSub{
+      font-weight:750;
+      font-size:.82rem;
+      color:var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      user-select:none;
+    }
+
+    .findGroup{
+      flex:1 1 auto;
+      min-width:160px;
+      display:flex;
+      gap:8px;
+      flex-wrap:nowrap;
+      align-items:center;
+    }
+
+    .input{
+      width:100%;
+      border-radius:14px;
+      border:2px solid #e5e7eb;
+      padding:9px 10px;
+      font-size:.9rem;
+      font-weight:750;
+      outline:none;
+      background:var(--soft);
+      transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
+      user-select:text;
+    }
+    .input:focus{
+      border-color:rgba(124,58,237,.55);
+      box-shadow:0 0 0 5px rgba(124,58,237,.10);
+      background:#fff;
     }
 
     .btn{
@@ -107,77 +173,12 @@
       border:0;
       box-shadow:0 12px 24px rgba(37,99,235,.18);
     }
-    .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none !important;filter:none !important}
-
-    .badgeBtn{
-      flex:0 0 auto;
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid rgba(229,231,235,.9);
-      background:rgba(255,255,255,.78);
-      font-weight:900;
-      font-size:.88rem;
-      white-space:nowrap;
-      cursor:pointer;
-      user-select:none;
-      -webkit-tap-highlight-color:transparent;
-      touch-action:manipulation;
-    }
-    .badgeBtn:active{transform:translateY(0)}
-    .badgeBtn:hover{filter:brightness(.98)}
-
-    .fileInfo{
-      min-width:0;
-      flex:1 1 auto;
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-      overflow:hidden;
-    }
-    .fileName{
-      font-weight:900;
-      font-size:.92rem;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      user-select:none;
-    }
-    .fileSub{
-      font-weight:750;
-      font-size:.82rem;
-      color:var(--muted);
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      user-select:none;
-    }
-
-    .findGroup{
-      flex:0 1 360px;
-      min-width:160px;
-      display:flex;
-      gap:8px;
-      flex-wrap:nowrap;
-      align-items:center;
-    }
-
-    .input{
-      width:100%;
-      border-radius:14px;
-      border:2px solid #e5e7eb;
-      padding:9px 10px;
-      font-size:.9rem;
-      font-weight:750;
-      outline:none;
-      background:var(--soft);
-      transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
-      user-select:text;
-    }
-    .input:focus{
-      border-color:rgba(124,58,237,.55);
-      box-shadow:0 0 0 5px rgba(124,58,237,.10);
+    .btnDanger{
       background:#fff;
+      color:#b91c1c;
+      border:1px solid rgba(185,28,28,.35);
     }
+    .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none !important;filter:none !important}
 
     .errorBar{
       margin-top:10px;
@@ -194,8 +195,16 @@
     }
     .errorBar.show{display:block}
 
-    .editorFrame{
+    .sectionTitle{
       margin-top:10px;
+      margin-bottom:8px;
+      font-weight:950;
+      font-size:.92rem;
+      color:rgba(31,41,55,.70);
+      user-select:none;
+    }
+
+    .editorFrame{
       border-radius:16px;
       border:2px solid #e5e7eb;
       overflow:hidden;
@@ -233,19 +242,51 @@
       margin-left:-2px;
     }
 
-    textarea.code{
+    .codePane{
+      position:relative;
       flex:1 1 auto;
       width:100%;
+      background:transparent;
+    }
+
+    pre.codeHl{
+      position:absolute;
+      inset:0;
+      margin:0;
+      padding:var(--pad);
       border:0;
       outline:none;
-      resize:none;
-      padding:var(--pad);
       background:transparent;
       color:var(--codeText);
       font-family:var(--mono);
       font-size:var(--fs);
       line-height:var(--lh);
       tab-size:2;
+
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+
+      pointer-events:none;
+      user-select:none;
+    }
+
+    textarea.code{
+      position:relative;
+      width:100%;
+      border:0;
+      outline:none;
+      resize:none;
+      padding:var(--pad);
+      background:transparent;
+
+      font-family:var(--mono);
+      font-size:var(--fs);
+      line-height:var(--lh);
+      tab-size:2;
+
+      color:transparent;
+      -webkit-text-fill-color:transparent;
       caret-color:#fff;
 
       overflow:hidden;
@@ -258,6 +299,14 @@
       -webkit-overflow-scrolling:touch;
     }
     textarea.code::selection{background:rgba(124,58,237,.35)}
+
+    .tok-punc{color:rgba(255,255,255,.70)}
+    .tok-tag{color:#60a5fa}
+    .tok-attr{color:#fbbf24}
+    .tok-op{color:rgba(255,255,255,.60)}
+    .tok-str{color:#34d399}
+    .tok-com{color:rgba(255,255,255,.45)}
+    .tok-doctype{color:#a78bfa}
 
     .previewCard{padding:12px}
     .previewHead{
@@ -311,7 +360,6 @@
 
     @media(max-width:520px){
       :root{ --gutterW:40px; --fs:12.5px; --lh:21px; }
-      .findGroup{flex:0 1 220px}
       .btn{padding:9px 10px}
       .previewBox{height:34vh}
     }
@@ -321,31 +369,47 @@
 <body>
   <div class="wrap">
     <div class="card">
-      <div class="toolbar" id="toolbar">
-        <button class="btn btnGhost" id="btnExit" type="button">Thoát</button>
-
-        <button class="badgeBtn" id="docBadge" type="button">Thoát</button>
+      <div class="toolbarTop" id="toolbarTop">
+        <div class="toolbarLeft">
+          <button class="btn btnGhost" id="btnExit" type="button">Thoát</button>
+        </div>
 
         <div class="fileInfo">
           <div class="fileName" id="fileName">—</div>
           <div class="fileSub" id="fileSub">—</div>
         </div>
 
+        <div class="toolbarRight">
+          <button class="btn btnGhost" id="btnRevert" type="button">Hoàn tác</button>
+          <button class="btn btnBlue" id="btnDownload" type="button">Tải về máy</button>
+        </div>
+      </div>
+
+      <div class="toolbarDivider"></div>
+
+      <div class="toolbarBottom" id="toolbarBottom">
         <div class="findGroup" id="findGroup">
-          <input class="input" id="findInput" placeholder="Tìm trong code" autocomplete="off" />
+          <input class="input" id="findInput" placeholder="Tìm trong..." autocomplete="off" />
           <button class="btn btnGhost" id="btnFind" type="button">Tìm</button>
         </div>
 
-        <button class="btn btnGhost" id="btnRevert" type="button">Hoàn tác</button>
-        <button class="btn btnPrimary" id="btnSave" type="button">Lưu</button>
-        <button class="btn btnBlue" id="btnDownload" type="button">Tải về máy</button>
+        <div class="toolbarRight">
+          <button class="btn btnPrimary" id="btnSave" type="button">Lưu</button>
+          <button class="btn btnDanger" id="btnClearAll" type="button">Xoá tất cả</button>
+        </div>
       </div>
 
       <div class="errorBar" id="errorBar"></div>
 
+      <div class="sectionTitle">Code</div>
+
       <div class="editorFrame" id="editorFrame">
         <div class="gutter" id="gutter"></div>
-        <textarea class="code" id="code" spellcheck="false" wrap="soft"></textarea>
+
+        <div class="codePane" id="codePane">
+          <pre class="codeHl" id="codeHl" aria-hidden="true"></pre>
+          <textarea class="code" id="code" spellcheck="false" wrap="soft"></textarea>
+        </div>
       </div>
     </div>
 
@@ -381,23 +445,27 @@
 
     const VOID_TAGS = new Set(["area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"]);
 
-    const DEFAULT_START = "<!doctype html>\n";
+    const DEFAULT_START = "<!DOCTYPE html>\n";
 
     const el = {
       btnExit: document.getElementById("btnExit"),
-      docBadge: document.getElementById("docBadge"),
       fileName: document.getElementById("fileName"),
       fileSub: document.getElementById("fileSub"),
+
       code: document.getElementById("code"),
+      codeHl: document.getElementById("codeHl"),
       gutter: document.getElementById("gutter"),
       preview: document.getElementById("preview"),
       errorBar: document.getElementById("errorBar"),
       toast: document.getElementById("toast"),
+
       findInput: document.getElementById("findInput"),
       btnFind: document.getElementById("btnFind"),
       btnSave: document.getElementById("btnSave"),
       btnRevert: document.getElementById("btnRevert"),
       btnDownload: document.getElementById("btnDownload"),
+      btnClearAll: document.getElementById("btnClearAll"),
+
       measure: document.getElementById("measure"),
     };
 
@@ -695,6 +763,52 @@
       return { ok: errLines.size === 0, errLines, firstErrLine };
     }
 
+    function escHtml(s){
+      return String(s || "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;");
+    }
+
+    function highlightHtml(raw){
+      let s = escHtml(raw);
+
+      s = s.replace(/&lt;!--[\s\S]*?--&gt;/g, (m) => `<span class="tok-com">${m}</span>`);
+      s = s.replace(/&lt;!DOCTYPE[\s\S]*?&gt;/gi, (m) => `<span class="tok-doctype">${m}</span>`);
+
+      s = s.replace(/&lt;\/?[a-zA-Z][\w:-]*(?:[\s\S]*?)&gt;/g, (m) => {
+        if(m.startsWith("&lt;!--")) return m;
+        if(/^&lt;!DOCTYPE/i.test(m)) return m;
+
+        const mm = m.match(/^(&lt;\/?)([a-zA-Z][\w:-]*)([\s\S]*?)(&gt;)$/);
+        if(!mm) return `<span class="tok-tag">${m}</span>`;
+
+        const open = mm[1];
+        const name = mm[2];
+        let inner = mm[3];
+        const close = mm[4];
+
+        inner = inner.replace(/(\s+)([^\s=\/&gt;]+)(\s*=\s*)(".*?"|'.*?')/g, (x, sp, an, eq, val) => {
+          return `${sp}<span class="tok-attr">${an}</span><span class="tok-op">${eq}</span><span class="tok-str">${val}</span>`;
+        });
+
+        inner = inner.replace(/(\s+)([^\s=\/&gt;]+)/g, (x, sp, an) => {
+          if(an.includes('tok-')) return x;
+          return `${sp}<span class="tok-attr">${an}</span>`;
+        });
+
+        return `<span class="tok-punc">${open}</span><span class="tok-tag">${name}</span>${inner}<span class="tok-punc">${close}</span>`;
+      });
+
+      if(!s) s = " ";
+      if(s.endsWith("\n")) s += " ";
+      return s;
+    }
+
+    function renderHighlight(){
+      el.codeHl.innerHTML = highlightHtml(el.code.value || "");
+    }
+
     function computeWrapCounts(lines, textWidthPx, lineHeightPx){
       el.measure.style.width = Math.max(20, textWidthPx) + "px";
       const counts = new Array(lines.length);
@@ -725,13 +839,12 @@
 
       let out = [];
       let rowIndex = 0;
-      STATE.lineStartRow = new Array(lines.length);
+      STATE.lineStartRow = new Array(Math.max(lines.length, 10));
 
       const needMin = Math.max(10, lines.length);
 
       for(let i=0;i<needMin;i++){
         const ln = i + 1;
-        const lineText = (i < lines.length) ? lines[i] : "";
         const wraps = (i < wrapCounts.length) ? wrapCounts[i] : 1;
 
         STATE.lineStartRow[i] = rowIndex;
@@ -750,6 +863,7 @@
 
       ta.style.height = "auto";
       ta.style.height = ta.scrollHeight + "px";
+      el.codeHl.style.height = ta.style.height;
     }
 
     function renderErrorBar(){
@@ -798,6 +912,7 @@
       if(STATE.updateTimer) clearTimeout(STATE.updateTimer);
       STATE.updateTimer = setTimeout(() => {
         STATE.updateTimer = null;
+
         const v = el.code.value || "";
         STATE.content = v;
 
@@ -806,6 +921,7 @@
         const lint = lintHtml(v);
         STATE.errLines = lint.errLines;
 
+        renderHighlight();
         renderErrorBar();
         rebuildGutterAndHeight();
         updatePreview();
@@ -841,7 +957,7 @@
       const ok = confirm("Quay lại bản đã lưu?");
       if(!ok) return;
       clearDraft(STATE.fileId);
-      el.code.value = STATE.remote || DEFAULT_START;
+      el.code.value = (STATE.remote && STATE.remote.trim()) ? STATE.remote : DEFAULT_START;
       STATE.content = el.code.value;
       toast("Đã hoàn tác");
       scheduleUpdate();
@@ -859,6 +975,16 @@
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 500);
       toast("Đang tải");
+    }
+
+    function doClearAll(){
+      const ok = confirm("Xoá tất cả nội dung? (Giữ lại <!DOCTYPE html>)");
+      if(!ok) return;
+      clearDraft(STATE.fileId);
+      el.code.value = DEFAULT_START;
+      STATE.content = el.code.value;
+      toast("Đã xoá");
+      scheduleUpdate();
     }
 
     function doFind(){
@@ -965,6 +1091,7 @@
         const lint = lintHtml(el.code.value || "");
         STATE.errLines = lint.errLines;
 
+        renderHighlight();
         renderErrorBar();
         rebuildGutterAndHeight();
         updatePreview();
@@ -978,13 +1105,13 @@
       }
 
       el.btnExit.addEventListener("click", goExit);
-      el.docBadge.addEventListener("click", goExit);
 
       el.code.addEventListener("input", scheduleUpdate, { passive:true });
 
       el.btnSave.addEventListener("click", doSave);
       el.btnRevert.addEventListener("click", doRevert);
       el.btnDownload.addEventListener("click", doDownload);
+      el.btnClearAll.addEventListener("click", doClearAll);
 
       el.btnFind.addEventListener("click", doFind);
       el.findInput.addEventListener("keydown", (e) => {
@@ -1005,6 +1132,7 @@
         if(STATE.updateTimer) clearTimeout(STATE.updateTimer);
         STATE.updateTimer = setTimeout(() => {
           STATE.updateTimer = null;
+          renderHighlight();
           rebuildGutterAndHeight();
         }, 80);
       }, { passive:true });
