@@ -403,12 +403,29 @@
     }
     .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 
+    .findNextFloat{
+      position:fixed;
+      right:14px;
+      bottom:86px;
+      z-index:20045;
+      display:none;
+      width:52px;
+      height:52px;
+      padding:0;
+      border-radius:999px;
+      align-items:center;
+      justify-content:center;
+      font-size:1.05rem;
+    }
+    .findNextFloat.show{display:flex}
+
     @media(max-width:520px){
       :root{ --gutterW:40px; --fs:12.5px; --lh:21px; }
       .btn{padding:9px 10px}
       .btnMini{min-width:42px}
       .previewBox{height:34vh}
       .pathText{font-size:.84rem}
+      .findNextFloat{right:12px; bottom:84px; width:50px; height:50px}
     }
   </style>
 </head>
@@ -426,7 +443,7 @@
         </div>
 
         <div class="toolbarRight">
-          <button class="btn btnGhost" id="btnRevert" type="button">Hoàn tác</button>
+          <button class="btn btnGhost" id="btnRevert" type="button">⟲</button>
           <button class="btn btnBlue" id="btnDownload" type="button">Tải về máy</button>
         </div>
       </div>
@@ -437,7 +454,6 @@
         <div class="findGroup" id="findGroup">
           <input class="input" id="findInput" placeholder="Tìm trong..." autocomplete="off" />
           <button class="btn btnGhost" id="btnFind" type="button" disabled>Tìm</button>
-          <button class="btn btnGhost btnMini" id="btnFindNext" type="button" style="display:none">⇧</button>
         </div>
 
         <div class="toolbarRight">
@@ -473,6 +489,8 @@
     </div>
   </div>
 
+  <button class="btn btnBlue findNextFloat" id="btnFindNextFloat" type="button" aria-label="Tìm tiếp">➜</button>
+
   <div class="toast" id="toast"></div>
 
   <div id="measure" style="
@@ -493,6 +511,7 @@
 
     const FILE_ID_RE = /^[a-z]{5}$/;
     const VOID_TAGS = new Set(["area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"]);
+    const RAW_TEXT_TAGS = new Set(["script","style","textarea"]);
 
     const DEFAULT_START = "<!DOCTYPE html>\n";
 
@@ -508,7 +527,7 @@
 
       findInput: document.getElementById("findInput"),
       btnFind: document.getElementById("btnFind"),
-      btnFindNext: document.getElementById("btnFindNext"),
+      btnFindNextFloat: document.getElementById("btnFindNextFloat"),
 
       codePane: document.getElementById("codePane"),
       code: document.getElementById("code"),
@@ -527,6 +546,8 @@
       content: "",
       lineStartRow: [],
       errLines: new Set(),
+      errors: [],
+      errIndex: 0,
       saving: false,
 
       lastFind: "",
@@ -775,81 +796,146 @@
       try{ localStorage.removeItem(draftKey(fileId)); }catch{}
     }
 
-    function lintHtmlAccurate(code){
+    function countNewlinesBetween(s, a, b){
+      let c = 0;
+      const end = Math.min(s.length, Math.max(a, b));
+      for(let i = Math.max(0, a); i < end; i++){
+        if(s[i] === "\n") c++;
+      }
+      return c;
+    }
+
+    function lintHtmlRich(code){
       const s = String(code || "");
+      const lower = s.toLowerCase();
+
       const stack = [];
+      const errors = [];
       const errLines = new Set();
 
+      function addErr(line, msg){
+        const ln = Math.max(1, Number(line) || 1);
+        errors.push({ line: ln, msg: String(msg || "") });
+        errLines.add(ln);
+      }
+
+      let i = 0;
       let line = 1;
-      let lastIdx = 0;
 
-      const re = /<!--[\s\S]*?-->|<\s*(\/)?\s*([a-zA-Z][\w:-]*)([^>]*)>/g;
-      let m;
+      while(i < s.length){
+        const ch = s[i];
 
-      while((m = re.exec(s))){
-        const idx = m.index;
-        const seg = s.slice(lastIdx, idx);
-        const nl = seg.match(/\n/g);
-        if(nl) line += nl.length;
-        lastIdx = idx;
+        if(ch !== "<"){
+          if(ch === "\n") line++;
+          i++;
+          continue;
+        }
 
-        const full = m[0] || "";
-        if(full.startsWith("<!--")){
-          const nl2 = full.match(/\n/g);
-          if(nl2) line += nl2.length;
-          lastIdx = idx + full.length;
+        if(s.startsWith("<!--", i)){
+          const end = s.indexOf("-->", i + 4);
+          if(end < 0){
+            addErr(line, "Chưa đóng comment <!-- -->");
+            break;
+          }
+          line += countNewlinesBetween(s, i, end + 3);
+          i = end + 3;
+          continue;
+        }
+
+        const lineStart = line;
+
+        let quote = "";
+        let endIdx = -1;
+        let nl = 0;
+
+        for(let j = i + 1; j < s.length; j++){
+          const cj = s[j];
+          if(cj === "\n") nl++;
+          if(quote){
+            if(cj === quote) quote = "";
+            continue;
+          }
+          if(cj === '"' || cj === "'"){ quote = cj; continue; }
+          if(cj === ">"){ endIdx = j; break; }
+        }
+
+        if(endIdx < 0){
+          addErr(lineStart, "Thiếu > để đóng thẻ");
+          break;
+        }
+
+        const full = s.slice(i, endIdx + 1);
+        line += nl;
+        i = endIdx + 1;
+
+        if(/^<\s*!doctype\b/i.test(full)){
+          continue;
+        }
+
+        const m = full.match(/^<\s*(\/)?\s*([a-zA-Z][\w:-]*)([\s\S]*?)>$/);
+        if(!m){
           continue;
         }
 
         const closing = !!m[1];
-        const tag = (m[2] || "").toLowerCase();
-        const rest = (m[3] || "");
+        const tag = String(m[2] || "").toLowerCase();
+        const rest = String(m[3] || "");
         const selfClose = /\/\s*$/.test(rest) || VOID_TAGS.has(tag);
 
         if(selfClose){
-          const nl3 = full.match(/\n/g);
-          if(nl3) line += nl3.length;
-          lastIdx = idx + full.length;
           continue;
         }
 
         if(!closing){
-          stack.push({ tag, line });
-        }else{
-          if(stack.length === 0){
-            errLines.add(line);
-          }else{
-            const top = stack[stack.length - 1];
-            if(top.tag !== tag){
-              errLines.add(line);
-              errLines.add(top.line);
-              let found = -1;
-              for(let k = stack.length - 1; k >= 0; k--){
-                if(stack[k].tag === tag){ found = k; break; }
-              }
-              if(found >= 0) stack.splice(found, 1);
-              else stack.pop();
-            }else{
-              stack.pop();
+          stack.push({ tag, line: lineStart });
+
+          if(RAW_TEXT_TAGS.has(tag)){
+            const needle = "</" + tag;
+            const pos = lower.indexOf(needle, i);
+            if(pos < 0){
+              addErr(lineStart, `Mở <${tag}> nhưng chưa đóng </${tag}>`);
+              break;
             }
+            line += countNewlinesBetween(s, i, pos);
+            i = pos;
           }
+
+          continue;
         }
 
-        const nl4 = full.match(/\n/g);
-        if(nl4) line += nl4.length;
-        lastIdx = idx + full.length;
-      }
+        if(stack.length === 0){
+          addErr(lineStart, `Thừa </${tag}> (không có thẻ mở)`);
+          continue;
+        }
 
-      if(lastIdx < s.length){
-        const nl = s.slice(lastIdx).match(/\n/g);
-        if(nl) line += nl.length;
+        const top = stack[stack.length - 1];
+        if(top.tag === tag){
+          stack.pop();
+          continue;
+        }
+
+        addErr(lineStart, `Đóng </${tag}> nhưng đang mở <${top.tag}> (mở ở dòng ${top.line})`);
+
+        let found = -1;
+        for(let k = stack.length - 2; k >= 0; k--){
+          if(stack[k].tag === tag){ found = k; break; }
+        }
+
+        if(found >= 0){
+          stack.splice(found, stack.length - found);
+        }else{
+          stack.pop();
+        }
       }
 
       if(stack.length){
-        for(const x of stack) errLines.add(x.line);
+        for(const x of stack){
+          addErr(x.line, `Mở <${x.tag}> nhưng chưa đóng`);
+        }
       }
 
-      return { ok: errLines.size === 0, errLines };
+      errors.sort((a,b)=>a.line - b.line);
+      return { ok: errors.length === 0, errLines, errors };
     }
 
     function escHtml(s){
@@ -1041,6 +1127,13 @@
       if(spans[i]) spans[i].classList.add("active");
     }
 
+    function updateFindNextFloat(){
+      const q = String(el.findInput.value || "").trim();
+      const show = !!(q && STATE.findMatches.length > 1);
+      el.btnFindNextFloat.classList.toggle("show", show);
+      el.btnFindNextFloat.disabled = !show;
+    }
+
     function updatePreview(){
       el.preview.srcdoc = String(el.code.value || "");
     }
@@ -1132,16 +1225,17 @@
 
     function renderErrorBar(){
       const bar = el.errorBar;
-      const errArr = [...STATE.errLines].sort((a,b)=>a-b);
+      const errs = Array.isArray(STATE.errors) ? STATE.errors : [];
 
-      if(errArr.length === 0){
+      if(errs.length === 0){
         bar.classList.remove("show");
         bar.textContent = "";
         return;
       }
 
-      const first = errArr[0];
-      bar.textContent = `Phát hiện ${errArr.length} lỗi ở dòng ${first}`;
+      const idx = Math.max(0, Math.min(STATE.errIndex || 0, errs.length - 1));
+      const e = errs[idx];
+      bar.textContent = `Lỗi ${idx + 1}/${errs.length}: ${e.msg} (dòng ${e.line})`;
       bar.classList.add("show");
     }
 
@@ -1170,16 +1264,15 @@
 
     function renderHighlight(){
       el.codeHl.innerHTML = highlightHtml(el.code.value || "");
+
       const q = String(el.findInput.value || "").trim();
       if(q){
         const spans = applyFindMarksDom(q);
         setActiveFind(STATE.findIndex || 0);
-        const showNext = spans.length > 1;
-        el.btnFindNext.style.display = showNext ? "" : "none";
-        el.btnFindNext.disabled = spans.length <= 1;
+        updateFindNextFloat();
+        if(spans.length <= 1) updateFindNextFloat();
       }else{
-        el.btnFindNext.style.display = "none";
-        el.btnFindNext.disabled = true;
+        updateFindNextFloat();
       }
     }
 
@@ -1205,6 +1298,7 @@
 
       setActiveFind(idx);
       toast(`${idx + 1}/${STATE.findMatches.length}`);
+      updateFindNextFloat();
     }
 
     function recomputeFind(){
@@ -1215,9 +1309,8 @@
         STATE.lastFind = "";
         STATE.findMatches = [];
         STATE.findIndex = 0;
-        el.btnFindNext.style.display = "none";
-        el.btnFindNext.disabled = true;
         renderHighlight();
+        updateFindNextFloat();
         return;
       }
 
@@ -1225,10 +1318,8 @@
       STATE.findMatches = buildFindMatches(el.code.value || "", q);
       if(STATE.findIndex >= STATE.findMatches.length) STATE.findIndex = 0;
 
-      el.btnFindNext.style.display = (STATE.findMatches.length > 1) ? "" : "none";
-      el.btnFindNext.disabled = STATE.findMatches.length <= 1;
-
       renderHighlight();
+      updateFindNextFloat();
     }
 
     function enterTyping(){
@@ -1268,8 +1359,10 @@
 
       if(STATE.fileId) saveDraft(STATE.fileId, v);
 
-      const lint = lintHtmlAccurate(v);
+      const lint = lintHtmlRich(v);
       STATE.errLines = lint.errLines;
+      STATE.errors = lint.errors;
+      STATE.errIndex = 0;
 
       renderErrorBar();
       rebuildGutterAndHeight();
@@ -1320,9 +1413,8 @@
 
       if(!matches.length){
         STATE.findIndex = 0;
-        el.btnFindNext.style.display = "none";
-        el.btnFindNext.disabled = true;
         renderHighlight();
+        updateFindNextFloat();
         toast("Không tìm thấy");
         return;
       }
@@ -1336,6 +1428,7 @@
 
       STATE.findIndex = pick;
       renderHighlight();
+      updateFindNextFloat();
       selectMatchAt(pick);
     }
 
@@ -1347,6 +1440,7 @@
       }
       const next = (STATE.findIndex + 1) % STATE.findMatches.length;
       renderHighlight();
+      updateFindNextFloat();
       selectMatchAt(next);
     }
 
@@ -1573,6 +1667,101 @@
       flushHeavyNow();
     }
 
+    function collectDoctypeRemovalRanges(s){
+      const re = /<!doctype\b[^>]*>/ig;
+      const matches = [];
+      let m;
+      while((m = re.exec(s))){
+        matches.push({ start: m.index, end: m.index + m[0].length });
+      }
+      if(matches.length <= 1) return [];
+
+      const ranges = [];
+      for(let k = 1; k < matches.length; k++){
+        let a = matches[k].start;
+        let b = matches[k].end;
+
+        while(a > 0 && (s[a - 1] === " " || s[a - 1] === "\t")) a--;
+
+        while(b < s.length && (s[b] === " " || s[b] === "\t" || s[b] === "\r")) b++;
+        if(s[b] === "\n") b++;
+
+        ranges.push({ start: a, end: b });
+      }
+      return ranges;
+    }
+
+    function applyRemovalRangesKeepCaret(s, caret, ranges){
+      if(!ranges.length) return { text: s, caret };
+
+      const sorted = ranges.slice().sort((x,y)=>x.start - y.start);
+      let curCaret = Math.max(0, Math.min(Number(caret) || 0, s.length));
+
+      let offset = 0;
+      for(const r of sorted){
+        const a = r.start - offset;
+        const b = r.end - offset;
+        const len = Math.max(0, b - a);
+        if(len <= 0) continue;
+
+        if(b <= curCaret) curCaret -= len;
+        else if(a < curCaret && curCaret < b) curCaret = a;
+
+        offset += (r.end - r.start);
+      }
+
+      let out = s;
+      for(let i = sorted.length - 1; i >= 0; i--){
+        const r = sorted[i];
+        out = out.slice(0, r.start) + out.slice(r.end);
+      }
+
+      curCaret = Math.max(0, Math.min(curCaret, out.length));
+      return { text: out, caret: curCaret };
+    }
+
+    function normalizeDuplicateDoctypeInEditor(){
+      const ta = el.code;
+      const v = String(ta.value || "");
+      const caret = ta.selectionEnd ?? 0;
+
+      const ranges = collectDoctypeRemovalRanges(v);
+      if(!ranges.length) return false;
+
+      const out = applyRemovalRangesKeepCaret(v, caret, ranges);
+      ta.value = out.text;
+      try{ ta.setSelectionRange(out.caret, out.caret); }catch{}
+      return true;
+    }
+
+    function onPasteDedupDoctype(e){
+      const ta = el.code;
+      const cd = e.clipboardData || window.clipboardData;
+      if(!cd) return;
+
+      const text = cd.getData("text/plain");
+      if(typeof text !== "string") return;
+
+      e.preventDefault();
+
+      const start = ta.selectionStart ?? 0;
+      const end = ta.selectionEnd ?? start;
+
+      try{
+        ta.setRangeText(text, start, end, "end");
+      }catch{
+        const v = ta.value || "";
+        ta.value = v.slice(0, start) + text + v.slice(end);
+        const p = start + text.length;
+        try{ ta.setSelectionRange(p, p); }catch{}
+      }
+
+      const changed = normalizeDuplicateDoctypeInEditor();
+      if(changed) toast("Đã xoá DOCTYPE trùng");
+
+      onEditorInput();
+    }
+
     async function boot(){
       const fileId = getFileIdFromUrl();
       if(!fileId){
@@ -1619,14 +1808,17 @@
           el.code.value = r ? STATE.remote : DEFAULT_START;
         }
 
-        const lint = lintHtmlAccurate(el.code.value || "");
+        const lint = lintHtmlRich(el.code.value || "");
         STATE.errLines = lint.errLines;
+        STATE.errors = lint.errors;
+        STATE.errIndex = 0;
 
         renderErrorBar();
         rebuildGutterAndHeight();
         updatePreview();
         updateFormatAvailability();
         recomputeFind();
+        updateFindNextFloat();
 
         try{ el.code.focus(); }catch{}
 
@@ -1649,7 +1841,7 @@
       }, { passive:true });
 
       el.btnFind.addEventListener("click", doFindFirstOrCurrent);
-      el.btnFindNext.addEventListener("click", doFindNext);
+      el.btnFindNextFloat.addEventListener("click", doFindNext);
 
       el.findInput.addEventListener("keydown", (e) => {
         if(e.key === "Enter"){
@@ -1660,12 +1852,21 @@
 
       el.errorBar.addEventListener("click", () => {
         flushHeavyNow();
-        const arr = [...STATE.errLines].sort((a,b)=>a-b);
-        if(arr.length) scrollToLine(arr[0]);
+        const errs = Array.isArray(STATE.errors) ? STATE.errors : [];
+        if(!errs.length) return;
+
+        const idx = Math.max(0, Math.min(STATE.errIndex || 0, errs.length - 1));
+        const e = errs[idx];
+
+        scrollToLine(e.line);
+
+        STATE.errIndex = (idx + 1) % errs.length;
+        renderErrorBar();
       });
 
       el.code.addEventListener("input", onEditorInput, { passive:true });
       el.code.addEventListener("keydown", autoIndentOnEnter, { passive:false });
+      el.code.addEventListener("paste", onPasteDedupDoctype, { passive:false });
 
       bindShortcuts();
 
