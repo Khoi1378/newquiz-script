@@ -53,7 +53,7 @@ textarea.code::selection{background:rgba(37,99,235,.33)}
 @media(min-width:980px){.previewBox{height:calc(100vh - 120px);min-height:0}}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(17,24,39,.92);color:#fff;padding:10px 12px;border-radius:14px;font-weight:900;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;max-width:calc(100% - 28px);z-index:20050;text-align:center;user-select:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
-.findNextFloat{position:fixed;left:calc(12px + env(safe-area-inset-left, 0px));top:50%;transform:translateY(-50%);z-index:20045;display:none;width:52px;height:52px;padding:0;border-radius:999px;align-items:center;justify-content:center;font-size:1.24rem}
+.findNextFloat{position:fixed;right:calc(12px + env(safe-area-inset-right, 0px));left:auto;top:50%;transform:translateY(-50%);z-index:20045;display:none;width:52px;height:52px;padding:0;border-radius:999px;align-items:center;justify-content:center;font-size:1.24rem}
 .findNextFloat.show{display:flex}
 .overlay{position:fixed;inset:0;z-index:25000;background:rgba(17,24,39,.45);display:none;align-items:flex-end;justify-content:center;padding:14px;-webkit-tap-highlight-color:transparent}
 .overlay.show{display:flex}
@@ -171,7 +171,6 @@ btnFind:document.getElementById("btnFind"),
 btnFindNextFloat:document.getElementById("btnFindNextFloat"),
 btnGoTop:document.getElementById("btnGoTop"),
 btnGoBottom:document.getElementById("btnGoBottom"),
-editorFrame:document.getElementById("editorFrame"),
 editorScroll:document.getElementById("editorScroll"),
 code:document.getElementById("code"),
 codeHl:document.getElementById("codeHl"),
@@ -188,7 +187,7 @@ toast:document.getElementById("toast"),
 measure:document.getElementById("measure")
 };
 
-const STATE={fileId:"",meta:null,remote:"",content:"",lineStartRow:[],errLines:new Set(),errors:[],errIndex:0,lastFind:"",findMatches:[],findIndex:0,heavyTimer:null,draftTimer:null,resizeTimer:null,undoStack:[],redoStack:[],pendingUndo:null,isUndoing:false,remoteSaving:false,remoteTimer:null,remoteQueued:false,me:null,renaming:false,renamePrev:""};
+const STATE={fileId:"",meta:null,remote:"",content:"",lineStartRow:[],errLines:new Set(),errors:[],errIndex:0,lastFind:"",findMatches:[],findIndex:0,heavyTimer:null,draftTimer:null,resizeTimer:null,undoStack:[],redoStack:[],pendingUndo:null,isUndoing:false,remoteSaving:false,remoteTimer:null,remoteQueued:false,me:null,renaming:false,renamePrev:"",nameTapTs:0,nameTapTimer:null};
 const PERF={heavyDelay:260,draftDelay:900,resizeDelay:120,remoteDelay:1200};
 
 function toast(msg){el.toast.textContent=String(msg||"");el.toast.classList.add("show");setTimeout(()=>el.toast.classList.remove("show"),1200)}
@@ -209,10 +208,7 @@ const API={me:async(token)=>{const t=String(token||"").trim();const out=await rp
 const CODEAPI={
 getFile:async(token,codeId)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();return await rpcTry(["api_code_get_file","code_get_file","api_code_get"],[{p_token:t,p_code_id:id},{token:t,code_id:id},{p_session_token:t,p_code_id:id}])},
 saveFile:async(token,codeId,content)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();return await rpcTry(["api_code_save_file","code_save_file","api_code_save"],[{p_token:t,p_code_id:id,p_content:content},{token:t,code_id:id,content},{p_session_token:t,p_code_id:id,p_content:content}])},
-renameNode:async(token,codeId,name)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();const nm=String(name||"").trim();return await rpcTry(
-["api_code_rename_node","code_rename_node","api_code_rename","code_rename","api_code_update_node","code_update_node","api_code_set_name","code_set_name"],
-[{p_token:t,p_code_id:id,p_name:nm},{token:t,code_id:id,name:nm},{p_session_token:t,p_code_id:id,p_name:nm},{token:t,p_code_id:id,p_name:nm},{p_token:t,p_code_id:id,p_new_name:nm},{token:t,code_id:id,new_name:nm}]
-)}
+renameNode:async(token,codeId,name)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();const nm=String(name||"").trim();return await rpcTry(["api_code_rename_node","code_rename_node","api_code_rename","code_rename","api_code_update_node","code_update_node","api_code_set_name","code_set_name"],[{p_token:t,p_code_id:id,p_name:nm},{token:t,code_id:id,name:nm},{p_session_token:t,p_code_id:id,p_name:nm},{token:t,p_code_id:id,p_name:nm},{p_token:t,p_code_id:id,p_new_name:nm},{token:t,code_id:id,new_name:nm}])}
 };
 
 function getFileIdFromUrl(){try{const u=new URL(location.href);const raw=(u.searchParams.get("f")||u.searchParams.get("file")||"").trim().toLowerCase();return FILE_ID_RE.test(raw)?raw:null}catch{return null}}
@@ -227,6 +223,7 @@ function saveNameOverride(fileId,name){try{const v=String(name||"").trim();if(!v
 function normLower(s){return String(s||"").toLocaleLowerCase()}
 function makeLineStarts(s){const out=[0];for(let i=0;i<s.length;i++)if(s[i]==="\n")out.push(i+1);return out}
 function idxToLineCol(lineStarts,idx){const i=Math.max(0,Math.min(Number(idx)||0,0x7fffffff));let lo=0,hi=lineStarts.length-1,ans=0;while(lo<=hi){const mid=(lo+hi)>>1;if(lineStarts[mid]<=i){ans=mid;lo=mid+1}else hi=mid-1}return{line:ans+1,col:(i-lineStarts[ans])+1}}
+
 function lintHtmlVsLike(code){
 const s=String(code||"");const lower=normLower(s);const lineStarts=makeLineStarts(s);const stack=[];const errors=[];const errLines=new Set();
 function addErrAt(idx,msg){const lc=idxToLineCol(lineStarts,idx);errors.push({line:lc.line,col:lc.col,msg:String(msg||"")});errLines.add(lc.line)}
@@ -330,12 +327,7 @@ let out=parts.join("");if(!out)out=" ";if(out.endsWith("\n"))out+=" ";return out
 function clearFindMarks(){
 const root=el.codeHl;
 const marks=root.querySelectorAll(".tok-find");
-for(const mk of marks){
-const parent=mk.parentNode;
-if(!parent)continue;
-parent.replaceChild(document.createTextNode(mk.textContent||""),mk);
-parent.normalize()
-}
+for(const mk of marks){const parent=mk.parentNode;if(!parent)continue;parent.replaceChild(document.createTextNode(mk.textContent||""),mk);parent.normalize()}
 }
 function buildFindMatches(text,q){
 const t=String(text||""),needle=String(q||"");if(!needle)return[];
@@ -387,13 +379,17 @@ function updatePreview(){el.preview.srcdoc=String(el.code.value||"")}
 function computeWrapCounts(lines,textWidthPx,lineHeightPx){
 el.measure.style.width=Math.max(20,textWidthPx)+"px";
 const counts=new Array(lines.length);
-for(let i=0;i<lines.length;i++){
-const s=lines[i];
-el.measure.textContent=(s.length?s:" ");
-const h=el.measure.scrollHeight;
-counts[i]=Math.max(1,Math.ceil(h/lineHeightPx))
-}
+for(let i=0;i<lines.length;i++){const s=lines[i];el.measure.textContent=(s.length?s:" ");const h=el.measure.scrollHeight;counts[i]=Math.max(1,Math.ceil(h/lineHeightPx))}
 return counts
+}
+
+function updateScrollNavButtons(){
+const sc=el.editorScroll;
+const max=(sc.scrollHeight||0)-(sc.clientHeight||0);
+const atTop=(sc.scrollTop<=1);
+const atBottom=(max<=1)||(sc.scrollTop>=max-1);
+el.btnGoTop.disabled=atTop;
+el.btnGoBottom.disabled=atBottom
 }
 
 function rebuildGutterAndHeight(){
@@ -443,11 +439,20 @@ bar.textContent=`Lỗi ${idx+1}/${errs.length}: ${e.msg} (dòng ${e.line}, cột
 bar.classList.add("show")
 }
 
+function scrollToRowCenter(row){
+const r=Math.max(0,Number(row)||0);
+const node=el.gutter.querySelector(`.gline[data-row="${r}"]`);
+if(!node)return;
+const top=node.offsetTop;
+const target=Math.max(0,top-(el.editorScroll.clientHeight/2)+(node.offsetHeight/2));
+try{el.editorScroll.scrollTo({top:target,behavior:"smooth"})}catch{el.editorScroll.scrollTop=target}
+setTimeout(updateScrollNavButtons,160)
+}
+
 function scrollToLineNoFocus(lineNo){
 const idx=Math.max(1,Number(lineNo)||1);
 const startRow=STATE.lineStartRow[idx-1]??0;
-const target=el.gutter.querySelector(`.gline[data-row="${startRow}"]`);
-if(target)target.scrollIntoView({block:"center",behavior:"smooth",inline:"nearest"})
+scrollToRowCenter(startRow)
 }
 
 function renderHighlight(){
@@ -467,6 +472,15 @@ if(!STATE.findMatches.length)return;
 const idx=((i%STATE.findMatches.length)+STATE.findMatches.length)%STATE.findMatches.length;
 STATE.findIndex=idx;
 const m=STATE.findMatches[idx];
+
+try{
+const active=document.activeElement;
+if(active!==el.fileNameBox){
+try{el.code.focus({preventScroll:true})}catch{try{el.code.focus()}catch{}}
+}
+try{el.code.setSelectionRange(m.start,m.end)}catch{}
+}catch{}
+
 scrollToLineNoFocus(getLineFromPos(m.start));
 setActiveFind(idx);
 toast(`${idx+1}/${STATE.findMatches.length}`);
@@ -476,10 +490,7 @@ updateFindNextFloat()
 function recomputeFind(){
 const q=String(el.findInput.value||"").trim();
 el.btnFind.disabled=!q;
-if(!q){
-STATE.lastFind="";STATE.findMatches=[];STATE.findIndex=0;
-renderHighlight();return
-}
+if(!q){STATE.lastFind="";STATE.findMatches=[];STATE.findIndex=0;renderHighlight();return}
 STATE.findMatches=buildFindMatches(el.code.value||"",q);
 if(STATE.findIndex>=STATE.findMatches.length)STATE.findIndex=0;
 renderHighlight()
@@ -508,10 +519,7 @@ STATE.remote=html;
 clearDraft(STATE.fileId);
 if(forceToast)toast("Đã lưu")
 }catch(e){toast(String(e&&e.message?e.message:"Lưu lỗi"))}
-finally{
-STATE.remoteSaving=false;
-if(STATE.remoteQueued){STATE.remoteQueued=false;scheduleRemoteSave()}
-}
+finally{STATE.remoteSaving=false;if(STATE.remoteQueued){STATE.remoteQueued=false;scheduleRemoteSave()}}
 }
 
 function updateUndoButtons(){el.btnUndo.disabled=!(STATE.undoStack&&STATE.undoStack.length);el.btnRedo.disabled=!(STATE.redoStack&&STATE.redoStack.length)}
@@ -614,11 +622,7 @@ let out=[],indent=0;
 for(const t0 of toks){
 const t=String(t0||"");if(!t)continue;
 if(isDoctype(t)){out.push("<!DOCTYPE html>");continue}
-if(isComment(t)){
-const lines=t.replace(/\r\n/g,"\n").replace(/\r/g,"\n").trim().split("\n");
-for(const ln of lines)out.push(indentUnit.repeat(Math.max(0,indent))+ln.trim());
-continue
-}
+if(isComment(t)){const lines=t.replace(/\r\n/g,"\n").replace(/\r/g,"\n").trim().split("\n");for(const ln of lines)out.push(indentUnit.repeat(Math.max(0,indent))+ln.trim());continue}
 if(isTag(t)){
 if(isClosingTag(t)){indent=Math.max(0,indent-1);out.push(indentUnit.repeat(indent)+t.trim())}
 else if(isSelfClosing(t)){out.push(indentUnit.repeat(indent)+t.trim())}
@@ -758,25 +762,8 @@ if(!STATE.findMatches.length){doFindFirst();return}
 selectMatchAt((STATE.findIndex+1)%STATE.findMatches.length)
 }
 
-function updateScrollNavButtons(){
-const sc=el.editorScroll;
-const max=(sc.scrollHeight||0)-(sc.clientHeight||0);
-const atTop=(sc.scrollTop<=1);
-const atBottom=(max<=1)||(sc.scrollTop>=max-1);
-el.btnGoTop.disabled=atTop;
-el.btnGoBottom.disabled=atBottom
-}
-function scrollEditorTop(){
-if(el.btnGoTop.disabled)return;
-try{el.editorScroll.scrollTo({top:0,behavior:"smooth"})}catch{el.editorScroll.scrollTop=0}
-setTimeout(updateScrollNavButtons,160)
-}
-function scrollEditorBottom(){
-if(el.btnGoBottom.disabled)return;
-const max=(el.editorScroll.scrollHeight||0);
-try{el.editorScroll.scrollTo({top:max,behavior:"smooth"})}catch{el.editorScroll.scrollTop=max}
-setTimeout(updateScrollNavButtons,160)
-}
+function scrollEditorTop(){if(el.btnGoTop.disabled)return;try{el.editorScroll.scrollTo({top:0,behavior:"smooth"})}catch{el.editorScroll.scrollTop=0}setTimeout(updateScrollNavButtons,160)}
+function scrollEditorBottom(){if(el.btnGoBottom.disabled)return;const max=(el.editorScroll.scrollHeight||0);try{el.editorScroll.scrollTo({top:max,behavior:"smooth"})}catch{el.editorScroll.scrollTop=max}setTimeout(updateScrollNavButtons,160)}
 
 function openOverlay(overlayEl){overlayEl.classList.add("show");overlayEl.setAttribute("aria-hidden","false")}
 function closeOverlay(overlayEl){overlayEl.classList.remove("show");overlayEl.setAttribute("aria-hidden","true")}
@@ -797,7 +784,6 @@ const newName=String(el.fileNameBox.value||"").trim();
 const prev=STATE.renamePrev||"";
 el.fileNameBox.readOnly=true;
 STATE.renaming=false;
-
 if(!newName){el.fileNameBox.value=prev;return}
 if(newName===prev)return;
 
@@ -821,6 +807,20 @@ if(!STATE.renaming)return;
 el.fileNameBox.value=STATE.renamePrev||String(el.fileNameBox.value||"");
 el.fileNameBox.readOnly=true;
 STATE.renaming=false
+}
+function onNameDoubleTap(e){
+if(!el.fileNameBox.readOnly||STATE.renaming)return;
+const now=Date.now();
+if(STATE.nameTapTs&&now-STATE.nameTapTs<360){
+STATE.nameTapTs=0;
+if(STATE.nameTapTimer){clearTimeout(STATE.nameTapTimer);STATE.nameTapTimer=null}
+e.preventDefault();
+startRename();
+return
+}
+STATE.nameTapTs=now;
+if(STATE.nameTapTimer)clearTimeout(STATE.nameTapTimer);
+STATE.nameTapTimer=setTimeout(()=>{STATE.nameTapTs=0;STATE.nameTapTimer=null},420)
 }
 
 function bindShortcuts(){
@@ -901,7 +901,6 @@ el.btnFindNextFloat.addEventListener("click",doFindNext);
 
 el.btnGoTop.addEventListener("click",scrollEditorTop);
 el.btnGoBottom.addEventListener("click",scrollEditorBottom);
-
 el.editorScroll.addEventListener("scroll",()=>{updateScrollNavButtons()},{passive:true});
 
 el.errorBar.addEventListener("click",()=>{
@@ -927,6 +926,8 @@ el.zoomOverlay.addEventListener("click",(e)=>{if(e.target===el.zoomOverlay)close
 el.previewBig.addEventListener("load",()=>{setTimeout(()=>fitIframeToWidth(el.previewBig),0)});
 
 el.fileNameBox.addEventListener("dblclick",()=>startRename());
+el.fileNameBox.addEventListener("click",onNameDoubleTap);
+el.fileNameBox.addEventListener("touchend",onNameDoubleTap,{passive:false});
 el.fileNameBox.addEventListener("keydown",(e)=>{
 if(e.key==="Enter"){e.preventDefault();if(el.fileNameBox.readOnly)startRename();else commitRename()}
 else if(e.key==="Escape"){e.preventDefault();cancelRename()}
