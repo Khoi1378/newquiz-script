@@ -1,97 +1,74 @@
 <!doctype html><html lang="vi"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no"/><title>tuankhoi.site - HTML Editor</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet"><style>
-:root{--bg1:#ffecd2;--bg2:#fcb69f;--card:#fff;--text:#1f2937;--muted:#6b7280;--border:#e5e7eb;--soft:#f8fafc;--shadow:0 14px 40px rgba(0,0,0,.10);--radius:18px;--bad:#dc2626;--mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;--codeBg:#0b1020;--codeText:#e5e7eb;--codeMuted:rgba(255,255,255,.55);--codeSoft:rgba(255,255,255,.06);--fs:13px;--lh:22px;--pad:12px;--gutterW:44px;--blue:#2563eb}
+:root{--bg1:#ffecd2;--bg2:#fcb69f;--card:#fff;--text:#1f2937;--border:#e5e7eb;--soft:#f8fafc;--shadow:0 14px 40px rgba(0,0,0,.10);--radius:18px;--mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;--codeBg:#0b1020;--codeText:#e5e7eb;--codeMuted:rgba(255,255,255,.55);--codeSoft:rgba(255,255,255,.06);--fs:13px;--lh:22px;--pad:12px;--gutterW:44px;--blue:#2563eb}
 *{box-sizing:border-box}html,body{height:100%}html{-webkit-text-size-adjust:100%}
-body{margin:0;font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);overflow:hidden;touch-action:none;-webkit-overflow-scrolling:touch;user-select:none;background-color:var(--bg1);background-image:radial-gradient(1200px 600px at 20% 10%,#fff 0%,rgba(255,255,255,0) 55%),linear-gradient(120deg,var(--bg1) 0%,var(--bg2) 100%);background-attachment:fixed,fixed;background-repeat:no-repeat,no-repeat;background-size:cover,cover}
-.wrap{height:100vh;max-width:1280px;margin:0 auto;padding:10px 12px 12px;display:flex;flex-direction:column;gap:10px;min-width:0}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;user-select:none}
-.fileName{font-weight:950;font-size:.9rem;color:rgba(31,41,55,.78);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto}
-.topActions{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+body{margin:0;font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);overflow-x:hidden;overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;user-select:none;background-color:var(--bg1);background-image:radial-gradient(1200px 600px at 20% 10%,#fff 0%,rgba(255,255,255,0) 55%),linear-gradient(120deg,var(--bg1) 0%,var(--bg2) 100%);background-attachment:fixed,fixed;background-repeat:no-repeat,no-repeat;background-size:cover,cover}
+.wrap{max-width:1280px;margin:0 auto;padding:10px 12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.topbar{display:flex;align-items:center;gap:10px;min-width:0;user-select:none}
+.exitBtn{border:0;background:#fee2e2;color:#b91c1c;padding:9px 12px;border-radius:999px;font-weight:950;font-size:1.02rem;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;box-shadow:0 10px 20px rgba(220,38,38,.12)}
+.exitBtn:hover{filter:brightness(.98)}.exitBtn:active{transform:translateY(0)}
+.fileBox{flex:1 1 auto;min-width:0;border-radius:14px;border:2px solid #e5e7eb;background:rgba(255,255,255,.82);box-shadow:0 10px 22px rgba(0,0,0,.06);padding:9px 10px;font-weight:950;font-size:.9rem;color:rgba(31,41,55,.85);outline:none;user-select:text}
+.fileBox[readonly]{cursor:default}
 .card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:10px;min-width:0}
-.split{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px}
-.col{min-height:0;min-width:0;display:flex;flex-direction:column}
+.split{display:flex;flex-direction:column;gap:10px;min-width:0}
+.col{min-width:0;display:flex;flex-direction:column}
 .previewCol{order:2}
-.editorCol{order:1;flex:1}
+.editorCol{order:1}
 @media(min-width:980px){.split{flex-direction:row}.previewCol{order:1;flex:0 0 25%}.editorCol{order:2;flex:1}}
-.btn{flex:0 0 auto;border:0;cursor:pointer;border-radius:999px;padding:9px 12px;font-weight:900;font-size:.88rem;background:#fff;color:#111827;border:1px solid #e5e7eb;user-select:none;white-space:nowrap;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .14s ease,filter .14s ease,opacity .14s ease}
+.btn{border:0;cursor:pointer;border-radius:999px;padding:9px 12px;font-weight:900;font-size:.88rem;background:#fff;color:#111827;border:1px solid #e5e7eb;user-select:none;white-space:nowrap;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .14s ease,filter .14s ease,opacity .14s ease}
 .btn:hover{transform:translateY(-1px);filter:brightness(.985)}.btn:active{transform:translateY(0)}.btn[disabled]{opacity:.55;cursor:not-allowed;transform:none!important;filter:none!important}
-.btnGhost{background:#fff;color:#111827;border:1px solid #e5e7eb}
 .btnBlue{background:var(--blue);color:#fff;border:0;box-shadow:0 12px 24px rgba(37,99,235,.18)}
 .btnDanger{background:#fff;color:#b91c1c;border:1px solid rgba(185,28,28,.35)}
-.exitBtn{border:0;background:#fee2e2;color:#b91c1c;padding:9px 12px;border-radius:999px;font-weight:950;font-size:1.02rem;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;box-shadow:0 10px 20px rgba(220,38,38,.12)}
-.exitBtn:active{transform:translateY(0)}.exitBtn:hover{filter:brightness(.98)}
-.iconBtn{border:0;background:transparent;padding:6px 8px;border-radius:12px;font-weight:950;font-size:1.18rem;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;color:#111827;opacity:1;transition:opacity .14s ease,transform .14s ease,filter .14s ease}
-.iconBtn:hover{transform:translateY(-1px);filter:brightness(.985)}.iconBtn:active{transform:translateY(0)}.iconBtn[disabled]{opacity:1;cursor:not-allowed;transform:none!important;filter:none!important;color:#9ca3af}
-.toolRow{display:flex;align-items:center;gap:12px;flex-wrap:nowrap;overflow:hidden;user-select:none;min-width:0}
-.toolLeft{display:flex;align-items:center;gap:12px;min-width:0;flex:0 0 auto}
-.toolMid{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 auto;overflow:hidden}
-.toolRight{display:flex;align-items:center;gap:10px;flex:0 0 auto}
-.input{width:100%;border-radius:14px;border:2px solid #e5e7eb;padding:9px 10px;font-size:.9rem;font-weight:750;outline:none;background:var(--soft);transition:border-color .14s ease,box-shadow .14s ease,background .14s ease;user-select:text;min-width:0}
+.iconBtn{border:0;background:transparent;padding:6px 8px;border-radius:12px;font-weight:950;font-size:1.18rem;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;color:#111827;transition:filter .14s ease,transform .14s ease}
+.iconBtn:hover{transform:translateY(-1px);filter:brightness(.985)}.iconBtn:active{transform:translateY(0)}.iconBtn[disabled]{cursor:not-allowed;color:#9ca3af;filter:none!important;transform:none!important}
+.toolStack{display:flex;flex-direction:column;gap:10px;min-width:0}
+.toolRow{display:flex;align-items:center;gap:12px;flex-wrap:nowrap;min-width:0;user-select:none}
+.row1{justify-content:flex-end}
+.row2{justify-content:space-between}
+.findGroup{display:flex;align-items:center;gap:10px;flex:1 1 auto;min-width:0}
+.input{width:100%;min-width:0;border-radius:14px;border:2px solid #e5e7eb;padding:9px 10px;font-size:.9rem;font-weight:750;outline:none;background:var(--soft);transition:border-color .14s ease,box-shadow .14s ease,background .14s ease;user-select:text}
 .input:focus{border-color:rgba(124,58,237,.55);box-shadow:0 0 0 5px rgba(124,58,237,.10);background:#fff}
-.errorBar{margin-top:10px;display:none;padding:10px 12px;border-radius:14px;border:1px solid rgba(220,38,38,.35);background:rgba(254,242,242,.85);color:#7f1d1d;font-weight:900;font-size:.9rem;user-select:none;cursor:pointer}
+.errorBar{display:none;padding:10px 12px;border-radius:14px;border:1px solid rgba(220,38,38,.35);background:rgba(254,242,242,.85);color:#7f1d1d;font-weight:900;font-size:.9rem;user-select:none;cursor:pointer}
 .errorBar.show{display:block}
-.editorCard{display:flex;flex-direction:column;gap:10px;min-height:0}
-.editorFrame{border-radius:16px;border:2px solid #e5e7eb;overflow:hidden;background:var(--codeBg);box-shadow:0 14px 34px rgba(0,0,0,.18);display:flex;flex:1;min-height:0}
-.editorScroll{flex:1;min-height:0;overflow:auto;overflow-x:hidden;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+.editorCard{display:flex;flex-direction:column;gap:10px}
+.editorFrame{border-radius:16px;border:2px solid #e5e7eb;overflow:hidden;background:var(--codeBg);box-shadow:0 14px 34px rgba(0,0,0,.18);display:flex;min-height:52vh}
+@media(min-width:980px){.editorFrame{min-height:calc(100vh - 156px)}}
+.editorScroll{flex:1;overflow:auto;overflow-x:hidden;touch-action:pan-y;-webkit-overflow-scrolling:touch}
 .editorInner{display:flex;align-items:stretch;min-width:0}
 .gutter{width:var(--gutterW);flex:0 0 var(--gutterW);padding:var(--pad) 6px;background:var(--codeSoft);border-right:1px solid rgba(255,255,255,.10);color:var(--codeMuted);font-family:var(--mono);font-size:var(--fs);line-height:var(--lh);text-align:right;user-select:none}
 .gline{height:var(--lh);display:flex;align-items:center;justify-content:flex-end;padding-right:2px}
 .gline.err{background:rgba(220,38,38,.18);border-radius:8px;padding-right:6px;margin-right:-2px;margin-left:-2px}
-.codePane{position:relative;flex:1 1 auto;width:100%;background:transparent;min-width:0}
+.codePane{position:relative;flex:1 1 auto;width:100%;min-width:0;background:transparent}
 pre.codeHl{position:absolute;inset:0;margin:0;padding:var(--pad);border:0;outline:none;background:transparent;color:var(--codeText);font-family:var(--mono);font-size:var(--fs);line-height:var(--lh);tab-size:2;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;pointer-events:none;user-select:none}
 textarea.code{position:relative;width:100%;border:0;outline:none;resize:none;padding:var(--pad);background:transparent;font-family:var(--mono);font-size:var(--fs);line-height:var(--lh);tab-size:2;color:transparent;-webkit-text-fill-color:transparent;caret-color:#fff;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;user-select:text;touch-action:pan-y;-webkit-overflow-scrolling:touch}
 textarea.code::selection{background:rgba(37,99,235,.33)}
 .tok-punc{color:rgba(255,255,255,.70)}.tok-tag{color:#60a5fa}.tok-attr{color:#fbbf24}.tok-op{color:rgba(255,255,255,.60)}.tok-str{color:#34d399}.tok-com{color:rgba(255,255,255,.45)}.tok-doctype{color:#a78bfa}.tok-txt{color:rgba(229,231,235,.92)}
 .tok-find{background:rgba(37,99,235,.22);border-radius:7px;padding:0 1px;box-shadow:0 0 0 1px rgba(37,99,235,.18) inset}
 .tok-find.active{background:rgba(37,99,235,.55);box-shadow:0 0 0 1px rgba(37,99,235,.35) inset}
-.previewCard{display:flex;flex-direction:column;gap:10px;min-height:0}
-.previewHead{display:flex;align-items:center;justify-content:space-between;gap:10px;user-select:none}
-.previewLabel{font-weight:950;color:rgba(31,41,55,.65);font-size:.88rem;user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.previewBox{border-radius:16px;border:2px solid #e5e7eb;background:#fff;overflow:hidden;box-shadow:0 10px 22px rgba(0,0,0,.06);min-height:160px;height:24vh}
+.previewCard{display:flex;flex-direction:column;gap:10px}
+.previewHead{display:flex;align-items:center;justify-content:space-between;gap:10px;user-select:none;flex-wrap:nowrap;overflow:hidden}
+.previewLabel{font-weight:950;color:rgba(31,41,55,.65);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.previewBox{border-radius:16px;border:2px solid #e5e7eb;background:#fff;overflow:hidden;box-shadow:0 10px 22px rgba(0,0,0,.06);min-height:180px;height:30vh}
 .previewBox iframe{width:100%;height:100%;border:0;background:#fff}
-@media(min-width:980px){.previewBox{height:calc(100vh - 86px);min-height:0;flex:1}}
+@media(min-width:980px){.previewBox{height:calc(100vh - 120px);min-height:0}}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(17,24,39,.92);color:#fff;padding:10px 12px;border-radius:14px;font-weight:900;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;max-width:calc(100% - 28px);z-index:20050;text-align:center;user-select:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
-.findNextFloat{position:fixed;right:calc(14px + env(safe-area-inset-right, 0px));bottom:calc(18px + env(safe-area-inset-bottom, 0px));z-index:20045;display:none;width:52px;height:52px;padding:0;border-radius:999px;align-items:center;justify-content:center;font-size:1.24rem}
-.findNextFloat.show{display:flex}
-.floatNav{position:fixed;left:calc(12px + env(safe-area-inset-left, 0px));top:calc(54px + env(safe-area-inset-top, 0px));z-index:20040;display:flex;flex-direction:column;gap:10px;user-select:none}
-.floatNav .navBtn{width:46px;height:46px;border-radius:999px;border:0;background:#fff;box-shadow:0 14px 30px rgba(0,0,0,.14);font-weight:950;font-size:1.1rem;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.floatNav .navBtn:active{transform:translateY(0)}
 .overlay{position:fixed;inset:0;z-index:25000;background:rgba(17,24,39,.45);display:none;align-items:flex-end;justify-content:center;padding:14px;-webkit-tap-highlight-color:transparent}
 .overlay.show{display:flex}
-.sheet,.zoomSheet{width:min(980px,100%);background:rgba(255,255,255,.98);border:2px solid rgba(229,231,235,.95);border-radius:22px;box-shadow:0 18px 60px rgba(0,0,0,.22);overflow:hidden;max-height:86vh;display:flex;flex-direction:column;user-select:none}
-.sheetHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 12px 10px;border-bottom:1px solid rgba(229,231,235,.9)}
+.zoomSheet{width:min(980px,100%);background:rgba(255,255,255,.98);border:2px solid rgba(229,231,235,.95);border-radius:22px;box-shadow:0 18px 60px rgba(0,0,0,.22);overflow:hidden;max-height:86vh;display:flex;flex-direction:column;user-select:none}
+.sheetHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 12px 10px;border-bottom:1px solid rgba(229,231,235,.9);flex-wrap:nowrap;overflow:hidden}
 .sheetTitle{font-weight:950;font-size:.98rem;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .sheetActions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
 .xBtn{border:0;background:transparent;padding:8px 10px;border-radius:999px;font-weight:950;font-size:1.06rem;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;color:#111827;opacity:.9}
-.sheetBody{padding:12px;overflow:auto;-webkit-overflow-scrolling:touch;min-height:0}
-.sheetBody *{user-select:none}.sheetBody input,.sheetBody textarea{user-select:text}
-.guideGrid{display:grid;grid-template-columns:1fr;gap:10px}
-.guideList{display:flex;flex-wrap:wrap;gap:10px}
-.guideChip{border:1px solid rgba(229,231,235,.95);background:#fff;border-radius:999px;padding:10px 12px;font-weight:950;font-size:.92rem;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;user-select:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.guideChip.active{border-color:rgba(37,99,235,.35);box-shadow:0 0 0 4px rgba(37,99,235,.10)}
-.guidePanel{border:2px solid rgba(229,231,235,.95);border-radius:18px;padding:12px;background:#fff;box-shadow:0 10px 22px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:10px}
-.guideRow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:nowrap;overflow:hidden}
-.guideLabel{font-weight:950;color:rgba(31,41,55,.70);font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.guideCode{width:100%;border-radius:14px;border:2px solid rgba(229,231,235,.95);background:var(--soft);padding:10px 10px;font-family:var(--mono);font-size:12.5px;line-height:19px;outline:none}
-.guidePreviewBox{border-radius:16px;border:2px solid #e5e7eb;overflow:hidden;background:#fff;box-shadow:0 10px 22px rgba(0,0,0,.06);height:32vh;min-height:180px}
-.guidePreviewBox iframe{width:100%;height:100%;border:0;background:#fff}
-.guideEmpty{padding:10px 0 2px;font-weight:900;color:rgba(31,41,55,.55);font-size:.92rem}
-.zoomBody{padding:12px;overflow:auto;-webkit-overflow-scrolling:touch;min-height:0}
-.zoomControls{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:nowrap;overflow:hidden}
-.toggle{display:flex;align-items:center;gap:8px;font-weight:950;color:#111827;user-select:none;white-space:nowrap}
-.toggle input{width:18px;height:18px;accent-color:var(--blue)}
-.zoomViewport{border-radius:16px;border:2px solid rgba(229,231,235,.95);background:#fff;overflow:auto;box-shadow:0 10px 22px rgba(0,0,0,.06);padding:10px}
-.zoomStage{position:relative;transform-origin:top left}
-.zoomStage iframe{border:0;background:#fff;display:block}
-@media(max-width:520px){:root{--gutterW:40px;--fs:12.5px;--lh:21px}.btn{padding:9px 10px}.previewBox{height:24vh}.floatNav{top:calc(52px + env(safe-area-inset-top, 0px))}.findNextFloat{right:calc(12px + env(safe-area-inset-right, 0px));bottom:calc(16px + env(safe-area-inset-bottom, 0px));width:50px;height:50px}}
+.zoomBody{padding:12px;overflow:auto;-webkit-overflow-scrolling:touch;min-height:0;display:flex;flex-direction:column;gap:10px}
+.zoomInfo{font-weight:950;color:rgba(31,41,55,.70);font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zoomViewport{border-radius:16px;border:2px solid rgba(229,231,235,.95);background:#fff;overflow:hidden;box-shadow:0 10px 22px rgba(0,0,0,.06);height:68vh;min-height:260px}
+.zoomViewport iframe{width:100%;height:100%;border:0;background:#fff}
+@media(max-width:520px){:root{--gutterW:40px;--fs:12.5px;--lh:21px}.btn{padding:9px 10px}.toolRow{gap:10px}.iconBtn{font-size:1.12rem}.previewBox{height:32vh}.editorFrame{min-height:48vh}}
 </style></head><body>
 <div class="wrap">
   <div class="topbar">
-    <div class="fileName" id="filePath">-</div>
-    <div class="topActions">
-      <button class="iconBtn" id="btnGuide" type="button" aria-label="Hướng dẫn">💡</button>
-      <button class="exitBtn" id="btnExit" type="button" aria-label="Thoát">⤶</button>
-    </div>
+    <button class="exitBtn" id="btnExit" type="button" aria-label="Thoát">⤶</button>
+    <input class="fileBox" id="fileNameBox" type="text" value="-" readonly aria-label="Tên file"/>
   </div>
 
   <div class="split">
@@ -99,7 +76,7 @@ textarea.code::selection{background:rgba(37,99,235,.33)}
       <div class="card previewCard">
         <div class="previewHead">
           <div class="previewLabel" id="previewLabel">Xem trước</div>
-          <button class="btn btnGhost" id="btnZoom" type="button">⌘ Zoom</button>
+          <button class="btn" id="btnZoom" type="button">⌘ Zoom</button>
         </div>
         <div class="previewBox"><iframe id="preview" sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts"></iframe></div>
       </div>
@@ -107,19 +84,22 @@ textarea.code::selection{background:rgba(37,99,235,.33)}
 
     <div class="col editorCol">
       <div class="card editorCard">
-        <div class="toolRow">
-          <div class="toolLeft">
+        <div class="toolStack">
+          <div class="toolRow row1">
             <button class="iconBtn" id="btnUndo" type="button" aria-label="Hoàn tác" disabled>↺</button>
             <button class="iconBtn" id="btnRedo" type="button" aria-label="Tiến tới" disabled>↻</button>
-            <button class="btn btnGhost" id="btnFormat" type="button" disabled>⌥ Căn chỉnh</button>
-          </div>
-          <div class="toolMid">
-            <input class="input" id="findInput" type="search" inputmode="search" enterkeyhint="search" placeholder="Tìm trong..." autocomplete="off"/>
-            <button class="btn btnGhost" id="btnFind" type="button" disabled>Tìm</button>
-          </div>
-          <div class="toolRight">
             <button class="btn btnBlue" id="btnDownload" type="button">Tải về</button>
-            <button class="btn btnDanger" id="btnClearAll" type="button">Xoá</button>
+            <button class="btn btnDanger" id="btnClearAll" type="button">Xóa tất cả</button>
+          </div>
+
+          <div class="toolRow row2">
+            <div class="findGroup">
+              <input class="input" id="findInput" type="search" inputmode="search" enterkeyhint="search" placeholder="Tìm kiếm..." autocomplete="off"/>
+              <button class="btn" id="btnFind" type="button" disabled>Tìm</button>
+            </div>
+            <button class="iconBtn" id="btnGoTop" type="button" aria-label="Lên đầu code">▲</button>
+            <button class="iconBtn" id="btnGoBottom" type="button" aria-label="Xuống cuối code">▼</button>
+            <button class="btn" id="btnFormat" type="button" disabled>⌥ Căn chỉnh</button>
           </div>
         </div>
 
@@ -143,49 +123,7 @@ textarea.code::selection{background:rgba(37,99,235,.33)}
   <div id="measure" style="position:absolute;left:-99999px;top:-99999px;visibility:hidden;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font-family:var(--mono);font-size:var(--fs);line-height:var(--lh);tab-size:2;padding:0;margin:0"></div>
 </div>
 
-<div class="floatNav" aria-hidden="false">
-  <button class="navBtn" id="btnGoTop" type="button" aria-label="Lên đầu">🔼</button>
-  <button class="navBtn" id="btnGoBottom" type="button" aria-label="Xuống cuối">🔽</button>
-</div>
-
-<button class="btn btnBlue findNextFloat" id="btnFindNextFloat" type="button" aria-label="Tìm tiếp">➜</button>
 <div class="toast" id="toast"></div>
-
-<div class="overlay" id="guideOverlay" aria-hidden="true">
-  <div class="sheet" role="dialog" aria-modal="true" aria-label="Hướng dẫn">
-    <div class="sheetHead">
-      <div class="sheetTitle">Hướng dẫn</div>
-      <div class="sheetActions">
-        <button class="btn btnGhost" id="btnGuideEdit" type="button" style="display:none">Sửa</button>
-        <button class="xBtn" id="btnGuideClose" type="button" aria-label="Đóng">X</button>
-      </div>
-    </div>
-    <div class="sheetBody">
-      <div class="guideGrid">
-        <div>
-          <div class="guideList" id="guideList"></div>
-          <div class="guideEmpty" id="guideEmpty" style="display:none">Chưa có nút hướng dẫn</div>
-        </div>
-
-        <div class="guidePanel" id="guidePanel">
-          <div class="guideRow">
-            <div class="guideLabel" id="guideSelTitle">-</div>
-            <div class="toolRight" style="gap:10px">
-              <button class="btn btnGhost" id="btnGuideInsert" type="button" disabled>Chèn</button>
-              <button class="btn btnGhost" id="btnGuideNew" type="button" style="display:none">Thêm</button>
-              <button class="btn btnDanger" id="btnGuideDelete" type="button" style="display:none">Xoá</button>
-              <button class="btn btnBlue" id="btnGuideSave" type="button" style="display:none">Lưu</button>
-            </div>
-          </div>
-
-          <input class="input" id="guideName" placeholder="Tên nút" style="display:none"/>
-          <div class="guidePreviewBox" id="guidePreviewBox"><iframe id="guidePreview" sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts"></iframe></div>
-          <textarea class="guideCode" id="guideContent" rows="9" readonly style="display:none"></textarea>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 
 <div class="overlay" id="zoomOverlay" aria-hidden="true">
   <div class="zoomSheet" role="dialog" aria-modal="true" aria-label="Phóng to xem trước">
@@ -194,14 +132,9 @@ textarea.code::selection{background:rgba(37,99,235,.33)}
       <div class="sheetActions"><button class="xBtn" id="btnZoomClose" type="button" aria-label="Đóng">X</button></div>
     </div>
     <div class="zoomBody">
-      <div class="zoomControls">
-        <label class="toggle"><input type="checkbox" id="chkFitWidth" checked/>Vừa bề ngang</label>
-        <div class="guideLabel" id="zoomInfo">-</div>
-      </div>
+      <div class="zoomInfo" id="zoomInfo">-</div>
       <div class="zoomViewport" id="zoomViewport">
-        <div class="zoomStage" id="zoomStage">
-          <iframe id="previewBig" sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts"></iframe>
-        </div>
+        <iframe id="previewBig" sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts"></iframe>
       </div>
     </div>
   </div>
@@ -214,7 +147,6 @@ const TOKEN_KEYS=["tk_token_v2","tk_token_v1","tk_token"];
 const TOKEN_COOKIES=["tk_token_v2","tk_token_v1","tk_token"];
 const ME_KEY="tk_me_v2";
 const DRAFT_KEY_PREFIX="tk_code_draft_v2:";
-const GUIDE_KEY_PREFIX="tk_code_guide_v1:";
 const FILE_ID_RE=/^[a-z]{5}$/;
 const VOID_TAGS=new Set(["area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"]);
 const RAW_TEXT_TAGS=new Set(["script","style","textarea"]);
@@ -222,52 +154,34 @@ const OPTIONAL_END_TAGS=new Set(["html","head","body","li","dt","dd","p","rt","r
 const DEFAULT_START="<!DOCTYPE html>\n";
 const el={
 btnExit:document.getElementById("btnExit"),
+fileNameBox:document.getElementById("fileNameBox"),
 btnUndo:document.getElementById("btnUndo"),
 btnRedo:document.getElementById("btnRedo"),
 btnDownload:document.getElementById("btnDownload"),
-btnGuide:document.getElementById("btnGuide"),
-guideOverlay:document.getElementById("guideOverlay"),
-btnGuideClose:document.getElementById("btnGuideClose"),
-btnGuideEdit:document.getElementById("btnGuideEdit"),
-guideList:document.getElementById("guideList"),
-guideEmpty:document.getElementById("guideEmpty"),
-guidePanel:document.getElementById("guidePanel"),
-guideSelTitle:document.getElementById("guideSelTitle"),
-guideName:document.getElementById("guideName"),
-guideContent:document.getElementById("guideContent"),
-guidePreview:document.getElementById("guidePreview"),
-btnGuideInsert:document.getElementById("btnGuideInsert"),
-btnGuideNew:document.getElementById("btnGuideNew"),
-btnGuideDelete:document.getElementById("btnGuideDelete"),
-btnGuideSave:document.getElementById("btnGuideSave"),
-btnZoom:document.getElementById("btnZoom"),
-zoomOverlay:document.getElementById("zoomOverlay"),
-btnZoomClose:document.getElementById("btnZoomClose"),
-chkFitWidth:document.getElementById("chkFitWidth"),
-zoomViewport:document.getElementById("zoomViewport"),
-zoomStage:document.getElementById("zoomStage"),
-previewBig:document.getElementById("previewBig"),
-zoomInfo:document.getElementById("zoomInfo"),
-filePath:document.getElementById("filePath"),
-findInput:document.getElementById("findInput"),
-btnFind:document.getElementById("btnFind"),
-btnFindNextFloat:document.getElementById("btnFindNextFloat"),
 btnClearAll:document.getElementById("btnClearAll"),
 btnFormat:document.getElementById("btnFormat"),
-codePane:document.getElementById("codePane"),
+findInput:document.getElementById("findInput"),
+btnFind:document.getElementById("btnFind"),
+btnGoTop:document.getElementById("btnGoTop"),
+btnGoBottom:document.getElementById("btnGoBottom"),
 code:document.getElementById("code"),
 codeHl:document.getElementById("codeHl"),
 gutter:document.getElementById("gutter"),
+editorScroll:document.getElementById("editorScroll"),
 preview:document.getElementById("preview"),
+previewLabel:document.getElementById("previewLabel"),
+btnZoom:document.getElementById("btnZoom"),
+zoomOverlay:document.getElementById("zoomOverlay"),
+btnZoomClose:document.getElementById("btnZoomClose"),
+previewBig:document.getElementById("previewBig"),
+zoomInfo:document.getElementById("zoomInfo"),
 errorBar:document.getElementById("errorBar"),
 toast:document.getElementById("toast"),
-measure:document.getElementById("measure"),
-editorScroll:document.getElementById("editorScroll"),
-btnGoTop:document.getElementById("btnGoTop"),
-btnGoBottom:document.getElementById("btnGoBottom")
+measure:document.getElementById("measure")
 };
-const STATE={fileId:"",meta:null,remote:"",content:"",lineStartRow:[],errLines:new Set(),errors:[],errIndex:0,lastFind:"",findMatches:[],findIndex:0,fastRaf:null,heavyTimer:null,draftTimer:null,resizeTimer:null,fastLastLines:0,fastLastWidth:0,undoStack:[],redoStack:[],pendingUndo:null,isUndoing:false,remoteSaving:false,remoteTimer:null,remoteQueued:false,me:null,guideEdit:false,guideSnippets:[],guideSelectedId:"",zoomW:0,zoomH:0};
-const PERF={heavyDelay:260,draftDelay:900,resizeDelay:90,remoteDelay:1200};
+const STATE={fileId:"",meta:null,remote:"",content:"",lineStartRow:[],errLines:new Set(),errors:[],errIndex:0,lastFind:"",findMatches:[],findIndex:0,heavyTimer:null,draftTimer:null,resizeTimer:null,undoStack:[],redoStack:[],pendingUndo:null,isUndoing:false,remoteSaving:false,remoteTimer:null,remoteQueued:false,me:null,renaming:false,renamePrev:""};
+const PERF={heavyDelay:260,draftDelay:900,resizeDelay:120,remoteDelay:1200};
+
 function toast(msg){el.toast.textContent=String(msg||"");el.toast.classList.add("show");setTimeout(()=>el.toast.classList.remove("show"),1200)}
 function cookieDomainHint(){const host=String(location.hostname||"").trim();if(!host||host==="localhost"||host.endsWith(".localhost"))return"";if(/^\d+\.\d+\.\d+\.\d+$/.test(host))return"";const parts=host.split(".").filter(Boolean);if(parts.length<2)return"";return"."+parts.slice(-2).join(".")}
 function setCookie(name,value){const v=encodeURIComponent(String(value||""));const maxAge=60*60*24*365*20;const base=cookieDomainHint();const common=`${name}=${v}; Max-Age=${maxAge}; Path=/; SameSite=Lax`;document.cookie=common;if(base&&base!==location.hostname)document.cookie=`${common}; Domain=${base}`}
@@ -277,44 +191,38 @@ function getMeCache(){try{const raw=localStorage.getItem(ME_KEY);if(!raw)return 
 function setMeCache(me){try{if(!me)localStorage.removeItem(ME_KEY);else localStorage.setItem(ME_KEY,JSON.stringify(me))}catch{}}
 function firstObj(x){if(Array.isArray(x))return x[0]||null;if(x&&typeof x==="object")return x;return null}
 function pickToken(out){const o=firstObj(out)||{};return(o.token||o.session_token||o.sessionToken||o.access_token||o.accessToken||o.app_token||o.appToken||o.tk||o.jwt||o.bearer||"")}
-function pickMe(out){const o=firstObj(out)||{};let me=o.me||o.user||o.profile||o.data||null;if(Array.isArray(me))me=me[0]||null;if(me&&typeof me==="object"){return{username:me.username||me.name||me.user||me.handle||"",role:me.role||me.user_role||me.userRole||"user"}}if(o.username){return{username:o.username,role:o.role||"user"}}return null}
+function pickMe(out){const o=firstObj(out)||{};let me=o.me||o.user||o.profile||o.data||null;if(Array.isArray(me))me=me[0]||null;if(me&&typeof me==="object")return{username:me.username||me.name||me.user||me.handle||"",role:me.role||me.user_role||me.userRole||"user"};if(o.username)return{username:o.username,role:o.role||"user"};return null}
 function asOk(out){const o=firstObj(out)||{};if(o&&typeof o.ok==="boolean")return o.ok;if(!!pickToken(o))return true;if(!!pickMe(o))return true;return false}
 function sbHeaders(){return{"apikey":SUPABASE_ANON_KEY,"Authorization":"Bearer "+SUPABASE_ANON_KEY,"Content-Type":"application/json","Accept":"application/json"}}
 async function rpc(fn,args){const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`,{method:"POST",headers:sbHeaders(),body:JSON.stringify(args||{})});const txt=await res.text();let data=null;try{data=txt?JSON.parse(txt):null}catch{}if(!res.ok){const msg=(data&&(data.message||data.error||data.hint))?(data.message||data.error||data.hint):txt;throw new Error(msg||("RPC failed: "+fn))}return data}
 async function rpcTry(fns,argsList){let lastErr=null;const fList=Array.isArray(fns)?fns:[String(fns||"")].filter(Boolean);const aList=(Array.isArray(argsList)&&argsList.length)?argsList:[{}];for(const fn of fList){for(const args of aList){try{return await rpc(fn,args||{})}catch(e){lastErr=e}}}throw(lastErr||new Error("RPC failed"))}
 const API={me:async(token)=>{const t=String(token||"").trim();const out=await rpcTry(["api_me","me","app_me","api_whoami","api_profile","whoami"],[{p_token:t},{token:t},{p_session:t},{session:t},{session_token:t},{p_session_token:t}]);return{ok:asOk(out),me:pickMe(out),token:pickToken(out)||""}}};
-const CODEAPI={getFile:async(token,codeId)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();return await rpcTry(["api_code_get_file","code_get_file","api_code_get"],[{p_token:t,p_code_id:id},{token:t,code_id:id},{p_session_token:t,p_code_id:id}])},saveFile:async(token,codeId,content)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();return await rpcTry(["api_code_save_file","code_save_file","api_code_save"],[{p_token:t,p_code_id:id,p_content:content},{token:t,code_id:id,content},{p_session_token:t,p_code_id:id,p_content:content}])}};
+const CODEAPI={
+getFile:async(token,codeId)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();return await rpcTry(["api_code_get_file","code_get_file","api_code_get"],[{p_token:t,p_code_id:id},{token:t,code_id:id},{p_session_token:t,p_code_id:id}])},
+saveFile:async(token,codeId,content)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();return await rpcTry(["api_code_save_file","code_save_file","api_code_save"],[{p_token:t,p_code_id:id,p_content:content},{token:t,code_id:id,content},{p_session_token:t,p_code_id:id,p_content:content}])},
+renameNode:async(token,codeId,name)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();const nm=String(name||"").trim();return await rpcTry(["api_code_rename_node","code_rename_node","api_code_rename","code_rename","api_code_update_node","code_update_node","api_code_set_name","code_set_name"],[{p_token:t,p_code_id:id,p_name:nm},{token:t,code_id:id,name:nm},{p_session_token:t,p_code_id:id,p_name:nm},{token:t,p_code_id:id,p_name:nm},{p_token:t,p_code_id:id,p_new_name:nm},{token:t,code_id:id,new_name:nm}])}
+};
 function isAdmin(){const me=STATE.me||getMeCache();const u=me&&me.username?String(me.username):"";const r=me&&me.role?String(me.role):"";return(u.toLocaleLowerCase()==="tuankhoi")&&(r.toLocaleLowerCase()==="admin")}
 function getFileIdFromUrl(){try{const u=new URL(location.href);const raw=(u.searchParams.get("f")||u.searchParams.get("file")||"").trim().toLowerCase();return FILE_ID_RE.test(raw)?raw:null}catch{return null}}
 function draftKey(fileId){return DRAFT_KEY_PREFIX+String(fileId||"")}
-function guideKey(fileId){return GUIDE_KEY_PREFIX+String(fileId||"")}
 function loadDraft(fileId){try{const raw=localStorage.getItem(draftKey(fileId));if(!raw)return null;const o=JSON.parse(raw);if(!o||typeof o.content!=="string")return null;return o}catch{return null}}
 function saveDraft(fileId,content){try{localStorage.setItem(draftKey(fileId),JSON.stringify({content:String(content||""),ts:Date.now()}))}catch{}}
 function clearDraft(fileId){try{localStorage.removeItem(draftKey(fileId))}catch{}}
-function loadGuide(fileId){try{const raw=localStorage.getItem(guideKey(fileId));if(!raw)return[];const list=JSON.parse(raw);if(!Array.isArray(list))return[];return list.filter(x=>x&&typeof x==="object").map(x=>({id:String(x.id||"").trim()||(Math.random().toString(36).slice(2,10)),name:String(x.name||"").trim()||"Nút",html:String(x.html||"")})).slice(0,60)}catch{return[]}}
-function saveGuide(fileId,list){try{localStorage.setItem(guideKey(fileId),JSON.stringify(Array.isArray(list)?list:[]))}catch{}}
 function normLower(s){return String(s||"").toLocaleLowerCase()}
 function makeLineStarts(s){const out=[0];for(let i=0;i<s.length;i++)if(s[i]==="\n")out.push(i+1);return out}
-function idxToLineCol(lineStarts,idx){const i=Math.max(0,Math.min(Number(idx)||0,0x7fffffff));let lo=0,hi=lineStarts.length-1,ans=0;while(lo<=hi){const mid=(lo+hi)>>1;if(lineStarts[mid]<=i){ans=mid;lo=mid+1}else hi=mid-1}const line=ans+1;const col=(i-lineStarts[ans])+1;return{line,col}}
+function idxToLineCol(lineStarts,idx){const i=Math.max(0,Math.min(Number(idx)||0,0x7fffffff));let lo=0,hi=lineStarts.length-1,ans=0;while(lo<=hi){const mid=(lo+hi)>>1;if(lineStarts[mid]<=i){ans=mid;lo=mid+1}else hi=mid-1}return{line:ans+1,col:(i-lineStarts[ans])+1}}
 function lintHtmlVsLike(code){const s=String(code||"");const lower=normLower(s);const lineStarts=makeLineStarts(s);const stack=[];const errors=[];const errLines=new Set();
 function addErrAt(idx,msg){const lc=idxToLineCol(lineStarts,idx);errors.push({line:lc.line,col:lc.col,msg:String(msg||"")});errLines.add(lc.line)}
 function markLineOfIdx(idx){const lc=idxToLineCol(lineStarts,idx);errLines.add(lc.line)}
 let i=0;
 while(i<s.length){
-const ch=s[i];
-if(ch!=="<"){i++;continue}
+if(s[i]!=="<"){i++;continue}
 if(s.startsWith("<!--",i)){const end=s.indexOf("-->",i+4);if(end<0){addErrAt(i,"Chưa đóng comment <!-- -->");break}i=end+3;continue}
 if(/^<!doctype\b/i.test(s.slice(i,i+12))){const end=s.indexOf(">",i+2);if(end<0){addErrAt(i,"Thiếu > để đóng DOCTYPE");break}i=end+1;continue}
-let quote="";let endIdx=-1;
-for(let j=i+1;j<s.length;j++){
-const cj=s[j];
-if(quote){if(cj===quote)quote="";continue}
-if(cj==='"'||cj==="'"){quote=cj;continue}
-if(cj===">"){endIdx=j;break}
-}
+let quote="",endIdx=-1;
+for(let j=i+1;j<s.length;j++){const cj=s[j];if(quote){if(cj===quote)quote="";continue}if(cj==='"'||cj==="'"){quote=cj;continue}if(cj===">"){endIdx=j;break}}
 if(endIdx<0){addErrAt(i,"Thiếu > để đóng thẻ");break}
-const full=s.slice(i,endIdx+1);
-const inner=String(full.slice(1,-1)||"").trim();
+const inner=String(s.slice(i+1,endIdx)||"").trim();
 if(!inner){i=endIdx+1;continue}
 if(inner.startsWith("!")){i=endIdx+1;continue}
 const isClose=/^\//.test(inner);
@@ -350,687 +258,82 @@ if(found>=0)stack.splice(found);else stack.pop()
 }
 i=endIdx+1
 }
-if(stack.length){
-for(const x of stack){if(OPTIONAL_END_TAGS.has(x.tag))continue;addErrAt(x.idx,`Mở <${x.tag}> nhưng chưa đóng`)}
-}
+if(stack.length){for(const x of stack){if(OPTIONAL_END_TAGS.has(x.tag))continue;addErrAt(x.idx,`Mở <${x.tag}> nhưng chưa đóng`)}}
 errors.sort((a,b)=>(a.line-b.line)||(a.col-b.col));
 return{ok:errors.length===0,errLines,errors}
 }
 function escHtml(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
-function highlightTagEsc(m){
-const mm=m.match(/^(&lt;\/?)([a-zA-Z][\w:-]*)([\s\S]*?)(&gt;)$/);
-if(!mm)return`<span class="tok-tag">${m}</span>`;
-const open=mm[1],name=mm[2],inner=mm[3]||"",close=mm[4];
-let out=`<span class="tok-punc">${open}</span><span class="tok-tag">${name}</span>`;
-let i=0;
-while(i<inner.length){
-const ch=inner[i];
-if(/\s/.test(ch)){let j=i+1;while(j<inner.length&&/\s/.test(inner[j]))j++;out+=inner.slice(i,j);i=j;continue}
-if(ch==="/"){out+=`<span class="tok-op">/</span>`;i++;continue}
-let j=i;while(j<inner.length&&!/\s/.test(inner[j])&&inner[j]!=="="&&inner[j]!=="/")j++;
-const attr=inner.slice(i,j);i=j;
-let k=i;while(k<inner.length&&/\s/.test(inner[k]))k++;
-if(inner[k]==="="){
-out+=`<span class="tok-attr">${attr}</span><span class="tok-op">=</span>`;k++;while(k<inner.length&&/\s/.test(inner[k]))k++;
-if(inner[k]==='"'||inner[k]==="'"){
-const q=inner[k];let p=k+1;while(p<inner.length&&inner[p]!==q)p++;
-const val=inner.slice(k,Math.min(p+1,inner.length));
-out+=`<span class="tok-str">${val}</span>`;i=Math.min(p+1,inner.length)
-}else{
-let p=k;while(p<inner.length&&!/\s/.test(inner[p])&&inner[p]!=="/")p++;
-const val=inner.slice(k,p);out+=`<span class="tok-str">${val}</span>`;i=p
-}
-}else{out+=`<span class="tok-attr">${attr}</span>`;i=k}
-}
-out+=`<span class="tok-punc">${close}</span>`;
-return out
-}
-function highlightHtml(raw){
-const s0=escHtml(raw||"");
-const parts=[];
-const re=/&lt;!--[\s\S]*?--&gt;|&lt;!DOCTYPE[\s\S]*?&gt;|&lt;\/?[a-zA-Z][\w:-]*[\s\S]*?&gt;/gi;
-let last=0,m;
-while((m=re.exec(s0))){
-const idx=m.index;
-if(idx>last){const txt=s0.slice(last,idx);parts.push(`<span class="tok-txt">${txt||" "}</span>`)}
-const tok=m[0]||"";
-if(tok.startsWith("&lt;!--"))parts.push(`<span class="tok-com">${tok}</span>`);
-else if(/^&lt;!DOCTYPE/i.test(tok))parts.push(`<span class="tok-doctype">${tok}</span>`);
-else parts.push(highlightTagEsc(tok));
-last=idx+tok.length
-}
-if(last<s0.length){const tail=s0.slice(last);parts.push(`<span class="tok-txt">${tail||" "}</span>`)}
-let out=parts.join("");if(!out)out=" ";if(out.endsWith("\n"))out+=" ";return out
-}
-function clearFindMarks(){
-const root=el.codeHl;
-const marks=root.querySelectorAll(".tok-find");
-for(const mk of marks){
-const parent=mk.parentNode;
-if(!parent)continue;
-parent.replaceChild(document.createTextNode(mk.textContent||""),mk);
-parent.normalize()
-}
-}
-function buildFindMatches(text,q){
-const t=String(text||""),needle=String(q||"");if(!needle)return[];
-const tL=normLower(t),nL=normLower(needle);
-const out=[];let i=0;
-while(true){const idx=tL.indexOf(nL,i);if(idx<0)break;out.push({start:idx,end:idx+needle.length});i=idx+Math.max(1,needle.length)}
-return out
-}
-function applyFindMarksDom(q){
-clearFindMarks();
-const needle=String(q||"");if(!needle)return[];
-const nL=normLower(needle);
-const root=el.codeHl;
-const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);
-const spans=[];
-let node;
-while((node=walker.nextNode())){
-const txt=node.nodeValue||"";if(!txt)continue;
-const low=normLower(txt);let idx=low.indexOf(nL);
-if(idx<0)continue;
-const frag=document.createDocumentFragment();let last=0;
-while(idx>=0){
-if(idx>last)frag.appendChild(document.createTextNode(txt.slice(last,idx)));
-const sp=document.createElement("span");
-sp.className="tok-find";sp.textContent=txt.slice(idx,idx+needle.length);
-frag.appendChild(sp);spans.push(sp);
-last=idx+needle.length;idx=low.indexOf(nL,last)
-}
-if(last<txt.length)frag.appendChild(document.createTextNode(txt.slice(last)));
-const parent=node.parentNode;if(parent)parent.replaceChild(frag,node)
-}
-return spans
-}
-function setActiveFind(index){
-const spans=el.codeHl.querySelectorAll(".tok-find");
-for(const s of spans)s.classList.remove("active");
-const i=Math.max(0,Math.min(index,spans.length-1));
-if(spans[i])spans[i].classList.add("active")
-}
-function updateFindNextFloat(){
-const q=String(el.findInput.value||"").trim();
-const show=!!(q&&STATE.findMatches.length>0);
-el.btnFindNextFloat.classList.toggle("show",show);
-el.btnFindNextFloat.disabled=!show
-}
+function highlightTagEsc(m){const mm=m.match(/^(&lt;\/?)([a-zA-Z][\w:-]*)([\s\S]*?)(&gt;)$/);if(!mm)return`<span class="tok-tag">${m}</span>`;const open=mm[1],name=mm[2],inner=mm[3]||"",close=mm[4];let out=`<span class="tok-punc">${open}</span><span class="tok-tag">${name}</span>`;let i=0;while(i<inner.length){const ch=inner[i];if(/\s/.test(ch)){let j=i+1;while(j<inner.length&&/\s/.test(inner[j]))j++;out+=inner.slice(i,j);i=j;continue}if(ch==="/"){out+=`<span class="tok-op">/</span>`;i++;continue}let j=i;while(j<inner.length&&!/\s/.test(inner[j])&&inner[j]!=="="&&inner[j]!=="/")j++;const attr=inner.slice(i,j);i=j;let k=i;while(k<inner.length&&/\s/.test(inner[k]))k++;if(inner[k]==="="){out+=`<span class="tok-attr">${attr}</span><span class="tok-op">=</span>`;k++;while(k<inner.length&&/\s/.test(inner[k]))k++;if(inner[k]==='"'||inner[k]==="'"){const q=inner[k];let p=k+1;while(p<inner.length&&inner[p]!==q)p++;const val=inner.slice(k,Math.min(p+1,inner.length));out+=`<span class="tok-str">${val}</span>`;i=Math.min(p+1,inner.length)}else{let p=k;while(p<inner.length&&!/\s/.test(inner[p])&&inner[p]!=="/")p++;const val=inner.slice(k,p);out+=`<span class="tok-str">${val}</span>`;i=p}}else{out+=`<span class="tok-attr">${attr}</span>`;i=k}}out+=`<span class="tok-punc">${close}</span>`;return out}
+function highlightHtml(raw){const s0=escHtml(raw||"");const parts=[];const re=/&lt;!--[\s\S]*?--&gt;|&lt;!DOCTYPE[\s\S]*?&gt;|&lt;\/?[a-zA-Z][\w:-]*[\s\S]*?&gt;/gi;let last=0,m;while((m=re.exec(s0))){const idx=m.index;if(idx>last){const txt=s0.slice(last,idx);parts.push(`<span class="tok-txt">${txt||" "}</span>`)}const tok=m[0]||"";if(tok.startsWith("&lt;!--"))parts.push(`<span class="tok-com">${tok}</span>`);else if(/^&lt;!DOCTYPE/i.test(tok))parts.push(`<span class="tok-doctype">${tok}</span>`);else parts.push(highlightTagEsc(tok));last=idx+tok.length}if(last<s0.length){const tail=s0.slice(last);parts.push(`<span class="tok-txt">${tail||" "}</span>`)}let out=parts.join("");if(!out)out=" ";if(out.endsWith("\n"))out+=" ";return out}
+function clearFindMarks(){const root=el.codeHl;const marks=root.querySelectorAll(".tok-find");for(const mk of marks){const parent=mk.parentNode;if(!parent)continue;parent.replaceChild(document.createTextNode(mk.textContent||""),mk);parent.normalize()}}
+function buildFindMatches(text,q){const t=String(text||""),needle=String(q||"");if(!needle)return[];const tL=normLower(t),nL=normLower(needle);const out=[];let i=0;while(true){const idx=tL.indexOf(nL,i);if(idx<0)break;out.push({start:idx,end:idx+needle.length});i=idx+Math.max(1,needle.length)}return out}
+function applyFindMarksDom(q){clearFindMarks();const needle=String(q||"");if(!needle)return[];const nL=normLower(needle);const root=el.codeHl;const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);const spans=[];let node;while((node=walker.nextNode())){const txt=node.nodeValue||"";if(!txt)continue;const low=normLower(txt);let idx=low.indexOf(nL);if(idx<0)continue;const frag=document.createDocumentFragment();let last=0;while(idx>=0){if(idx>last)frag.appendChild(document.createTextNode(txt.slice(last,idx)));const sp=document.createElement("span");sp.className="tok-find";sp.textContent=txt.slice(idx,idx+needle.length);frag.appendChild(sp);spans.push(sp);last=idx+needle.length;idx=low.indexOf(nL,last)}if(last<txt.length)frag.appendChild(document.createTextNode(txt.slice(last)));const parent=node.parentNode;if(parent)parent.replaceChild(frag,node)}return spans}
+function setActiveFind(index){const spans=el.codeHl.querySelectorAll(".tok-find");for(const s of spans)s.classList.remove("active");const i=Math.max(0,Math.min(index,spans.length-1));if(spans[i])spans[i].classList.add("active")}
 function updatePreview(){el.preview.srcdoc=String(el.code.value||"")}
-function computeWrapCounts(lines,textWidthPx,lineHeightPx){
-el.measure.style.width=Math.max(20,textWidthPx)+"px";
-const counts=new Array(lines.length);
-for(let i=0;i<lines.length;i++){
-const s=lines[i];
-el.measure.textContent=(s.length?s:" ");
-const h=el.measure.scrollHeight;
-const wraps=Math.max(1,Math.ceil(h/lineHeightPx));
-counts[i]=wraps
-}
-return counts
-}
-function rebuildGutterAndHeight(){
-const ta=el.code;
-const cs=getComputedStyle(ta);
-const padL=parseFloat(cs.paddingLeft)||0;
-const padR=parseFloat(cs.paddingRight)||0;
-const lh=parseFloat(cs.lineHeight)||22;
-const textWidth=Math.max(20,ta.clientWidth-padL-padR);
-const text=ta.value||"";
-const lines=text.split("\n");
-const wrapCounts=computeWrapCounts(lines,textWidth,lh);
-let out=[],rowIndex=0;
-STATE.lineStartRow=new Array(Math.max(lines.length,10));
-const needMin=Math.max(10,lines.length);
-for(let i=0;i<needMin;i++){
-const ln=i+1;
-const wraps=(i<wrapCounts.length)?wrapCounts[i]:1;
-STATE.lineStartRow[i]=rowIndex;
-for(let w=0;w<wraps;w++){
-const first=(w===0);
-const isErr=first&&STATE.errLines.has(ln);
-const cls="gline"+(isErr?" err":"");
-const label=first?String(ln):"";
-out.push(`<div class="${cls}" data-row="${rowIndex}" data-line="${ln}">${label}</div>`);
-rowIndex++
-}
-}
-el.gutter.innerHTML=out.join("");
-ta.style.height="auto";
-ta.style.height=ta.scrollHeight+"px";
-el.codeHl.style.height=ta.style.height
-}
-function renderErrorBar(){
-const bar=el.errorBar;
-const errs=Array.isArray(STATE.errors)?STATE.errors:[];
-if(errs.length===0){bar.classList.remove("show");bar.textContent="";return}
-const idx=Math.max(0,Math.min(STATE.errIndex||0,errs.length-1));
-const e=errs[idx];
-const pos=(e&&e.col)?`dòng ${e.line}, cột ${e.col}`:`dòng ${e.line}`;
-bar.textContent=`Lỗi ${idx+1}/${errs.length}: ${e.msg} (${pos})`;
-bar.classList.add("show")
-}
-function scrollToLineNoFocus(lineNo){
-const idx=Math.max(1,Number(lineNo)||1);
-const startRow=STATE.lineStartRow[idx-1]??0;
-const target=el.gutter.querySelector(`.gline[data-row="${startRow}"]`);
-if(target)target.scrollIntoView({block:"center",behavior:"smooth",inline:"nearest"})
-}
-function renderHighlight(){
-el.codeHl.innerHTML=highlightHtml(el.code.value||"");
-const q=String(el.findInput.value||"").trim();
-if(q){applyFindMarksDom(q);setActiveFind(STATE.findIndex||0)}
-updateFindNextFloat()
-}
-function getLineFromPos(pos){
-const text=el.code.value||"";
-const before=text.slice(0,Math.max(0,pos));
-return before.split("\n").length
-}
-function selectMatchAt(i){
-if(!STATE.findMatches.length)return;
-const idx=((i%STATE.findMatches.length)+STATE.findMatches.length)%STATE.findMatches.length;
-STATE.findIndex=idx;
-const m=STATE.findMatches[idx];
-const lineNo=getLineFromPos(m.start);
-scrollToLineNoFocus(lineNo);
-setActiveFind(idx);
-toast(`${idx+1}/${STATE.findMatches.length}`);
-updateFindNextFloat()
-}
-function recomputeFind(){
-const q=String(el.findInput.value||"").trim();
-el.btnFind.disabled=!q;
-if(!q){
-STATE.lastFind="";STATE.findMatches=[];STATE.findIndex=0;
-renderHighlight();return
-}
-STATE.lastFind=q;
-STATE.findMatches=buildFindMatches(el.code.value||"",q);
-if(STATE.findIndex>=STATE.findMatches.length)STATE.findIndex=0;
-renderHighlight()
-}
-function scheduleDraftSave(){
-if(STATE.draftTimer)clearTimeout(STATE.draftTimer);
-STATE.draftTimer=setTimeout(()=>{STATE.draftTimer=null;if(!STATE.fileId)return;saveDraft(STATE.fileId,el.code.value||"")},PERF.draftDelay)
-}
-function scheduleRemoteSave(){
-if(STATE.remoteTimer)clearTimeout(STATE.remoteTimer);
-STATE.remoteTimer=setTimeout(()=>{STATE.remoteTimer=null;remoteSaveNow(false)},PERF.remoteDelay)
-}
-async function remoteSaveNow(forceToast){
-try{
-const token=getToken();
-if(!token||!STATE.fileId)return;
-const html=String(el.code.value||"");
-if(html===String(STATE.remote||"")){if(forceToast)toast("Đã lưu");return}
-if(STATE.remoteSaving){STATE.remoteQueued=true;return}
-STATE.remoteSaving=true;
-const out=await CODEAPI.saveFile(token,STATE.fileId,html);
-const o=firstObj(out)||out||{};
-if(o.ok!==true)throw new Error(o.error||o.message||"Lưu lỗi");
-STATE.remote=html;
-clearDraft(STATE.fileId);
-if(forceToast)toast("Đã lưu")
-}catch(e){toast(String(e&&e.message?e.message:"Lưu lỗi"))}
-finally{
-STATE.remoteSaving=false;
-if(STATE.remoteQueued){STATE.remoteQueued=false;scheduleRemoteSave()}
-}
-}
-function runHeavyUpdate(){
-const v=el.code.value||"";
-STATE.content=v;
-if(STATE.fileId)saveDraft(STATE.fileId,v);
-const lint=lintHtmlVsLike(v);
-STATE.errLines=lint.errLines;
-STATE.errors=lint.errors;
-STATE.errIndex=0;
-renderErrorBar();
-rebuildGutterAndHeight();
-updatePreview();
-updateFormatAvailability();
-recomputeFind();
-updateUndoButtons();
-scheduleRemoteSave()
-}
-function scheduleHeavyUpdate(){
-if(STATE.heavyTimer)clearTimeout(STATE.heavyTimer);
-STATE.heavyTimer=setTimeout(()=>{STATE.heavyTimer=null;runHeavyUpdate()},PERF.heavyDelay)
-}
-function flushHeavyNow(){
-if(STATE.heavyTimer){clearTimeout(STATE.heavyTimer);STATE.heavyTimer=null}
-if(STATE.draftTimer){clearTimeout(STATE.draftTimer);STATE.draftTimer=null}
-runHeavyUpdate()
-}
-function updateUndoButtons(){
-el.btnUndo.disabled=!(STATE.undoStack&&STATE.undoStack.length);
-el.btnRedo.disabled=!(STATE.redoStack&&STATE.redoStack.length)
-}
-function pushUndoSnapshot(snap){
-if(!snap||typeof snap.value!=="string")return;
-const top=STATE.undoStack.length?STATE.undoStack[STATE.undoStack.length-1]:null;
-if(top&&top.value===snap.value&&top.selStart===snap.selStart&&top.selEnd===snap.selEnd)return;
-STATE.undoStack.push(snap);
-if(STATE.undoStack.length>40)STATE.undoStack.shift();
-updateUndoButtons()
-}
-function pushRedoSnapshot(snap){
-if(!snap||typeof snap.value!=="string")return;
-STATE.redoStack.push(snap);
-if(STATE.redoStack.length>40)STATE.redoStack.shift();
-updateUndoButtons()
-}
-function captureUndoNow(){
-if(STATE.isUndoing)return;
-pushUndoSnapshot({value:String(el.code.value||""),selStart:el.code.selectionStart??0,selEnd:el.code.selectionEnd??0})
-}
-function onBeforeInput(){
-if(STATE.isUndoing)return;
-STATE.pendingUndo={value:String(el.code.value||""),selStart:el.code.selectionStart??0,selEnd:el.code.selectionEnd??0}
-}
-function onEditorInput(){
-if(!STATE.isUndoing&&STATE.pendingUndo){
-const prev=STATE.pendingUndo;STATE.pendingUndo=null;
-if(prev.value!==String(el.code.value||"")){pushUndoSnapshot(prev);STATE.redoStack=[];updateUndoButtons()}
-}
-scheduleDraftSave();
-scheduleHeavyUpdate();
-scheduleRemoteSave()
-}
-function doFindFirstOrCurrent(){
-flushHeavyNow();
-const q=String(el.findInput.value||"").trim();
-if(!q){toast("Chưa nhập từ khoá");return}
-const matches=buildFindMatches(el.code.value||"",q);
-STATE.lastFind=q;STATE.findMatches=matches;
-if(!matches.length){STATE.findIndex=0;renderHighlight();toast("Không tìm thấy");setTimeout(()=>{try{el.findInput.blur()}catch{}},0);return}
-STATE.findIndex=0;renderHighlight();selectMatchAt(0);
-setTimeout(()=>{try{el.findInput.blur()}catch{}},0)
-}
-function doFindNext(){
-flushHeavyNow();
-const q=String(el.findInput.value||"").trim();
-if(!q){toast("Chưa nhập từ khoá");return}
-if(q!==STATE.lastFind){doFindFirstOrCurrent();return}
-if(!STATE.findMatches.length){doFindFirstOrCurrent();return}
-const next=(STATE.findIndex+1)%STATE.findMatches.length;
-renderHighlight();
-selectMatchAt(next)
-}
-function doUndo(){
-flushHeavyNow();
-if(!STATE.undoStack.length)return;
-const cur={value:String(el.code.value||""),selStart:el.code.selectionStart??0,selEnd:el.code.selectionEnd??0};
-const snap=STATE.undoStack.pop();
-pushRedoSnapshot(cur);
-updateUndoButtons();
-STATE.isUndoing=true;
-el.code.value=String(snap.value||"");
-try{el.code.setSelectionRange(snap.selStart??0,snap.selEnd??0)}catch{}
-STATE.isUndoing=false;
-toast("Đã hoàn tác");
-flushHeavyNow()
-}
-function doRedo(){
-flushHeavyNow();
-if(!STATE.redoStack.length)return;
-const cur={value:String(el.code.value||""),selStart:el.code.selectionStart??0,selEnd:el.code.selectionEnd??0};
-const snap=STATE.redoStack.pop();
-pushUndoSnapshot(cur);
-updateUndoButtons();
-STATE.isUndoing=true;
-el.code.value=String(snap.value||"");
-try{el.code.setSelectionRange(snap.selStart??0,snap.selEnd??0)}catch{}
-STATE.isUndoing=false;
-toast("Đã tiến tới");
-flushHeavyNow()
-}
-function doDownload(){
-const name=(STATE.meta&&STATE.meta.name)?String(STATE.meta.name):"file.html";
-const blob=new Blob([el.code.value||""],{type:"text/html;charset=utf-8"});
-const url=URL.createObjectURL(blob);
-const a=document.createElement("a");
-a.href=url;
-a.download=name.toLowerCase().endsWith(".html")?name:(name+".html");
-document.body.appendChild(a);
-a.click();
-a.remove();
-setTimeout(()=>URL.revokeObjectURL(url),500);
-toast("Đang tải")
-}
-function doClearAll(){
-flushHeavyNow();
-const ok=confirm("Xoá tất cả nội dung? (Giữ lại <!DOCTYPE html>)");
-if(!ok)return;
-captureUndoNow();
-STATE.redoStack=[];updateUndoButtons();
-clearDraft(STATE.fileId);
-el.code.value=DEFAULT_START;
-STATE.content=el.code.value;
-toast("Đã xoá");
-flushHeavyNow()
-}
-function autoIndentOnEnter(e){
-if(e.key!=="Enter")return;
-e.preventDefault();
-const ta=el.code;
-const v=ta.value||"";
-const start=ta.selectionStart||0;
-const end=ta.selectionEnd||0;
-captureUndoNow();
-STATE.redoStack=[];updateUndoButtons();
-const ls=v.lastIndexOf("\n",Math.max(0,start-1))+1;
-const linePrefix=v.slice(ls,start);
-const m=linePrefix.match(/^[\t ]*/);
-const indent=m?m[0]:"";
-const insert="\n"+indent;
-try{ta.setRangeText(insert,start,end,"end")}
-catch{ta.value=v.slice(0,start)+insert+v.slice(end);ta.selectionStart=ta.selectionEnd=start+insert.length}
-onEditorInput()
-}
-function tokenizeForFormat(html){
-const s=String(html||"").replace(/\r\n/g,"\n").replace(/\r/g,"\n");
-const re=/<!--[\s\S]*?-->|<!DOCTYPE[\s\S]*?>|<\/?[a-zA-Z][\w:-]*(?:\s[^<>]*?)?>|[^<]+/gi;
-const out=[];let m;
-while((m=re.exec(s)))out.push(m[0]||"");
-return out
-}
+function computeWrapCounts(lines,textWidthPx,lineHeightPx){el.measure.style.width=Math.max(20,textWidthPx)+"px";const counts=new Array(lines.length);for(let i=0;i<lines.length;i++){const s=lines[i];el.measure.textContent=(s.length?s:" ");const h=el.measure.scrollHeight;counts[i]=Math.max(1,Math.ceil(h/lineHeightPx))}return counts}
+function rebuildGutterAndHeight(){const ta=el.code;const cs=getComputedStyle(ta);const padL=parseFloat(cs.paddingLeft)||0;const padR=parseFloat(cs.paddingRight)||0;const lh=parseFloat(cs.lineHeight)||22;const textWidth=Math.max(20,ta.clientWidth-padL-padR);const text=ta.value||"";const lines=text.split("\n");const wrapCounts=computeWrapCounts(lines,textWidth,lh);let out=[],rowIndex=0;STATE.lineStartRow=new Array(Math.max(lines.length,10));const needMin=Math.max(10,lines.length);for(let i=0;i<needMin;i++){const ln=i+1;const wraps=(i<wrapCounts.length)?wrapCounts[i]:1;STATE.lineStartRow[i]=rowIndex;for(let w=0;w<wraps;w++){const first=(w===0);const isErr=first&&STATE.errLines.has(ln);out.push(`<div class="gline${isErr?" err":""}" data-row="${rowIndex}" data-line="${ln}">${first?String(ln):""}</div>`);rowIndex++}}el.gutter.innerHTML=out.join("");ta.style.height="auto";ta.style.height=ta.scrollHeight+"px";el.codeHl.style.height=ta.style.height}
+function renderErrorBar(){const bar=el.errorBar;const errs=Array.isArray(STATE.errors)?STATE.errors:[];if(errs.length===0){bar.classList.remove("show");bar.textContent="";return}const idx=Math.max(0,Math.min(STATE.errIndex||0,errs.length-1));const e=errs[idx];bar.textContent=`Lỗi ${idx+1}/${errs.length}: ${e.msg} (dòng ${e.line}, cột ${e.col})`;bar.classList.add("show")}
+function scrollToLineNoFocus(lineNo){const idx=Math.max(1,Number(lineNo)||1);const startRow=STATE.lineStartRow[idx-1]??0;const target=el.gutter.querySelector(`.gline[data-row="${startRow}"]`);if(target)target.scrollIntoView({block:"center",behavior:"smooth",inline:"nearest"})}
+function renderHighlight(){el.codeHl.innerHTML=highlightHtml(el.code.value||"");const q=String(el.findInput.value||"").trim();if(q){applyFindMarksDom(q);setActiveFind(STATE.findIndex||0)}}
+function getLineFromPos(pos){const text=el.code.value||"";return text.slice(0,Math.max(0,pos)).split("\n").length}
+function selectMatchAt(i){if(!STATE.findMatches.length)return;const idx=((i%STATE.findMatches.length)+STATE.findMatches.length)%STATE.findMatches.length;STATE.findIndex=idx;const m=STATE.findMatches[idx];scrollToLineNoFocus(getLineFromPos(m.start));setActiveFind(idx);toast(`${idx+1}/${STATE.findMatches.length}`)}
+function recomputeFind(){const q=String(el.findInput.value||"").trim();el.btnFind.disabled=!q;if(!q){STATE.lastFind="";STATE.findMatches=[];STATE.findIndex=0;renderHighlight();return}STATE.findMatches=buildFindMatches(el.code.value||"",q);if(STATE.findIndex>=STATE.findMatches.length)STATE.findIndex=0;renderHighlight()}
+function scheduleDraftSave(){if(STATE.draftTimer)clearTimeout(STATE.draftTimer);STATE.draftTimer=setTimeout(()=>{STATE.draftTimer=null;if(!STATE.fileId)return;saveDraft(STATE.fileId,el.code.value||"")},PERF.draftDelay)}
+function scheduleRemoteSave(){if(STATE.remoteTimer)clearTimeout(STATE.remoteTimer);STATE.remoteTimer=setTimeout(()=>{STATE.remoteTimer=null;remoteSaveNow(false)},PERF.remoteDelay)}
+async function remoteSaveNow(forceToast){try{const token=getToken();if(!token||!STATE.fileId)return;const html=String(el.code.value||"");if(html===String(STATE.remote||"")){if(forceToast)toast("Đã lưu");return}if(STATE.remoteSaving){STATE.remoteQueued=true;return}STATE.remoteSaving=true;const out=await CODEAPI.saveFile(token,STATE.fileId,html);const o=firstObj(out)||out||{};if(o.ok!==true)throw new Error(o.error||o.message||"Lưu lỗi");STATE.remote=html;clearDraft(STATE.fileId);if(forceToast)toast("Đã lưu")}catch(e){toast(String(e&&e.message?e.message:"Lưu lỗi"))}finally{STATE.remoteSaving=false;if(STATE.remoteQueued){STATE.remoteQueued=false;scheduleRemoteSave()}}}
+function updateUndoButtons(){el.btnUndo.disabled=!(STATE.undoStack&&STATE.undoStack.length);el.btnRedo.disabled=!(STATE.redoStack&&STATE.redoStack.length)}
+function pushUndoSnapshot(snap){if(!snap||typeof snap.value!=="string")return;const top=STATE.undoStack.length?STATE.undoStack[STATE.undoStack.length-1]:null;if(top&&top.value===snap.value&&top.selStart===snap.selStart&&top.selEnd===snap.selEnd)return;STATE.undoStack.push(snap);if(STATE.undoStack.length>40)STATE.undoStack.shift();updateUndoButtons()}
+function pushRedoSnapshot(snap){if(!snap||typeof snap.value!=="string")return;STATE.redoStack.push(snap);if(STATE.redoStack.length>40)STATE.redoStack.shift();updateUndoButtons()}
+function captureUndoNow(){if(STATE.isUndoing)return;pushUndoSnapshot({value:String(el.code.value||""),selStart:el.code.selectionStart??0,selEnd:el.code.selectionEnd??0})}
+function onBeforeInput(){if(STATE.isUndoing)return;STATE.pendingUndo={value:String(el.code.value||""),selStart:el.code.selectionStart??0,selEnd:el.code.selectionEnd??0}}
+function runHeavyUpdate(){const v=el.code.value||"";STATE.content=v;if(STATE.fileId)saveDraft(STATE.fileId,v);const lint=lintHtmlVsLike(v);STATE.errLines=lint.errLines;STATE.errors=lint.errors;STATE.errIndex=0;renderErrorBar();rebuildGutterAndHeight();updatePreview();updateFormatAvailability();recomputeFind();updateUndoButtons();scheduleRemoteSave()}
+function scheduleHeavyUpdate(){if(STATE.heavyTimer)clearTimeout(STATE.heavyTimer);STATE.heavyTimer=setTimeout(()=>{STATE.heavyTimer=null;runHeavyUpdate()},PERF.heavyDelay)}
+function flushHeavyNow(){if(STATE.heavyTimer){clearTimeout(STATE.heavyTimer);STATE.heavyTimer=null}if(STATE.draftTimer){clearTimeout(STATE.draftTimer);STATE.draftTimer=null}runHeavyUpdate()}
+function onEditorInput(){if(!STATE.isUndoing&&STATE.pendingUndo){const prev=STATE.pendingUndo;STATE.pendingUndo=null;if(prev.value!==String(el.code.value||"")){pushUndoSnapshot(prev);STATE.redoStack=[];updateUndoButtons()}}scheduleDraftSave();scheduleHeavyUpdate();scheduleRemoteSave()}
+function doUndo(){flushHeavyNow();if(!STATE.undoStack.length)return;const cur={value:String(el.code.value||""),selStart:el.code.selectionStart??0,selEnd:el.code.selectionEnd??0};const snap=STATE.undoStack.pop();pushRedoSnapshot(cur);STATE.isUndoing=true;el.code.value=String(snap.value||"");try{el.code.setSelectionRange(snap.selStart??0,snap.selEnd??0)}catch{}STATE.isUndoing=false;toast("Đã hoàn tác");flushHeavyNow()}
+function doRedo(){flushHeavyNow();if(!STATE.redoStack.length)return;const cur={value:String(el.code.value||""),selStart:el.code.selectionStart??0,selEnd:el.code.selectionEnd??0};const snap=STATE.redoStack.pop();pushUndoSnapshot(cur);STATE.isUndoing=true;el.code.value=String(snap.value||"");try{el.code.setSelectionRange(snap.selStart??0,snap.selEnd??0)}catch{}STATE.isUndoing=false;toast("Đã tiến tới");flushHeavyNow()}
+function doDownload(){const name=(STATE.meta&&STATE.meta.name)?String(STATE.meta.name):"file.html";const blob=new Blob([el.code.value||""],{type:"text/html;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name.toLowerCase().endsWith(".html")?name:(name+".html");document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),500);toast("Đang tải")}
+function doClearAll(){flushHeavyNow();const ok=confirm("Xóa tất cả nội dung? (Giữ lại <!DOCTYPE html>)");if(!ok)return;captureUndoNow();STATE.redoStack=[];updateUndoButtons();clearDraft(STATE.fileId);el.code.value=DEFAULT_START;STATE.content=el.code.value;toast("Đã xóa");flushHeavyNow()}
+function autoIndentOnEnter(e){if(e.key!=="Enter")return;e.preventDefault();const ta=el.code;const v=ta.value||"";const start=ta.selectionStart||0;const end=ta.selectionEnd||0;captureUndoNow();STATE.redoStack=[];updateUndoButtons();const ls=v.lastIndexOf("\n",Math.max(0,start-1))+1;const linePrefix=v.slice(ls,start);const m=linePrefix.match(/^[\t ]*/);const indent=m?m[0]:"";const insert="\n"+indent;try{ta.setRangeText(insert,start,end,"end")}catch{ta.value=v.slice(0,start)+insert+v.slice(end);ta.selectionStart=ta.selectionEnd=start+insert.length}onEditorInput()}
+function tokenizeForFormat(html){const s=String(html||"").replace(/\r\n/g,"\n").replace(/\r/g,"\n");const re=/<!--[\s\S]*?-->|<!DOCTYPE[\s\S]*?>|<\/?[a-zA-Z][\w:-]*(?:\s[^<>]*?)?>|[^<]+/gi;const out=[];let m;while((m=re.exec(s)))out.push(m[0]||"");return out}
 function isClosingTag(tok){return/^<\/\s*[a-zA-Z]/.test(tok)}
 function isDoctype(tok){return/^<!DOCTYPE/i.test(tok)}
 function isComment(tok){return/^<!--/.test(tok)}
 function isTag(tok){return/^</.test(tok)&&/>$/.test(tok)}
 function getTagName(tok){const m=tok.match(/^<\/?\s*([a-zA-Z][\w:-]*)/);return(m&&m[1])?m[1].toLowerCase():""}
 function isSelfClosing(tok){const name=getTagName(tok);if(!name)return false;if(VOID_TAGS.has(name))return true;return/\/\s*>$/.test(tok)}
-function formatHtml(code){
-const raw=String(code||"");
-const toks=tokenizeForFormat(raw);
-const indentUnit="  ";
-let out=[],indent=0;
-for(const t0 of toks){
-const t=String(t0||"");if(!t)continue;
-if(isDoctype(t)){out.push("<!DOCTYPE html>");continue}
-if(isComment(t)){
-const lines=t.replace(/\r\n/g,"\n").replace(/\r/g,"\n").trim().split("\n");
-for(const ln of lines)out.push(indentUnit.repeat(Math.max(0,indent))+ln.trim());
-continue
-}
-if(isTag(t)){
-if(isClosingTag(t)){indent=Math.max(0,indent-1);out.push(indentUnit.repeat(indent)+t.trim())}
-else if(isSelfClosing(t)){out.push(indentUnit.repeat(indent)+t.trim())}
-else{out.push(indentUnit.repeat(indent)+t.trim());indent++}
-continue
-}
-const txt=t.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
-const lines=txt.split("\n");
-for(const ln of lines){const trimmed=ln.trim();if(trimmed)out.push(indentUnit.repeat(Math.max(0,indent))+trimmed)}
-}
-let formatted=out.join("\n").replace(/[ \t]+\n/g,"\n").trimEnd();
-if(!formatted)formatted=DEFAULT_START.trimEnd();
-if(!formatted.startsWith("<!DOCTYPE html>"))formatted="<!DOCTYPE html>\n"+formatted;
-if(!formatted.endsWith("\n"))formatted+="\n";
-return formatted
-}
-function updateFormatAvailability(){
-const cur=String(el.code.value||"");
-const fmt=formatHtml(cur);
-el.btnFormat.disabled=(fmt===cur)
-}
-function doFormat(){
-flushHeavyNow();
-if(el.btnFormat.disabled)return;
-captureUndoNow();
-STATE.redoStack=[];updateUndoButtons();
-const cur=String(el.code.value||"");
-const fmt=formatHtml(cur);
-if(fmt===cur){updateFormatAvailability();return}
-el.code.value=fmt;
-toast("Đã căn chỉnh");
-flushHeavyNow()
-}
-function collectDoctypeRemovalRanges(s){
-const re=/<!doctype\b[^>]*>/ig;
-const matches=[];let m;
-while((m=re.exec(s)))matches.push({start:m.index,end:m.index+m[0].length});
-if(matches.length<=1)return[];
-const ranges=[];
-for(let k=1;k<matches.length;k++){
-let a=matches[k].start,b=matches[k].end;
-while(a>0&&(s[a-1]===" "||s[a-1]==="\t"))a--;
-while(b<s.length&&(s[b]===" "||s[b]==="\t"||s[b]==="\r"))b++;
-if(s[b]==="\n")b++;
-ranges.push({start:a,end:b})
-}
-return ranges
-}
-function applyRemovalRangesKeepCaret(s,caret,ranges){
-if(!ranges.length)return{text:s,caret};
-const sorted=ranges.slice().sort((x,y)=>x.start-y.start);
-let curCaret=Math.max(0,Math.min(Number(caret)||0,s.length));
-let offset=0;
-for(const r of sorted){
-const a=r.start-offset,b=r.end-offset,len=Math.max(0,b-a);
-if(len<=0)continue;
-if(b<=curCaret)curCaret-=len;
-else if(a<curCaret&&curCaret<b)curCaret=a;
-offset+=(r.end-r.start)
-}
-let out=s;
-for(let i=sorted.length-1;i>=0;i--){const r=sorted[i];out=out.slice(0,r.start)+out.slice(r.end)}
-curCaret=Math.max(0,Math.min(curCaret,out.length));
-return{text:out,caret:curCaret}
-}
-function normalizeDuplicateDoctypeInEditor(){
-const ta=el.code;
-const v=String(ta.value||"");
-const caret=ta.selectionEnd??0;
-const ranges=collectDoctypeRemovalRanges(v);
-if(!ranges.length)return false;
-const out=applyRemovalRangesKeepCaret(v,caret,ranges);
-ta.value=out.text;
-try{ta.setSelectionRange(out.caret,out.caret)}catch{}
-return true
-}
-function onPasteDedupDoctype(e){
-const ta=el.code;
-const cd=e.clipboardData||window.clipboardData;
-if(!cd)return;
-const text=cd.getData("text/plain");
-if(typeof text!=="string")return;
-e.preventDefault();
-captureUndoNow();
-STATE.redoStack=[];updateUndoButtons();
-const start=ta.selectionStart??0;
-const end=ta.selectionEnd??start;
-try{ta.setRangeText(text,start,end,"end")}
-catch{const v=ta.value||"";ta.value=v.slice(0,start)+text+v.slice(end);const p=start+text.length;try{ta.setSelectionRange(p,p)}catch{}}
-const changed=normalizeDuplicateDoctypeInEditor();
-if(changed)toast("Đã xoá DOCTYPE trùng");
-onEditorInput()
-}
-function openOverlay(overlayEl){overlayEl.classList.add("show");overlayEl.setAttribute("aria-hidden","false")}
-function closeOverlay(overlayEl){overlayEl.classList.remove("show");overlayEl.setAttribute("aria-hidden","true")}
-function guideSelected(){
-const list=Array.isArray(STATE.guideSnippets)?STATE.guideSnippets:[];
-return list.find(x=>x.id===STATE.guideSelectedId)||null
-}
-function wrapSnippet(html){
-const s=String(html||"");
-if(/<!doctype/i.test(s))return s;
-return "<!doctype html><html><head><meta charset='utf-8'/><meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no'/><style>html,body{margin:0;padding:0;width:100%}</style></head><body>"+s+"</body></html>"
-}
-function renderGuide(){
-const list=Array.isArray(STATE.guideSnippets)?STATE.guideSnippets:[];
-el.guideList.innerHTML="";
-el.guideEmpty.style.display=list.length?"none":"";
-const admin=isAdmin();
-const editing=!!STATE.guideEdit;
-if(!list.length){
-STATE.guideSelectedId="";
-el.guideSelTitle.textContent="Chưa có";
-el.btnGuideInsert.disabled=true;
-el.guidePreview.srcdoc=wrapSnippet("");
-if(admin){
-el.btnGuideEdit.style.display="";
-el.btnGuideEdit.textContent=editing?"Xong":"Sửa";
-el.btnGuideNew.style.display="";
-}else{
-el.btnGuideEdit.style.display="none";
-el.btnGuideNew.style.display="none";
-}
-el.btnGuideDelete.style.display="none";
-el.btnGuideSave.style.display=(admin&&editing)?"":"none";
-el.guideName.style.display=(admin&&editing)?"":"none";
-el.guideContent.style.display=(admin&&editing)?"":"none";
-el.guideContent.readOnly=!(admin&&editing);
-return
-}
-if(!STATE.guideSelectedId||!list.some(x=>x.id===STATE.guideSelectedId))STATE.guideSelectedId=list[0].id;
-for(const item of list){
-const b=document.createElement("button");
-b.type="button";
-b.className="guideChip"+(item.id===STATE.guideSelectedId?" active":"");
-b.textContent=String(item.name||"Nút");
-b.addEventListener("click",()=>{STATE.guideSelectedId=item.id;renderGuide()});
-el.guideList.appendChild(b)
-}
-const sel=list.find(x=>x.id===STATE.guideSelectedId)||list[0];
-el.guideSelTitle.textContent=String(sel.name||"-");
-el.btnGuideInsert.disabled=!sel;
-el.guidePreview.srcdoc=wrapSnippet(sel.html||"");
-if(!admin){
-el.btnGuideEdit.style.display="none";
-}else{
-el.btnGuideEdit.style.display="";
-el.btnGuideEdit.textContent=editing?"Xong":"Sửa"
-}
-el.btnGuideNew.style.display=(admin&&editing)?"":"none";
-el.btnGuideDelete.style.display=(admin&&editing)?"":"none";
-el.btnGuideSave.style.display=(admin&&editing)?"":"none";
-el.guideName.style.display=(admin&&editing)?"":"none";
-el.guideName.value=String(sel.name||"");
-el.guideContent.style.display=(admin&&editing)?"":"none";
-el.guideContent.readOnly=!(admin&&editing);
-el.guideContent.value=String(sel.html||"")
-}
-function openGuide(){
-STATE.guideSnippets=loadGuide(STATE.fileId);
-STATE.guideEdit=false;
-renderGuide();
-openOverlay(el.guideOverlay)
-}
-function closeGuide(){closeOverlay(el.guideOverlay);STATE.guideEdit=false}
-function insertAtCursor(text){
-const ta=el.code;
-const start=ta.selectionStart??0;
-const end=ta.selectionEnd??start;
-try{ta.setRangeText(String(text||""),start,end,"end")}
-catch{const v=ta.value||"";const t=String(text||"");ta.value=v.slice(0,start)+t+v.slice(end);const p=start+t.length;try{ta.setSelectionRange(p,p)}catch{}}
-}
-function doGuideInsert(){
-const sel=guideSelected();
-if(!sel)return;
-captureUndoNow();
-STATE.redoStack=[];updateUndoButtons();
-insertAtCursor(sel.html||"");
-toast("Đã chèn");
-flushHeavyNow();
-closeGuide()
-}
-function doGuideToggleEdit(){
-if(!isAdmin())return;
-STATE.guideEdit=!STATE.guideEdit;
-renderGuide()
-}
-function doGuideSave(){
-if(!isAdmin())return;
-const sel=guideSelected();
-if(!sel)return;
-const name=String(el.guideName.value||"").trim()||"Nút";
-const html=String(el.guideContent.value||"");
-const list=Array.isArray(STATE.guideSnippets)?STATE.guideSnippets:[];
-const idx=list.findIndex(x=>x.id===sel.id);
-if(idx>=0)list[idx]={...list[idx],name,html};
-STATE.guideSnippets=list;
-saveGuide(STATE.fileId,list);
-toast("Đã lưu");
-renderGuide()
-}
-function doGuideNew(){
-if(!isAdmin())return;
-const list=Array.isArray(STATE.guideSnippets)?STATE.guideSnippets:[];
-const id=Math.random().toString(36).slice(2,10);
-list.push({id,name:"Nút mới",html:""});
-STATE.guideSnippets=list;
-STATE.guideSelectedId=id;
-STATE.guideEdit=true;
-saveGuide(STATE.fileId,list);
-renderGuide();
-setTimeout(()=>{try{el.guideName.focus();el.guideName.select?.()}catch{}},0)
-}
-function doGuideDelete(){
-if(!isAdmin())return;
-const sel=guideSelected();
-if(!sel)return;
-const ok=confirm("Xoá nút hướng dẫn này?");
-if(!ok)return;
-const list=Array.isArray(STATE.guideSnippets)?STATE.guideSnippets:[];
-const next=list.filter(x=>x.id!==sel.id);
-STATE.guideSnippets=next;
-STATE.guideSelectedId=next.length?next[0].id:"";
-saveGuide(STATE.fileId,next);
-toast("Đã xoá");
-renderGuide()
-}
-function openZoom(){
-el.chkFitWidth.checked=true;
-el.previewBig.srcdoc=String(el.code.value||"");
-el.zoomInfo.textContent="-";
-openOverlay(el.zoomOverlay)
-}
-function closeZoom(){closeOverlay(el.zoomOverlay)}
-function applyZoomScale(){
-try{
-const fit=!!el.chkFitWidth.checked;
-const stage=el.zoomStage;
-const vp=el.zoomViewport;
-const cw=vp.clientWidth?(vp.clientWidth-20):0;
-const w=Math.max(1,STATE.zoomW||1);
-const h=Math.max(1,STATE.zoomH||1);
-let s=1;
-if(fit&&cw>0)s=Math.min(1,cw/w);
-stage.style.transform=`scale(${s})`;
-stage.style.width=w+"px";
-stage.style.height=h+"px";
-el.previewBig.style.width=w+"px";
-el.previewBig.style.height=h+"px";
-el.zoomInfo.textContent=`${Math.round(w)}x${Math.round(h)} · ${Math.round(s*100)}%`
-}catch{}
-}
-async function measureZoomContent(){
-try{
-const doc=el.previewBig.contentDocument;
-if(!doc)return;
-const w=Math.max(doc.documentElement?(doc.documentElement.scrollWidth||0):0,doc.body?(doc.body.scrollWidth||0):0);
-const h=Math.max(doc.documentElement?(doc.documentElement.scrollHeight||0):0,doc.body?(doc.body.scrollHeight||0):0);
-STATE.zoomW=Math.max(1,w);
-STATE.zoomH=Math.max(1,h);
-applyZoomScale()
-}catch{}
-}
-function goExit(){location.href="/code"}
+function formatHtml(code){const raw=String(code||"");const toks=tokenizeForFormat(raw);const indentUnit="  ";let out=[],indent=0;for(const t0 of toks){const t=String(t0||"");if(!t)continue;if(isDoctype(t)){out.push("<!DOCTYPE html>");continue}if(isComment(t)){const lines=t.replace(/\r\n/g,"\n").replace(/\r/g,"\n").trim().split("\n");for(const ln of lines)out.push(indentUnit.repeat(Math.max(0,indent))+ln.trim());continue}if(isTag(t)){if(isClosingTag(t)){indent=Math.max(0,indent-1);out.push(indentUnit.repeat(indent)+t.trim())}else if(isSelfClosing(t)){out.push(indentUnit.repeat(indent)+t.trim())}else{out.push(indentUnit.repeat(indent)+t.trim());indent++}continue}const txt=t.replace(/\r\n/g,"\n").replace(/\r/g,"\n");for(const ln of txt.split("\n")){const trimmed=ln.trim();if(trimmed)out.push(indentUnit.repeat(Math.max(0,indent))+trimmed)}}let formatted=out.join("\n").replace(/[ \t]+\n/g,"\n").trimEnd();if(!formatted)formatted=DEFAULT_START.trimEnd();if(!formatted.startsWith("<!DOCTYPE html>"))formatted="<!DOCTYPE html>\n"+formatted;if(!formatted.endsWith("\n"))formatted+="\n";return formatted}
+function updateFormatAvailability(){const cur=String(el.code.value||"");el.btnFormat.disabled=(formatHtml(cur)===cur)}
+function doFormat(){flushHeavyNow();if(el.btnFormat.disabled)return;captureUndoNow();STATE.redoStack=[];updateUndoButtons();const cur=String(el.code.value||"");const fmt=formatHtml(cur);if(fmt===cur){updateFormatAvailability();return}el.code.value=fmt;toast("Đã căn chỉnh");flushHeavyNow()}
+function collectDoctypeRemovalRanges(s){const re=/<!doctype\b[^>]*>/ig;const matches=[];let m;while((m=re.exec(s)))matches.push({start:m.index,end:m.index+m[0].length});if(matches.length<=1)return[];const ranges=[];for(let k=1;k<matches.length;k++){let a=matches[k].start,b=matches[k].end;while(a>0&&(s[a-1]===" "||s[a-1]==="\t"))a--;while(b<s.length&&(s[b]===" "||s[b]==="\t"||s[b]==="\r"))b++;if(s[b]==="\n")b++;ranges.push({start:a,end:b})}return ranges}
+function applyRemovalRangesKeepCaret(s,caret,ranges){if(!ranges.length)return{text:s,caret};const sorted=ranges.slice().sort((x,y)=>x.start-y.start);let curCaret=Math.max(0,Math.min(Number(caret)||0,s.length));let offset=0;for(const r of sorted){const a=r.start-offset,b=r.end-offset,len=Math.max(0,b-a);if(len<=0)continue;if(b<=curCaret)curCaret-=len;else if(a<curCaret&&curCaret<b)curCaret=a;offset+=(r.end-r.start)}let out=s;for(let i=sorted.length-1;i>=0;i--){const r=sorted[i];out=out.slice(0,r.start)+out.slice(r.end)}curCaret=Math.max(0,Math.min(curCaret,out.length));return{text:out,caret:curCaret}}
+function normalizeDuplicateDoctypeInEditor(){const ta=el.code;const v=String(ta.value||"");const caret=ta.selectionEnd??0;const ranges=collectDoctypeRemovalRanges(v);if(!ranges.length)return false;const out=applyRemovalRangesKeepCaret(v,caret,ranges);ta.value=out.text;try{ta.setSelectionRange(out.caret,out.caret)}catch{}return true}
+function onPasteDedupDoctype(e){const ta=el.code;const cd=e.clipboardData||window.clipboardData;if(!cd)return;const text=cd.getData("text/plain");if(typeof text!=="string")return;e.preventDefault();captureUndoNow();STATE.redoStack=[];updateUndoButtons();const start=ta.selectionStart??0;const end=ta.selectionEnd??start;try{ta.setRangeText(text,start,end,"end")}catch{const v=ta.value||"";ta.value=v.slice(0,start)+text+v.slice(end);const p=start+text.length;try{ta.setSelectionRange(p,p)}catch{}}const changed=normalizeDuplicateDoctypeInEditor();if(changed)toast("Đã xóa DOCTYPE trùng");onEditorInput()}
+
+function ensureFitStyle(doc){try{const head=doc.head||doc.getElementsByTagName("head")[0]||doc.documentElement;let st=doc.getElementById("__tk_fit");if(!st){st=doc.createElement("style");st.id="__tk_fit";head.appendChild(st)}st.textContent="html,body{margin:0;padding:0}table{border-collapse:collapse}th,td{white-space:nowrap}";}catch{}}
+function fitIframeToWidth(iframe){try{const doc=iframe.contentDocument;if(!doc||!doc.body)return;ensureFitStyle(doc);requestAnimationFrame(()=>{try{const wFrame=iframe.clientWidth||0;const de=doc.documentElement,bd=doc.body;bd.style.transform="";bd.style.width="";bd.style.transformOrigin="0 0";de.style.overflowX="hidden";bd.style.overflowX="hidden";const w=Math.max(de.scrollWidth||0,bd.scrollWidth||0,1);let s=1;if(wFrame>0)s=Math.min(1,wFrame/w);if(s<1){bd.style.transform=`scale(${s})`;bd.style.width=(100/s)+"%"}const h=Math.max(de.scrollHeight||0,bd.scrollHeight||0,1);const info=`${Math.round(w)}x${Math.round(h)} · ${Math.round(s*100)}%`;if(iframe===el.previewBig)el.zoomInfo.textContent=info;}catch{}})}catch{}}
+
+function doFindCycle(){flushHeavyNow();const q=String(el.findInput.value||"").trim();if(!q){toast("Chưa nhập từ khóa");return}if(q!==STATE.lastFind){STATE.lastFind=q;STATE.findMatches=buildFindMatches(el.code.value||"",q);STATE.findIndex=0;renderHighlight();if(!STATE.findMatches.length){toast("Không tìm thấy");return}selectMatchAt(0);return}if(!STATE.findMatches.length){STATE.findMatches=buildFindMatches(el.code.value||"",q);STATE.findIndex=0;renderHighlight();if(!STATE.findMatches.length){toast("Không tìm thấy");return}selectMatchAt(0);return}selectMatchAt((STATE.findIndex+1)%STATE.findMatches.length)}
 function scrollEditorTop(){try{el.editorScroll.scrollTo({top:0,behavior:"smooth"})}catch{el.editorScroll.scrollTop=0}}
 function scrollEditorBottom(){try{el.editorScroll.scrollTo({top:el.editorScroll.scrollHeight,behavior:"smooth"})}catch{el.editorScroll.scrollTop=el.editorScroll.scrollHeight}}
-function bindShortcuts(){
-document.addEventListener("keydown",(e)=>{
-const isMac=/Mac|iPhone|iPad|iPod/i.test(navigator.platform);
-const mod=isMac?e.metaKey:e.ctrlKey;
+
+function openOverlay(overlayEl){overlayEl.classList.add("show");overlayEl.setAttribute("aria-hidden","false")}
+function closeOverlay(overlayEl){overlayEl.classList.remove("show");overlayEl.setAttribute("aria-hidden","true")}
+function openZoom(){el.previewBig.srcdoc=String(el.code.value||"");el.zoomInfo.textContent="-";openOverlay(el.zoomOverlay)}
+function closeZoom(){closeOverlay(el.zoomOverlay)}
+function goExit(){location.href="/code"}
+
+function startRename(){if(STATE.renaming)return;STATE.renaming=true;STATE.renamePrev=String(el.fileNameBox.value||"");el.fileNameBox.readOnly=false;try{el.fileNameBox.focus();el.fileNameBox.select?.()}catch{}}
+async function commitRename(){if(!STATE.renaming)return;const newName=String(el.fileNameBox.value||"").trim();const prev=STATE.renamePrev||"";el.fileNameBox.readOnly=true;STATE.renaming=false;if(!newName){el.fileNameBox.value=prev;return}if(newName===prev)return;try{const token=getToken();if(!token||!STATE.fileId)throw new Error("Thiếu token");const out=await CODEAPI.renameNode(token,STATE.fileId,newName);const o=firstObj(out)||out||{};if(o.ok!==true&&o.success!==true)throw new Error(o.error||o.message||"Đổi tên lỗi");STATE.meta=STATE.meta||{};STATE.meta.name=newName;toast("Đã đổi tên")}catch(e){el.fileNameBox.value=prev;toast(String(e&&e.message?e.message:"Không đổi tên được"))}}
+function cancelRename(){if(!STATE.renaming)return;el.fileNameBox.value=STATE.renamePrev||String(el.fileNameBox.value||"");el.fileNameBox.readOnly=true;STATE.renaming=false}
+
+function bindShortcuts(){document.addEventListener("keydown",(e)=>{const isMac=/Mac|iPhone|iPad|iPod/i.test(navigator.platform);const mod=isMac?e.metaKey:e.ctrlKey;
 if(mod&&(e.key==="s"||e.key==="S")){e.preventDefault();remoteSaveNow(true)}
 if(mod&&(e.key==="z"||e.key==="Z")&&!e.shiftKey){e.preventDefault();doUndo()}
 if((isMac&&mod&&e.shiftKey&&(e.key==="z"||e.key==="Z"))||(!isMac&&mod&&(e.key==="y"||e.key==="Y"))){e.preventDefault();doRedo()}
 if(mod&&(e.key==="f"||e.key==="F")){e.preventDefault();el.findInput.focus();el.findInput.select?.()}
-},{passive:false})
-}
+},{passive:false})}
+
 async function boot(){
 const fileId=getFileIdFromUrl();
 if(!fileId){toast("Thiếu hoặc sai f (5 chữ).");location.replace("/code");return}
@@ -1038,8 +341,7 @@ STATE.fileId=fileId;
 const token=getToken();
 if(!token){location.replace("/code");return}
 const cachedMe=getMeCache();
-if(cachedMe&&cachedMe.username){STATE.me=cachedMe}else{
-try{const meOut=await API.me(token);if(meOut&&meOut.ok&&meOut.me&&meOut.me.username){setMeCache(meOut.me);STATE.me=meOut.me}}catch{}}
+if(cachedMe&&cachedMe.username){STATE.me=cachedMe}else{try{const meOut=await API.me(token);if(meOut&&meOut.ok&&meOut.me&&meOut.me.username){setMeCache(meOut.me);STATE.me=meOut.me}}catch{}}
 try{
 const raw=await CODEAPI.getFile(token,fileId);
 const o=firstObj(raw)||raw||{};
@@ -1047,8 +349,7 @@ if(o.ok!==true)throw new Error(o.error||o.message||"Không mở được file");
 STATE.meta=o.node||o.file||o.meta||{};
 STATE.remote=String(o.content||"");
 const name=String((STATE.meta&&STATE.meta.name)?STATE.meta.name:("file-"+fileId+".html"));
-const path=String(o.full_path||o.path||name);
-el.filePath.textContent=path||"-";
+el.fileNameBox.value=name;
 const draft=loadDraft(fileId);
 if(draft&&typeof draft.content==="string")el.code.value=draft.content;
 else{const r=(STATE.remote||"").trim();el.code.value=r?STATE.remote:DEFAULT_START}
@@ -1058,48 +359,50 @@ STATE.errLines=lint.errLines;
 STATE.errors=lint.errors;
 STATE.errIndex=0;
 STATE.undoStack=[];STATE.redoStack=[];STATE.pendingUndo=null;updateUndoButtons();
-STATE.guideSnippets=loadGuide(fileId);
 renderErrorBar();
 rebuildGutterAndHeight();
+renderHighlight();
 updatePreview();
 updateFormatAvailability();
 recomputeFind();
-updateFindNextFloat();
 try{el.code.focus()}catch{}
 }catch(e){toast(String(e&&e.message?e.message:"Không mở được file"));location.replace("/code");return}
+
 el.btnExit.addEventListener("click",goExit);
 el.btnUndo.addEventListener("click",doUndo);
 el.btnRedo.addEventListener("click",doRedo);
 el.btnDownload.addEventListener("click",doDownload);
 el.btnClearAll.addEventListener("click",doClearAll);
 el.btnFormat.addEventListener("click",doFormat);
-el.btnGuide.addEventListener("click",openGuide);
-el.btnGuideClose.addEventListener("click",closeGuide);
-el.btnGuideEdit.addEventListener("click",doGuideToggleEdit);
-el.btnGuideInsert.addEventListener("click",doGuideInsert);
-el.btnGuideSave.addEventListener("click",doGuideSave);
-el.btnGuideNew.addEventListener("click",doGuideNew);
-el.btnGuideDelete.addEventListener("click",doGuideDelete);
-el.guideName.addEventListener("input",()=>{if(!STATE.guideEdit)return;el.guideSelTitle.textContent=String(el.guideName.value||"").trim()||"-"},{passive:true});
-el.guideOverlay.addEventListener("click",(e)=>{if(e.target===el.guideOverlay)closeGuide()});
-el.btnZoom.addEventListener("click",openZoom);
-el.btnZoomClose.addEventListener("click",closeZoom);
-el.zoomOverlay.addEventListener("click",(e)=>{if(e.target===el.zoomOverlay)closeZoom()});
-el.chkFitWidth.addEventListener("change",applyZoomScale);
-el.previewBig.addEventListener("load",()=>{setTimeout(measureZoomContent,el.code.value?30:10)});
+
 el.findInput.addEventListener("input",()=>{STATE.findIndex=0;recomputeFind()},{passive:true});
-el.btnFind.addEventListener("click",doFindFirstOrCurrent);
-el.btnFindNextFloat.addEventListener("click",doFindNext);
-el.findInput.addEventListener("keydown",(e)=>{if(e.key==="Enter"){e.preventDefault();doFindFirstOrCurrent()}});
+el.btnFind.addEventListener("click",doFindCycle);
+el.findInput.addEventListener("keydown",(e)=>{if(e.key==="Enter"){e.preventDefault();doFindCycle()}});
+
+el.btnGoTop.addEventListener("click",scrollEditorTop);
+el.btnGoBottom.addEventListener("click",scrollEditorBottom);
+
 el.errorBar.addEventListener("click",()=>{flushHeavyNow();const errs=Array.isArray(STATE.errors)?STATE.errors:[];if(!errs.length)return;const idx=Math.max(0,Math.min(STATE.errIndex||0,errs.length-1));const e=errs[idx];scrollToLineNoFocus(e.line);STATE.errIndex=(idx+1)%errs.length;renderErrorBar()});
+
 el.code.addEventListener("beforeinput",onBeforeInput,{passive:true});
 el.code.addEventListener("input",onEditorInput,{passive:true});
 el.code.addEventListener("keydown",autoIndentOnEnter,{passive:false});
 el.code.addEventListener("paste",onPasteDedupDoctype,{passive:false});
-el.btnGoTop.addEventListener("click",scrollEditorTop);
-el.btnGoBottom.addEventListener("click",scrollEditorBottom);
+
+el.preview.addEventListener("load",()=>{setTimeout(()=>fitIframeToWidth(el.preview),0)});
+el.btnZoom.addEventListener("click",openZoom);
+el.btnZoomClose.addEventListener("click",closeZoom);
+el.zoomOverlay.addEventListener("click",(e)=>{if(e.target===el.zoomOverlay)closeZoom()});
+el.previewBig.addEventListener("load",()=>{setTimeout(()=>fitIframeToWidth(el.previewBig),0)});
+
+el.fileNameBox.addEventListener("dblclick",()=>startRename());
+el.fileNameBox.addEventListener("keydown",(e)=>{if(e.key==="Enter"){e.preventDefault();if(el.fileNameBox.readOnly)startRename();else commitRename()}else if(e.key==="Escape"){e.preventDefault();cancelRename()}});
+el.fileNameBox.addEventListener("blur",()=>{if(STATE.renaming)commitRename()},{passive:true});
+
 bindShortcuts();
-window.addEventListener("resize",()=>{if(STATE.resizeTimer)clearTimeout(STATE.resizeTimer);STATE.resizeTimer=setTimeout(()=>{STATE.resizeTimer=null;rebuildGutterAndHeight();recomputeFind();applyZoomScale()},PERF.resizeDelay)},{passive:true});
+
+window.addEventListener("resize",()=>{if(STATE.resizeTimer)clearTimeout(STATE.resizeTimer);STATE.resizeTimer=setTimeout(()=>{STATE.resizeTimer=null;rebuildGutterAndHeight();recomputeFind();fitIframeToWidth(el.preview);if(el.zoomOverlay.classList.contains("show"))fitIframeToWidth(el.previewBig)},PERF.resizeDelay)},{passive:true});
+
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){try{if(STATE.fileId)saveDraft(STATE.fileId,el.code.value||"")}catch{}remoteSaveNow(false)}},{passive:true});
 window.addEventListener("beforeunload",()=>{try{if(STATE.fileId)saveDraft(STATE.fileId,el.code.value||"")}catch{}},{passive:true});
 }
