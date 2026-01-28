@@ -2,9 +2,9 @@
 :root{--bg1:#ffecd2;--bg2:#fcb69f;--card:#fff;--text:#1f2937;--border:#e5e7eb;--soft:#f8fafc;--shadow:0 14px 40px rgba(0,0,0,.10);--radius:18px;--mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;--codeBg:#0b1020;--codeText:#e5e7eb;--codeMuted:rgba(255,255,255,.55);--codeSoft:rgba(255,255,255,.06);--fs:13px;--lh:22px;--pad:12px;--gutterW:44px;--blue:#2563eb}
 *{box-sizing:border-box}html,body{height:100%}html{-webkit-text-size-adjust:100%}
 body{margin:0;font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);overflow-x:hidden;overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;user-select:none;background-color:var(--bg1);background-image:radial-gradient(1200px 600px at 20% 10%,#fff 0%,rgba(255,255,255,0) 55%),linear-gradient(120deg,var(--bg1) 0%,var(--bg2) 100%);background-attachment:fixed,fixed;background-repeat:no-repeat,no-repeat;background-size:cover,cover}
-.wrap{max-width:1280px;margin:0 auto;padding:10px 12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.wrap{max-width:1280px;margin:0 auto;padding:10px 12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0;min-height:100vh}
 .topbar{display:flex;align-items:center;gap:10px;min-width:0;user-select:none}
-.exitBtn{border:0;background:#fee2e2;color:#b91c1c;padding:9px 12px;border-radius:999px;font-weight:950;font-size:1.02rem;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;box-shadow:0 10px 20px rgba(220,38,38,.12)}
+.exitBtn{border:0;background:#fee2e2;color:#b91c1c;padding:9px 12px;border-radius:999px;font-weight:950;font-size:1.02rem;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;box-shadow:0 10px 20px rgba(220,38,38,.12)}
 .exitBtn:hover{filter:brightness(.98)}.exitBtn:active{transform:translateY(0)}
 .fileBox{flex:1 1 auto;min-width:0;border-radius:14px;border:2px solid #e5e7eb;background:rgba(255,255,255,.82);box-shadow:0 10px 22px rgba(0,0,0,.06);padding:9px 10px;font-weight:950;font-size:.9rem;color:rgba(31,41,55,.85);outline:none;user-select:text}
 .fileBox[readonly]{cursor:default}
@@ -19,7 +19,8 @@ body{margin:0;font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,A
 .btnBlue{background:var(--blue);color:#fff;border:0;box-shadow:0 12px 24px rgba(37,99,235,.18)}
 .btnDanger{background:#fff;color:#b91c1c;border:1px solid rgba(185,28,28,.35)}
 .iconBtn{border:0;background:transparent;padding:6px 8px;border-radius:12px;font-weight:950;font-size:1.18rem;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;color:#111827;transition:filter .14s ease,transform .14s ease}
-.iconBtn:hover{transform:translateY(-1px);filter:brightness(.985)}.iconBtn:active{transform:translateY(0)}.iconBtn[disabled]{cursor:not-allowed;color:#9ca3af;filter:none!important;transform:none!important}
+.iconBtn:hover{transform:translateY(-1px);filter:brightness(.985)}.iconBtn:active{transform:translateY(0)}
+.iconBtn[disabled]{cursor:not-allowed;color:#9ca3af;filter:none!important;transform:none!important}
 .toolStack{display:flex;flex-direction:column;gap:10px;min-width:0}
 .toolRow{display:flex;align-items:center;gap:12px;flex-wrap:nowrap;min-width:0;user-select:none}
 .row1{justify-content:flex-end}
@@ -30,16 +31,16 @@ body{margin:0;font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,A
 .errorBar{display:none;padding:10px 12px;border-radius:14px;border:1px solid rgba(220,38,38,.35);background:rgba(254,242,242,.85);color:#7f1d1d;font-weight:900;font-size:.9rem;user-select:none;cursor:pointer}
 .errorBar.show{display:block}
 .editorCard{display:flex;flex-direction:column;gap:10px}
-.editorFrame{border-radius:16px;border:2px solid #e5e7eb;overflow:hidden;background:var(--codeBg);box-shadow:0 14px 34px rgba(0,0,0,.18);display:flex;min-height:52vh}
-@media(min-width:980px){.editorFrame{min-height:calc(100vh - 156px)}}
-.editorScroll{flex:1;overflow:auto;overflow-x:hidden;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+.editorFrame{border-radius:16px;border:2px solid #e5e7eb;overflow:hidden;background:var(--codeBg);box-shadow:0 14px 34px rgba(0,0,0,.18);display:flex;height:52vh}
+@media(min-width:980px){.editorFrame{height:calc(100vh - 156px)}}
+.editorScroll{flex:1;overflow:auto;overflow-x:hidden;touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .editorInner{display:flex;align-items:stretch;min-width:0}
 .gutter{width:var(--gutterW);flex:0 0 var(--gutterW);padding:var(--pad) 6px;background:var(--codeSoft);border-right:1px solid rgba(255,255,255,.10);color:var(--codeMuted);font-family:var(--mono);font-size:var(--fs);line-height:var(--lh);text-align:right;user-select:none}
 .gline{height:var(--lh);display:flex;align-items:center;justify-content:flex-end;padding-right:2px}
 .gline.err{background:rgba(220,38,38,.18);border-radius:8px;padding-right:6px;margin-right:-2px;margin-left:-2px}
 .codePane{position:relative;flex:1 1 auto;width:100%;min-width:0;background:transparent}
-pre.codeHl{position:absolute;inset:0;margin:0;padding:var(--pad);border:0;outline:none;background:transparent;color:var(--codeText);font-family:var(--mono);font-size:var(--fs);line-height:var(--lh);tab-size:2;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;pointer-events:none;user-select:none}
-textarea.code{position:relative;width:100%;border:0;outline:none;resize:none;padding:var(--pad);background:transparent;font-family:var(--mono);font-size:var(--fs);line-height:var(--lh);tab-size:2;color:transparent;-webkit-text-fill-color:transparent;caret-color:#fff;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;user-select:text;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+pre.codeHl{position:absolute;inset:0;margin:0;padding:var(--pad);border:0;outline:none;background:transparent;color:var(--codeText);font-family:var(--mono);font-size:var(--fs);line-height:var(--lh);tab-size:2;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;pointer-events:none;user-select:none;min-height:100%}
+textarea.code{position:relative;width:100%;border:0;outline:none;resize:none;padding:var(--pad);background:transparent;font-family:var(--mono);font-size:var(--fs);line-height:var(--lh);tab-size:2;color:transparent;-webkit-text-fill-color:transparent;caret-color:#fff;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;user-select:text;touch-action:pan-y;-webkit-overflow-scrolling:touch;min-height:100%}
 textarea.code::selection{background:rgba(37,99,235,.33)}
 .tok-punc{color:rgba(255,255,255,.70)}.tok-tag{color:#60a5fa}.tok-attr{color:#fbbf24}.tok-op{color:rgba(255,255,255,.60)}.tok-str{color:#34d399}.tok-com{color:rgba(255,255,255,.45)}.tok-doctype{color:#a78bfa}.tok-txt{color:rgba(229,231,235,.92)}
 .tok-find{background:rgba(37,99,235,.22);border-radius:7px;padding:0 1px;box-shadow:0 0 0 1px rgba(37,99,235,.18) inset}
@@ -47,11 +48,13 @@ textarea.code::selection{background:rgba(37,99,235,.33)}
 .previewCard{display:flex;flex-direction:column;gap:10px}
 .previewHead{display:flex;align-items:center;justify-content:space-between;gap:10px;user-select:none;flex-wrap:nowrap;overflow:hidden}
 .previewLabel{font-weight:950;color:rgba(31,41,55,.65);font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.previewBox{border-radius:16px;border:2px solid #e5e7eb;background:#fff;overflow:hidden;box-shadow:0 10px 22px rgba(0,0,0,.06);min-height:180px;height:30vh}
+.previewBox{border-radius:16px;border:2px solid #e5e7eb;background:#fff;overflow:hidden;box-shadow:0 10px 22px rgba(0,0,0,.06);min-height:160px;height:24vh}
 .previewBox iframe{width:100%;height:100%;border:0;background:#fff}
 @media(min-width:980px){.previewBox{height:calc(100vh - 120px);min-height:0}}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(17,24,39,.92);color:#fff;padding:10px 12px;border-radius:14px;font-weight:900;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;max-width:calc(100% - 28px);z-index:20050;text-align:center;user-select:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+.findNextFloat{position:fixed;left:calc(12px + env(safe-area-inset-left, 0px));top:50%;transform:translateY(-50%);z-index:20045;display:none;width:52px;height:52px;padding:0;border-radius:999px;align-items:center;justify-content:center;font-size:1.24rem}
+.findNextFloat.show{display:flex}
 .overlay{position:fixed;inset:0;z-index:25000;background:rgba(17,24,39,.45);display:none;align-items:flex-end;justify-content:center;padding:14px;-webkit-tap-highlight-color:transparent}
 .overlay.show{display:flex}
 .zoomSheet{width:min(980px,100%);background:rgba(255,255,255,.98);border:2px solid rgba(229,231,235,.95);border-radius:22px;box-shadow:0 18px 60px rgba(0,0,0,.22);overflow:hidden;max-height:86vh;display:flex;flex-direction:column;user-select:none}
@@ -63,7 +66,7 @@ textarea.code::selection{background:rgba(37,99,235,.33)}
 .zoomInfo{font-weight:950;color:rgba(31,41,55,.70);font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .zoomViewport{border-radius:16px;border:2px solid rgba(229,231,235,.95);background:#fff;overflow:hidden;box-shadow:0 10px 22px rgba(0,0,0,.06);height:68vh;min-height:260px}
 .zoomViewport iframe{width:100%;height:100%;border:0;background:#fff}
-@media(max-width:520px){:root{--gutterW:40px;--fs:12.5px;--lh:21px}.btn{padding:9px 10px}.toolRow{gap:10px}.iconBtn{font-size:1.12rem}.previewBox{height:32vh}.editorFrame{min-height:48vh}}
+@media(max-width:520px){:root{--gutterW:40px;--fs:12.5px;--lh:21px}.btn{padding:9px 10px}.toolRow{gap:10px}.iconBtn{font-size:1.12rem}.previewBox{height:20vh}.editorFrame{height:56vh}.findNextFloat{width:50px;height:50px}}
 </style></head><body>
 <div class="wrap">
   <div class="topbar">
@@ -97,8 +100,8 @@ textarea.code::selection{background:rgba(37,99,235,.33)}
               <input class="input" id="findInput" type="search" inputmode="search" enterkeyhint="search" placeholder="Tìm kiếm..." autocomplete="off"/>
               <button class="btn" id="btnFind" type="button" disabled>Tìm</button>
             </div>
-            <button class="iconBtn" id="btnGoTop" type="button" aria-label="Lên đầu code">▲</button>
-            <button class="iconBtn" id="btnGoBottom" type="button" aria-label="Xuống cuối code">▼</button>
+            <button class="iconBtn" id="btnGoTop" type="button" aria-label="Lên đầu code" disabled>▲</button>
+            <button class="iconBtn" id="btnGoBottom" type="button" aria-label="Xuống cuối code" disabled>▼</button>
             <button class="btn" id="btnFormat" type="button" disabled>⌥ Căn chỉnh</button>
           </div>
         </div>
@@ -123,6 +126,7 @@ textarea.code::selection{background:rgba(37,99,235,.33)}
   <div id="measure" style="position:absolute;left:-99999px;top:-99999px;visibility:hidden;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font-family:var(--mono);font-size:var(--fs);line-height:var(--lh);tab-size:2;padding:0;margin:0"></div>
 </div>
 
+<button class="btn btnBlue findNextFloat" id="btnFindNextFloat" type="button" aria-label="Tìm tiếp">➜</button>
 <div class="toast" id="toast"></div>
 
 <div class="overlay" id="zoomOverlay" aria-hidden="true">
@@ -147,11 +151,13 @@ const TOKEN_KEYS=["tk_token_v2","tk_token_v1","tk_token"];
 const TOKEN_COOKIES=["tk_token_v2","tk_token_v1","tk_token"];
 const ME_KEY="tk_me_v2";
 const DRAFT_KEY_PREFIX="tk_code_draft_v2:";
+const NAME_OVERRIDE_PREFIX="tk_code_name_override_v1:";
 const FILE_ID_RE=/^[a-z]{5}$/;
 const VOID_TAGS=new Set(["area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"]);
 const RAW_TEXT_TAGS=new Set(["script","style","textarea"]);
 const OPTIONAL_END_TAGS=new Set(["html","head","body","li","dt","dd","p","rt","rp","optgroup","option","colgroup","thead","tbody","tfoot","tr","td","th"]);
 const DEFAULT_START="<!DOCTYPE html>\n";
+
 const el={
 btnExit:document.getElementById("btnExit"),
 fileNameBox:document.getElementById("fileNameBox"),
@@ -162,12 +168,14 @@ btnClearAll:document.getElementById("btnClearAll"),
 btnFormat:document.getElementById("btnFormat"),
 findInput:document.getElementById("findInput"),
 btnFind:document.getElementById("btnFind"),
+btnFindNextFloat:document.getElementById("btnFindNextFloat"),
 btnGoTop:document.getElementById("btnGoTop"),
 btnGoBottom:document.getElementById("btnGoBottom"),
+editorFrame:document.getElementById("editorFrame"),
+editorScroll:document.getElementById("editorScroll"),
 code:document.getElementById("code"),
 codeHl:document.getElementById("codeHl"),
 gutter:document.getElementById("gutter"),
-editorScroll:document.getElementById("editorScroll"),
 preview:document.getElementById("preview"),
 previewLabel:document.getElementById("previewLabel"),
 btnZoom:document.getElementById("btnZoom"),
@@ -179,6 +187,7 @@ errorBar:document.getElementById("errorBar"),
 toast:document.getElementById("toast"),
 measure:document.getElementById("measure")
 };
+
 const STATE={fileId:"",meta:null,remote:"",content:"",lineStartRow:[],errLines:new Set(),errors:[],errIndex:0,lastFind:"",findMatches:[],findIndex:0,heavyTimer:null,draftTimer:null,resizeTimer:null,undoStack:[],redoStack:[],pendingUndo:null,isUndoing:false,remoteSaving:false,remoteTimer:null,remoteQueued:false,me:null,renaming:false,renamePrev:""};
 const PERF={heavyDelay:260,draftDelay:900,resizeDelay:120,remoteDelay:1200};
 
@@ -200,18 +209,26 @@ const API={me:async(token)=>{const t=String(token||"").trim();const out=await rp
 const CODEAPI={
 getFile:async(token,codeId)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();return await rpcTry(["api_code_get_file","code_get_file","api_code_get"],[{p_token:t,p_code_id:id},{token:t,code_id:id},{p_session_token:t,p_code_id:id}])},
 saveFile:async(token,codeId,content)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();return await rpcTry(["api_code_save_file","code_save_file","api_code_save"],[{p_token:t,p_code_id:id,p_content:content},{token:t,code_id:id,content},{p_session_token:t,p_code_id:id,p_content:content}])},
-renameNode:async(token,codeId,name)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();const nm=String(name||"").trim();return await rpcTry(["api_code_rename_node","code_rename_node","api_code_rename","code_rename","api_code_update_node","code_update_node","api_code_set_name","code_set_name"],[{p_token:t,p_code_id:id,p_name:nm},{token:t,code_id:id,name:nm},{p_session_token:t,p_code_id:id,p_name:nm},{token:t,p_code_id:id,p_name:nm},{p_token:t,p_code_id:id,p_new_name:nm},{token:t,code_id:id,new_name:nm}])}
+renameNode:async(token,codeId,name)=>{const t=String(token||"").trim();const id=String(codeId||"").trim();const nm=String(name||"").trim();return await rpcTry(
+["api_code_rename_node","code_rename_node","api_code_rename","code_rename","api_code_update_node","code_update_node","api_code_set_name","code_set_name"],
+[{p_token:t,p_code_id:id,p_name:nm},{token:t,code_id:id,name:nm},{p_session_token:t,p_code_id:id,p_name:nm},{token:t,p_code_id:id,p_name:nm},{p_token:t,p_code_id:id,p_new_name:nm},{token:t,code_id:id,new_name:nm}]
+)}
 };
-function isAdmin(){const me=STATE.me||getMeCache();const u=me&&me.username?String(me.username):"";const r=me&&me.role?String(me.role):"";return(u.toLocaleLowerCase()==="tuankhoi")&&(r.toLocaleLowerCase()==="admin")}
+
 function getFileIdFromUrl(){try{const u=new URL(location.href);const raw=(u.searchParams.get("f")||u.searchParams.get("file")||"").trim().toLowerCase();return FILE_ID_RE.test(raw)?raw:null}catch{return null}}
 function draftKey(fileId){return DRAFT_KEY_PREFIX+String(fileId||"")}
+function nameKey(fileId){return NAME_OVERRIDE_PREFIX+String(fileId||"")}
 function loadDraft(fileId){try{const raw=localStorage.getItem(draftKey(fileId));if(!raw)return null;const o=JSON.parse(raw);if(!o||typeof o.content!=="string")return null;return o}catch{return null}}
 function saveDraft(fileId,content){try{localStorage.setItem(draftKey(fileId),JSON.stringify({content:String(content||""),ts:Date.now()}))}catch{}}
 function clearDraft(fileId){try{localStorage.removeItem(draftKey(fileId))}catch{}}
+function loadNameOverride(fileId){try{return String(localStorage.getItem(nameKey(fileId))||"").trim()||""}catch{return ""}}
+function saveNameOverride(fileId,name){try{const v=String(name||"").trim();if(!v)localStorage.removeItem(nameKey(fileId));else localStorage.setItem(nameKey(fileId),v)}catch{}}
+
 function normLower(s){return String(s||"").toLocaleLowerCase()}
 function makeLineStarts(s){const out=[0];for(let i=0;i<s.length;i++)if(s[i]==="\n")out.push(i+1);return out}
 function idxToLineCol(lineStarts,idx){const i=Math.max(0,Math.min(Number(idx)||0,0x7fffffff));let lo=0,hi=lineStarts.length-1,ans=0;while(lo<=hi){const mid=(lo+hi)>>1;if(lineStarts[mid]<=i){ans=mid;lo=mid+1}else hi=mid-1}return{line:ans+1,col:(i-lineStarts[ans])+1}}
-function lintHtmlVsLike(code){const s=String(code||"");const lower=normLower(s);const lineStarts=makeLineStarts(s);const stack=[];const errors=[];const errLines=new Set();
+function lintHtmlVsLike(code){
+const s=String(code||"");const lower=normLower(s);const lineStarts=makeLineStarts(s);const stack=[];const errors=[];const errLines=new Set();
 function addErrAt(idx,msg){const lc=idxToLineCol(lineStarts,idx);errors.push({line:lc.line,col:lc.col,msg:String(msg||"")});errLines.add(lc.line)}
 function markLineOfIdx(idx){const lc=idxToLineCol(lineStarts,idx);errLines.add(lc.line)}
 let i=0;
@@ -262,39 +279,326 @@ if(stack.length){for(const x of stack){if(OPTIONAL_END_TAGS.has(x.tag))continue;
 errors.sort((a,b)=>(a.line-b.line)||(a.col-b.col));
 return{ok:errors.length===0,errLines,errors}
 }
+
 function escHtml(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
-function highlightTagEsc(m){const mm=m.match(/^(&lt;\/?)([a-zA-Z][\w:-]*)([\s\S]*?)(&gt;)$/);if(!mm)return`<span class="tok-tag">${m}</span>`;const open=mm[1],name=mm[2],inner=mm[3]||"",close=mm[4];let out=`<span class="tok-punc">${open}</span><span class="tok-tag">${name}</span>`;let i=0;while(i<inner.length){const ch=inner[i];if(/\s/.test(ch)){let j=i+1;while(j<inner.length&&/\s/.test(inner[j]))j++;out+=inner.slice(i,j);i=j;continue}if(ch==="/"){out+=`<span class="tok-op">/</span>`;i++;continue}let j=i;while(j<inner.length&&!/\s/.test(inner[j])&&inner[j]!=="="&&inner[j]!=="/")j++;const attr=inner.slice(i,j);i=j;let k=i;while(k<inner.length&&/\s/.test(inner[k]))k++;if(inner[k]==="="){out+=`<span class="tok-attr">${attr}</span><span class="tok-op">=</span>`;k++;while(k<inner.length&&/\s/.test(inner[k]))k++;if(inner[k]==='"'||inner[k]==="'"){const q=inner[k];let p=k+1;while(p<inner.length&&inner[p]!==q)p++;const val=inner.slice(k,Math.min(p+1,inner.length));out+=`<span class="tok-str">${val}</span>`;i=Math.min(p+1,inner.length)}else{let p=k;while(p<inner.length&&!/\s/.test(inner[p])&&inner[p]!=="/")p++;const val=inner.slice(k,p);out+=`<span class="tok-str">${val}</span>`;i=p}}else{out+=`<span class="tok-attr">${attr}</span>`;i=k}}out+=`<span class="tok-punc">${close}</span>`;return out}
-function highlightHtml(raw){const s0=escHtml(raw||"");const parts=[];const re=/&lt;!--[\s\S]*?--&gt;|&lt;!DOCTYPE[\s\S]*?&gt;|&lt;\/?[a-zA-Z][\w:-]*[\s\S]*?&gt;/gi;let last=0,m;while((m=re.exec(s0))){const idx=m.index;if(idx>last){const txt=s0.slice(last,idx);parts.push(`<span class="tok-txt">${txt||" "}</span>`)}const tok=m[0]||"";if(tok.startsWith("&lt;!--"))parts.push(`<span class="tok-com">${tok}</span>`);else if(/^&lt;!DOCTYPE/i.test(tok))parts.push(`<span class="tok-doctype">${tok}</span>`);else parts.push(highlightTagEsc(tok));last=idx+tok.length}if(last<s0.length){const tail=s0.slice(last);parts.push(`<span class="tok-txt">${tail||" "}</span>`)}let out=parts.join("");if(!out)out=" ";if(out.endsWith("\n"))out+=" ";return out}
-function clearFindMarks(){const root=el.codeHl;const marks=root.querySelectorAll(".tok-find");for(const mk of marks){const parent=mk.parentNode;if(!parent)continue;parent.replaceChild(document.createTextNode(mk.textContent||""),mk);parent.normalize()}}
-function buildFindMatches(text,q){const t=String(text||""),needle=String(q||"");if(!needle)return[];const tL=normLower(t),nL=normLower(needle);const out=[];let i=0;while(true){const idx=tL.indexOf(nL,i);if(idx<0)break;out.push({start:idx,end:idx+needle.length});i=idx+Math.max(1,needle.length)}return out}
-function applyFindMarksDom(q){clearFindMarks();const needle=String(q||"");if(!needle)return[];const nL=normLower(needle);const root=el.codeHl;const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);const spans=[];let node;while((node=walker.nextNode())){const txt=node.nodeValue||"";if(!txt)continue;const low=normLower(txt);let idx=low.indexOf(nL);if(idx<0)continue;const frag=document.createDocumentFragment();let last=0;while(idx>=0){if(idx>last)frag.appendChild(document.createTextNode(txt.slice(last,idx)));const sp=document.createElement("span");sp.className="tok-find";sp.textContent=txt.slice(idx,idx+needle.length);frag.appendChild(sp);spans.push(sp);last=idx+needle.length;idx=low.indexOf(nL,last)}if(last<txt.length)frag.appendChild(document.createTextNode(txt.slice(last)));const parent=node.parentNode;if(parent)parent.replaceChild(frag,node)}return spans}
-function setActiveFind(index){const spans=el.codeHl.querySelectorAll(".tok-find");for(const s of spans)s.classList.remove("active");const i=Math.max(0,Math.min(index,spans.length-1));if(spans[i])spans[i].classList.add("active")}
+function highlightTagEsc(m){
+const mm=m.match(/^(&lt;\/?)([a-zA-Z][\w:-]*)([\s\S]*?)(&gt;)$/);
+if(!mm)return`<span class="tok-tag">${m}</span>`;
+const open=mm[1],name=mm[2],inner=mm[3]||"",close=mm[4];
+let out=`<span class="tok-punc">${open}</span><span class="tok-tag">${name}</span>`;
+let i=0;
+while(i<inner.length){
+const ch=inner[i];
+if(/\s/.test(ch)){let j=i+1;while(j<inner.length&&/\s/.test(inner[j]))j++;out+=inner.slice(i,j);i=j;continue}
+if(ch==="/"){out+=`<span class="tok-op">/</span>`;i++;continue}
+let j=i;while(j<inner.length&&!/\s/.test(inner[j])&&inner[j]!=="="&&inner[j]!=="/")j++;
+const attr=inner.slice(i,j);i=j;
+let k=i;while(k<inner.length&&/\s/.test(inner[k]))k++;
+if(inner[k]==="="){
+out+=`<span class="tok-attr">${attr}</span><span class="tok-op">=</span>`;k++;while(k<inner.length&&/\s/.test(inner[k]))k++;
+if(inner[k]==='"'||inner[k]==="'"){
+const q=inner[k];let p=k+1;while(p<inner.length&&inner[p]!==q)p++;
+const val=inner.slice(k,Math.min(p+1,inner.length));
+out+=`<span class="tok-str">${val}</span>`;i=Math.min(p+1,inner.length)
+}else{
+let p=k;while(p<inner.length&&!/\s/.test(inner[p])&&inner[p]!=="/")p++;
+const val=inner.slice(k,p);out+=`<span class="tok-str">${val}</span>`;i=p
+}
+}else{out+=`<span class="tok-attr">${attr}</span>`;i=k}
+}
+out+=`<span class="tok-punc">${close}</span>`;
+return out
+}
+function highlightHtml(raw){
+const s0=escHtml(raw||"");
+const parts=[];
+const re=/&lt;!--[\s\S]*?--&gt;|&lt;!DOCTYPE[\s\S]*?&gt;|&lt;\/?[a-zA-Z][\w:-]*[\s\S]*?&gt;/gi;
+let last=0,m;
+while((m=re.exec(s0))){
+const idx=m.index;
+if(idx>last){const txt=s0.slice(last,idx);parts.push(`<span class="tok-txt">${txt||" "}</span>`)}
+const tok=m[0]||"";
+if(tok.startsWith("&lt;!--"))parts.push(`<span class="tok-com">${tok}</span>`);
+else if(/^&lt;!DOCTYPE/i.test(tok))parts.push(`<span class="tok-doctype">${tok}</span>`);
+else parts.push(highlightTagEsc(tok));
+last=idx+tok.length
+}
+if(last<s0.length){const tail=s0.slice(last);parts.push(`<span class="tok-txt">${tail||" "}</span>`)}
+let out=parts.join("");if(!out)out=" ";if(out.endsWith("\n"))out+=" ";return out
+}
+
+function clearFindMarks(){
+const root=el.codeHl;
+const marks=root.querySelectorAll(".tok-find");
+for(const mk of marks){
+const parent=mk.parentNode;
+if(!parent)continue;
+parent.replaceChild(document.createTextNode(mk.textContent||""),mk);
+parent.normalize()
+}
+}
+function buildFindMatches(text,q){
+const t=String(text||""),needle=String(q||"");if(!needle)return[];
+const tL=normLower(t),nL=normLower(needle);
+const out=[];let i=0;
+while(true){const idx=tL.indexOf(nL,i);if(idx<0)break;out.push({start:idx,end:idx+needle.length});i=idx+Math.max(1,needle.length)}
+return out
+}
+function applyFindMarksDom(q){
+clearFindMarks();
+const needle=String(q||"");if(!needle)return[];
+const nL=normLower(needle);
+const root=el.codeHl;
+const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null);
+const spans=[];
+let node;
+while((node=walker.nextNode())){
+const txt=node.nodeValue||"";if(!txt)continue;
+const low=normLower(txt);let idx=low.indexOf(nL);
+if(idx<0)continue;
+const frag=document.createDocumentFragment();let last=0;
+while(idx>=0){
+if(idx>last)frag.appendChild(document.createTextNode(txt.slice(last,idx)));
+const sp=document.createElement("span");
+sp.className="tok-find";sp.textContent=txt.slice(idx,idx+needle.length);
+frag.appendChild(sp);spans.push(sp);
+last=idx+needle.length;idx=low.indexOf(nL,last)
+}
+if(last<txt.length)frag.appendChild(document.createTextNode(txt.slice(last)));
+const parent=node.parentNode;if(parent)parent.replaceChild(frag,node)
+}
+return spans
+}
+function setActiveFind(index){
+const spans=el.codeHl.querySelectorAll(".tok-find");
+for(const s of spans)s.classList.remove("active");
+const i=Math.max(0,Math.min(index,spans.length-1));
+if(spans[i])spans[i].classList.add("active")
+}
+function updateFindNextFloat(){
+const q=String(el.findInput.value||"").trim();
+const show=!!(q&&STATE.findMatches.length>1);
+el.btnFindNextFloat.classList.toggle("show",show);
+el.btnFindNextFloat.disabled=!show
+}
+
 function updatePreview(){el.preview.srcdoc=String(el.code.value||"")}
-function computeWrapCounts(lines,textWidthPx,lineHeightPx){el.measure.style.width=Math.max(20,textWidthPx)+"px";const counts=new Array(lines.length);for(let i=0;i<lines.length;i++){const s=lines[i];el.measure.textContent=(s.length?s:" ");const h=el.measure.scrollHeight;counts[i]=Math.max(1,Math.ceil(h/lineHeightPx))}return counts}
-function rebuildGutterAndHeight(){const ta=el.code;const cs=getComputedStyle(ta);const padL=parseFloat(cs.paddingLeft)||0;const padR=parseFloat(cs.paddingRight)||0;const lh=parseFloat(cs.lineHeight)||22;const textWidth=Math.max(20,ta.clientWidth-padL-padR);const text=ta.value||"";const lines=text.split("\n");const wrapCounts=computeWrapCounts(lines,textWidth,lh);let out=[],rowIndex=0;STATE.lineStartRow=new Array(Math.max(lines.length,10));const needMin=Math.max(10,lines.length);for(let i=0;i<needMin;i++){const ln=i+1;const wraps=(i<wrapCounts.length)?wrapCounts[i]:1;STATE.lineStartRow[i]=rowIndex;for(let w=0;w<wraps;w++){const first=(w===0);const isErr=first&&STATE.errLines.has(ln);out.push(`<div class="gline${isErr?" err":""}" data-row="${rowIndex}" data-line="${ln}">${first?String(ln):""}</div>`);rowIndex++}}el.gutter.innerHTML=out.join("");ta.style.height="auto";ta.style.height=ta.scrollHeight+"px";el.codeHl.style.height=ta.style.height}
-function renderErrorBar(){const bar=el.errorBar;const errs=Array.isArray(STATE.errors)?STATE.errors:[];if(errs.length===0){bar.classList.remove("show");bar.textContent="";return}const idx=Math.max(0,Math.min(STATE.errIndex||0,errs.length-1));const e=errs[idx];bar.textContent=`Lỗi ${idx+1}/${errs.length}: ${e.msg} (dòng ${e.line}, cột ${e.col})`;bar.classList.add("show")}
-function scrollToLineNoFocus(lineNo){const idx=Math.max(1,Number(lineNo)||1);const startRow=STATE.lineStartRow[idx-1]??0;const target=el.gutter.querySelector(`.gline[data-row="${startRow}"]`);if(target)target.scrollIntoView({block:"center",behavior:"smooth",inline:"nearest"})}
-function renderHighlight(){el.codeHl.innerHTML=highlightHtml(el.code.value||"");const q=String(el.findInput.value||"").trim();if(q){applyFindMarksDom(q);setActiveFind(STATE.findIndex||0)}}
-function getLineFromPos(pos){const text=el.code.value||"";return text.slice(0,Math.max(0,pos)).split("\n").length}
-function selectMatchAt(i){if(!STATE.findMatches.length)return;const idx=((i%STATE.findMatches.length)+STATE.findMatches.length)%STATE.findMatches.length;STATE.findIndex=idx;const m=STATE.findMatches[idx];scrollToLineNoFocus(getLineFromPos(m.start));setActiveFind(idx);toast(`${idx+1}/${STATE.findMatches.length}`)}
-function recomputeFind(){const q=String(el.findInput.value||"").trim();el.btnFind.disabled=!q;if(!q){STATE.lastFind="";STATE.findMatches=[];STATE.findIndex=0;renderHighlight();return}STATE.findMatches=buildFindMatches(el.code.value||"",q);if(STATE.findIndex>=STATE.findMatches.length)STATE.findIndex=0;renderHighlight()}
-function scheduleDraftSave(){if(STATE.draftTimer)clearTimeout(STATE.draftTimer);STATE.draftTimer=setTimeout(()=>{STATE.draftTimer=null;if(!STATE.fileId)return;saveDraft(STATE.fileId,el.code.value||"")},PERF.draftDelay)}
-function scheduleRemoteSave(){if(STATE.remoteTimer)clearTimeout(STATE.remoteTimer);STATE.remoteTimer=setTimeout(()=>{STATE.remoteTimer=null;remoteSaveNow(false)},PERF.remoteDelay)}
-async function remoteSaveNow(forceToast){try{const token=getToken();if(!token||!STATE.fileId)return;const html=String(el.code.value||"");if(html===String(STATE.remote||"")){if(forceToast)toast("Đã lưu");return}if(STATE.remoteSaving){STATE.remoteQueued=true;return}STATE.remoteSaving=true;const out=await CODEAPI.saveFile(token,STATE.fileId,html);const o=firstObj(out)||out||{};if(o.ok!==true)throw new Error(o.error||o.message||"Lưu lỗi");STATE.remote=html;clearDraft(STATE.fileId);if(forceToast)toast("Đã lưu")}catch(e){toast(String(e&&e.message?e.message:"Lưu lỗi"))}finally{STATE.remoteSaving=false;if(STATE.remoteQueued){STATE.remoteQueued=false;scheduleRemoteSave()}}}
+
+function computeWrapCounts(lines,textWidthPx,lineHeightPx){
+el.measure.style.width=Math.max(20,textWidthPx)+"px";
+const counts=new Array(lines.length);
+for(let i=0;i<lines.length;i++){
+const s=lines[i];
+el.measure.textContent=(s.length?s:" ");
+const h=el.measure.scrollHeight;
+counts[i]=Math.max(1,Math.ceil(h/lineHeightPx))
+}
+return counts
+}
+
+function rebuildGutterAndHeight(){
+const ta=el.code;
+const cs=getComputedStyle(ta);
+const padL=parseFloat(cs.paddingLeft)||0;
+const padR=parseFloat(cs.paddingRight)||0;
+const lh=parseFloat(cs.lineHeight)||22;
+const textWidth=Math.max(20,ta.clientWidth-padL-padR);
+const text=ta.value||"";
+const lines=text.split("\n");
+const wrapCounts=computeWrapCounts(lines,textWidth,lh);
+
+let out=[],rowIndex=0;
+STATE.lineStartRow=new Array(Math.max(lines.length,10));
+const needMin=Math.max(10,lines.length);
+
+for(let i=0;i<needMin;i++){
+const ln=i+1;
+const wraps=(i<wrapCounts.length)?wrapCounts[i]:1;
+STATE.lineStartRow[i]=rowIndex;
+for(let w=0;w<wraps;w++){
+const first=(w===0);
+const isErr=first&&STATE.errLines.has(ln);
+out.push(`<div class="gline${isErr?" err":""}" data-row="${rowIndex}" data-line="${ln}">${first?String(ln):""}</div>`);
+rowIndex++
+}
+}
+el.gutter.innerHTML=out.join("");
+
+ta.style.height="auto";
+const minH=Math.max(1,el.editorScroll.clientHeight||0);
+const needH=Math.max(minH,ta.scrollHeight||minH);
+ta.style.height=needH+"px";
+el.codeHl.style.height=ta.style.height;
+
+updateScrollNavButtons()
+}
+
+function renderErrorBar(){
+const bar=el.errorBar;
+const errs=Array.isArray(STATE.errors)?STATE.errors:[];
+if(errs.length===0){bar.classList.remove("show");bar.textContent="";return}
+const idx=Math.max(0,Math.min(STATE.errIndex||0,errs.length-1));
+const e=errs[idx];
+bar.textContent=`Lỗi ${idx+1}/${errs.length}: ${e.msg} (dòng ${e.line}, cột ${e.col})`;
+bar.classList.add("show")
+}
+
+function scrollToLineNoFocus(lineNo){
+const idx=Math.max(1,Number(lineNo)||1);
+const startRow=STATE.lineStartRow[idx-1]??0;
+const target=el.gutter.querySelector(`.gline[data-row="${startRow}"]`);
+if(target)target.scrollIntoView({block:"center",behavior:"smooth",inline:"nearest"})
+}
+
+function renderHighlight(){
+el.codeHl.innerHTML=highlightHtml(el.code.value||"");
+const q=String(el.findInput.value||"").trim();
+if(q){applyFindMarksDom(q);setActiveFind(STATE.findIndex||0)}
+updateFindNextFloat()
+}
+
+function getLineFromPos(pos){
+const text=el.code.value||"";
+return text.slice(0,Math.max(0,pos)).split("\n").length
+}
+
+function selectMatchAt(i){
+if(!STATE.findMatches.length)return;
+const idx=((i%STATE.findMatches.length)+STATE.findMatches.length)%STATE.findMatches.length;
+STATE.findIndex=idx;
+const m=STATE.findMatches[idx];
+scrollToLineNoFocus(getLineFromPos(m.start));
+setActiveFind(idx);
+toast(`${idx+1}/${STATE.findMatches.length}`);
+updateFindNextFloat()
+}
+
+function recomputeFind(){
+const q=String(el.findInput.value||"").trim();
+el.btnFind.disabled=!q;
+if(!q){
+STATE.lastFind="";STATE.findMatches=[];STATE.findIndex=0;
+renderHighlight();return
+}
+STATE.findMatches=buildFindMatches(el.code.value||"",q);
+if(STATE.findIndex>=STATE.findMatches.length)STATE.findIndex=0;
+renderHighlight()
+}
+
+function scheduleDraftSave(){
+if(STATE.draftTimer)clearTimeout(STATE.draftTimer);
+STATE.draftTimer=setTimeout(()=>{STATE.draftTimer=null;if(!STATE.fileId)return;saveDraft(STATE.fileId,el.code.value||"")},PERF.draftDelay)
+}
+function scheduleRemoteSave(){
+if(STATE.remoteTimer)clearTimeout(STATE.remoteTimer);
+STATE.remoteTimer=setTimeout(()=>{STATE.remoteTimer=null;remoteSaveNow(false)},PERF.remoteDelay)
+}
+async function remoteSaveNow(forceToast){
+try{
+const token=getToken();
+if(!token||!STATE.fileId)return;
+const html=String(el.code.value||"");
+if(html===String(STATE.remote||"")){if(forceToast)toast("Đã lưu");return}
+if(STATE.remoteSaving){STATE.remoteQueued=true;return}
+STATE.remoteSaving=true;
+const out=await CODEAPI.saveFile(token,STATE.fileId,html);
+const o=firstObj(out)||out||{};
+if(o.ok!==true)throw new Error(o.error||o.message||"Lưu lỗi");
+STATE.remote=html;
+clearDraft(STATE.fileId);
+if(forceToast)toast("Đã lưu")
+}catch(e){toast(String(e&&e.message?e.message:"Lưu lỗi"))}
+finally{
+STATE.remoteSaving=false;
+if(STATE.remoteQueued){STATE.remoteQueued=false;scheduleRemoteSave()}
+}
+}
+
 function updateUndoButtons(){el.btnUndo.disabled=!(STATE.undoStack&&STATE.undoStack.length);el.btnRedo.disabled=!(STATE.redoStack&&STATE.redoStack.length)}
-function pushUndoSnapshot(snap){if(!snap||typeof snap.value!=="string")return;const top=STATE.undoStack.length?STATE.undoStack[STATE.undoStack.length-1]:null;if(top&&top.value===snap.value&&top.selStart===snap.selStart&&top.selEnd===snap.selEnd)return;STATE.undoStack.push(snap);if(STATE.undoStack.length>40)STATE.undoStack.shift();updateUndoButtons()}
+function pushUndoSnapshot(snap){
+if(!snap||typeof snap.value!=="string")return;
+const top=STATE.undoStack.length?STATE.undoStack[STATE.undoStack.length-1]:null;
+if(top&&top.value===snap.value&&top.selStart===snap.selStart&&top.selEnd===snap.selEnd)return;
+STATE.undoStack.push(snap);
+if(STATE.undoStack.length>40)STATE.undoStack.shift();
+updateUndoButtons()
+}
 function pushRedoSnapshot(snap){if(!snap||typeof snap.value!=="string")return;STATE.redoStack.push(snap);if(STATE.redoStack.length>40)STATE.redoStack.shift();updateUndoButtons()}
 function captureUndoNow(){if(STATE.isUndoing)return;pushUndoSnapshot({value:String(el.code.value||""),selStart:el.code.selectionStart??0,selEnd:el.code.selectionEnd??0})}
 function onBeforeInput(){if(STATE.isUndoing)return;STATE.pendingUndo={value:String(el.code.value||""),selStart:el.code.selectionStart??0,selEnd:el.code.selectionEnd??0}}
-function runHeavyUpdate(){const v=el.code.value||"";STATE.content=v;if(STATE.fileId)saveDraft(STATE.fileId,v);const lint=lintHtmlVsLike(v);STATE.errLines=lint.errLines;STATE.errors=lint.errors;STATE.errIndex=0;renderErrorBar();rebuildGutterAndHeight();updatePreview();updateFormatAvailability();recomputeFind();updateUndoButtons();scheduleRemoteSave()}
+
+function runHeavyUpdate(){
+const v=el.code.value||"";
+STATE.content=v;
+if(STATE.fileId)saveDraft(STATE.fileId,v);
+const lint=lintHtmlVsLike(v);
+STATE.errLines=lint.errLines;
+STATE.errors=lint.errors;
+STATE.errIndex=0;
+renderErrorBar();
+rebuildGutterAndHeight();
+renderHighlight();
+updatePreview();
+updateFormatAvailability();
+recomputeFind();
+updateUndoButtons();
+scheduleRemoteSave()
+}
 function scheduleHeavyUpdate(){if(STATE.heavyTimer)clearTimeout(STATE.heavyTimer);STATE.heavyTimer=setTimeout(()=>{STATE.heavyTimer=null;runHeavyUpdate()},PERF.heavyDelay)}
 function flushHeavyNow(){if(STATE.heavyTimer){clearTimeout(STATE.heavyTimer);STATE.heavyTimer=null}if(STATE.draftTimer){clearTimeout(STATE.draftTimer);STATE.draftTimer=null}runHeavyUpdate()}
-function onEditorInput(){if(!STATE.isUndoing&&STATE.pendingUndo){const prev=STATE.pendingUndo;STATE.pendingUndo=null;if(prev.value!==String(el.code.value||"")){pushUndoSnapshot(prev);STATE.redoStack=[];updateUndoButtons()}}scheduleDraftSave();scheduleHeavyUpdate();scheduleRemoteSave()}
+function onEditorInput(){
+if(!STATE.isUndoing&&STATE.pendingUndo){
+const prev=STATE.pendingUndo;STATE.pendingUndo=null;
+if(prev.value!==String(el.code.value||"")){pushUndoSnapshot(prev);STATE.redoStack=[];updateUndoButtons()}
+}
+scheduleDraftSave();scheduleHeavyUpdate();scheduleRemoteSave()
+}
 function doUndo(){flushHeavyNow();if(!STATE.undoStack.length)return;const cur={value:String(el.code.value||""),selStart:el.code.selectionStart??0,selEnd:el.code.selectionEnd??0};const snap=STATE.undoStack.pop();pushRedoSnapshot(cur);STATE.isUndoing=true;el.code.value=String(snap.value||"");try{el.code.setSelectionRange(snap.selStart??0,snap.selEnd??0)}catch{}STATE.isUndoing=false;toast("Đã hoàn tác");flushHeavyNow()}
 function doRedo(){flushHeavyNow();if(!STATE.redoStack.length)return;const cur={value:String(el.code.value||""),selStart:el.code.selectionStart??0,selEnd:el.code.selectionEnd??0};const snap=STATE.redoStack.pop();pushUndoSnapshot(cur);STATE.isUndoing=true;el.code.value=String(snap.value||"");try{el.code.setSelectionRange(snap.selStart??0,snap.selEnd??0)}catch{}STATE.isUndoing=false;toast("Đã tiến tới");flushHeavyNow()}
-function doDownload(){const name=(STATE.meta&&STATE.meta.name)?String(STATE.meta.name):"file.html";const blob=new Blob([el.code.value||""],{type:"text/html;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name.toLowerCase().endsWith(".html")?name:(name+".html");document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),500);toast("Đang tải")}
-function doClearAll(){flushHeavyNow();const ok=confirm("Xóa tất cả nội dung? (Giữ lại <!DOCTYPE html>)");if(!ok)return;captureUndoNow();STATE.redoStack=[];updateUndoButtons();clearDraft(STATE.fileId);el.code.value=DEFAULT_START;STATE.content=el.code.value;toast("Đã xóa");flushHeavyNow()}
-function autoIndentOnEnter(e){if(e.key!=="Enter")return;e.preventDefault();const ta=el.code;const v=ta.value||"";const start=ta.selectionStart||0;const end=ta.selectionEnd||0;captureUndoNow();STATE.redoStack=[];updateUndoButtons();const ls=v.lastIndexOf("\n",Math.max(0,start-1))+1;const linePrefix=v.slice(ls,start);const m=linePrefix.match(/^[\t ]*/);const indent=m?m[0]:"";const insert="\n"+indent;try{ta.setRangeText(insert,start,end,"end")}catch{ta.value=v.slice(0,start)+insert+v.slice(end);ta.selectionStart=ta.selectionEnd=start+insert.length}onEditorInput()}
+function doDownload(){
+const name=(STATE.meta&&STATE.meta.name)?String(STATE.meta.name):"file.html";
+const blob=new Blob([el.code.value||""],{type:"text/html;charset=utf-8"});
+const url=URL.createObjectURL(blob);
+const a=document.createElement("a");
+a.href=url;
+a.download=name.toLowerCase().endsWith(".html")?name:(name+".html");
+document.body.appendChild(a);
+a.click();
+a.remove();
+setTimeout(()=>URL.revokeObjectURL(url),500);
+toast("Đang tải")
+}
+function doClearAll(){
+flushHeavyNow();
+const ok=confirm("Xóa tất cả nội dung? (Giữ lại <!DOCTYPE html>)");
+if(!ok)return;
+captureUndoNow();
+STATE.redoStack=[];updateUndoButtons();
+clearDraft(STATE.fileId);
+el.code.value=DEFAULT_START;
+STATE.content=el.code.value;
+toast("Đã xóa");
+flushHeavyNow()
+}
+function autoIndentOnEnter(e){
+if(e.key!=="Enter")return;
+e.preventDefault();
+const ta=el.code;
+const v=ta.value||"";
+const start=ta.selectionStart||0;
+const end=ta.selectionEnd||0;
+captureUndoNow();
+STATE.redoStack=[];updateUndoButtons();
+const ls=v.lastIndexOf("\n",Math.max(0,start-1))+1;
+const linePrefix=v.slice(ls,start);
+const m=linePrefix.match(/^[\t ]*/);
+const indent=m?m[0]:"";
+const insert="\n"+indent;
+try{ta.setRangeText(insert,start,end,"end")}
+catch{ta.value=v.slice(0,start)+insert+v.slice(end);ta.selectionStart=ta.selectionEnd=start+insert.length}
+onEditorInput()
+}
+
 function tokenizeForFormat(html){const s=String(html||"").replace(/\r\n/g,"\n").replace(/\r/g,"\n");const re=/<!--[\s\S]*?-->|<!DOCTYPE[\s\S]*?>|<\/?[a-zA-Z][\w:-]*(?:\s[^<>]*?)?>|[^<]+/gi;const out=[];let m;while((m=re.exec(s)))out.push(m[0]||"");return out}
 function isClosingTag(tok){return/^<\/\s*[a-zA-Z]/.test(tok)}
 function isDoctype(tok){return/^<!DOCTYPE/i.test(tok)}
@@ -302,20 +606,177 @@ function isComment(tok){return/^<!--/.test(tok)}
 function isTag(tok){return/^</.test(tok)&&/>$/.test(tok)}
 function getTagName(tok){const m=tok.match(/^<\/?\s*([a-zA-Z][\w:-]*)/);return(m&&m[1])?m[1].toLowerCase():""}
 function isSelfClosing(tok){const name=getTagName(tok);if(!name)return false;if(VOID_TAGS.has(name))return true;return/\/\s*>$/.test(tok)}
-function formatHtml(code){const raw=String(code||"");const toks=tokenizeForFormat(raw);const indentUnit="  ";let out=[],indent=0;for(const t0 of toks){const t=String(t0||"");if(!t)continue;if(isDoctype(t)){out.push("<!DOCTYPE html>");continue}if(isComment(t)){const lines=t.replace(/\r\n/g,"\n").replace(/\r/g,"\n").trim().split("\n");for(const ln of lines)out.push(indentUnit.repeat(Math.max(0,indent))+ln.trim());continue}if(isTag(t)){if(isClosingTag(t)){indent=Math.max(0,indent-1);out.push(indentUnit.repeat(indent)+t.trim())}else if(isSelfClosing(t)){out.push(indentUnit.repeat(indent)+t.trim())}else{out.push(indentUnit.repeat(indent)+t.trim());indent++}continue}const txt=t.replace(/\r\n/g,"\n").replace(/\r/g,"\n");for(const ln of txt.split("\n")){const trimmed=ln.trim();if(trimmed)out.push(indentUnit.repeat(Math.max(0,indent))+trimmed)}}let formatted=out.join("\n").replace(/[ \t]+\n/g,"\n").trimEnd();if(!formatted)formatted=DEFAULT_START.trimEnd();if(!formatted.startsWith("<!DOCTYPE html>"))formatted="<!DOCTYPE html>\n"+formatted;if(!formatted.endsWith("\n"))formatted+="\n";return formatted}
+function formatHtml(code){
+const raw=String(code||"");
+const toks=tokenizeForFormat(raw);
+const indentUnit="  ";
+let out=[],indent=0;
+for(const t0 of toks){
+const t=String(t0||"");if(!t)continue;
+if(isDoctype(t)){out.push("<!DOCTYPE html>");continue}
+if(isComment(t)){
+const lines=t.replace(/\r\n/g,"\n").replace(/\r/g,"\n").trim().split("\n");
+for(const ln of lines)out.push(indentUnit.repeat(Math.max(0,indent))+ln.trim());
+continue
+}
+if(isTag(t)){
+if(isClosingTag(t)){indent=Math.max(0,indent-1);out.push(indentUnit.repeat(indent)+t.trim())}
+else if(isSelfClosing(t)){out.push(indentUnit.repeat(indent)+t.trim())}
+else{out.push(indentUnit.repeat(indent)+t.trim());indent++}
+continue
+}
+const txt=t.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+for(const ln of txt.split("\n")){const trimmed=ln.trim();if(trimmed)out.push(indentUnit.repeat(Math.max(0,indent))+trimmed)}
+}
+let formatted=out.join("\n").replace(/[ \t]+\n/g,"\n").trimEnd();
+if(!formatted)formatted=DEFAULT_START.trimEnd();
+if(!formatted.startsWith("<!DOCTYPE html>"))formatted="<!DOCTYPE html>\n"+formatted;
+if(!formatted.endsWith("\n"))formatted+="\n";
+return formatted
+}
 function updateFormatAvailability(){const cur=String(el.code.value||"");el.btnFormat.disabled=(formatHtml(cur)===cur)}
-function doFormat(){flushHeavyNow();if(el.btnFormat.disabled)return;captureUndoNow();STATE.redoStack=[];updateUndoButtons();const cur=String(el.code.value||"");const fmt=formatHtml(cur);if(fmt===cur){updateFormatAvailability();return}el.code.value=fmt;toast("Đã căn chỉnh");flushHeavyNow()}
-function collectDoctypeRemovalRanges(s){const re=/<!doctype\b[^>]*>/ig;const matches=[];let m;while((m=re.exec(s)))matches.push({start:m.index,end:m.index+m[0].length});if(matches.length<=1)return[];const ranges=[];for(let k=1;k<matches.length;k++){let a=matches[k].start,b=matches[k].end;while(a>0&&(s[a-1]===" "||s[a-1]==="\t"))a--;while(b<s.length&&(s[b]===" "||s[b]==="\t"||s[b]==="\r"))b++;if(s[b]==="\n")b++;ranges.push({start:a,end:b})}return ranges}
-function applyRemovalRangesKeepCaret(s,caret,ranges){if(!ranges.length)return{text:s,caret};const sorted=ranges.slice().sort((x,y)=>x.start-y.start);let curCaret=Math.max(0,Math.min(Number(caret)||0,s.length));let offset=0;for(const r of sorted){const a=r.start-offset,b=r.end-offset,len=Math.max(0,b-a);if(len<=0)continue;if(b<=curCaret)curCaret-=len;else if(a<curCaret&&curCaret<b)curCaret=a;offset+=(r.end-r.start)}let out=s;for(let i=sorted.length-1;i>=0;i--){const r=sorted[i];out=out.slice(0,r.start)+out.slice(r.end)}curCaret=Math.max(0,Math.min(curCaret,out.length));return{text:out,caret:curCaret}}
-function normalizeDuplicateDoctypeInEditor(){const ta=el.code;const v=String(ta.value||"");const caret=ta.selectionEnd??0;const ranges=collectDoctypeRemovalRanges(v);if(!ranges.length)return false;const out=applyRemovalRangesKeepCaret(v,caret,ranges);ta.value=out.text;try{ta.setSelectionRange(out.caret,out.caret)}catch{}return true}
-function onPasteDedupDoctype(e){const ta=el.code;const cd=e.clipboardData||window.clipboardData;if(!cd)return;const text=cd.getData("text/plain");if(typeof text!=="string")return;e.preventDefault();captureUndoNow();STATE.redoStack=[];updateUndoButtons();const start=ta.selectionStart??0;const end=ta.selectionEnd??start;try{ta.setRangeText(text,start,end,"end")}catch{const v=ta.value||"";ta.value=v.slice(0,start)+text+v.slice(end);const p=start+text.length;try{ta.setSelectionRange(p,p)}catch{}}const changed=normalizeDuplicateDoctypeInEditor();if(changed)toast("Đã xóa DOCTYPE trùng");onEditorInput()}
+function doFormat(){
+flushHeavyNow();
+if(el.btnFormat.disabled)return;
+captureUndoNow();
+STATE.redoStack=[];updateUndoButtons();
+const cur=String(el.code.value||"");
+const fmt=formatHtml(cur);
+if(fmt===cur){updateFormatAvailability();return}
+el.code.value=fmt;
+toast("Đã căn chỉnh");
+flushHeavyNow()
+}
 
-function ensureFitStyle(doc){try{const head=doc.head||doc.getElementsByTagName("head")[0]||doc.documentElement;let st=doc.getElementById("__tk_fit");if(!st){st=doc.createElement("style");st.id="__tk_fit";head.appendChild(st)}st.textContent="html,body{margin:0;padding:0}table{border-collapse:collapse}th,td{white-space:nowrap}";}catch{}}
-function fitIframeToWidth(iframe){try{const doc=iframe.contentDocument;if(!doc||!doc.body)return;ensureFitStyle(doc);requestAnimationFrame(()=>{try{const wFrame=iframe.clientWidth||0;const de=doc.documentElement,bd=doc.body;bd.style.transform="";bd.style.width="";bd.style.transformOrigin="0 0";de.style.overflowX="hidden";bd.style.overflowX="hidden";const w=Math.max(de.scrollWidth||0,bd.scrollWidth||0,1);let s=1;if(wFrame>0)s=Math.min(1,wFrame/w);if(s<1){bd.style.transform=`scale(${s})`;bd.style.width=(100/s)+"%"}const h=Math.max(de.scrollHeight||0,bd.scrollHeight||0,1);const info=`${Math.round(w)}x${Math.round(h)} · ${Math.round(s*100)}%`;if(iframe===el.previewBig)el.zoomInfo.textContent=info;}catch{}})}catch{}}
+function collectDoctypeRemovalRanges(s){
+const re=/<!doctype\b[^>]*>/ig;
+const matches=[];let m;
+while((m=re.exec(s)))matches.push({start:m.index,end:m.index+m[0].length});
+if(matches.length<=1)return[];
+const ranges=[];
+for(let k=1;k<matches.length;k++){
+let a=matches[k].start,b=matches[k].end;
+while(a>0&&(s[a-1]===" "||s[a-1]==="\t"))a--;
+while(b<s.length&&(s[b]===" "||s[b]==="\t"||s[b]==="\r"))b++;
+if(s[b]==="\n")b++;
+ranges.push({start:a,end:b})
+}
+return ranges
+}
+function applyRemovalRangesKeepCaret(s,caret,ranges){
+if(!ranges.length)return{text:s,caret};
+const sorted=ranges.slice().sort((x,y)=>x.start-y.start);
+let curCaret=Math.max(0,Math.min(Number(caret)||0,s.length));
+let offset=0;
+for(const r of sorted){
+const a=r.start-offset,b=r.end-offset,len=Math.max(0,b-a);
+if(len<=0)continue;
+if(b<=curCaret)curCaret-=len;
+else if(a<curCaret&&curCaret<b)curCaret=a;
+offset+=(r.end-r.start)
+}
+let out=s;
+for(let i=sorted.length-1;i>=0;i--){const r=sorted[i];out=out.slice(0,r.start)+out.slice(r.end)}
+curCaret=Math.max(0,Math.min(curCaret,out.length));
+return{text:out,caret:curCaret}
+}
+function normalizeDuplicateDoctypeInEditor(){
+const ta=el.code;
+const v=String(ta.value||"");
+const caret=ta.selectionEnd??0;
+const ranges=collectDoctypeRemovalRanges(v);
+if(!ranges.length)return false;
+const out=applyRemovalRangesKeepCaret(v,caret,ranges);
+ta.value=out.text;
+try{ta.setSelectionRange(out.caret,out.caret)}catch{}
+return true
+}
+function onPasteDedupDoctype(e){
+const ta=el.code;
+const cd=e.clipboardData||window.clipboardData;
+if(!cd)return;
+const text=cd.getData("text/plain");
+if(typeof text!=="string")return;
+e.preventDefault();
+captureUndoNow();
+STATE.redoStack=[];updateUndoButtons();
+const start=ta.selectionStart??0;
+const end=ta.selectionEnd??start;
+try{ta.setRangeText(text,start,end,"end")}
+catch{const v=ta.value||"";ta.value=v.slice(0,start)+text+v.slice(end);const p=start+text.length;try{ta.setSelectionRange(p,p)}catch{}}
+const changed=normalizeDuplicateDoctypeInEditor();
+if(changed)toast("Đã xóa DOCTYPE trùng");
+onEditorInput()
+}
 
-function doFindCycle(){flushHeavyNow();const q=String(el.findInput.value||"").trim();if(!q){toast("Chưa nhập từ khóa");return}if(q!==STATE.lastFind){STATE.lastFind=q;STATE.findMatches=buildFindMatches(el.code.value||"",q);STATE.findIndex=0;renderHighlight();if(!STATE.findMatches.length){toast("Không tìm thấy");return}selectMatchAt(0);return}if(!STATE.findMatches.length){STATE.findMatches=buildFindMatches(el.code.value||"",q);STATE.findIndex=0;renderHighlight();if(!STATE.findMatches.length){toast("Không tìm thấy");return}selectMatchAt(0);return}selectMatchAt((STATE.findIndex+1)%STATE.findMatches.length)}
-function scrollEditorTop(){try{el.editorScroll.scrollTo({top:0,behavior:"smooth"})}catch{el.editorScroll.scrollTop=0}}
-function scrollEditorBottom(){try{el.editorScroll.scrollTo({top:el.editorScroll.scrollHeight,behavior:"smooth"})}catch{el.editorScroll.scrollTop=el.editorScroll.scrollHeight}}
+function ensureFitStyle(doc){
+try{
+const head=doc.head||doc.getElementsByTagName("head")[0]||doc.documentElement;
+let st=doc.getElementById("__tk_fit");
+if(!st){st=doc.createElement("style");st.id="__tk_fit";head.appendChild(st)}
+st.textContent="html,body{margin:0;padding:0}table{border-collapse:collapse}th,td{white-space:nowrap}";
+}catch{}
+}
+function fitIframeToWidth(iframe){
+try{
+const doc=iframe.contentDocument;
+if(!doc||!doc.body)return;
+ensureFitStyle(doc);
+requestAnimationFrame(()=>{try{
+const wFrame=iframe.clientWidth||0;
+const de=doc.documentElement,bd=doc.body;
+bd.style.transform="";bd.style.width="";bd.style.transformOrigin="0 0";
+de.style.overflowX="hidden";bd.style.overflowX="hidden";
+const w=Math.max(de.scrollWidth||0,bd.scrollWidth||0,1);
+let s=1;
+if(wFrame>0)s=Math.min(1,wFrame/w);
+if(s<1){bd.style.transform=`scale(${s})`;bd.style.width=(100/s)+"%"}
+const h=Math.max(de.scrollHeight||0,bd.scrollHeight||0,1);
+const info=`${Math.round(w)}x${Math.round(h)} · ${Math.round(s*100)}%`;
+if(iframe===el.previewBig)el.zoomInfo.textContent=info;
+}catch{}})}
+catch{}
+}
+
+function doFindFirst(){
+flushHeavyNow();
+const q=String(el.findInput.value||"").trim();
+if(!q){toast("Chưa nhập từ khóa");return}
+STATE.lastFind=q;
+STATE.findMatches=buildFindMatches(el.code.value||"",q);
+STATE.findIndex=0;
+renderHighlight();
+if(!STATE.findMatches.length){toast("Không tìm thấy");return}
+selectMatchAt(0)
+}
+function doFindNext(){
+flushHeavyNow();
+const q=String(el.findInput.value||"").trim();
+if(!q){toast("Chưa nhập từ khóa");return}
+if(q!==STATE.lastFind){doFindFirst();return}
+if(!STATE.findMatches.length){doFindFirst();return}
+selectMatchAt((STATE.findIndex+1)%STATE.findMatches.length)
+}
+
+function updateScrollNavButtons(){
+const sc=el.editorScroll;
+const max=(sc.scrollHeight||0)-(sc.clientHeight||0);
+const atTop=(sc.scrollTop<=1);
+const atBottom=(max<=1)||(sc.scrollTop>=max-1);
+el.btnGoTop.disabled=atTop;
+el.btnGoBottom.disabled=atBottom
+}
+function scrollEditorTop(){
+if(el.btnGoTop.disabled)return;
+try{el.editorScroll.scrollTo({top:0,behavior:"smooth"})}catch{el.editorScroll.scrollTop=0}
+setTimeout(updateScrollNavButtons,160)
+}
+function scrollEditorBottom(){
+if(el.btnGoBottom.disabled)return;
+const max=(el.editorScroll.scrollHeight||0);
+try{el.editorScroll.scrollTo({top:max,behavior:"smooth"})}catch{el.editorScroll.scrollTop=max}
+setTimeout(updateScrollNavButtons,160)
+}
 
 function openOverlay(overlayEl){overlayEl.classList.add("show");overlayEl.setAttribute("aria-hidden","false")}
 function closeOverlay(overlayEl){overlayEl.classList.remove("show");overlayEl.setAttribute("aria-hidden","true")}
@@ -323,50 +784,108 @@ function openZoom(){el.previewBig.srcdoc=String(el.code.value||"");el.zoomInfo.t
 function closeZoom(){closeOverlay(el.zoomOverlay)}
 function goExit(){location.href="/code"}
 
-function startRename(){if(STATE.renaming)return;STATE.renaming=true;STATE.renamePrev=String(el.fileNameBox.value||"");el.fileNameBox.readOnly=false;try{el.fileNameBox.focus();el.fileNameBox.select?.()}catch{}}
-async function commitRename(){if(!STATE.renaming)return;const newName=String(el.fileNameBox.value||"").trim();const prev=STATE.renamePrev||"";el.fileNameBox.readOnly=true;STATE.renaming=false;if(!newName){el.fileNameBox.value=prev;return}if(newName===prev)return;try{const token=getToken();if(!token||!STATE.fileId)throw new Error("Thiếu token");const out=await CODEAPI.renameNode(token,STATE.fileId,newName);const o=firstObj(out)||out||{};if(o.ok!==true&&o.success!==true)throw new Error(o.error||o.message||"Đổi tên lỗi");STATE.meta=STATE.meta||{};STATE.meta.name=newName;toast("Đã đổi tên")}catch(e){el.fileNameBox.value=prev;toast(String(e&&e.message?e.message:"Không đổi tên được"))}}
-function cancelRename(){if(!STATE.renaming)return;el.fileNameBox.value=STATE.renamePrev||String(el.fileNameBox.value||"");el.fileNameBox.readOnly=true;STATE.renaming=false}
+function startRename(){
+if(STATE.renaming)return;
+STATE.renaming=true;
+STATE.renamePrev=String(el.fileNameBox.value||"");
+el.fileNameBox.readOnly=false;
+try{el.fileNameBox.focus();el.fileNameBox.select?.()}catch{}
+}
+async function commitRename(){
+if(!STATE.renaming)return;
+const newName=String(el.fileNameBox.value||"").trim();
+const prev=STATE.renamePrev||"";
+el.fileNameBox.readOnly=true;
+STATE.renaming=false;
 
-function bindShortcuts(){document.addEventListener("keydown",(e)=>{const isMac=/Mac|iPhone|iPad|iPod/i.test(navigator.platform);const mod=isMac?e.metaKey:e.ctrlKey;
+if(!newName){el.fileNameBox.value=prev;return}
+if(newName===prev)return;
+
+STATE.meta=STATE.meta||{};
+STATE.meta.name=newName;
+saveNameOverride(STATE.fileId,newName);
+
+try{
+const token=getToken();
+if(!token||!STATE.fileId)throw new Error("Thiếu token");
+const out=await CODEAPI.renameNode(token,STATE.fileId,newName);
+const o=firstObj(out)||out||{};
+if(o.ok!==true&&o.success!==true)throw new Error(o.error||o.message||"Đổi tên lỗi");
+toast("Đã đổi tên")
+}catch{
+toast("Đã đổi tên (cục bộ)")
+}
+}
+function cancelRename(){
+if(!STATE.renaming)return;
+el.fileNameBox.value=STATE.renamePrev||String(el.fileNameBox.value||"");
+el.fileNameBox.readOnly=true;
+STATE.renaming=false
+}
+
+function bindShortcuts(){
+document.addEventListener("keydown",(e)=>{
+const isMac=/Mac|iPhone|iPad|iPod/i.test(navigator.platform);
+const mod=isMac?e.metaKey:e.ctrlKey;
 if(mod&&(e.key==="s"||e.key==="S")){e.preventDefault();remoteSaveNow(true)}
 if(mod&&(e.key==="z"||e.key==="Z")&&!e.shiftKey){e.preventDefault();doUndo()}
 if((isMac&&mod&&e.shiftKey&&(e.key==="z"||e.key==="Z"))||(!isMac&&mod&&(e.key==="y"||e.key==="Y"))){e.preventDefault();doRedo()}
 if(mod&&(e.key==="f"||e.key==="F")){e.preventDefault();el.findInput.focus();el.findInput.select?.()}
-},{passive:false})}
+},{passive:false})
+}
 
 async function boot(){
 const fileId=getFileIdFromUrl();
 if(!fileId){toast("Thiếu hoặc sai f (5 chữ).");location.replace("/code");return}
 STATE.fileId=fileId;
+
 const token=getToken();
 if(!token){location.replace("/code");return}
+
 const cachedMe=getMeCache();
-if(cachedMe&&cachedMe.username){STATE.me=cachedMe}else{try{const meOut=await API.me(token);if(meOut&&meOut.ok&&meOut.me&&meOut.me.username){setMeCache(meOut.me);STATE.me=meOut.me}}catch{}}
+if(cachedMe&&cachedMe.username){STATE.me=cachedMe}
+else{try{const meOut=await API.me(token);if(meOut&&meOut.ok&&meOut.me&&meOut.me.username){setMeCache(meOut.me);STATE.me=meOut.me}}catch{}}
+
 try{
 const raw=await CODEAPI.getFile(token,fileId);
 const o=firstObj(raw)||raw||{};
 if(o.ok!==true)throw new Error(o.error||o.message||"Không mở được file");
+
 STATE.meta=o.node||o.file||o.meta||{};
 STATE.remote=String(o.content||"");
-const name=String((STATE.meta&&STATE.meta.name)?STATE.meta.name:("file-"+fileId+".html"));
+
+const serverName=String((STATE.meta&&STATE.meta.name)?STATE.meta.name:("file-"+fileId+".html"));
+const localName=loadNameOverride(fileId);
+const name=localName||serverName;
+STATE.meta.name=name;
 el.fileNameBox.value=name;
+
 const draft=loadDraft(fileId);
 if(draft&&typeof draft.content==="string")el.code.value=draft.content;
 else{const r=(STATE.remote||"").trim();el.code.value=r?STATE.remote:DEFAULT_START}
+
 normalizeDuplicateDoctypeInEditor();
+
 const lint=lintHtmlVsLike(el.code.value||"");
 STATE.errLines=lint.errLines;
 STATE.errors=lint.errors;
 STATE.errIndex=0;
+
 STATE.undoStack=[];STATE.redoStack=[];STATE.pendingUndo=null;updateUndoButtons();
+
 renderErrorBar();
 rebuildGutterAndHeight();
 renderHighlight();
 updatePreview();
 updateFormatAvailability();
 recomputeFind();
+updateScrollNavButtons();
+
 try{el.code.focus()}catch{}
-}catch(e){toast(String(e&&e.message?e.message:"Không mở được file"));location.replace("/code");return}
+}catch(e){
+toast(String(e&&e.message?e.message:"Không mở được file"));
+location.replace("/code");return
+}
 
 el.btnExit.addEventListener("click",goExit);
 el.btnUndo.addEventListener("click",doUndo);
@@ -376,13 +895,25 @@ el.btnClearAll.addEventListener("click",doClearAll);
 el.btnFormat.addEventListener("click",doFormat);
 
 el.findInput.addEventListener("input",()=>{STATE.findIndex=0;recomputeFind()},{passive:true});
-el.btnFind.addEventListener("click",doFindCycle);
-el.findInput.addEventListener("keydown",(e)=>{if(e.key==="Enter"){e.preventDefault();doFindCycle()}});
+el.btnFind.addEventListener("click",doFindFirst);
+el.findInput.addEventListener("keydown",(e)=>{if(e.key==="Enter"){e.preventDefault();doFindFirst()}});
+el.btnFindNextFloat.addEventListener("click",doFindNext);
 
 el.btnGoTop.addEventListener("click",scrollEditorTop);
 el.btnGoBottom.addEventListener("click",scrollEditorBottom);
 
-el.errorBar.addEventListener("click",()=>{flushHeavyNow();const errs=Array.isArray(STATE.errors)?STATE.errors:[];if(!errs.length)return;const idx=Math.max(0,Math.min(STATE.errIndex||0,errs.length-1));const e=errs[idx];scrollToLineNoFocus(e.line);STATE.errIndex=(idx+1)%errs.length;renderErrorBar()});
+el.editorScroll.addEventListener("scroll",()=>{updateScrollNavButtons()},{passive:true});
+
+el.errorBar.addEventListener("click",()=>{
+flushHeavyNow();
+const errs=Array.isArray(STATE.errors)?STATE.errors:[];
+if(!errs.length)return;
+const idx=Math.max(0,Math.min(STATE.errIndex||0,errs.length-1));
+const e=errs[idx];
+scrollToLineNoFocus(e.line);
+STATE.errIndex=(idx+1)%errs.length;
+renderErrorBar()
+});
 
 el.code.addEventListener("beforeinput",onBeforeInput,{passive:true});
 el.code.addEventListener("input",onEditorInput,{passive:true});
@@ -396,14 +927,33 @@ el.zoomOverlay.addEventListener("click",(e)=>{if(e.target===el.zoomOverlay)close
 el.previewBig.addEventListener("load",()=>{setTimeout(()=>fitIframeToWidth(el.previewBig),0)});
 
 el.fileNameBox.addEventListener("dblclick",()=>startRename());
-el.fileNameBox.addEventListener("keydown",(e)=>{if(e.key==="Enter"){e.preventDefault();if(el.fileNameBox.readOnly)startRename();else commitRename()}else if(e.key==="Escape"){e.preventDefault();cancelRename()}});
+el.fileNameBox.addEventListener("keydown",(e)=>{
+if(e.key==="Enter"){e.preventDefault();if(el.fileNameBox.readOnly)startRename();else commitRename()}
+else if(e.key==="Escape"){e.preventDefault();cancelRename()}
+});
 el.fileNameBox.addEventListener("blur",()=>{if(STATE.renaming)commitRename()},{passive:true});
 
 bindShortcuts();
 
-window.addEventListener("resize",()=>{if(STATE.resizeTimer)clearTimeout(STATE.resizeTimer);STATE.resizeTimer=setTimeout(()=>{STATE.resizeTimer=null;rebuildGutterAndHeight();recomputeFind();fitIframeToWidth(el.preview);if(el.zoomOverlay.classList.contains("show"))fitIframeToWidth(el.previewBig)},PERF.resizeDelay)},{passive:true});
+window.addEventListener("resize",()=>{
+if(STATE.resizeTimer)clearTimeout(STATE.resizeTimer);
+STATE.resizeTimer=setTimeout(()=>{
+STATE.resizeTimer=null;
+rebuildGutterAndHeight();
+recomputeFind();
+fitIframeToWidth(el.preview);
+if(el.zoomOverlay.classList.contains("show"))fitIframeToWidth(el.previewBig);
+updateScrollNavButtons()
+},PERF.resizeDelay)
+},{passive:true});
 
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden"){try{if(STATE.fileId)saveDraft(STATE.fileId,el.code.value||"")}catch{}remoteSaveNow(false)}},{passive:true});
+document.addEventListener("visibilitychange",()=>{
+if(document.visibilityState==="hidden"){
+try{if(STATE.fileId)saveDraft(STATE.fileId,el.code.value||"")}catch{}
+remoteSaveNow(false)
+}
+},{passive:true});
+
 window.addEventListener("beforeunload",()=>{try{if(STATE.fileId)saveDraft(STATE.fileId,el.code.value||"")}catch{}},{passive:true});
 }
 boot();
