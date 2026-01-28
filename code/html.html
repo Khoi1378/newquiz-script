@@ -294,6 +294,8 @@
 
       pointer-events:none;
       user-select:none;
+      opacity:1;
+      transition:opacity .06s linear;
     }
 
     textarea.code{
@@ -324,6 +326,12 @@
       -webkit-overflow-scrolling:touch;
     }
     textarea.code::selection{background:rgba(37,99,235,.33)}
+
+    .codePane.typing pre.codeHl{opacity:0}
+    .codePane.typing textarea.code{
+      color:var(--codeText);
+      -webkit-text-fill-color:var(--codeText);
+    }
 
     .tok-punc{color:rgba(255,255,255,.70)}
     .tok-tag{color:#60a5fa}
@@ -502,6 +510,7 @@
       btnFind: document.getElementById("btnFind"),
       btnFindNext: document.getElementById("btnFindNext"),
 
+      codePane: document.getElementById("codePane"),
       code: document.getElementById("code"),
       codeHl: document.getElementById("codeHl"),
       gutter: document.getElementById("gutter"),
@@ -519,11 +528,24 @@
       lineStartRow: [],
       errLines: new Set(),
       saving: false,
-      updateTimer: null,
 
       lastFind: "",
       findMatches: [],
       findIndex: 0,
+
+      typing: false,
+      fastRaf: null,
+      heavyTimer: null,
+      draftTimer: null,
+      resizeTimer: null,
+      fastLastLines: 0,
+      fastLastWidth: 0,
+    };
+
+    const PERF = {
+      heavyDelay: 260,
+      draftDelay: 900,
+      resizeDelay: 90,
     };
 
     function toast(msg){
@@ -1079,6 +1101,35 @@
       el.codeHl.style.height = ta.style.height;
     }
 
+    function fastSyncHeightAndGutter(){
+      const ta = el.code;
+
+      ta.style.height = "auto";
+      ta.style.height = ta.scrollHeight + "px";
+      el.codeHl.style.height = ta.style.height;
+
+      const lineCount = (ta.value || "").split("\n").length;
+      const w = ta.clientWidth;
+
+      if(lineCount === STATE.fastLastLines && w === STATE.fastLastWidth) return;
+      STATE.fastLastLines = lineCount;
+      STATE.fastLastWidth = w;
+
+      const needMin = Math.max(10, lineCount);
+      const out = new Array(needMin);
+      STATE.lineStartRow = new Array(needMin);
+
+      for(let i=0;i<needMin;i++){
+        const ln = i + 1;
+        STATE.lineStartRow[i] = i;
+        const isErr = STATE.errLines.has(ln);
+        const cls = "gline" + (isErr ? " err" : "");
+        out[i] = `<div class="${cls}" data-row="${i}" data-line="${ln}">${ln}</div>`;
+      }
+
+      el.gutter.innerHTML = out.join("");
+    }
+
     function renderErrorBar(){
       const bar = el.errorBar;
       const errArr = [...STATE.errLines].sort((a,b)=>a-b);
@@ -1180,7 +1231,86 @@
       renderHighlight();
     }
 
+    function enterTyping(){
+      if(STATE.typing) return;
+      STATE.typing = true;
+      el.codePane.classList.add("typing");
+    }
+
+    function exitTyping(){
+      if(!STATE.typing) return;
+      STATE.typing = false;
+      el.codePane.classList.remove("typing");
+    }
+
+    function scheduleDraftSave(){
+      if(STATE.draftTimer) clearTimeout(STATE.draftTimer);
+      STATE.draftTimer = setTimeout(() => {
+        STATE.draftTimer = null;
+        if(!STATE.fileId) return;
+        saveDraft(STATE.fileId, el.code.value || "");
+      }, PERF.draftDelay);
+    }
+
+    function scheduleFastSync(){
+      if(STATE.fastRaf) return;
+      STATE.fastRaf = requestAnimationFrame(() => {
+        STATE.fastRaf = null;
+        fastSyncHeightAndGutter();
+      });
+    }
+
+    function runHeavyUpdate(){
+      exitTyping();
+
+      const v = el.code.value || "";
+      STATE.content = v;
+
+      if(STATE.fileId) saveDraft(STATE.fileId, v);
+
+      const lint = lintHtmlAccurate(v);
+      STATE.errLines = lint.errLines;
+
+      renderErrorBar();
+      rebuildGutterAndHeight();
+      updatePreview();
+      updateFormatAvailability();
+      recomputeFind();
+    }
+
+    function scheduleHeavyUpdate(){
+      if(STATE.heavyTimer) clearTimeout(STATE.heavyTimer);
+      STATE.heavyTimer = setTimeout(() => {
+        STATE.heavyTimer = null;
+        runHeavyUpdate();
+      }, PERF.heavyDelay);
+    }
+
+    function flushHeavyNow(){
+      if(STATE.fastRaf){
+        cancelAnimationFrame(STATE.fastRaf);
+        STATE.fastRaf = null;
+      }
+      if(STATE.heavyTimer){
+        clearTimeout(STATE.heavyTimer);
+        STATE.heavyTimer = null;
+      }
+      if(STATE.draftTimer){
+        clearTimeout(STATE.draftTimer);
+        STATE.draftTimer = null;
+      }
+      runHeavyUpdate();
+    }
+
+    function onEditorInput(){
+      enterTyping();
+      scheduleFastSync();
+      scheduleDraftSave();
+      scheduleHeavyUpdate();
+    }
+
     function doFindFirstOrCurrent(){
+      flushHeavyNow();
       const q = String(el.findInput.value || "").trim();
       if(!q){ toast("Chưa nhập từ khoá"); return; }
 
@@ -1210,6 +1340,7 @@
     }
 
     function doFindNext(){
+      flushHeavyNow();
       if(!STATE.findMatches.length){
         doFindFirstOrCurrent();
         return;
@@ -1219,29 +1350,9 @@
       selectMatchAt(next);
     }
 
-    function scheduleUpdate(){
-      if(STATE.updateTimer) clearTimeout(STATE.updateTimer);
-      STATE.updateTimer = setTimeout(() => {
-        STATE.updateTimer = null;
-
-        const v = el.code.value || "";
-        STATE.content = v;
-
-        saveDraft(STATE.fileId, v);
-
-        const lint = lintHtmlAccurate(v);
-        STATE.errLines = lint.errLines;
-
-        renderErrorBar();
-        rebuildGutterAndHeight();
-        updatePreview();
-        updateFormatAvailability();
-        recomputeFind();
-      }, 120);
-    }
-
     async function doSave(){
       if(STATE.saving) return;
+      flushHeavyNow();
       STATE.saving = true;
       el.btnSave.disabled = true;
 
@@ -1266,13 +1377,14 @@
     }
 
     async function doRevert(){
+      flushHeavyNow();
       const ok = confirm("Quay lại bản đã lưu?");
       if(!ok) return;
       clearDraft(STATE.fileId);
       el.code.value = (STATE.remote && STATE.remote.trim()) ? STATE.remote : DEFAULT_START;
       STATE.content = el.code.value;
       toast("Đã hoàn tác");
-      scheduleUpdate();
+      flushHeavyNow();
     }
 
     function doDownload(){
@@ -1290,13 +1402,14 @@
     }
 
     function doClearAll(){
+      flushHeavyNow();
       const ok = confirm("Xoá tất cả nội dung? (Giữ lại <!DOCTYPE html>)");
       if(!ok) return;
       clearDraft(STATE.fileId);
       el.code.value = DEFAULT_START;
       STATE.content = el.code.value;
       toast("Đã xoá");
-      scheduleUpdate();
+      flushHeavyNow();
     }
 
     function bindShortcuts(){
@@ -1342,7 +1455,7 @@
         ta.selectionStart = ta.selectionEnd = start + insert.length;
       }
 
-      scheduleUpdate();
+      onEditorInput();
     }
 
     function tokenizeForFormat(html){
@@ -1410,8 +1523,6 @@
         }
 
         if(isTag(t)){
-          const name = getTagName(t);
-
           if(isClosingTag(t)){
             indent = Math.max(0, indent - 1);
             out.push(indentUnit.repeat(indent) + t.trim());
@@ -1421,7 +1532,6 @@
             out.push(indentUnit.repeat(indent) + t.trim());
             indent++;
           }
-
           continue;
         }
 
@@ -1450,6 +1560,7 @@
     }
 
     function doFormat(){
+      flushHeavyNow();
       if(el.btnFormat.disabled) return;
       const cur = String(el.code.value || "");
       const fmt = formatHtml(cur);
@@ -1459,7 +1570,7 @@
       }
       el.code.value = fmt;
       toast("Đã căn thụt");
-      scheduleUpdate();
+      flushHeavyNow();
     }
 
     async function boot(){
@@ -1548,22 +1659,34 @@
       });
 
       el.errorBar.addEventListener("click", () => {
+        flushHeavyNow();
         const arr = [...STATE.errLines].sort((a,b)=>a-b);
         if(arr.length) scrollToLine(arr[0]);
       });
 
-      el.code.addEventListener("input", scheduleUpdate, { passive:true });
+      el.code.addEventListener("input", onEditorInput, { passive:true });
       el.code.addEventListener("keydown", autoIndentOnEnter, { passive:false });
 
       bindShortcuts();
 
       window.addEventListener("resize", () => {
-        if(STATE.updateTimer) clearTimeout(STATE.updateTimer);
-        STATE.updateTimer = setTimeout(() => {
-          STATE.updateTimer = null;
-          rebuildGutterAndHeight();
-          recomputeFind();
-        }, 80);
+        if(STATE.resizeTimer) clearTimeout(STATE.resizeTimer);
+        STATE.resizeTimer = setTimeout(() => {
+          STATE.resizeTimer = null;
+          if(STATE.typing){
+            scheduleFastSync();
+            scheduleHeavyUpdate();
+          }else{
+            rebuildGutterAndHeight();
+            recomputeFind();
+          }
+        }, PERF.resizeDelay);
+      }, { passive:true });
+
+      window.addEventListener("beforeunload", () => {
+        try{
+          if(STATE.fileId) saveDraft(STATE.fileId, el.code.value || "");
+        }catch{}
       }, { passive:true });
     }
 
