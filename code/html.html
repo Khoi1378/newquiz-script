@@ -178,13 +178,6 @@
       min-width:44px;
       text-align:center;
     }
-    .btnUndoSym{
-      display:inline-block;
-      font-weight:950;
-      font-size:1.08rem;
-      line-height:1;
-      transform:translateY(1px);
-    }
     .btn[disabled]{opacity:.55;cursor:not-allowed;transform:none !important;filter:none !important}
 
     .errorBar{
@@ -480,7 +473,7 @@
       padding:8px 10px;
       border-radius:999px;
       font-weight:950;
-      font-size:1.18rem;
+      font-size:1.06rem;
       cursor:pointer;
       -webkit-tap-highlight-color:transparent;
       touch-action:manipulation;
@@ -643,7 +636,7 @@
   <div class="wrap">
     <div class="pathBar">
       <button class="btn btnGhost" id="btnGuide" type="button">Hướng dẫn</button>
-      <div class="pathText" id="filePath">—</div>
+      <div class="pathText" id="filePath">-</div>
     </div>
 
     <div class="card">
@@ -653,9 +646,7 @@
         </div>
 
         <div class="toolbarRight">
-          <button class="btn btnGhost btnMini" id="btnUndo" type="button" aria-label="Hoàn tác" disabled>
-            <span class="btnUndoSym">⤾</span>
-          </button>
+          <button class="btn btnGhost btnMini" id="btnUndo" type="button" aria-label="Hoàn tác" disabled>Undo</button>
           <button class="btn btnBlue" id="btnDownload" type="button">Tải về máy</button>
         </div>
       </div>
@@ -677,7 +668,7 @@
 
       <div class="sectionHead">
         <div class="sectionTitle">Code</div>
-        <button class="optBtn" id="btnFormat" type="button" disabled>Căn chỉnh ⌥</button>
+        <button class="optBtn" id="btnFormat" type="button" disabled>Căn chỉnh</button>
       </div>
 
       <div class="editorFrame" id="editorFrame">
@@ -693,7 +684,7 @@
     <div class="card previewCard">
       <div class="previewHead">
         <div class="previewLabel" id="previewLabel">Xem trước</div>
-        <button class="btn btnGhost" id="btnZoom" type="button" style="display:none">⌘ Phóng to</button>
+        <button class="btn btnGhost" id="btnZoom" type="button" style="display:none">Phóng to</button>
       </div>
       <div class="previewBox">
         <iframe id="preview" sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts"></iframe>
@@ -701,7 +692,7 @@
     </div>
   </div>
 
-  <button class="btn btnBlue findNextFloat" id="btnFindNextFloat" type="button" aria-label="Tìm tiếp">➜</button>
+  <button class="btn btnBlue findNextFloat" id="btnFindNextFloat" type="button" aria-label="Tìm tiếp">Tiếp</button>
 
   <div class="toast" id="toast"></div>
 
@@ -718,7 +709,7 @@
         <div class="sheetTitle">Hướng dẫn</div>
         <div class="sheetActions">
           <button class="btn btnGhost" id="btnGuideEdit" type="button" style="display:none">Sửa</button>
-          <button class="xBtn" id="btnGuideClose" type="button" aria-label="Đóng">×</button>
+          <button class="xBtn" id="btnGuideClose" type="button" aria-label="Đóng">X</button>
         </div>
       </div>
       <div class="sheetBody">
@@ -730,7 +721,7 @@
 
           <div class="guidePanel" id="guidePanel" style="display:none">
             <div class="guideRow">
-              <div class="guideLabel" id="guideSelTitle">—</div>
+              <div class="guideLabel" id="guideSelTitle">-</div>
               <div class="toolbarRight" style="gap:8px">
                 <button class="btn btnGhost" id="btnGuideInsert" type="button" disabled>Chèn</button>
                 <button class="btn btnGhost" id="btnGuideNew" type="button" style="display:none">Thêm</button>
@@ -752,7 +743,7 @@
       <div class="sheetHead">
         <div class="sheetTitle">Phóng to</div>
         <div class="sheetActions">
-          <button class="xBtn" id="btnZoomClose" type="button" aria-label="Đóng">×</button>
+          <button class="xBtn" id="btnZoomClose" type="button" aria-label="Đóng">X</button>
         </div>
       </div>
       <div class="zoomBody">
@@ -761,7 +752,7 @@
             <input type="checkbox" id="chkFitWidth" checked />
             Vừa bề ngang
           </label>
-          <div class="guideLabel" id="zoomInfo">—</div>
+          <div class="guideLabel" id="zoomInfo">-</div>
         </div>
         <div class="zoomViewport" id="zoomViewport">
           <div class="zoomStage" id="zoomStage">
@@ -1887,10 +1878,9 @@
         return;
       }
 
-      let pick = 0;
-      STATE.findIndex = pick;
+      STATE.findIndex = 0;
       renderHighlight();
-      selectMatchAt(pick);
+      selectMatchAt(0);
 
       setTimeout(() => { try{ el.findInput.blur(); }catch{} }, 0);
     }
@@ -2221,6 +2211,11 @@
       overlayEl.setAttribute("aria-hidden", "true");
     }
 
+    function guideSelected(){
+      const list = Array.isArray(STATE.guideSnippets) ? STATE.guideSnippets : [];
+      return list.find(x => x.id === STATE.guideSelectedId) || null;
+    }
+
     function renderGuide(){
       const list = Array.isArray(STATE.guideSnippets) ? STATE.guideSnippets : [];
       el.guideList.innerHTML = "";
@@ -2229,6 +2224,7 @@
 
       if(!list.length){
         STATE.guideSelectedId = "";
+        el.btnGuideInsert.disabled = true;
         return;
       }
 
@@ -2249,12 +2245,13 @@
       }
 
       const sel = list.find(x => x.id === STATE.guideSelectedId) || list[0];
-      el.guideSelTitle.textContent = String(sel.name || "—");
+      el.guideSelTitle.textContent = String(sel.name || "-");
 
       const admin = isAdmin();
       const editing = !!STATE.guideEdit;
 
-      el.btnGuideInsert.disabled = !admin;
+      el.btnGuideInsert.disabled = !sel;
+
       el.btnGuideNew.style.display = (admin && editing) ? "" : "none";
       el.btnGuideDelete.style.display = (admin && editing) ? "" : "none";
       el.btnGuideSave.style.display = (admin && editing) ? "" : "none";
@@ -2308,27 +2305,14 @@
       }
     }
 
-    function guideSelected(){
-      const list = Array.isArray(STATE.guideSnippets) ? STATE.guideSnippets : [];
-      return list.find(x => x.id === STATE.guideSelectedId) || null;
-    }
-
-    function guideUpsertSelected(name, html){
-      const list = Array.isArray(STATE.guideSnippets) ? STATE.guideSnippets : [];
-      const id = String(STATE.guideSelectedId || "");
-      const idx = list.findIndex(x => x.id === id);
-      if(idx < 0) return;
-      list[idx] = { ...list[idx], name: String(name || "").trim() attachments? };
-    }
-
     function doGuideInsert(){
       const sel = guideSelected();
       if(!sel) return;
-      if(!isAdmin()) return;
       captureUndoNow();
       insertAtCursor(sel.html || "");
       toast("Đã chèn");
       flushHeavyNow();
+      closeGuide();
     }
 
     function doGuideToggleEdit(){
@@ -2384,7 +2368,7 @@
 
     function openZoom(){
       el.previewBig.srcdoc = String(el.code.value || "");
-      el.zoomInfo.textContent = "—";
+      el.zoomInfo.textContent = "-";
       openOverlay(el.zoomOverlay);
     }
 
@@ -2414,7 +2398,7 @@
         el.previewBig.style.width = w + "px";
         el.previewBig.style.height = h + "px";
 
-        el.zoomInfo.textContent = `${Math.round(w)}×${Math.round(h)} · ${Math.round(s * 100)}%`;
+        el.zoomInfo.textContent = `${Math.round(w)}x${Math.round(h)} · ${Math.round(s * 100)}%`;
       }catch{}
     }
 
@@ -2475,7 +2459,7 @@
         const name = String((STATE.meta && STATE.meta.name) ? STATE.meta.name : ("file-" + fileId + ".html"));
         const path = String(o.full_path || o.path || name);
 
-        el.filePath.textContent = path || "—";
+        el.filePath.textContent = path || "-";
 
         const draft = loadDraft(fileId);
         if(draft && typeof draft.content === "string"){
@@ -2535,7 +2519,7 @@
 
       el.guideName.addEventListener("input", () => {
         if(!STATE.guideEdit) return;
-        el.guideSelTitle.textContent = String(el.guideName.value || "").trim() || "—";
+        el.guideSelTitle.textContent = String(el.guideName.value || "").trim() || "-";
       }, { passive:true });
 
       el.guideOverlay.addEventListener("click", (e) => {
@@ -2552,8 +2536,6 @@
       el.previewBig.addEventListener("load", () => {
         setTimeout(measureZoomContent, el.code.value ? 30 : 10);
       });
-
-      el.zoomViewport.addEventListener("scroll", () => {}, { passive:true });
 
       el.findInput.addEventListener("input", () => {
         STATE.findIndex = 0;
