@@ -512,6 +512,7 @@
     const FILE_ID_RE = /^[a-z]{5}$/;
     const VOID_TAGS = new Set(["area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"]);
     const RAW_TEXT_TAGS = new Set(["script","style","textarea"]);
+    const OPTIONAL_END_TAGS = new Set(["html","head","body","li","dt","dd","p","rt","rp","optgroup","option","colgroup","thead","tbody","tfoot","tr","td","th"]);
 
     const DEFAULT_START = "<!DOCTYPE html>\n";
 
@@ -796,37 +797,57 @@
       try{ localStorage.removeItem(draftKey(fileId)); }catch{}
     }
 
-    function countNewlinesBetween(s, a, b){
-      let c = 0;
-      const end = Math.min(s.length, Math.max(a, b));
-      for(let i = Math.max(0, a); i < end; i++){
-        if(s[i] === "\n") c++;
-      }
-      return c;
+    function normLower(s){
+      return String(s || "").toLocaleLowerCase();
     }
 
-    function lintHtmlRich(code){
+    function makeLineStarts(s){
+      const out = [0];
+      for(let i=0;i<s.length;i++){
+        if(s[i] === "\n") out.push(i + 1);
+      }
+      return out;
+    }
+
+    function idxToLineCol(lineStarts, idx){
+      const i = Math.max(0, Math.min(Number(idx) || 0, 0x7fffffff));
+      let lo = 0, hi = lineStarts.length - 1, ans = 0;
+      while(lo <= hi){
+        const mid = (lo + hi) >> 1;
+        if(lineStarts[mid] <= i){ ans = mid; lo = mid + 1; }
+        else hi = mid - 1;
+      }
+      const line = ans + 1;
+      const col = (i - lineStarts[ans]) + 1;
+      return { line, col };
+    }
+
+    function lintHtmlVsLike(code){
       const s = String(code || "");
-      const lower = s.toLowerCase();
+      const lower = normLower(s);
+      const lineStarts = makeLineStarts(s);
 
       const stack = [];
       const errors = [];
       const errLines = new Set();
 
-      function addErr(line, msg){
-        const ln = Math.max(1, Number(line) || 1);
-        errors.push({ line: ln, msg: String(msg || "") });
-        errLines.add(ln);
+      function addErrAt(idx, msg){
+        const lc = idxToLineCol(lineStarts, idx);
+        errors.push({ line: lc.line, col: lc.col, msg: String(msg || "") });
+        errLines.add(lc.line);
+      }
+
+      function markLineOfIdx(idx){
+        const lc = idxToLineCol(lineStarts, idx);
+        errLines.add(lc.line);
       }
 
       let i = 0;
-      let line = 1;
 
       while(i < s.length){
         const ch = s[i];
 
         if(ch !== "<"){
-          if(ch === "\n") line++;
           i++;
           continue;
         }
@@ -834,23 +855,28 @@
         if(s.startsWith("<!--", i)){
           const end = s.indexOf("-->", i + 4);
           if(end < 0){
-            addErr(line, "Chưa đóng comment <!-- -->");
+            addErrAt(i, "Chưa đóng comment <!-- -->");
             break;
           }
-          line += countNewlinesBetween(s, i, end + 3);
           i = end + 3;
           continue;
         }
 
-        const lineStart = line;
+        if(/^<!doctype\b/i.test(s.slice(i, i + 12))){
+          const end = s.indexOf(">", i + 2);
+          if(end < 0){
+            addErrAt(i, "Thiếu > để đóng DOCTYPE");
+            break;
+          }
+          i = end + 1;
+          continue;
+        }
 
         let quote = "";
         let endIdx = -1;
-        let nl = 0;
 
         for(let j = i + 1; j < s.length; j++){
           const cj = s[j];
-          if(cj === "\n") nl++;
           if(quote){
             if(cj === quote) quote = "";
             continue;
@@ -860,81 +886,90 @@
         }
 
         if(endIdx < 0){
-          addErr(lineStart, "Thiếu > để đóng thẻ");
+          addErrAt(i, "Thiếu > để đóng thẻ");
           break;
         }
 
         const full = s.slice(i, endIdx + 1);
-        line += nl;
-        i = endIdx + 1;
+        const inner0 = full.slice(1, -1);
+        const inner = String(inner0 || "").trim();
 
-        if(/^<\s*!doctype\b/i.test(full)){
+        if(!inner){
+          i = endIdx + 1;
           continue;
         }
 
-        const m = full.match(/^<\s*(\/)?\s*([a-zA-Z][\w:-]*)([\s\S]*?)>$/);
-        if(!m){
+        if(inner.startsWith("!")){
+          i = endIdx + 1;
           continue;
         }
 
-        const closing = !!m[1];
-        const tag = String(m[2] || "").toLowerCase();
-        const rest = String(m[3] || "");
-        const selfClose = /\/\s*$/.test(rest) || VOID_TAGS.has(tag);
-
-        if(selfClose){
+        const isClose = /^\//.test(inner);
+        const nameMatch = inner.match(/^\/?\s*([a-zA-Z][\w:-]*)/);
+        if(!nameMatch){
+          i = endIdx + 1;
           continue;
         }
 
-        if(!closing){
-          stack.push({ tag, line: lineStart });
+        const tag = String(nameMatch[1] || "").toLowerCase();
+        const isVoid = VOID_TAGS.has(tag);
 
-          if(RAW_TEXT_TAGS.has(tag)){
-            const needle = "</" + tag;
-            const pos = lower.indexOf(needle, i);
-            if(pos < 0){
-              addErr(lineStart, `Mở <${tag}> nhưng chưa đóng </${tag}>`);
-              break;
+        const hasSelfCloseSyntax = (!isClose) && /\/\s*$/.test(inner);
+
+        if(hasSelfCloseSyntax && !isVoid){
+          addErrAt(i, `Thẻ <${tag}> không được tự đóng bằng />. Dùng </${tag}>.`);
+        }
+
+        const treatSelf = hasSelfCloseSyntax && isVoid;
+
+        if(!isClose){
+          if(!treatSelf && !isVoid){
+            stack.push({ tag, idx: i });
+
+            if(RAW_TEXT_TAGS.has(tag)){
+              const needle = `</${tag}`;
+              const pos = lower.indexOf(needle, endIdx + 1);
+              if(pos < 0){
+                addErrAt(i, `Mở <${tag}> nhưng chưa đóng </${tag}>`);
+                break;
+              }
+              i = pos;
+              continue;
             }
-            line += countNewlinesBetween(s, i, pos);
-            i = pos;
           }
-
-          continue;
-        }
-
-        if(stack.length === 0){
-          addErr(lineStart, `Thừa </${tag}> (không có thẻ mở)`);
-          continue;
-        }
-
-        const top = stack[stack.length - 1];
-        if(top.tag === tag){
-          stack.pop();
-          continue;
-        }
-
-        addErr(lineStart, `Đóng </${tag}> nhưng đang mở <${top.tag}> (mở ở dòng ${top.line})`);
-
-        let found = -1;
-        for(let k = stack.length - 2; k >= 0; k--){
-          if(stack[k].tag === tag){ found = k; break; }
-        }
-
-        if(found >= 0){
-          stack.splice(found, stack.length - found);
         }else{
-          stack.pop();
+          if(stack.length === 0){
+            addErrAt(i, `Thừa </${tag}> (không có thẻ mở)`);
+          }else{
+            const top = stack[stack.length - 1];
+            if(top.tag === tag){
+              stack.pop();
+            }else{
+              const topLc = idxToLineCol(lineStarts, top.idx);
+              addErrAt(i, `Đóng </${tag}> nhưng đang mở <${top.tag}> (mở ở dòng ${topLc.line})`);
+              markLineOfIdx(top.idx);
+
+              let found = -1;
+              for(let k = stack.length - 2; k >= 0; k--){
+                if(stack[k].tag === tag){ found = k; break; }
+              }
+              if(found >= 0) stack.splice(found);
+              else stack.pop();
+            }
+          }
         }
+
+        i = endIdx + 1;
       }
 
       if(stack.length){
         for(const x of stack){
-          addErr(x.line, `Mở <${x.tag}> nhưng chưa đóng`);
+          if(OPTIONAL_END_TAGS.has(x.tag)) continue;
+          addErrAt(x.idx, `Mở <${x.tag}> nhưng chưa đóng`);
         }
       }
 
-      errors.sort((a,b)=>a.line - b.line);
+      errors.sort((a,b) => (a.line - b.line) || (a.col - b.col));
       return { ok: errors.length === 0, errLines, errors };
     }
 
@@ -1066,16 +1101,21 @@
     function buildFindMatches(text, q){
       const t = String(text || "");
       const needle = String(q || "");
-      const out = [];
-      if(!needle) return out;
+      if(!needle) return [];
 
+      const tL = normLower(t);
+      const nL = normLower(needle);
+
+      const out = [];
       let i = 0;
+
       while(true){
-        const idx = t.indexOf(needle, i);
+        const idx = tL.indexOf(nL, i);
         if(idx < 0) break;
         out.push({ start: idx, end: idx + needle.length });
         i = idx + Math.max(1, needle.length);
       }
+
       return out;
     }
 
@@ -1084,6 +1124,7 @@
       const needle = String(q || "");
       if(!needle) return [];
 
+      const nL = normLower(needle);
       const root = el.codeHl;
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
       const spans = [];
@@ -1092,7 +1133,9 @@
       while((node = walker.nextNode())){
         const txt = node.nodeValue || "";
         if(!txt) continue;
-        let idx = txt.indexOf(needle);
+
+        const low = normLower(txt);
+        let idx = low.indexOf(nL);
         if(idx < 0) continue;
 
         const frag = document.createDocumentFragment();
@@ -1103,12 +1146,12 @@
 
           const sp = document.createElement("span");
           sp.className = "tok-find";
-          sp.textContent = needle;
+          sp.textContent = txt.slice(idx, idx + needle.length);
           frag.appendChild(sp);
           spans.push(sp);
 
           last = idx + needle.length;
-          idx = txt.indexOf(needle, last);
+          idx = low.indexOf(nL, last);
         }
 
         if(last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
@@ -1235,15 +1278,20 @@
 
       const idx = Math.max(0, Math.min(STATE.errIndex || 0, errs.length - 1));
       const e = errs[idx];
-      bar.textContent = `Lỗi ${idx + 1}/${errs.length}: ${e.msg} (dòng ${e.line})`;
+      const pos = (e && e.col) ? `dòng ${e.line}, cột ${e.col}` : `dòng ${e.line}`;
+      bar.textContent = `Lỗi ${idx + 1}/${errs.length}: ${e.msg} (${pos})`;
       bar.classList.add("show");
     }
 
-    function scrollToLine(lineNo){
+    function scrollToLine(lineNo, preserveSelection){
       const idx = Math.max(1, Number(lineNo) || 1);
       const startRow = STATE.lineStartRow[idx - 1] ?? 0;
       const target = el.gutter.querySelector(`.gline[data-row="${startRow}"]`);
       if(target) target.scrollIntoView({ block:"center", behavior:"smooth" });
+
+      try{ el.code.focus(); }catch{}
+
+      if(preserveSelection) return;
 
       const text = el.code.value || "";
       let pos = 0;
@@ -1257,7 +1305,6 @@
         pos = p;
       }
       try{
-        el.code.focus();
         el.code.setSelectionRange(pos, pos);
       }catch{}
     }
@@ -1267,13 +1314,10 @@
 
       const q = String(el.findInput.value || "").trim();
       if(q){
-        const spans = applyFindMarksDom(q);
+        applyFindMarksDom(q);
         setActiveFind(STATE.findIndex || 0);
-        updateFindNextFloat();
-        if(spans.length <= 1) updateFindNextFloat();
-      }else{
-        updateFindNextFloat();
       }
+      updateFindNextFloat();
     }
 
     function getLineFromPos(pos){
@@ -1294,7 +1338,7 @@
       }catch{}
 
       const lineNo = getLineFromPos(m.start);
-      scrollToLine(lineNo);
+      scrollToLine(lineNo, true);
 
       setActiveFind(idx);
       toast(`${idx + 1}/${STATE.findMatches.length}`);
@@ -1310,7 +1354,6 @@
         STATE.findMatches = [];
         STATE.findIndex = 0;
         renderHighlight();
-        updateFindNextFloat();
         return;
       }
 
@@ -1319,7 +1362,6 @@
       if(STATE.findIndex >= STATE.findMatches.length) STATE.findIndex = 0;
 
       renderHighlight();
-      updateFindNextFloat();
     }
 
     function enterTyping(){
@@ -1359,7 +1401,7 @@
 
       if(STATE.fileId) saveDraft(STATE.fileId, v);
 
-      const lint = lintHtmlRich(v);
+      const lint = lintHtmlVsLike(v);
       STATE.errLines = lint.errLines;
       STATE.errors = lint.errors;
       STATE.errIndex = 0;
@@ -1414,7 +1456,6 @@
       if(!matches.length){
         STATE.findIndex = 0;
         renderHighlight();
-        updateFindNextFloat();
         toast("Không tìm thấy");
         return;
       }
@@ -1428,7 +1469,6 @@
 
       STATE.findIndex = pick;
       renderHighlight();
-      updateFindNextFloat();
       selectMatchAt(pick);
     }
 
@@ -1440,7 +1480,6 @@
       }
       const next = (STATE.findIndex + 1) % STATE.findMatches.length;
       renderHighlight();
-      updateFindNextFloat();
       selectMatchAt(next);
     }
 
@@ -1808,7 +1847,9 @@
           el.code.value = r ? STATE.remote : DEFAULT_START;
         }
 
-        const lint = lintHtmlRich(el.code.value || "");
+        normalizeDuplicateDoctypeInEditor();
+
+        const lint = lintHtmlVsLike(el.code.value || "");
         STATE.errLines = lint.errLines;
         STATE.errors = lint.errors;
         STATE.errIndex = 0;
@@ -1858,7 +1899,7 @@
         const idx = Math.max(0, Math.min(STATE.errIndex || 0, errs.length - 1));
         const e = errs[idx];
 
-        scrollToLine(e.line);
+        scrollToLine(e.line, false);
 
         STATE.errIndex = (idx + 1) % errs.length;
         renderErrorBar();
