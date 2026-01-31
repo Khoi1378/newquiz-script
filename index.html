@@ -15,15 +15,31 @@
 html,body{height:100%}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);background:radial-gradient(1200px 600px at 20% 10%,#fff 0%,rgba(255,255,255,0) 55%),linear-gradient(120deg,var(--bg1) 0%,var(--bg2) 100%);overflow:hidden;touch-action:pan-x pan-y}
+
+/* FIX FONT ON DESKTOP FORM CONTROLS (button/input sometimes not inheriting body font) */
+button,input,select,textarea{
+  font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+button{font-synthesis:none}
+
 a{color:inherit;text-decoration:none}
 a:hover,a:active,a:visited{text-decoration:none}
 a:focus-visible{outline:3px solid rgba(124,58,237,.25);outline-offset:3px;border-radius:14px}
 .btn,.pinKey,.btn-x{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+
+/* ensure these UI buttons always use the same font+weight on PC */
+.btn,.pinKey,.btn-x{
+  font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  font-synthesis:none;
+}
+
 #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 110px;touch-action:pan-y}
 .wrap{max-width:980px;margin:0 auto;padding:0 14px}
 .userCorner{position:fixed;top:10px;left:12px;z-index:10010;display:none;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.55);border:1px solid rgba(229,231,235,.65);backdrop-filter:blur(6px);box-shadow:0 10px 22px rgba(0,0,0,.06);user-select:none;max-width:calc(100vw - 24px);cursor:pointer}
-.userCorner .name{font-weight:950;font-size:.88rem;color:rgba(31,41,55,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:58vw}
-.userCorner .adminBadge{padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin);white-space:nowrap}
+.userCorner .name{font-weight:900;font-size:.88rem;color:rgba(31,41,55,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:58vw}
+.userCorner .adminBadge{padding:4px 8px;border-radius:999px;font-weight:900;font-size:.78rem;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin);white-space:nowrap}
 .btn{border:0;cursor:pointer;border-radius:999px;padding:10px 14px;font-weight:900;font-size:.9rem;transition:transform .16s ease,filter .16s ease;display:inline-flex;align-items:center;gap:8px;user-select:none;white-space:nowrap;box-shadow:0 12px 24px rgba(0,0,0,.12);background:#fff;color:#111827;border:1px solid #e5e7eb}
 .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
 .btn:active{transform:translateY(0)}
@@ -36,19 +52,31 @@ a:focus-visible{outline:3px solid rgba(124,58,237,.25);outline-offset:3px;border
 .titlebox{display:flex;gap:10px;align-items:center;flex:1 1 360px;min-width:240px}
 .logo{width:42px;height:42px;border-radius:16px;background:linear-gradient(135deg,#a78bfa,#fb7185);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;box-shadow:0 10px 22px rgba(124,58,237,.18);user-select:none}
 .titles h1{font-size:1.02rem;margin:0;font-weight:800}
-.titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:650}
+.titles .tiny{margin-top:3px;font-size:.86rem;color:var(--muted);font-weight:700}
 .actions{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex:1 1 320px;flex-wrap:wrap}
 .statusPill{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;background:rgba(255,255,255,.75);border:1px solid rgba(229,231,235,.9);color:rgba(31,41,55,.8);font-weight:800;font-size:.9rem;box-shadow:0 10px 22px rgba(0,0,0,.05);user-select:none;max-width:72vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .content{padding:12px 0 0}
 .card{background:var(--card);border:2px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin:12px 0}
 .row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .vi{margin:0;font-weight:900;font-size:1.04rem;line-height:1.25}
-.muted{color:var(--muted);font-weight:650}
+.muted{color:var(--muted);font-weight:700}
 .idx{font-size:.78rem;font-weight:900;padding:6px 10px;border-radius:999px;background:#eff6ff;color:#1d4ed8;border:1px solid #dbeafe;white-space:nowrap}
 .badge-open{background:#ecfdf5;color:#065f46;border-color:#a7f3d0}
 .badge-code{background:#fff7ed;color:#9a3412;border-color:#fed7aa}
 .badge-pin{background:#f5f3ff;color:#5b21b6;border-color:#ddd6fe}
-.input{width:100%;border-radius:14px;border:2px solid #e5e7eb;padding:11px 12px;font-size:.95rem;font-weight:700;outline:none;background:var(--soft);transition:border-color .15s ease,box-shadow .15s ease}
+.input{
+  width:100%;
+  border-radius:14px;
+  border:2px solid #e5e7eb;
+  padding:11px 12px;
+  font-size:.95rem;
+  font-weight:700;
+  outline:none;
+  background:var(--soft);
+  transition:border-color .15s ease,box-shadow .15s ease;
+  font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  font-synthesis:none;
+}
 .input:focus{border-color:rgba(124,58,237,.55);box-shadow:0 0 0 5px rgba(124,58,237,.10);background:#fff}
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:20000}
 .modal-backdrop.show{display:flex}
@@ -58,10 +86,10 @@ a:focus-visible{outline:3px solid rgba(124,58,237,.25);outline-offset:3px;border
 #confirmBackdrop{z-index:20045}
 .modal{width:100%;max-width:620px;background:#fff;border-radius:18px;border:1px solid #e5e7eb;box-shadow:0 20px 60px rgba(0,0,0,.18);padding:14px;max-height:82vh;overflow:auto;-webkit-overflow-scrolling:touch}
 .modal h3{margin:4px 0 6px;font-size:1.02rem}
-.modal p{margin:0 0 12px;color:var(--muted);font-weight:650;font-size:.92rem;line-height:1.35}
+.modal p{margin:0 0 12px;color:var(--muted);font-weight:700;font-size:.92rem;line-height:1.35}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
 .xclose{position:sticky;top:0;display:flex;justify-content:flex-end;z-index:2;margin-bottom:4px}
-.btn-x{width:56px;height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-weight:1000;font-size:1.8rem;line-height:1;box-shadow:0 12px 24px rgba(0,0,0,.10)}
+.btn-x{width:56px;height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;font-weight:900;font-size:1.8rem;line-height:1;box-shadow:0 12px 24px rgba(0,0,0,.10)}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(17,24,39,.92);color:#fff;padding:10px 12px;border-radius:14px;font-weight:800;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;max-width:calc(100% - 28px);z-index:20050;text-align:center}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
 .pinWrap{display:grid;gap:12px}
@@ -69,11 +97,11 @@ a:focus-visible{outline:3px solid rgba(124,58,237,.25);outline-offset:3px;border
 .dot{width:14px;height:14px;border-radius:999px;border:2px solid #e5e7eb;background:#fff;box-shadow:0 10px 22px rgba(0,0,0,.08)}
 .dot.filled{background:linear-gradient(135deg,#7c3aed,#fb7185);border-color:rgba(124,58,237,.25)}
 .pinKeypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.pinKey{height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;font-weight:1000;font-size:1.25rem;cursor:pointer;box-shadow:0 10px 22px rgba(0,0,0,.08);transition:transform .12s ease,filter .12s ease;user-select:none}
+.pinKey{height:56px;border-radius:16px;border:1px solid #e5e7eb;background:#fff;font-weight:900;font-size:1.25rem;cursor:pointer;box-shadow:0 10px 22px rgba(0,0,0,.08);transition:transform .12s ease,filter .12s ease;user-select:none}
 .pinKey:hover{transform:translateY(-1px);filter:brightness(.99)}
 .pinKey:active{transform:translateY(0)}
-.pinKey.small{font-size:.95rem;font-weight:950;letter-spacing:.02em}
-.pinNote{text-align:center;color:var(--muted);font-weight:750;font-size:.9rem;line-height:1.35}
+.pinKey.small{font-size:.95rem;font-weight:900;letter-spacing:.02em}
+.pinNote{text-align:center;color:var(--muted);font-weight:700;font-size:.9rem;line-height:1.35}
 @keyframes shakeX{0%{transform:translateX(0)}15%{transform:translateX(-8px)}30%{transform:translateX(8px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}75%{transform:translateX(-4px)}90%{transform:translateX(4px)}100%{transform:translateX(0)}}
 .pinWrap.shake{animation:shakeX .5s ease}
 .pinDots.error .dot{border-color:rgba(220,38,38,.65)}
@@ -81,7 +109,7 @@ a:focus-visible{outline:3px solid rgba(124,58,237,.25);outline-offset:3px;border
 .pinNote.error{color:var(--bad)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:520px){.grid2{grid-template-columns:1fr}}
-.adminBadgeInline{padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin);white-space:nowrap}
+.adminBadgeInline{padding:4px 8px;border-radius:999px;font-weight:900;font-size:.78rem;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.35);color:var(--admin);white-space:nowrap}
 </style>
 </head>
 <body>
