@@ -44,6 +44,10 @@
         linear-gradient(120deg,var(--bg1) 0%, var(--bg2) 100%);
       overflow:hidden;
     }
+
+    /* FIX: desktop button font */
+    button, input, textarea, select{ font-family:inherit; }
+
     .noScroll #shell{overflow:hidden!important}
     #shell{height:100vh;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 0 130px}
     .wrap{max-width:1180px;margin:0 auto;padding:0 14px}
@@ -1103,6 +1107,82 @@ function calcCustomTotal(){
   }
   return Math.round(sum*100)/100;
 }
+
+/* ===========================
+   FIX: chia điểm equal không làm tròn, không bù trừ câu cuối, không ra điểm âm
+   - UI hiển thị tối đa 16 số sau dấu thập phân, truncate (không rounding)
+   - Tất cả câu = total / n (đều nhau)
+   =========================== */
+
+const EQUAL_MAX_FRAC=16;
+
+function normalizeNumberText(s){
+  let t=String(s??"").trim();
+  if(!t) return "0";
+  t=t.replace(/\s+/g,"");
+  t=t.replace(/,/g,".");
+  return t;
+}
+function parseDecimalToBigIntParts(s){
+  const t=normalizeNumberText(s);
+  const m=t.match(/^([+-])?(\d+)(?:\.(\d+))?$/);
+  if(!m) return null;
+  const sign=(m[1]==="-")?-1n:1n;
+  const intPart=m[2]||"0";
+  const fracPart=m[3]||"";
+  const scale=fracPart.length;
+  const digits=(intPart+fracPart).replace(/^0+(?=\d)/,"") || "0";
+  let num=0n;
+  try{ num=BigInt(digits); }catch{ return null; }
+  return {sign, num, scale};
+}
+function pow10Big(k){
+  if(k<=0) return 1n;
+  return 10n ** BigInt(k);
+}
+function divBigIntToDecimalText(numer, denom, maxFrac){
+  if(denom===0n) return "0";
+  let sign="";
+  let n=numer;
+  let d=denom;
+  if(n===0n) return "0";
+  if(n<0n){ sign = sign===""?"-":""; n=-n; }
+  if(d<0n){ sign = sign===""?"-":""; d=-d; }
+
+  const intPart = n / d;
+  let rem = n % d;
+
+  if(rem===0n) return sign + String(intPart);
+
+  let frac="";
+  for(let i=0;i<maxFrac && rem!==0n;i++){
+    rem *= 10n;
+    const digit = rem / d;
+    rem = rem % d;
+    frac += String(digit);
+  }
+
+  frac = frac.replace(/0+$/,"");
+  if(!frac) return sign + String(intPart);
+  return sign + String(intPart) + "." + frac;
+}
+function divDecimalTextByInt(totalStr, n, maxFrac){
+  const parts=parseDecimalToBigIntParts(totalStr);
+  if(!parts) return "0";
+  const {sign, num, scale}=parts;
+  const nn=Number(n||0);
+  if(!nn) return "0";
+  const denom = BigInt(nn) * pow10Big(scale);
+  const numer = sign * num;
+  return divBigIntToDecimalText(numer, denom, maxFrac);
+}
+function calcEqualPoints(n,totalStr){
+  const nn=Number(n||0);
+  if(!nn) return [];
+  const perStr=divDecimalTextByInt(totalStr, nn, EQUAL_MAX_FRAC);
+  return Array(nn).fill(perStr);
+}
+
 function updateTotalScoreUI(){
   const mode=String(scoringModeEl.value||"equal");
   if(mode==="custom"){
@@ -1181,7 +1261,7 @@ function validateQuiz(){
   const sm=String(shuffleModeEl.value||"none");
   if(!["none","q","qa"].includes(sm)) return "Shuffle mode không hợp lệ";
   if(String(scoringModeEl.value||"equal")==="equal"){
-    const total=Number(totalScoreEl.value||"");
+    const total=Number(normalizeNumberText(totalScoreEl.value||""));
     if(!Number.isFinite(total)||total<=0) return "Tổng điểm không hợp lệ";
   }
   if(requireCodeEl.value==="true" && !String(accessCodeEl.value||"").trim()) return "Thiếu mã truy cập";
@@ -1196,7 +1276,7 @@ async function saveQuizOnly(){
     quizIdEl.value=CURRENT_QID;
   }
   const qid=CURRENT_QID;
-  let totalScore=Number(totalScoreEl.value||"10")||10;
+  let totalScore=Number(normalizeNumberText(totalScoreEl.value||"10"))||10;
   if(String(scoringModeEl.value||"equal")==="custom"){
     totalScore=calcCustomTotal();
     totalScoreEl.value=String(totalScore);
@@ -1474,23 +1554,26 @@ function qTypeLabel(t){
   if(t==="tf4") return "Đúng/Sai";
   return "Câu hỏi";
 }
-function defaultQuestion(){
+
+/* FIX: thêm câu mới mặc định theo loại câu trước */
+function defaultQuestionOfType(t){
+  const type=isAllowedQType(t)?t:"mcq1";
+  if(type==="essay"){
+    return {type:"essay",prompt:"",answers:[],points:0,meta:{fuzzy:true,raw_answers:"",image_url:"",image_path:""}};
+  }
+  if(type==="short4"){
+    return {type:"short4",prompt:"",answers:[],points:0,meta:{format:"4boxes",raw_answers:"",image_url:"",image_path:""}};
+  }
+  if(type==="tf4"){
+    return {type:"tf4",prompt:"",answers:[],points:0,meta:{statements:["","","",""],keys:[false,false,false,false],rule:{byCorrectCount:{"0":0,"1":0.1,"2":0.25,"3":0.5,"4":1}},image_url:"",image_path:""}};
+  }
   return {type:"mcq1",prompt:"",answers:[],points:0,meta:{options:["","","",""],correct:1,image_url:"",image_path:""}};
 }
-function updateQCount(){qCountPill.textContent=String(QUESTIONS.length||0)}
-
-function calcEqualPoints(n,total){
-  if(!n) return [];
-  const per=total/n;
-  let sum=0;
-  const arr=[];
-  for(let i=0;i<n;i++){
-    let p=(i===n-1)?(total-sum):Math.round(per*100)/100;
-    if(i!==n-1) sum+=p;
-    arr.push(Math.round(p*100)/100);
-  }
-  return arr;
+function defaultQuestion(){
+  return defaultQuestionOfType("mcq1");
 }
+
+function updateQCount(){qCountPill.textContent=String(QUESTIONS.length||0)}
 
 function updateCardPreviews(card,q){
   const prevBox=card.querySelector('[data-role="mathPrevBox"]');
@@ -1540,8 +1623,8 @@ function renderAllQuestions(){
     return;
   }
   const isCustom=(String(scoringModeEl.value||"equal")==="custom");
-  const total=(Number(totalScoreEl.value||"10")||10);
-  const equalPts=!isCustom?calcEqualPoints(QUESTIONS.length,total):[];
+  const totalStr=String(totalScoreEl.value||"10");
+  const equalPts=!isCustom?calcEqualPoints(QUESTIONS.length,totalStr):[];
 
   qAllHost.innerHTML=QUESTIONS.map((q,i)=>{
     ensureMeta(q);
@@ -1558,7 +1641,7 @@ function renderAllQuestions(){
     const stmts=Array.isArray(q.meta?.statements)?q.meta.statements:["","","",""];
     const showTfPrev=stmts.some(hasLatex);
 
-    const ptsPill=!isCustom?`<span class="idx ok">Điểm ${esc(String(equalPts[i]??0))}</span>`:"";
+    const ptsPill=!isCustom?`<span class="idx ok">Điểm ${esc(String(equalPts[i]??"0"))}</span>`:"";
 
     return `
       <div class="qCard" data-i="${i}" data-imgdrop="1">
@@ -1840,8 +1923,10 @@ function scrollToQuestion(i){
   if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
 }
 
+/* FIX: add câu mới theo loại câu trước */
 document.getElementById("fabAddQuestion").onclick=()=>{
-  QUESTIONS.push(defaultQuestion());
+  const lastType=(QUESTIONS.length?String(QUESTIONS[QUESTIONS.length-1]?.type||"mcq1"):"mcq1");
+  QUESTIONS.push(defaultQuestionOfType(lastType));
   renderAllQuestions();
   toast("Đã thêm câu hỏi");
   setTimeout(()=>scrollToQuestion(QUESTIONS.length-1),60);
@@ -2081,16 +2166,13 @@ function parseImportText(text){
 
 function applyScoring(items){
   const mode=scoringModeEl.value;
-  const total=Number(totalScoreEl.value||"10")||10;
+  const totalStr=String(totalScoreEl.value||"10");
   if(!items.length) return items;
   if(mode==="equal"){
-    const per=total/items.length;
-    let sum=0;
-    return items.map((q,i)=>{
-      const p=(i===items.length-1)?(total-sum):Math.round(per*100)/100;
-      if(i!==items.length-1) sum+=p;
-      return {...q,points:Math.round(p*100)/100};
-    });
+    const perStr=divDecimalTextByInt(totalStr, items.length, EQUAL_MAX_FRAC);
+    const perNum=Number(perStr);
+    const safe=(Number.isFinite(perNum)&&perNum>=0)?perNum:0;
+    return items.map(q=>({...q,points:safe}));
   }
   return items.map(q=>({...q,points:(q.points==null?0:Number(q.points)||0)}));
 }
@@ -2197,9 +2279,6 @@ async function delUser(id){
 }
 
 // FIX #1: Rename “thật”
-// - validate username
-// - confirm
-// - gọi cả v2 + v1 (cái nào tồn tại sẽ chạy) để tránh trường hợp hệ thống đang dùng 2 bảng user khác nhau.
 async function renameUser(id){
   const u=USERS.find(x=>String(x.id)===String(id));
   const oldU=String(u?.username||"").trim();
@@ -2250,9 +2329,6 @@ let LATEX_TARGET_EL=null;
 
 /* ===========================
    FIX #2: LaTeX insert “thông minh”
-   - Không tự sinh thêm $$ khi chèn vào latex có sẵn
-   - Không “ăn mất” $$ khi chèn sau 1 cụm latex đã đóng
-   - Áp dụng cho cả ô preview trong modal + ô đang gõ
    =========================== */
 
 function isEscapedAt(s,i){
@@ -2260,17 +2336,13 @@ function isEscapedAt(s,i){
   for(let k=i-1;k>=0&&s[k]==="\\";k--) bs++;
   return (bs%2===1);
 }
-
-// parser đơn giản nhưng ổn hơn bản cũ: khi đang ở $$...$$ thì bỏ qua $ đơn; chỉ đóng bằng $$.
 function detectMathContext(text,pos){
   const s=String(text||"");
-  let mode=""; // "", "$", "$$", "\\(", "\\["
+  let mode="";
   let i=0;
   while(i<pos){
     const ch=s[i];
     const nxt=s[i+1];
-
-    // handle \( \) \[ \]
     if(ch==="\\"){
       if(nxt==="("){
         if(!mode) mode="\\(";
@@ -2291,34 +2363,27 @@ function detectMathContext(text,pos){
         i+=2; continue;
       }
     }
-
-    // handle $ / $$
     if(ch==="$" && !isEscapedAt(s,i)){
       const isDouble=(nxt==="$");
       if(mode==="$$"){
         if(isDouble){
           mode=""; i+=2; continue;
         }
-        // đang trong $$...$$ thì bỏ qua $ đơn
         i+=1; continue;
       }
       if(mode==="$"){
         if(!isDouble){
           mode=""; i+=1; continue;
         }
-        // gặp $$ khi đang trong $...$ => đóng $ ở ký tự đầu, rồi mở $$ ở ký tự thứ 2
         mode="$$"; i+=2; continue;
       }
-      // mode===""
       if(isDouble){ mode="$$"; i+=2; continue; }
       mode="$"; i+=1; continue;
     }
-
     i+=1;
   }
   return mode;
 }
-
 function stripOuterMathDelims(s){
   let t=String(s||"").trim();
   if(!t) return t;
@@ -2328,7 +2393,6 @@ function stripOuterMathDelims(s){
   if(t.startsWith("\\[")&&t.endsWith("\\]")&&t.length>4) return t.slice(2,-2).trim();
   return t;
 }
-
 function looksWrappedMath(t){
   const s=String(t||"").trim();
   if(!s) return false;
@@ -2338,8 +2402,6 @@ function looksWrappedMath(t){
   if((s.startsWith("\\[") && s.endsWith("\\]") && s.length>4)) return true;
   return false;
 }
-
-// chống dính biên tạo "$$$$" hoặc "$$...$$$$...$$" khi chèn sát dấu $
 function dedupeMathDelims(before,insert,after){
   let ins=String(insert||"");
   const b=String(before||"");
@@ -2354,17 +2416,14 @@ function dedupeMathDelims(before,insert,after){
   const e2=ins.slice(-2);
   const e1=ins.slice(-1);
 
-  // left dedupe
   if(b2==="$$" && i2==="$$") ins=ins.slice(2);
   else if(b1==="$" && b2!=="$$" && i1==="$" && i2!=="$$") ins=ins.slice(1);
 
-  // right dedupe
   if(e2==="$$" && a2==="$$") ins=ins.slice(0,-2);
   else if(e1==="$" && e2!=="$$" && a1==="$" && a2!=="$$") ins=ins.slice(0,-1);
 
   return ins;
 }
-
 function isTextField(el){
   if(!el) return false;
   const tag=(el.tagName||"").toUpperCase();
@@ -2375,7 +2434,6 @@ function isTextField(el){
   }
   return false;
 }
-
 function getActiveTextTarget(){
   const active=document.activeElement;
   if(isTextField(active)&&qAllHost.contains(active)) return active;
@@ -2383,7 +2441,6 @@ function getActiveTextTarget(){
   if(!el) toast("Click vào ô nhập trước");
   return el;
 }
-
 function insertAtCursor(el,text){
   const start=el.selectionStart??el.value.length;
   const end=el.selectionEnd??el.value.length;
@@ -2395,9 +2452,6 @@ function insertAtCursor(el,text){
   if(typeof el.setSelectionRange==="function") el.setSelectionRange(pos,pos);
   try{ el.dispatchEvent(new Event("input",{bubbles:true})); }catch{}
 }
-
-// insert LaTeX “khôn”: nếu đang ở trong math context thì strip vỏ; nếu không thì giữ nguyên,
-// đồng thời chống dính biên gây thêm $$ không mong muốn.
 function insertLatexSmart(el, snippet){
   if(!el) return;
   const start=el.selectionStart??el.value.length;
@@ -2411,7 +2465,6 @@ function insertLatexSmart(el, snippet){
   if(ctx){
     ins=stripOuterMathDelims(ins);
   }else{
-    // nếu user gõ latex thuần (có \, ^, _, { } ...) mà không bọc, tự bọc $...$ cho tiện
     const t=ins.trim();
     if(t && !looksWrappedMath(t) && /[\\^_{}]|\\[a-zA-Z]+/.test(t)){
       ins="$"+t+"$";
@@ -2420,7 +2473,6 @@ function insertLatexSmart(el, snippet){
   }
   insertAtCursor(el,ins);
 }
-
 function updateLatexPreview(){
   const s=String(latexPreviewSrc.value||"").trim();
   latexPreview.textContent=s?s:" ";
@@ -2453,8 +2505,6 @@ document.getElementById("btnLatexClear").onclick=()=>{
   updateLatexPreview();
   toast("Đã clear");
 };
-
-// FIX #2: dùng insertLatexSmart thay vì logic cũ (tránh sinh $$ sai / mất $$ sai)
 document.getElementById("btnLatexInsert").onclick=()=>{
   const el=LATEX_TARGET_EL||getActiveTextTarget();
   if(!el) return;
@@ -2493,8 +2543,6 @@ const LATEX_TEMPLATES=[
   {label:"Hàm 3/1",tpl:"$y = \\dfrac{ax^3 + bx^2 + cx + d}{ex + f}$"}
 ];
 latexGrid.innerHTML=LATEX_TEMPLATES.map(x=>`<button class="latexChip" type="button" data-tpl="${esc(x.tpl)}">${esc(x.label)}</button>`).join("");
-
-// FIX #2: chèn template vào ô preview cũng “khôn” để không tạo thêm $$ lạ khi đang chỉnh 1 latex có sẵn
 latexGrid.addEventListener("click",(e)=>{
   const b=e.target.closest("[data-tpl]");
   if(!b) return;
