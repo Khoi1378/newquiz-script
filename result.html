@@ -144,6 +144,7 @@ body{margin:0;font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,A
 </div>
 </div>
 <div class="toast" id="toast"></div>
+
 <div class="modal-backdrop" id="wrongBackdrop" aria-hidden="true">
 <div class="modal" role="dialog" aria-modal="true" aria-labelledby="wrongTitle">
 <div class="xclose"><button class="btn-x" id="btnCloseWrong" aria-label="Đóng">✕</button></div>
@@ -152,6 +153,7 @@ body{margin:0;font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,A
 <div id="wrongBody" style="display:grid;gap:12px;"></div>
 </div>
 </div>
+
 <div class="modal-backdrop" id="detailBackdrop" aria-hidden="true">
 <div class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
 <div class="xclose"><button class="btn-x" id="btnCloseDetail" aria-label="Đóng">✕</button></div>
@@ -159,14 +161,42 @@ body{margin:0;font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,A
 <div id="detailBody"></div>
 </div>
 </div>
+
+<!-- Admin edit score (ẩn, chỉ hiện khi bấm 3 lần vào row leaderboard) -->
+<div class="modal-backdrop" id="editScoreBackdrop" aria-hidden="true">
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="editScoreTitle">
+<div class="xclose"><button class="btn-x" id="btnCloseEditScore" aria-label="Đóng">✕</button></div>
+<h3 id="editScoreTitle">Sửa điểm</h3>
+<p id="editScoreSub"></p>
+<div style="display:grid;gap:12px">
+<input id="editScoreInput" class="qBox" inputmode="decimal" autocomplete="off"
+       placeholder="Nhập điểm (0.0 - 10.0)"
+       style="border-style:solid;border-width:2px;background:var(--soft);font-weight:900;font-size:1.05rem;outline:none">
+<div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap">
+<button class="btn" id="btnEditScoreCancel" type="button" style="justify-content:center;">Hủy</button>
+<button class="btn btn-primary" id="btnEditScoreSave" type="button" style="justify-content:center;">Lưu</button>
+</div>
+</div>
+</div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <script>
 const SUPABASE_URL="https://aidvlydhbdtwunyreqak.supabase.co";
 const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
-const RPC={me:"api_me",quizMeta:"api_get_quiz_meta",attemptPublic:"api_get_attempt_public",leaderboard:"api_get_leaderboard",pinComment:"api_toggle_comment_pin",questionsPublic:"api_get_questions_public"};
+const RPC={
+  me:"api_me",
+  quizMeta:"api_get_quiz_meta",
+  attemptPublic:"api_get_attempt_public",
+  leaderboard:"api_get_leaderboard",
+  pinComment:"api_toggle_comment_pin",
+  questionsPublic:"api_get_questions_public",
+  setBestScore:"api_admin_set_best_score"
+};
 const TOKEN_KEY="tk_token_v2";
 const NAME_KEY="tk_display_name_v1";
+
 function renderFatal(err){const msg=(err&&(err.message||err))?(err.message||String(err)):"Unknown error";toast("Lỗi: "+msg)}
 window.addEventListener("error",(e)=>{renderFatal(e?.error||e?.message)});
 window.addEventListener("unhandledrejection",(e)=>{renderFatal(e?.reason||e)});
@@ -179,114 +209,691 @@ async function sbRpc(fn,args){const res=await fetch(`${SUPABASE_URL}/rest/v1/rpc
 async function sbGet(path){const res=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{headers:sbHeaders()});const txt=await res.text();let data=null;try{data=txt?JSON.parse(txt):null}catch{}if(!res.ok){const msg=(data&&(data.message||data.error||data.hint||data.details))?(data.message||data.error||data.hint||data.details):txt;throw new Error(msg||"REST GET error")}return data}
 async function sbPost(path,body,{preferReturn=true}={}){const h=sbHeaders();if(preferReturn)h["Prefer"]="return=representation";const res=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{method:"POST",headers:h,body:JSON.stringify(body||{})});const txt=await res.text();let data=null;try{data=txt?JSON.parse(txt):null}catch{}if(!res.ok){const msg=(data&&(data.message||data.error||data.hint||data.details))?(data.message||data.error||data.hint||data.details):txt;throw new Error(msg||"REST POST error")}return data}
 async function sbDelete(path){const res=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{method:"DELETE",headers:sbHeaders()});const txt=await res.text();let data=null;try{data=txt?JSON.parse(txt):null}catch{}if(!res.ok){const msg=(data&&(data.message||data.error||data.hint||data.details))?(data.message||data.error||data.hint||data.details):txt;throw new Error(msg||"REST DELETE error")}return data}
+
 function applyMath(rootEl){if(!rootEl)return;if(typeof window.renderMathInElement!=="function")return;try{window.renderMathInElement(rootEl,{delimiters:[{left:"$$",right:"$$",display:true},{left:"$",right:"$",display:false}],throwOnError:false})}catch{}}
 function toMs(ts){const d=new Date(ts);const t=d.getTime();return isFinite(t)?t:0}
 function fmtTs(ts){try{const d=ts?new Date(ts):new Date();const pad=(n)=>String(n).padStart(2,"0");return`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(-2)}`}catch{return""}}
+
 const qs=new URLSearchParams(location.search);
 const quizId=String(qs.get("quiz")||"").toLowerCase().replace(/[^a-z]/g,"").slice(0,5);
 const attemptId=String(qs.get("attempt")||"").trim();
 const PROGRESS_KEY=`tk_progress::${quizId}`;
 function clearForRestart(){try{localStorage.removeItem(PROGRESS_KEY)}catch{}try{sessionStorage.removeItem(`tk_last_result::${quizId}`)}catch{}}
+
 const shell=document.getElementById("shell");
 document.getElementById("btnScrollTop").addEventListener("click",()=>shell.scrollTo({top:0,behavior:"smooth"}));
 document.getElementById("btnDiscuss").addEventListener("click",()=>{const a=document.getElementById("discussionAnchor");if(a)a.scrollIntoView({behavior:"smooth",block:"start"})});
 document.getElementById("btnRestart").addEventListener("click",()=>{if(!quizId){location.href="/";return}clearForRestart();location.href=`/q/index.html?quiz=${quizId}&restart=1&start=1`});
+
 const wrongBackdrop=document.getElementById("wrongBackdrop");
 const wrongBody=document.getElementById("wrongBody");
 document.getElementById("btnCloseWrong").addEventListener("click",()=>closeReviewPopup());
 wrongBackdrop.addEventListener("click",(e)=>{if(e.target===wrongBackdrop)closeReviewPopup()});
+
 const detailBackdrop=document.getElementById("detailBackdrop");
 const detailBody=document.getElementById("detailBody");
 document.getElementById("btnCloseDetail").addEventListener("click",()=>closeDetail());
 detailBackdrop.addEventListener("click",(e)=>{if(e.target===detailBackdrop)closeDetail()});
-document.addEventListener("keydown",(e)=>{if(e.key==="Escape"){if(detailBackdrop.classList.contains("show"))closeDetail();else if(wrongBackdrop.classList.contains("show"))closeReviewPopup()}});
+
+const editScoreBackdrop=document.getElementById("editScoreBackdrop");
+const editScoreSub=document.getElementById("editScoreSub");
+const editScoreInput=document.getElementById("editScoreInput");
+document.getElementById("btnCloseEditScore").addEventListener("click",()=>closeEditScore());
+document.getElementById("btnEditScoreCancel").addEventListener("click",()=>closeEditScore());
+editScoreBackdrop.addEventListener("click",(e)=>{if(e.target===editScoreBackdrop)closeEditScore()});
+
+document.addEventListener("keydown",(e)=>{
+  if(e.key!=="Escape")return;
+  if(editScoreBackdrop.classList.contains("show"))closeEditScore();
+  else if(detailBackdrop.classList.contains("show"))closeDetail();
+  else if(wrongBackdrop.classList.contains("show"))closeReviewPopup();
+});
+
 function openReviewPopup(){wrongBackdrop.classList.add("show");wrongBackdrop.setAttribute("aria-hidden","false");applyMath(wrongBody)}
 function closeReviewPopup(){wrongBackdrop.classList.remove("show");wrongBackdrop.setAttribute("aria-hidden","true")}
 function openDetail(html){detailBody.innerHTML=html||"";detailBackdrop.classList.add("show");detailBackdrop.setAttribute("aria-hidden","false");applyMath(detailBody)}
 function closeDetail(){detailBackdrop.classList.remove("show");detailBackdrop.setAttribute("aria-hidden","true");detailBody.innerHTML=""}
+
 let ATTEMPT_TIMES=null;
 function setTopbar({title,sub,username,correctCount,totalCount,progressPercent,attemptTimes}){document.getElementById("quizTitle").textContent=title||"Kết quả";document.getElementById("quizSub").textContent=sub||"";document.getElementById("whoName").textContent=username||"—";document.getElementById("answeredCount").textContent=String(Number(correctCount||0));document.getElementById("totalCount").textContent=String(Number(totalCount||0));document.getElementById("progressFill").style.width=`${Math.max(0,Math.min(100,Number(progressPercent||0)))}%`;document.getElementById("attemptTimes").textContent=(attemptTimes==null?"—":String(attemptTimes))}
-function renderSummaryCard({score10,correctCount,totalCount,wrongCount,createdAt,canViewDetails}){const sum=document.getElementById("summary");const pct=Math.round(Math.max(0,Math.min(100,Number(score10||0)*10)));const createdLine=createdAt?`<div class="mutedSmall">Nộp lúc: <b>${escapeHtml(fmtTs(createdAt))}</b></div>`:"";const attemptLine=`<div class="pill">Lượt nộp: <strong>${ATTEMPT_TIMES==null?"—":Number(ATTEMPT_TIMES)}</strong></div>`;sum.innerHTML=`<div class="row1"><p class="vi">Kết quả</p><div class="meta"><span class="idx">DB</span></div></div><div class="scoreHero"><div class="scoreBig">${pct}%</div><div class="scoreSub">= ${Number(score10||0).toFixed(1)} điểm (thang 10)</div><div class="scoreMeta"><div class="pill">Đúng: <strong>${Number(correctCount||0)}</strong>/${Number(totalCount||0)}</div><div class="pill">Sai/Trống: <strong>${Number(wrongCount||0)}</strong></div>${attemptLine}</div>${createdLine}${canViewDetails?`<div class="resultline" style="margin-top:0"><b>Xem lại:</b> Chọn chế độ xem ở mục bên dưới.</div>`:`<div class="resultline" style="margin-top:0"><b>Lưu ý:</b> Link này đang hiển thị theo DB. Nếu muốn xem <b>chi tiết đáp án</b>, hãy mở bằng tài khoản đã làm bài (có token).</div>`}</div>`;applyMath(sum)}
-function renderReviewCard({canViewDetails,okCount,badCount,totalCount,hasData}){const card=document.getElementById("wrongCard");if(!canViewDetails){card.style.display="none";return}card.style.display="";const dis=!hasData?`<div class="resultline" style="margin-top:10px">Không có dữ liệu chi tiết (answers/per) trong attempt để hiển thị xem lại.</div>`:"";card.innerHTML=`<div class="row1"><p class="vi">Xem lại</p><div class="meta"><span class="idx">${Number(badCount||0)} sai</span></div></div><div class="muted" style="margin-top:6px">Tổng: <b>${Number(totalCount||0)}</b> • Đúng: <b>${Number(okCount||0)}</b> • Sai/Trống: <b>${Number(badCount||0)}</b></div><div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap"><button class="miniBtn" data-mode="all" type="button">Đúng & Sai</button><button class="miniBtn" data-mode="ok" type="button">Câu đúng</button><button class="miniBtn" data-mode="bad" type="button">Câu sai</button></div>${dis}`;card.onclick=null;card.addEventListener("click",(e)=>{const b=e.target.closest("[data-mode]");if(!b)return;const mode=String(b.getAttribute("data-mode")||"all");openReview(mode)})}
-function renderLeaderboard(rows,myUserId,errMsg){const lb=document.getElementById("lb");const arr=Array.isArray(rows)?rows:[];if(errMsg){lb.innerHTML=`<div class="row1"><p class="vi">Bảng xếp hạng</p><div class="meta"><span class="idx">RPC</span></div></div><div class="muted" style="margin-top:6px;line-height:1.35">Lỗi load leaderboard: <b>${escapeHtml(errMsg)}</b><br/>(Hãy chạy lại SQL phần <b>api_get_leaderboard</b> và đảm bảo đã <b>GRANT</b> cho anon/authenticated.)</div>`;return}if(!arr.length){lb.innerHTML=`<div class="row1"><p class="vi">Bảng xếp hạng</p><div class="meta"><span class="idx">TOP</span></div></div><div class="muted" style="margin-top:6px">Chưa có dữ liệu. (Nếu bạn đã làm mà vẫn trống: kiểm tra lại RPC <b>api_get_leaderboard</b> và RLS.)</div>`;return}const maxRows=30;const top=arr.slice(0,maxRows);const myIndex=myUserId?top.findIndex(r=>String(r.user_id)===String(myUserId)):-1;const myRankLine=(myIndex>=0)?`<div class="resultline" style="margin-top:0"><b>Vị trí của bạn:</b> Bạn đang ở hạng <b>#${myIndex+1}</b> trong bảng xếp hạng.</div>`:`<div class="resultline" style="margin-top:0">Bạn chưa nằm trong top đang hiển thị.</div>`;const body=top.map((r,index)=>{const rk=index+1;const medal=rk===1?`<span class="medal m1">🥇</span>`:rk===2?`<span class="medal m2">🥈</span>`:rk===3?`<span class="medal m3">🥉</span>`:"";const trClass=rk===1?"toprow1":rk===2?"toprow2":rk===3?"toprow3":"";const isMe=myUserId&&String(r.user_id)===String(myUserId);const rowClass=`${trClass} ${isMe?"meRow":""}`.trim();const uname=escapeHtml(r.username||"(user)");const admin=(String(r.role||"").toLowerCase()==="admin")?`<span class="adminTag">ADMIN</span>`:"";const nameCell=isMe?`<span class="nameTrunc meName">${uname}</span><span class="meBadge">Bạn</span>${admin}`:`<span class="nameTrunc">${uname}</span>${admin}`;const score10=Number(r.score10||0);const pct=Math.round(score10*10);return`<tr class="${rowClass}"><td><span class="rankpill">${medal}<span>${rk}</span></span></td><td style="overflow:hidden">${nameCell}</td><td><b>${score10.toFixed(1)}</b>/10</td><td>${pct}%</td></tr>`}).join("");lb.innerHTML=`<div class="row1"><p class="vi">Bảng xếp hạng</p><div class="meta"><span class="idx">TOP</span></div></div><div class="muted" style="margin-top:6px">Xếp theo <b>điểm cao nhất</b> của mỗi <b>người</b>.</div><div style="margin-top:10px">${myRankLine}</div><div style="overflow:auto;margin-top:10px;"><table class="table"><thead><tr><th>#</th><th>Tên</th><th>Điểm</th><th>%</th></tr></thead><tbody>${body}</tbody></table></div>`}
+
+function renderSummaryCard({score10,correctCount,totalCount,wrongCount,createdAt,canViewDetails}){
+  const sum=document.getElementById("summary");
+  const pct=Math.round(Math.max(0,Math.min(100,Number(score10||0)*10)));
+  const createdLine=createdAt?`<div class="mutedSmall">Nộp lúc: <b>${escapeHtml(fmtTs(createdAt))}</b></div>`:"";
+  const attemptLine=`<div class="pill">Lượt nộp: <strong>${ATTEMPT_TIMES==null?"—":Number(ATTEMPT_TIMES)}</strong></div>`;
+  sum.innerHTML=`<div class="row1"><p class="vi">Kết quả</p><div class="meta"><span class="idx">DB</span></div></div><div class="scoreHero"><div class="scoreBig">${pct}%</div><div class="scoreSub">= ${Number(score10||0).toFixed(1)} điểm (thang 10)</div><div class="scoreMeta"><div class="pill">Đúng: <strong>${Number(correctCount||0)}</strong>/${Number(totalCount||0)}</div><div class="pill">Sai/Trống: <strong>${Number(wrongCount||0)}</strong></div>${attemptLine}</div>${createdLine}${canViewDetails?`<div class="resultline" style="margin-top:0"><b>Xem lại:</b> Chọn chế độ xem ở mục bên dưới.</div>`:`<div class="resultline" style="margin-top:0"><b>Lưu ý:</b> Link này đang hiển thị theo DB. Nếu muốn xem <b>chi tiết đáp án</b>, hãy mở bằng tài khoản đã làm bài (có token).</div>`}</div>`;
+  applyMath(sum);
+}
+
+function renderReviewCard({canViewDetails,okCount,badCount,totalCount,hasData}){
+  const card=document.getElementById("wrongCard");
+  if(!canViewDetails){card.style.display="none";return}
+  card.style.display="";
+  const dis=!hasData?`<div class="resultline" style="margin-top:10px">Không có dữ liệu chi tiết (answers/per) trong attempt để hiển thị xem lại.</div>`:"";
+  card.innerHTML=`<div class="row1"><p class="vi">Xem lại</p><div class="meta"><span class="idx">${Number(badCount||0)} sai</span></div></div><div class="muted" style="margin-top:6px">Tổng: <b>${Number(totalCount||0)}</b> • Đúng: <b>${Number(okCount||0)}</b> • Sai/Trống: <b>${Number(badCount||0)}</b></div><div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap"><button class="miniBtn" data-mode="all" type="button">Đúng & Sai</button><button class="miniBtn" data-mode="ok" type="button">Câu đúng</button><button class="miniBtn" data-mode="bad" type="button">Câu sai</button></div>${dis}`;
+  card.onclick=null;
+  card.addEventListener("click",(e)=>{
+    const b=e.target.closest("[data-mode]");
+    if(!b)return;
+    const mode=String(b.getAttribute("data-mode")||"all");
+    openReview(mode);
+  });
+}
+
 function normalizeForCompare(s){let t=String(s||"").trim().toLowerCase();t=t.replace(/đ/g,"d");try{t=t.normalize("NFKD").replace(/[\u0300-\u036f]/g,"")}catch{}t=t.replace(/[“”"']/g," ");t=t.replace(/[^a-z0-9\s\-,.]/g," ");t=t.replace(/\s+/g," ").trim();return t}
 function looseEq(user,expected){const u=normalizeForCompare(user);const a=normalizeForCompare(expected);if(!u||!a)return false;if(u===a)return true;if(u.replace(/\s/g,"")===a.replace(/\s/g,""))return true;return false}
 function pointsOf(q){const p=Number(q.points??0);return(isFinite(p)&&p>0)?p:1}
 function qTypeOf(q){return String(q.q_type||q.qtype||"essay").toLowerCase()}
-function acceptedAnswersFromQuestion(q){const out=[];if(Array.isArray(q.answers))out.push(...q.answers);const m=q.meta||{};if(Array.isArray(m.answers))out.push(...m.answers);if(Array.isArray(m.accepted))out.push(...m.accepted);if(typeof m.answer==="string"&&m.answer.trim())out.push(m.answer);if(typeof m.expected==="string"&&m.expected.trim())out.push(m.expected);if(typeof q.answer==="string"&&q.answer.trim())out.push(q.answer);if(typeof q.expected==="string"&&q.expected.trim())out.push(q.expected);if(typeof q.correct==="string"&&q.correct.trim())out.push(q.correct);const seen=new Set();const uniq=[];for(const x of out){const k=normalizeForCompare(x);if(!k)continue;if(seen.has(k))continue;seen.add(k);uniq.push(String(x).trim())}return uniq}
+function acceptedAnswersFromQuestion(q){
+  const out=[];
+  if(Array.isArray(q.answers))out.push(...q.answers);
+  const m=q.meta||{};
+  if(Array.isArray(m.answers))out.push(...m.answers);
+  if(Array.isArray(m.accepted))out.push(...m.accepted);
+  if(typeof m.answer==="string"&&m.answer.trim())out.push(m.answer);
+  if(typeof m.expected==="string"&&m.expected.trim())out.push(m.expected);
+  if(typeof q.answer==="string"&&q.answer.trim())out.push(q.answer);
+  if(typeof q.expected==="string"&&q.expected.trim())out.push(q.expected);
+  if(typeof q.correct==="string"&&q.correct.trim())out.push(q.correct);
+  const seen=new Set();const uniq=[];
+  for(const x of out){const k=normalizeForCompare(x);if(!k)continue;if(seen.has(k))continue;seen.add(k);uniq.push(String(x).trim())}
+  return uniq;
+}
 function toMcqNumber(v){if(v==null)return 0;if(typeof v==="number"){const n=Math.floor(v);return(n>=1&&n<=4)?n:0}const s=String(v).trim();if(/^[1-4]$/.test(s))return Number(s);const u=s.toUpperCase();if(u==="A")return 1;if(u==="B")return 2;if(u==="C")return 3;if(u==="D")return 4;return 0}
 function mcqCorrectOf(q){const m=q.meta||{};if(Number(m.correct)>=1&&Number(m.correct)<=4)return Number(m.correct);const ans=String(m.answer||q.answer||"").trim();if(ans){const n=toMcqNumber(ans);if(n)return n}return 0}
 function mcqOptionsOf(q){const m=q.meta||{};if(Array.isArray(m.options))return m.options;if(Array.isArray(q.options))return q.options;return["","","",""]}
 function fmtMcqChoice(n,opts){const L="ABCD";const idx=(Number(n||0)-1);const t=(idx>=0&&idx<4)?String(opts[idx]||""):"";return idx>=0?`${L[idx]}${t?`. ${t}`:""}`:"(trống)"}
-function gradeOne(q,userAnswer){const t=qTypeOf(q);const max=pointsOf(q);if(t==="mcq1"||t==="mcq"){const user=toMcqNumber(userAnswer);const correct=mcqCorrectOf(q);const ok=(user>0&&correct>0&&user===correct);const opts=mcqOptionsOf(q);const expected=correct?`Đáp án đúng: ${fmtMcqChoice(correct,opts)}`:"Đáp án đúng: (chưa set)";const userFmt=user?`Bạn chọn: ${fmtMcqChoice(user,opts)}`:"Bạn chọn: (trống)";return{ok,expected,userFmt,earned:ok?max:0,max}}if(t==="tf4"){const keys=Array.isArray(q.meta?.keys)?q.meta.keys:[true,false,false,false];const stmts=Array.isArray(q.meta?.statements)?q.meta.statements:["","","",""];const user=Array.isArray(userAnswer)?userAnswer:[null,null,null,null];let correctCount=0;for(let i=0;i<4;i++){if((user[i]===true||user[i]===false)&&user[i]===Boolean(keys[i]))correctCount++}const rule=q.meta?.rule?.byCorrectCount||{"0":0,"1":0.25,"2":0.5,"3":0.5,"4":1};const mult=Number(rule[String(correctCount)]??0)||0;const earned=Math.round(max*mult*100)/100;const ok=(correctCount===4);const ufmt=Array.isArray(user)?user.map(x=>x===true?"Đúng":x===false?"Sai":"—").join(" | "):"(trống)";const kfmt=keys.map(x=>x?"Đúng":"Sai").join(" | ");const expected=`Key: ${kfmt} • Đúng ${correctCount}/4 (điểm: ${earned}/${max})`;return{ok,expected,userFmt:`Bạn chọn: ${ufmt}`,earned,max,stmts,keys,user}}const user=String(userAnswer||"").trim();const acc=acceptedAnswersFromQuestion(q);const expected=acc[0]?`Đáp án đúng: ${acc[0]}`:"Đáp án đúng: (chưa set)";if(!user)return{ok:false,expected,userFmt:"Bạn trả lời: (trống)",earned:0,max};let ok=false;for(const a of acc){if(looseEq(user,a)){ok=true;break}}return{ok,expected,userFmt:`Bạn trả lời: ${user}`,earned:ok?max:0,max}}
+function gradeOne(q,userAnswer){
+  const t=qTypeOf(q);
+  const max=pointsOf(q);
+  if(t==="mcq1"||t==="mcq"){
+    const user=toMcqNumber(userAnswer);
+    const correct=mcqCorrectOf(q);
+    const ok=(user>0&&correct>0&&user===correct);
+    const opts=mcqOptionsOf(q);
+    const expected=correct?`Đáp án đúng: ${fmtMcqChoice(correct,opts)}`:"Đáp án đúng: (chưa set)";
+    const userFmt=user?`Bạn chọn: ${fmtMcqChoice(user,opts)}`:"Bạn chọn: (trống)";
+    return{ok,expected,userFmt,earned:ok?max:0,max};
+  }
+  if(t==="tf4"){
+    const keys=Array.isArray(q.meta?.keys)?q.meta.keys:[true,false,false,false];
+    const stmts=Array.isArray(q.meta?.statements)?q.meta.statements:["","","",""];
+    const user=Array.isArray(userAnswer)?userAnswer:[null,null,null,null];
+    let correctCount=0;
+    for(let i=0;i<4;i++){if((user[i]===true||user[i]===false)&&user[i]===Boolean(keys[i]))correctCount++}
+    const rule=q.meta?.rule?.byCorrectCount||{"0":0,"1":0.25,"2":0.5,"3":0.5,"4":1};
+    const mult=Number(rule[String(correctCount)]??0)||0;
+    const earned=Math.round(max*mult*100)/100;
+    const ok=(correctCount===4);
+    const ufmt=Array.isArray(user)?user.map(x=>x===true?"Đúng":x===false?"Sai":"—").join(" | "):"(trống)";
+    const kfmt=keys.map(x=>x?"Đúng":"Sai").join(" | ");
+    const expected=`Key: ${kfmt} • Đúng ${correctCount}/4 (điểm: ${earned}/${max})`;
+    return{ok,expected,userFmt:`Bạn chọn: ${ufmt}`,earned,max,stmts,keys,user};
+  }
+  const user=String(userAnswer||"").trim();
+  const acc=acceptedAnswersFromQuestion(q);
+  const expected=acc[0]?`Đáp án đúng: ${acc[0]}`:"Đáp án đúng: (chưa set)";
+  if(!user)return{ok:false,expected,userFmt:"Bạn trả lời: (trống)",earned:0,max};
+  let ok=false;
+  for(const a of acc){if(looseEq(user,a)){ok=true;break}}
+  return{ok,expected,userFmt:`Bạn trả lời: ${user}`,earned:ok?max:0,max};
+}
+
 const DISCUSS_MAX=120;
 let DISC={tree:[],openReply:""};
-function discussionHtml(username){return`<div class="row1"><p class="vi">Thảo luận</p><div class="meta"><span class="idx">💬</span></div></div><div style="margin-top:10px;display:grid;gap:10px;"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6b7280;font-weight:800;font-size:.85rem"><div><b>Viết bình luận</b> <span class="muted">(Tên: <b>${escapeHtml(username||"—")}</b>)</span></div><div><span id="rootCount">0</span>/${DISCUSS_MAX}</div></div><textarea id="rootInput" class="qBox" style="min-height:86px;border-style:solid;border-width:2px;background:var(--soft)" maxlength="${DISCUSS_MAX}" placeholder="Nhập bình luận..."></textarea><div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;"><button class="btn btn-primary" id="btnPostRoot" style="justify-content:center;">Gửi</button></div><div id="discussList" style="display:grid;gap:12px"></div></div>`}
+function discussionHtml(username){
+  return`<div class="row1"><p class="vi">Thảo luận</p><div class="meta"><span class="idx">💬</span></div></div><div style="margin-top:10px;display:grid;gap:10px;"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6b7280;font-weight:800;font-size:.85rem"><div><b>Viết bình luận</b> <span class="muted">(Tên: <b>${escapeHtml(username||"—")}</b>)</span></div><div><span id="rootCount">0</span>/${DISCUSS_MAX}</div></div><textarea id="rootInput" class="qBox" style="min-height:86px;border-style:solid;border-width:2px;background:var(--soft)" maxlength="${DISCUSS_MAX}" placeholder="Nhập bình luận..."></textarea><div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;"><button class="btn btn-primary" id="btnPostRoot" style="justify-content:center;">Gửi</button></div><div id="discussList" style="display:grid;gap:12px"></div></div>`;
+}
 function isAdmin(me){return!!me&&(String(me.role||"").toLowerCase()==="admin"||String(me.username||"").toLowerCase()==="tuankhoi")}
-function buildTree(rows){const byId=new Map();rows.forEach(r=>{byId.set(String(r.id),{id:String(r.id),parent_id:(r.parent_id==null?"":String(r.parent_id)),author:String(r.author||""),created_at:r.created_at,createdAtMs:toMs(r.created_at),text:String(r.text||""),pinned:!!r.pinned,pinnedAtMs:r.pinned_at?toMs(r.pinned_at):0,replies:[]})});const roots=[];for(const node of byId.values()){if(node.parent_id&&byId.has(node.parent_id)){byId.get(node.parent_id).replies.push(node)}else{roots.push(node)}}roots.sort((a,b)=>{if(a.pinned!==b.pinned)return a.pinned?-1:1;if(a.pinned&&b.pinned&&a.pinnedAtMs!==b.pinnedAtMs)return b.pinnedAtMs-a.pinnedAtMs;return a.createdAtMs-b.createdAtMs});roots.forEach(r=>r.replies.sort((a,b)=>{if(a.pinned!==b.pinned)return a.pinned?-1:1;if(a.pinned&&b.pinned&&a.pinnedAtMs!==b.pinnedAtMs)return b.pinnedAtMs-a.pinnedAtMs;return a.createdAtMs-b.createdAtMs}));return roots}
-function canDeleteComment(c,me){if(isAdmin(me))return true;const a=String(c.author||"").trim().toLowerCase();const m=String(me?.username||"").trim().toLowerCase();return!!m&&a===m}
-async function loadComments(){const rows=await sbGet(`comments?quiz_id=eq.${quizId}&select=id,parent_id,author,text,created_at,pinned,pinned_at&order=pinned.desc,pinned_at.desc,created_at.asc&limit=400`);DISC.tree=buildTree(Array.isArray(rows)?rows:[])}
-async function addComment({text,parent_id,author}){const payload={quiz_id:quizId,parent_id:(parent_id==null?null:Number(parent_id)),author:author||"",text:text||""};const res=await sbPost("comments",payload,{preferReturn:true});return Array.isArray(res)?res[0]:res}
+
+function buildTree(rows){
+  const byId=new Map();
+  rows.forEach(r=>{byId.set(String(r.id),{id:String(r.id),parent_id:(r.parent_id==null?"":String(r.parent_id)),author:String(r.author||""),created_at:r.created_at,createdAtMs:toMs(r.created_at),text:String(r.text||""),pinned:!!r.pinned,pinnedAtMs:r.pinned_at?toMs(r.pinned_at):0,replies:[]})});
+  const roots=[];
+  for(const node of byId.values()){
+    if(node.parent_id&&byId.has(node.parent_id)){byId.get(node.parent_id).replies.push(node)}
+    else{roots.push(node)}
+  }
+  roots.sort((a,b)=>{if(a.pinned!==b.pinned)return a.pinned?-1:1;if(a.pinned&&b.pinned&&a.pinnedAtMs!==b.pinnedAtMs)return b.pinnedAtMs-a.pinnedAtMs;return a.createdAtMs-b.createdAtMs});
+  roots.forEach(r=>r.replies.sort((a,b)=>{if(a.pinned!==b.pinned)return a.pinned?-1:1;if(a.pinned&&b.pinned&&a.pinnedAtMs!==b.pinnedAtMs)return b.pinnedAtMs-a.pinnedAtMs;return a.createdAtMs-b.createdAtMs}));
+  return roots;
+}
+function canDeleteComment(c,me){
+  if(isAdmin(me))return true;
+  const a=String(c.author||"").trim().toLowerCase();
+  const m=String(me?.username||"").trim().toLowerCase();
+  return!!m&&a===m;
+}
+async function loadComments(){
+  const rows=await sbGet(`comments?quiz_id=eq.${quizId}&select=id,parent_id,author,text,created_at,pinned,pinned_at&order=pinned.desc,pinned_at.desc,created_at.asc&limit=400`);
+  DISC.tree=buildTree(Array.isArray(rows)?rows:[]);
+}
+async function addComment({text,parent_id,author}){
+  const payload={quiz_id:quizId,parent_id:(parent_id==null?null:Number(parent_id)),author:author||"",text:text||""};
+  const res=await sbPost("comments",payload,{preferReturn:true});
+  return Array.isArray(res)?res[0]:res;
+}
 async function deleteComment(id){await sbDelete(`comments?id=eq.${encodeURIComponent(id)}`)}
-async function togglePinComment({me,commentId,pin}){const token=getToken();if(!token){toast("Admin cần đăng nhập");return}try{const out=await sbRpc(RPC.pinComment,{p_token:token,p_comment_id:Number(commentId),p_pin:!!pin});if(!out||out.ok!==true)throw new Error(out?.error||"Pin lỗi");toast(pin?"Đã pin":"Đã bỏ pin");await loadComments();renderDiscussion(me)}catch(e){toast(e?.message||"Pin lỗi")}}
-function renderDiscussion(me){const discussionEl=document.getElementById("discussion");const list=document.getElementById("discussList");if(!list)return;const tree=DISC.tree||[];if(!tree.length){list.innerHTML=`<div class="muted">Chưa có bình luận nào.</div>`;return}list.innerHTML="";tree.forEach(root=>{const wrap=document.createElement("div");wrap.className="qBox";wrap.style.boxShadow="none";const showAdminBadge=(String(root.author||"").trim().toLowerCase()==="tuankhoi");const adminTag=showAdminBadge?`<span class="adminTag">ADMIN</span>`:"";const pinTag=root.pinned?`<span style="padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.35);color:#92400e">📌 PIN</span>`:"";const delBtn=canDeleteComment(root,me)?`<button class="miniBtn" style="background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25);color:#991b1b" data-del="${escapeHtml(root.id)}">Xóa</button>`:"";const pinBtn=isAdmin(me)?`<button class="miniBtn" style="background:rgba(245,158,11,.10);border-color:rgba(245,158,11,.30);color:#92400e" data-pin="${escapeHtml(root.id)}" data-pv="${root.pinned?0:1}">${root.pinned?"Bỏ pin":"📌 Pin"}</button>`:"";wrap.innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><div style="font-weight:950;color:#6b7280;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>${escapeHtml(root.author||"—")}</span>${adminTag}${pinTag}</div></div><div style="color:#111827;font-weight:750;line-height:1.35;white-space:pre-wrap;word-break:break-word">${escapeHtml(root.text||"")}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;justify-content:flex-end"><button class="miniBtn" data-reply="${escapeHtml(root.id)}">Trả lời</button>${pinBtn}${delBtn}</div><div style="margin-top:6px;text-align:right;color:#6b7280;font-weight:800;font-size:.82rem">${escapeHtml(fmtTs(root.created_at))}</div><div class="replySlot" data-slot="${escapeHtml(root.id)}"></div><div class="replyWrap" data-replies="${escapeHtml(root.id)}" style="margin-top:10px;margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;display:grid;gap:10px"></div>`;list.appendChild(wrap);const slot=wrap.querySelector(`[data-slot="${CSS.escape(String(root.id))}"]`);if(slot&&DISC.openReply===String(root.id)){slot.innerHTML=`<div style="margin-top:10px;display:grid;gap:10px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6b7280;font-weight:800;font-size:.85rem"><div><b>Trả lời</b></div><div><span data-ct>0</span>/${DISCUSS_MAX}</div></div><textarea class="qBox" style="min-height:72px;border-style:solid;border-width:2px;background:var(--soft)" maxlength="${DISCUSS_MAX}" placeholder="Nhập trả lời..."></textarea><div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;"><button class="btn btn-primary" data-sendreply="${escapeHtml(root.id)}" style="justify-content:center;">Gửi</button><button class="btn" data-cancelreply style="justify-content:center;">Hủy</button></div></div>`}const rWrap=wrap.querySelector(`[data-replies="${CSS.escape(String(root.id))}"]`);if(rWrap){rWrap.innerHTML="";(root.replies||[]).forEach(r=>{const item=document.createElement("div");item.className="qBox";item.style.margin="0";item.style.boxShadow="none";const rPinTag=r.pinned?`<span style="padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.35);color:#92400e">📌 PIN</span>`:"";const rPinBtn=isAdmin(me)?`<button class="miniBtn" style="background:rgba(245,158,11,.10);border-color:rgba(245,158,11,.30);color:#92400e" data-pin="${escapeHtml(r.id)}" data-pv="${r.pinned?0:1}">${r.pinned?"Bỏ pin":"📌 Pin"}</button>`:"";const rDelBtn=canDeleteComment(r,me)?`<button class="miniBtn" style="background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25);color:#991b1b" data-del="${escapeHtml(r.id)}">Xóa</button>`:"";item.innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><div style="font-weight:950;color:#6b7280;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>${escapeHtml(r.author||"—")}</span>${rPinTag}</div></div><div style="color:#111827;font-weight:750;line-height:1.35;white-space:pre-wrap;word-break:break-word">${escapeHtml(r.text||"")}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;justify-content:flex-end">${rPinBtn}${rDelBtn}</div><div style="margin-top:6px;text-align:right;color:#6b7280;font-weight:800;font-size:.82rem">${escapeHtml(fmtTs(r.created_at))}</div>`;rWrap.appendChild(item)})}});discussionEl.onclick=async(e)=>{const pinBtn=e.target.closest("[data-pin]");if(pinBtn){const id=pinBtn.getAttribute("data-pin");const pv=pinBtn.getAttribute("data-pv");await togglePinComment({me,commentId:id,pin:pv==="1"});return}const delBtn=e.target.closest("[data-del]");if(delBtn){const id=String(delBtn.getAttribute("data-del")||"");if(!id)return;if(!confirm("Xóa bình luận này?"))return;try{await deleteComment(id);await loadComments();renderDiscussion(me);toast("Đã xóa")}catch{toast("Xóa lỗi (có thể do RLS)")}return}const replyBtn=e.target.closest("[data-reply]");if(replyBtn){const rootId=String(replyBtn.getAttribute("data-reply")||"");DISC.openReply=(DISC.openReply===rootId)?"":rootId;renderDiscussion(me);const slot=discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);const ta=slot?slot.querySelector("textarea"):null;if(ta)ta.focus();return}const cancelBtn=e.target.closest("[data-cancelreply]");if(cancelBtn){DISC.openReply="";renderDiscussion(me);return}const sendBtn=e.target.closest("[data-sendreply]");if(sendBtn){const rootId=String(sendBtn.getAttribute("data-sendreply")||"");const slot=discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);const ta=slot?slot.querySelector("textarea"):null;const text=ta?String(ta.value||"").trim():"";if(!text||text.length>DISCUSS_MAX){toast("Tối đa 120 ký tự");return}const author=String(me?.username||"").trim();if(!author){toast("Thiếu tên");return}DISC.openReply="";renderDiscussion(me);try{await addComment({text,parent_id:rootId,author});await loadComments();renderDiscussion(me);toast("Đã gửi")}catch{toast("Gửi lỗi (có thể do RLS)")}return}};discussionEl.oninput=(e)=>{const ta=e.target;if(!(ta&&ta.tagName==="TEXTAREA"))return;const form=ta.closest("div");if(!form)return;const ct=form.querySelector("[data-ct]");if(ct)ct.textContent=String((ta.value||"").length)}}
-async function loadMeIfAny(){const token=getToken();if(!token)return null;try{const out=await sbRpc(RPC.me,{p_token:token});if(!out||out.ok!==true)return null;const m=out.me||out.user||out.data||null;if(m&&m.id&&!m.user_id)m.user_id=m.id;return m}catch{return null}}
-async function loadQuizMeta(){const out=await sbRpc(RPC.quizMeta,{p_quiz_id:quizId});if(!out||out.ok!==true)throw new Error(out?.error||"Không load quiz meta");const q=out.quiz||{};return{title:q.title||"",sub:q.sub||""}}
-async function loadAttemptPublic(attemptId,token){const out=await sbRpc(RPC.attemptPublic,{p_attempt_id:attemptId,p_token:token||""});if(!out||out.ok!==true)throw new Error(out?.error||"Không load attempt");return out}
-async function loadLeaderboard(){const out=await sbRpc(RPC.leaderboard,{p_quiz_id:quizId,p_limit:50});if(Array.isArray(out))return out;if(out&&Array.isArray(out.items))return out.items;return[]}
-async function loadQuestionsPublic(){const out=await sbRpc(RPC.questionsPublic,{p_quiz_id:quizId});if(!out||out.ok!==true)return[];return Array.isArray(out.items)?out.items:[]}
-async function loadAttemptCount(userId){if(!userId)return null;const url=`${SUPABASE_URL}/rest/v1/attempts?user_id=eq.${encodeURIComponent(userId)}&quiz_id=eq.${encodeURIComponent(quizId)}&select=attempt_id`;const h=sbHeaders();h["Prefer"]="count=exact";const res=await fetch(url,{headers:h});const txt=await res.text();if(!res.ok)throw new Error(txt||"count error");const cr=(res.headers.get("content-range")||res.headers.get("Content-Range")||"");const m=cr.match(/\/(\d+)\s*$/);if(m)return Number(m[1]);let data=null;try{data=txt?JSON.parse(txt):null}catch{}return Array.isArray(data)?data.length:0}
+async function togglePinComment({me,commentId,pin}){
+  const token=getToken();
+  if(!token){toast("Admin cần đăng nhập");return}
+  try{
+    const out=await sbRpc(RPC.pinComment,{p_token:token,p_comment_id:Number(commentId),p_pin:!!pin});
+    if(!out||out.ok!==true)throw new Error(out?.error||"Pin lỗi");
+    toast(pin?"Đã pin":"Đã bỏ pin");
+    await loadComments();
+    renderDiscussion(me);
+  }catch(e){toast(e?.message||"Pin lỗi")}
+}
+function renderDiscussion(me){
+  const discussionEl=document.getElementById("discussion");
+  const list=document.getElementById("discussList");
+  if(!list)return;
+  const tree=DISC.tree||[];
+  if(!tree.length){list.innerHTML=`<div class="muted">Chưa có bình luận nào.</div>`;return}
+  list.innerHTML="";
+  tree.forEach(root=>{
+    const wrap=document.createElement("div");
+    wrap.className="qBox";
+    wrap.style.boxShadow="none";
+    const showAdminBadge=(String(root.author||"").trim().toLowerCase()==="tuankhoi");
+    const adminTag=showAdminBadge?`<span class="adminTag">ADMIN</span>`:"";
+    const pinTag=root.pinned?`<span style="padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.35);color:#92400e">📌 PIN</span>`:"";
+    const delBtn=canDeleteComment(root,me)?`<button class="miniBtn" style="background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25);color:#991b1b" data-del="${escapeHtml(root.id)}">Xóa</button>`:"";
+    const pinBtn=isAdmin(me)?`<button class="miniBtn" style="background:rgba(245,158,11,.10);border-color:rgba(245,158,11,.30);color:#92400e" data-pin="${escapeHtml(root.id)}" data-pv="${root.pinned?0:1}">${root.pinned?"Bỏ pin":"📌 Pin"}</button>`:"";
+    wrap.innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><div style="font-weight:950;color:#6b7280;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>${escapeHtml(root.author||"—")}</span>${adminTag}${pinTag}</div></div><div style="color:#111827;font-weight:750;line-height:1.35;white-space:pre-wrap;word-break:break-word">${escapeHtml(root.text||"")}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;justify-content:flex-end"><button class="miniBtn" data-reply="${escapeHtml(root.id)}">Trả lời</button>${pinBtn}${delBtn}</div><div style="margin-top:6px;text-align:right;color:#6b7280;font-weight:800;font-size:.82rem">${escapeHtml(fmtTs(root.created_at))}</div><div class="replySlot" data-slot="${escapeHtml(root.id)}"></div><div class="replyWrap" data-replies="${escapeHtml(root.id)}" style="margin-top:10px;margin-left:14px;padding-left:12px;border-left:6px solid #e5e7eb;display:grid;gap:10px"></div>`;
+    list.appendChild(wrap);
+
+    const slot=wrap.querySelector(`[data-slot="${CSS.escape(String(root.id))}"]`);
+    if(slot&&DISC.openReply===String(root.id)){
+      slot.innerHTML=`<div style="margin-top:10px;display:grid;gap:10px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#6b7280;font-weight:800;font-size:.85rem"><div><b>Trả lời</b></div><div><span data-ct>0</span>/${DISCUSS_MAX}</div></div><textarea class="qBox" style="min-height:72px;border-style:solid;border-width:2px;background:var(--soft)" maxlength="${DISCUSS_MAX}" placeholder="Nhập trả lời..."></textarea><div style="display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;"><button class="btn btn-primary" data-sendreply="${escapeHtml(root.id)}" style="justify-content:center;">Gửi</button><button class="btn" data-cancelreply style="justify-content:center;">Hủy</button></div></div>`;
+    }
+
+    const rWrap=wrap.querySelector(`[data-replies="${CSS.escape(String(root.id))}"]`);
+    if(rWrap){
+      rWrap.innerHTML="";
+      (root.replies||[]).forEach(r=>{
+        const item=document.createElement("div");
+        item.className="qBox";
+        item.style.margin="0";
+        item.style.boxShadow="none";
+        const rPinTag=r.pinned?`<span style="padding:4px 8px;border-radius:999px;font-weight:950;font-size:.78rem;background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.35);color:#92400e">📌 PIN</span>`:"";
+        const rPinBtn=isAdmin(me)?`<button class="miniBtn" style="background:rgba(245,158,11,.10);border-color:rgba(245,158,11,.30);color:#92400e" data-pin="${escapeHtml(r.id)}" data-pv="${r.pinned?0:1}">${r.pinned?"Bỏ pin":"📌 Pin"}</button>`:"";
+        const rDelBtn=canDeleteComment(r,me)?`<button class="miniBtn" style="background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25);color:#991b1b" data-del="${escapeHtml(r.id)}">Xóa</button>`:"";
+        item.innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><div style="font-weight:950;color:#6b7280;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>${escapeHtml(r.author||"—")}</span>${rPinTag}</div></div><div style="color:#111827;font-weight:750;line-height:1.35;white-space:pre-wrap;word-break:break-word">${escapeHtml(r.text||"")}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;justify-content:flex-end">${rPinBtn}${rDelBtn}</div><div style="margin-top:6px;text-align:right;color:#6b7280;font-weight:800;font-size:.82rem">${escapeHtml(fmtTs(r.created_at))}</div>`;
+        rWrap.appendChild(item);
+      });
+    }
+  });
+
+  discussionEl.onclick=async(e)=>{
+    const pinBtn=e.target.closest("[data-pin]");
+    if(pinBtn){
+      const id=pinBtn.getAttribute("data-pin");
+      const pv=pinBtn.getAttribute("data-pv");
+      await togglePinComment({me,commentId:id,pin:pv==="1"});
+      return;
+    }
+    const delBtn=e.target.closest("[data-del]");
+    if(delBtn){
+      const id=String(delBtn.getAttribute("data-del")||"");
+      if(!id)return;
+      if(!confirm("Xóa bình luận này?"))return;
+      try{await deleteComment(id);await loadComments();renderDiscussion(me);toast("Đã xóa")}catch{toast("Xóa lỗi (có thể do RLS)")}
+      return;
+    }
+    const replyBtn=e.target.closest("[data-reply]");
+    if(replyBtn){
+      const rootId=String(replyBtn.getAttribute("data-reply")||"");
+      DISC.openReply=(DISC.openReply===rootId)?"":rootId;
+      renderDiscussion(me);
+      const slot=discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
+      const ta=slot?slot.querySelector("textarea"):null;
+      if(ta)ta.focus();
+      return;
+    }
+    const cancelBtn=e.target.closest("[data-cancelreply]");
+    if(cancelBtn){DISC.openReply="";renderDiscussion(me);return}
+    const sendBtn=e.target.closest("[data-sendreply]");
+    if(sendBtn){
+      const rootId=String(sendBtn.getAttribute("data-sendreply")||"");
+      const slot=discussionEl.querySelector(`[data-slot="${CSS.escape(rootId)}"]`);
+      const ta=slot?slot.querySelector("textarea"):null;
+      const text=ta?String(ta.value||"").trim():"";
+      if(!text||text.length>DISCUSS_MAX){toast("Tối đa 120 ký tự");return}
+      const author=String(me?.username||"").trim();
+      if(!author){toast("Thiếu tên");return}
+      DISC.openReply="";
+      renderDiscussion(me);
+      try{await addComment({text,parent_id:rootId,author});await loadComments();renderDiscussion(me);toast("Đã gửi")}catch{toast("Gửi lỗi (có thể do RLS)")}
+      return;
+    }
+  };
+
+  discussionEl.oninput=(e)=>{
+    const ta=e.target;
+    if(!(ta&&ta.tagName==="TEXTAREA"))return;
+    const form=ta.closest("div");
+    if(!form)return;
+    const ct=form.querySelector("[data-ct]");
+    if(ct)ct.textContent=String((ta.value||"").length);
+  };
+}
+
+async function loadMeIfAny(){
+  const token=getToken();
+  if(!token)return null;
+  try{
+    const out=await sbRpc(RPC.me,{p_token:token});
+    if(!out||out.ok!==true)return null;
+    const m=out.me||out.user||out.data||null;
+    if(m&&m.id&&!m.user_id)m.user_id=m.id;
+    return m;
+  }catch{return null}
+}
+async function loadQuizMeta(){
+  const out=await sbRpc(RPC.quizMeta,{p_quiz_id:quizId});
+  if(!out||out.ok!==true)throw new Error(out?.error||"Không load quiz meta");
+  const q=out.quiz||{};
+  return{title:q.title||"",sub:q.sub||""};
+}
+async function loadAttemptPublic(attemptId,token){
+  const out=await sbRpc(RPC.attemptPublic,{p_attempt_id:attemptId,p_token:token||""});
+  if(!out||out.ok!==true)throw new Error(out?.error||"Không load attempt");
+  return out;
+}
+async function loadLeaderboard(){
+  const out=await sbRpc(RPC.leaderboard,{p_quiz_id:quizId,p_limit:50});
+  if(Array.isArray(out))return out;
+  if(out&&Array.isArray(out.items))return out.items;
+  return [];
+}
+async function loadQuestionsPublic(){
+  const out=await sbRpc(RPC.questionsPublic,{p_quiz_id:quizId});
+  if(!out||out.ok!==true)return[];
+  return Array.isArray(out.items)?out.items:[];
+}
+async function loadAttemptCount(userId){
+  if(!userId)return null;
+  const url=`${SUPABASE_URL}/rest/v1/attempts?user_id=eq.${encodeURIComponent(userId)}&quiz_id=eq.${encodeURIComponent(quizId)}&select=attempt_id`;
+  const h=sbHeaders();
+  h["Prefer"]="count=exact";
+  const res=await fetch(url,{headers:h});
+  const txt=await res.text();
+  if(!res.ok)throw new Error(txt||"count error");
+  const cr=(res.headers.get("content-range")||res.headers.get("Content-Range")||"");
+  const m=cr.match(/\/(\d+)\s*$/);
+  if(m)return Number(m[1]);
+  let data=null;try{data=txt?JSON.parse(txt):null}catch{}
+  return Array.isArray(data)?data.length:0;
+}
+
 let QUESTIONS=[];
 let REVIEW_ITEMS=[];
 let CAN_VIEW_DETAILS=false;
 let REVIEW_HAS_DATA=false;
-function pickAnswer(answersMap,qid){if(!answersMap)return undefined;const k1=String(qid);if(Object.prototype.hasOwnProperty.call(answersMap,k1))return answersMap[k1];if(Object.prototype.hasOwnProperty.call(answersMap,qid))return answersMap[qid];return answersMap[k1]}
+
+function pickAnswer(answersMap,qid){
+  if(!answersMap)return undefined;
+  const k1=String(qid);
+  if(Object.prototype.hasOwnProperty.call(answersMap,k1))return answersMap[k1];
+  if(Object.prototype.hasOwnProperty.call(answersMap,qid))return answersMap[qid];
+  return answersMap[k1];
+}
 function imgOf(q){const m=q.meta||{};return String(m.image_url||m.image||m.img||"").trim()}
 function fmtNum(n){const x=Number(n);if(!isFinite(x))return"0";const s=String(Math.round(x*100)/100);return s.replace(/\.0+$/,"").replace(/(\.\d*[1-9])0+$/,"$1")}
-function buildReviewFromAttempt({perList,answersMap}){REVIEW_ITEMS=[];const perById=new Map();if(Array.isArray(perList)){for(const p of perList){if(p&&p.id!=null)perById.set(String(p.id),p)}}QUESTIONS.forEach((q,idx0)=>{const id=String(q.id);const per=perById.get(id);const okFromPer=(per&&typeof per.ok==="boolean")?per.ok:null;const ua=pickAnswer(answersMap,q.id);const g=gradeOne(q,ua);const ok=(okFromPer===null)?!!g.ok:!!okFromPer;const prompt=String(q.prompt||"").trim()||`#${q.id}`;REVIEW_ITEMS.push({id:q.id,idx:idx0+1,prompt,q,g,userAnswerRaw:ua,ok})})}
-function setReviewTitle(mode){const el=document.getElementById("wrongTitle");if(!el)return;el.textContent=mode==="ok"?"Xem lại: Câu đúng":mode==="bad"?"Xem lại: Câu sai":"Xem lại: Đúng & Sai"}
-function openReview(mode){if(!CAN_VIEW_DETAILS)return;setReviewTitle(mode);renderReviewList(mode);openReviewPopup()}
-function renderReviewList(mode){wrongBody.innerHTML="";if(!CAN_VIEW_DETAILS){wrongBody.innerHTML=`<div class="resultline">Không có quyền xem chi tiết đáp án cho attempt này.</div>`;return}if(!REVIEW_HAS_DATA){wrongBody.innerHTML=`<div class="resultline">Không có dữ liệu chi tiết (answers/per) trong attempt để hiển thị xem lại.</div>`;return}const arr=(Array.isArray(REVIEW_ITEMS)?REVIEW_ITEMS:[]).filter(w=>mode==="ok"?w.ok:mode==="bad"?!w.ok:true);if(!arr.length){wrongBody.innerHTML=`<div class="resultline">${mode==="ok"?`<span class="oktxt">Không có câu đúng trong dữ liệu xem lại.</span>`:mode==="bad"?`<span class="oktxt">Không có câu sai nào ✅</span>`:`<span class="muted">Không có dữ liệu.</span>`}</div>`;return}arr.forEach((w)=>{const wrap=document.createElement("div");wrap.className="wrongRow";const t=qTypeOf(w.q);const typeLabel=(t==="mcq1"||t==="mcq")?"Trắc nghiệm":(t==="tf4")?"Đúng/Sai":(t==="short4")?"4 ô":"Tự luận";const uline=(w.g&&w.g.userFmt)?w.g.userFmt:"Bạn trả lời: (trống)";const eline=(w.g&&w.g.expected)?w.g.expected:"Đáp án đúng: (chưa set)";const st=w.ok?`<span class="badge ok">ĐÚNG</span>`:`<span class="badge bad">SAI</span>`;const pts=`${fmtNum(w.g?.earned??0)}/${fmtNum(w.g?.max??pointsOf(w.q))}`;wrap.innerHTML=`<div class="ptsTag">${escapeHtml(pts)}</div><div class="wrongLeft"><div class="wrongTitle">${st}<span class="badge" style="margin-left:8px">${escapeHtml(typeLabel)}</span><span class="badge" style="margin-left:8px">Câu ${Number(w.idx||0)}</span></div><div class="wrongSub" style="margin-top:8px">${escapeHtml(w.prompt)}</div><div class="wrongSub" style="margin-top:8px">${escapeHtml(uline)}</div><div class="wrongSub" style="margin-top:4px">${escapeHtml(eline)}</div></div><div class="wrongRight"><button class="miniBtn" data-detail="${escapeHtml(String(w.id))}">Chi tiết</button></div>`;wrongBody.appendChild(wrap);const btn=wrap.querySelector(`[data-detail="${CSS.escape(String(w.id))}"]`);if(btn)btn.onclick=()=>{openDetail(renderQuestionDetailHtml(w.q,w.g,w.userAnswerRaw))};applyMath(wrap)});applyMath(wrongBody)}
-function renderQuestionDetailHtml(q,g,userAnswerRaw){const t=qTypeOf(q);const img=imgOf(q);const prompt=String(q.prompt||"").trim();const ptsLine=`${fmtNum(g.earned??0)}/${fmtNum(g.max??pointsOf(q))}`;let body=`<div class="qBox"><div class="qPrompt">${escapeHtml(prompt||"(trống)")}</div>${img?`<img class="qImg" src="${escapeHtml(img)}" alt="image">`:""}</div><div class="kv"><div class="kvRow"><div class="kvKey">Kết quả</div><div class="kvVal">${g.ok?`<span class="badge ok">ĐÚNG</span>`:`<span class="badge bad">SAI</span>`}</div></div><div class="kvRow"><div class="kvKey">Điểm</div><div class="kvVal"><b>${escapeHtml(ptsLine)}</b></div></div><div class="kvRow"><div class="kvKey">Bạn làm</div><div class="kvVal">${escapeHtml(g.userFmt||"—")}</div></div><div class="kvRow"><div class="kvKey">Đáp án đúng</div><div class="kvVal">${escapeHtml(g.expected||"—")}</div></div></div>`;if(t==="mcq1"||t==="mcq"){const opts=mcqOptionsOf(q);const userN=toMcqNumber(userAnswerRaw);const corN=mcqCorrectOf(q);const L="ABCD";body+=`<div class="qBox" style="margin-top:12px"><div style="font-weight:1000">Các lựa chọn</div><div class="optList">${[1,2,3,4].map(n=>{const text=String(opts[n-1]||"");const isCor=(corN===n);const isUser=(userN===n);const cls=isCor?"good":(isUser&&!isCor)?"bad":"";const tag=isCor?`<span class="badge ok">Đúng</span>`:isUser?`<span class="badge bad">Bạn chọn</span>`:"";return`<div class="optItem ${cls}"><b>${L[n-1]}.</b> ${escapeHtml(text||"(trống)")}${tag?`<div style="margin-top:6px">${tag}</div>`:""}</div>`}).join("")}</div></div>`}if(t==="tf4"){const stmts=Array.isArray(q.meta?.statements)?q.meta.statements:["","","",""];const keys=Array.isArray(q.meta?.keys)?q.meta.keys:[true,false,false,false];const user=Array.isArray(userAnswerRaw)?userAnswerRaw:[null,null,null,null];body+=`<div class="qBox" style="margin-top:12px"><div style="font-weight:1000">Đúng/Sai (4 ý)</div><div class="optList">${[0,1,2,3].map(i=>{const st=String(stmts[i]||"").trim();const k=!!keys[i];const u=user[i];const uTxt=(u===true)?"Đúng":(u===false)?"Sai":"—";const kTxt=k?"Đúng":"Sai";const ok=(u===true||u===false)?(u===k):false;const cls=ok?"good":"bad";return`<div class="optItem ${cls}"><b>${"ABCD"[i]}.</b> ${escapeHtml(st||"(trống)")}<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><span class="badge">${escapeHtml("Bạn: "+uTxt)}</span><span class="badge ok">${escapeHtml("Key: "+kTxt)}</span></div></div>`}).join("")}</div></div>`}if(t==="essay"||t==="short4"){const acc=acceptedAnswersFromQuestion(q);const ua=String(userAnswerRaw??"").trim();body+=`<div class="qBox" style="margin-top:12px"><div style="font-weight:1000">Đáp án</div><div class="muted" style="margin-top:6px">Các đáp án chấp nhận:</div><div class="optList">${(acc.length?acc:["(chưa set)"]).map(a=>`<div class="optItem good">${escapeHtml(a)}</div>`).join("")}</div><div class="resultline"><b>Bạn trả lời:</b> ${escapeHtml(ua||"(trống)")}</div></div>`}return body}
-(async function boot(){
-if(!quizId){setTopbar({title:"Kết quả",sub:"Sai link (thiếu ?quiz=abcde)",username:"—",correctCount:0,totalCount:0,progressPercent:0,attemptTimes:null});document.getElementById("summary").innerHTML=`<div class="muted">Sai link.</div>`;document.getElementById("wrongCard").style.display="none";document.getElementById("lb").innerHTML=`<div class="muted">Sai link.</div>`;document.getElementById("discussion").innerHTML=`<div class="muted">Sai link.</div>`;return}
-const token=getToken();
-const fallbackName=loadName();
-let me=await loadMeIfAny();
-let username=me?.username||fallbackName||"—";
-let myUserId=me?.user_id||"";
-let qTitle="",qSub="";
-try{const qm=await loadQuizMeta();qTitle=qm.title||"";qSub=qm.sub||""}catch{}
-let aScore10=0,aCorrect=0,aTotal=0,aCreatedAt="";
-let detailsJson={};
-CAN_VIEW_DETAILS=false;
-let targetUserId=myUserId||"";
-if(attemptId){
-try{const out=await loadAttemptPublic(attemptId,token);const a=out.attempt||{};const u=out.user||{};const q=out.quiz||{};qTitle=q.title||qTitle||"Kết quả";qSub=q.sub||qSub||"";username=u.username||username||"—";if(me?.user_id)myUserId=me.user_id;if(!targetUserId)targetUserId=String(u.user_id||u.id||"");aScore10=Number(a.score10||0);aCorrect=Number(a.correct_count||0);aTotal=Number(a.total_count||0);aCreatedAt=a.created_at||"";CAN_VIEW_DETAILS=!!out.can_view_details;detailsJson=(a.details_json&&typeof a.details_json==="object")?a.details_json:{}}catch(e){toast("Không load được attempt: "+(e?.message||"error"))}}
-else{
-try{const cached=JSON.parse(sessionStorage.getItem(`tk_last_result::${quizId}`)||"null");if(cached&&cached.result){aScore10=Number(cached.result.score10||0);aCorrect=Number(cached.result.fullCorrectCount||cached.result.correctCount||0);aTotal=Number(cached.result.totalCount||0);detailsJson=(cached.result&&typeof cached.result==="object")?cached.result:{};username=cached?.me?.username||username;targetUserId=String(cached?.me?.user_id||cached?.me?.id||targetUserId||"");CAN_VIEW_DETAILS=true}}catch{}}
-const prog=aTotal?(aCorrect/aTotal)*100:(aScore10*10);
-setTopbar({title:qTitle||"Kết quả",sub:qSub||"",username:username||"—",correctCount:aCorrect,totalCount:aTotal,progressPercent:prog,attemptTimes:ATTEMPT_TIMES});
-if(targetUserId){
-try{ATTEMPT_TIMES=await loadAttemptCount(targetUserId);document.getElementById("attemptTimes").textContent=String(ATTEMPT_TIMES)}catch{ATTEMPT_TIMES=null;document.getElementById("attemptTimes").textContent="—"}
+function buildReviewFromAttempt({perList,answersMap}){
+  REVIEW_ITEMS=[];
+  const perById=new Map();
+  if(Array.isArray(perList)){for(const p of perList){if(p&&p.id!=null)perById.set(String(p.id),p)}}
+  QUESTIONS.forEach((q,idx0)=>{
+    const id=String(q.id);
+    const per=perById.get(id);
+    const okFromPer=(per&&typeof per.ok==="boolean")?per.ok:null;
+    const ua=pickAnswer(answersMap,q.id);
+    const g=gradeOne(q,ua);
+    const ok=(okFromPer===null)?!!g.ok:!!okFromPer;
+    const prompt=String(q.prompt||"").trim()||`#${q.id}`;
+    REVIEW_ITEMS.push({id:q.id,idx:idx0+1,prompt,q,g,userAnswerRaw:ua,ok});
+  });
 }
-let wrongCountForUI=Math.max(0,(aTotal||0)-(aCorrect||0));
-let okCount=0,badCount=wrongCountForUI,totalCount=aTotal||0;
-REVIEW_HAS_DATA=false;
-if(CAN_VIEW_DETAILS){
-try{QUESTIONS=await loadQuestionsPublic();const perList=Array.isArray(detailsJson?.per)?detailsJson.per:[];const answersMap=(detailsJson&&detailsJson.answers&&typeof detailsJson.answers==="object")?detailsJson.answers:null;if(QUESTIONS.length&&(perList.length||answersMap)){buildReviewFromAttempt({perList,answersMap});REVIEW_HAS_DATA=true;okCount=REVIEW_ITEMS.filter(x=>x.ok).length;badCount=REVIEW_ITEMS.length-okCount;totalCount=REVIEW_ITEMS.length||aTotal||0}else{REVIEW_ITEMS=[];REVIEW_HAS_DATA=false}}catch{REVIEW_ITEMS=[];REVIEW_HAS_DATA=false}}
-renderSummaryCard({score10:aScore10,correctCount:aCorrect,totalCount:aTotal,wrongCount:wrongCountForUI,createdAt:aCreatedAt,canViewDetails:CAN_VIEW_DETAILS});
-renderReviewCard({canViewDetails:CAN_VIEW_DETAILS,okCount,badCount,totalCount,hasData:REVIEW_HAS_DATA});
-try{const lbRows=await loadLeaderboard();renderLeaderboard(lbRows,myUserId,"")}catch(e){renderLeaderboard([], "", e?.message||"RPC error")}
-const discussionEl=document.getElementById("discussion");
-discussionEl.innerHTML=discussionHtml(username||fallbackName||"—");
-const rootInput=document.getElementById("rootInput");
-const rootCount=document.getElementById("rootCount");
-const btnPostRoot=document.getElementById("btnPostRoot");
-rootInput.addEventListener("input",()=>{rootCount.textContent=String((rootInput.value||"").length)},{passive:true});
-const meForUI=me||{username:username||fallbackName||"",role:"user"};
-try{await loadComments();renderDiscussion(meForUI)}catch(e){discussionEl.innerHTML+=`<div class="muted" style="margin-top:10px">Không load được comments: <b>${escapeHtml(e?.message||String(e))}</b></div>`}
-btnPostRoot.addEventListener("click",async()=>{const text=String(rootInput.value||"").trim();if(!text||text.length>DISCUSS_MAX){toast("Tối đa 120 ký tự");return}const author=String(meForUI.username||"").trim();if(!author){toast("Thiếu tên");return}rootInput.value="";rootCount.textContent="0";try{await addComment({text,parent_id:null,author});await loadComments();renderDiscussion(meForUI);toast("Đã gửi")}catch{toast("Gửi lỗi (có thể do RLS)")}})
+function setReviewTitle(mode){
+  const el=document.getElementById("wrongTitle");
+  if(!el)return;
+  el.textContent=mode==="ok"?"Xem lại: Câu đúng":mode==="bad"?"Xem lại: Câu sai":"Xem lại: Đúng & Sai";
+}
+function openReview(mode){if(!CAN_VIEW_DETAILS)return;setReviewTitle(mode);renderReviewList(mode);openReviewPopup()}
+function renderReviewList(mode){
+  wrongBody.innerHTML="";
+  if(!CAN_VIEW_DETAILS){wrongBody.innerHTML=`<div class="resultline">Không có quyền xem chi tiết đáp án cho attempt này.</div>`;return}
+  if(!REVIEW_HAS_DATA){wrongBody.innerHTML=`<div class="resultline">Không có dữ liệu chi tiết (answers/per) trong attempt để hiển thị xem lại.</div>`;return}
+  const arr=(Array.isArray(REVIEW_ITEMS)?REVIEW_ITEMS:[]).filter(w=>mode==="ok"?w.ok:mode==="bad"?!w.ok:true);
+  if(!arr.length){wrongBody.innerHTML=`<div class="resultline">${mode==="ok"?`<span class="oktxt">Không có câu đúng trong dữ liệu xem lại.</span>`:mode==="bad"?`<span class="oktxt">Không có câu sai nào ✅</span>`:`<span class="muted">Không có dữ liệu.</span>`}</div>`;return}
+  arr.forEach((w)=>{
+    const wrap=document.createElement("div");
+    wrap.className="wrongRow";
+    const t=qTypeOf(w.q);
+    const typeLabel=(t==="mcq1"||t==="mcq")?"Trắc nghiệm":(t==="tf4")?"Đúng/Sai":(t==="short4")?"4 ô":"Tự luận";
+    const uline=(w.g&&w.g.userFmt)?w.g.userFmt:"Bạn trả lời: (trống)";
+    const eline=(w.g&&w.g.expected)?w.g.expected:"Đáp án đúng: (chưa set)";
+    const st=w.ok?`<span class="badge ok">ĐÚNG</span>`:`<span class="badge bad">SAI</span>`;
+    const pts=`${fmtNum(w.g?.earned??0)}/${fmtNum(w.g?.max??pointsOf(w.q))}`;
+    wrap.innerHTML=`<div class="ptsTag">${escapeHtml(pts)}</div><div class="wrongLeft"><div class="wrongTitle">${st}<span class="badge" style="margin-left:8px">${escapeHtml(typeLabel)}</span><span class="badge" style="margin-left:8px">Câu ${Number(w.idx||0)}</span></div><div class="wrongSub" style="margin-top:8px">${escapeHtml(w.prompt)}</div><div class="wrongSub" style="margin-top:8px">${escapeHtml(uline)}</div><div class="wrongSub" style="margin-top:4px">${escapeHtml(eline)}</div></div><div class="wrongRight"><button class="miniBtn" data-detail="${escapeHtml(String(w.id))}">Chi tiết</button></div>`;
+    wrongBody.appendChild(wrap);
+    const btn=wrap.querySelector(`[data-detail="${CSS.escape(String(w.id))}"]`);
+    if(btn)btn.onclick=()=>{openDetail(renderQuestionDetailHtml(w.q,w.g,w.userAnswerRaw))};
+    applyMath(wrap);
+  });
+  applyMath(wrongBody);
+}
+function renderQuestionDetailHtml(q,g,userAnswerRaw){
+  const t=qTypeOf(q);
+  const img=imgOf(q);
+  const prompt=String(q.prompt||"").trim();
+  const ptsLine=`${fmtNum(g.earned??0)}/${fmtNum(g.max??pointsOf(q))}`;
+  let body=`<div class="qBox"><div class="qPrompt">${escapeHtml(prompt||"(trống)")}</div>${img?`<img class="qImg" src="${escapeHtml(img)}" alt="image">`:""}</div><div class="kv"><div class="kvRow"><div class="kvKey">Kết quả</div><div class="kvVal">${g.ok?`<span class="badge ok">ĐÚNG</span>`:`<span class="badge bad">SAI</span>`}</div></div><div class="kvRow"><div class="kvKey">Điểm</div><div class="kvVal"><b>${escapeHtml(ptsLine)}</b></div></div><div class="kvRow"><div class="kvKey">Bạn làm</div><div class="kvVal">${escapeHtml(g.userFmt||"—")}</div></div><div class="kvRow"><div class="kvKey">Đáp án đúng</div><div class="kvVal">${escapeHtml(g.expected||"—")}</div></div></div>`;
+  if(t==="mcq1"||t==="mcq"){
+    const opts=mcqOptionsOf(q);
+    const userN=toMcqNumber(userAnswerRaw);
+    const corN=mcqCorrectOf(q);
+    const L="ABCD";
+    body+=`<div class="qBox" style="margin-top:12px"><div style="font-weight:1000">Các lựa chọn</div><div class="optList">${[1,2,3,4].map(n=>{
+      const text=String(opts[n-1]||"");
+      const isCor=(corN===n);
+      const isUser=(userN===n);
+      const cls=isCor?"good":(isUser&&!isCor)?"bad":"";
+      const tag=isCor?`<span class="badge ok">Đúng</span>`:isUser?`<span class="badge bad">Bạn chọn</span>`:"";
+      return`<div class="optItem ${cls}"><b>${L[n-1]}.</b> ${escapeHtml(text||"(trống)")}${tag?`<div style="margin-top:6px">${tag}</div>`:""}</div>`;
+    }).join("")}</div></div>`;
+  }
+  if(t==="tf4"){
+    const stmts=Array.isArray(q.meta?.statements)?q.meta.statements:["","","",""];
+    const keys=Array.isArray(q.meta?.keys)?q.meta.keys:[true,false,false,false];
+    const user=Array.isArray(userAnswerRaw)?userAnswerRaw:[null,null,null,null];
+    body+=`<div class="qBox" style="margin-top:12px"><div style="font-weight:1000">Đúng/Sai (4 ý)</div><div class="optList">${[0,1,2,3].map(i=>{
+      const st=String(stmts[i]||"").trim();
+      const k=!!keys[i];
+      const u=user[i];
+      const uTxt=(u===true)?"Đúng":(u===false)?"Sai":"—";
+      const kTxt=k?"Đúng":"Sai";
+      const ok=(u===true||u===false)?(u===k):false;
+      const cls=ok?"good":"bad";
+      return`<div class="optItem ${cls}"><b>${"ABCD"[i]}.</b> ${escapeHtml(st||"(trống)")}<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><span class="badge">${escapeHtml("Bạn: "+uTxt)}</span><span class="badge ok">${escapeHtml("Key: "+kTxt)}</span></div></div>`;
+    }).join("")}</div></div>`;
+  }
+  if(t==="essay"||t==="short4"){
+    const acc=acceptedAnswersFromQuestion(q);
+    const ua=String(userAnswerRaw??"").trim();
+    body+=`<div class="qBox" style="margin-top:12px"><div style="font-weight:1000">Đáp án</div><div class="muted" style="margin-top:6px">Các đáp án chấp nhận:</div><div class="optList">${(acc.length?acc:["(chưa set)"]).map(a=>`<div class="optItem good">${escapeHtml(a)}</div>`).join("")}</div><div class="resultline"><b>Bạn trả lời:</b> ${escapeHtml(ua||"(trống)")}</div></div>`;
+  }
+  return body;
+}
+
+/* ===================== ADMIN EDIT LEADERBOARD SCORE ===================== */
+let ME=null;
+let LB_SCROLL_TO_UID="";
+let LB_TRIPLE={uid:"",count:0,last:0};
+let EDIT_TARGET={userId:"",username:"",score10:0};
+
+function closeEditScore(){
+  editScoreBackdrop.classList.remove("show");
+  editScoreBackdrop.setAttribute("aria-hidden","true");
+  editScoreSub.textContent="";
+  editScoreInput.value="";
+  EDIT_TARGET={userId:"",username:"",score10:0};
+}
+function openEditScore({userId,username,score10}){
+  if(!isAdmin(ME))return;
+  const token=getToken();
+  if(!token){toast("Admin cần đăng nhập");return}
+  EDIT_TARGET={userId:String(userId||""),username:String(username||""),score10:Number(score10||0)};
+  editScoreSub.innerHTML=`User: <b>${escapeHtml(EDIT_TARGET.username||"—")}</b> • Điểm hiện tại: <b>${Number(EDIT_TARGET.score10||0).toFixed(1)}</b>/10`;
+  editScoreInput.value=Number(EDIT_TARGET.score10||0).toFixed(1);
+  editScoreBackdrop.classList.add("show");
+  editScoreBackdrop.setAttribute("aria-hidden","false");
+  setTimeout(()=>{try{editScoreInput.focus();editScoreInput.select()}catch{}},50);
+}
+async function saveEditScore(){
+  if(!isAdmin(ME))return;
+  const token=getToken();
+  if(!token){toast("Admin cần đăng nhập");return}
+  const raw=String(editScoreInput.value||"").trim().replace(",",".");
+  const n=parseFloat(raw);
+  if(!isFinite(n)){toast("Điểm không hợp lệ");return}
+  const v=Math.round(Math.max(0,Math.min(10,n))*10)/10;
+  if(!EDIT_TARGET.userId){toast("Thiếu user");return}
+
+  try{
+    const out=await sbRpc(RPC.setBestScore,{p_token:token,p_quiz_id:quizId,p_user_id:EDIT_TARGET.userId,p_score10:v});
+    if(!out||out.ok!==true)throw new Error(out?.error||"Set điểm lỗi");
+    closeEditScore();
+    toast("Đã cập nhật");
+    LB_SCROLL_TO_UID=String(EDIT_TARGET.userId||"");
+    const lbRows=await loadLeaderboard();
+    renderLeaderboard(lbRows, ME?.user_id||"", "");
+  }catch(e){
+    toast(e?.message||"Set điểm lỗi");
+  }
+}
+document.getElementById("btnEditScoreSave").addEventListener("click",saveEditScore);
+editScoreInput.addEventListener("keydown",(e)=>{
+  if(e.key==="Enter"){e.preventDefault();saveEditScore();return}
+});
+
+/* ===================== LEADERBOARD RENDER + TRIPLE CLICK ===================== */
+function renderLeaderboard(rows,myUserId,errMsg){
+  const lb=document.getElementById("lb");
+  const arr=Array.isArray(rows)?rows:[];
+  if(errMsg){
+    lb.innerHTML=`<div class="row1"><p class="vi">Bảng xếp hạng</p><div class="meta"><span class="idx">RPC</span></div></div><div class="muted" style="margin-top:6px;line-height:1.35">Lỗi load leaderboard: <b>${escapeHtml(errMsg)}</b><br/>(Hãy chạy lại SQL phần <b>api_get_leaderboard</b> và đảm bảo đã <b>GRANT</b> cho anon/authenticated.)</div>`;
+    return;
+  }
+  if(!arr.length){
+    lb.innerHTML=`<div class="row1"><p class="vi">Bảng xếp hạng</p><div class="meta"><span class="idx">TOP</span></div></div><div class="muted" style="margin-top:6px">Chưa có dữ liệu. (Nếu bạn đã làm mà vẫn trống: kiểm tra lại RPC <b>api_get_leaderboard</b> và RLS.)</div>`;
+    return;
+  }
+
+  const maxRows=isAdmin(ME)?50:30;
+  const top=arr.slice(0,maxRows);
+
+  const myIndex=myUserId?top.findIndex(r=>String(r.user_id)===String(myUserId)):-1;
+  const myRankLine=(myIndex>=0)?`<div class="resultline" style="margin-top:0"><b>Vị trí của bạn:</b> Bạn đang ở hạng <b>#${myIndex+1}</b> trong bảng xếp hạng.</div>`:`<div class="resultline" style="margin-top:0">Bạn chưa nằm trong top đang hiển thị.</div>`;
+
+  const body=top.map((r,index)=>{
+    const rk=index+1;
+    const medal=rk===1?`<span class="medal m1">🥇</span>`:rk===2?`<span class="medal m2">🥈</span>`:rk===3?`<span class="medal m3">🥉</span>`:"";
+    const trClass=rk===1?"toprow1":rk===2?"toprow2":rk===3?"toprow3":"";
+    const isMe=myUserId&&String(r.user_id)===String(myUserId);
+    const rowClass=`${trClass} ${isMe?"meRow":""}`.trim();
+    const uname=escapeHtml(r.username||"(user)");
+    const admin=(String(r.role||"").toLowerCase()==="admin")?`<span class="adminTag">ADMIN</span>`:"";
+    const nameCell=isMe?`<span class="nameTrunc meName">${uname}</span><span class="meBadge">Bạn</span>${admin}`:`<span class="nameTrunc">${uname}</span>${admin}`;
+    const score10=Number(r.score10||0);
+    const pct=Math.round(score10*10);
+
+    const uid=escapeHtml(String(r.user_id||""));
+    const unameRaw=escapeHtml(String(r.username||""));
+    const scoreRaw=escapeHtml(String(score10||0));
+
+    return`<tr class="${rowClass}" data-uid="${uid}" data-uname="${unameRaw}" data-score="${scoreRaw}">
+      <td><span class="rankpill">${medal}<span>${rk}</span></span></td>
+      <td style="overflow:hidden">${nameCell}</td>
+      <td><b>${score10.toFixed(1)}</b>/10</td>
+      <td>${pct}%</td>
+    </tr>`;
+  }).join("");
+
+  lb.innerHTML=`<div class="row1"><p class="vi">Bảng xếp hạng</p><div class="meta"><span class="idx">TOP</span></div></div><div class="muted" style="margin-top:6px">Xếp theo <b>điểm cao nhất</b> của mỗi <b>người</b>.</div><div style="margin-top:10px">${myRankLine}</div><div style="overflow:auto;margin-top:10px;"><table class="table" id="lbTable"><thead><tr><th>#</th><th>Tên</th><th>Điểm</th><th>%</th></tr></thead><tbody>${body}</tbody></table></div>`;
+
+  // triple click: admin bấm 3 lần vào row => mở sửa điểm
+  const tbl=lb.querySelector("#lbTable");
+  if(tbl){
+    tbl.onclick=(e)=>{
+      if(!isAdmin(ME))return;
+      const tr=e.target.closest('tr[data-uid]');
+      if(!tr)return;
+
+      const uid=String(tr.getAttribute("data-uid")||"");
+      const now=Date.now();
+      if(uid && LB_TRIPLE.uid===uid && (now-LB_TRIPLE.last)<=550){
+        LB_TRIPLE.count++;
+      }else{
+        LB_TRIPLE.uid=uid;
+        LB_TRIPLE.count=1;
+      }
+      LB_TRIPLE.last=now;
+
+      if(LB_TRIPLE.count>=3){
+        LB_TRIPLE.count=0;
+        const uname=String(tr.getAttribute("data-uname")||"");
+        const score=Number(tr.getAttribute("data-score")||0);
+        openEditScore({userId:uid,username:uname,score10:score});
+      }
+    };
+  }
+
+  // sau khi cập nhật điểm: scroll tới user vừa sửa (nếu còn nằm trong top)
+  if(LB_SCROLL_TO_UID){
+    const uid=LB_SCROLL_TO_UID;
+    LB_SCROLL_TO_UID="";
+    setTimeout(()=>{
+      try{
+        const tr=lb.querySelector(`tr[data-uid="${CSS.escape(uid)}"]`);
+        if(tr)tr.scrollIntoView({behavior:"smooth",block:"center"});
+      }catch{}
+    },80);
+  }
+}
+
+/* ===================== BOOT ===================== */
+(async function boot(){
+  if(!quizId){
+    setTopbar({title:"Kết quả",sub:"Sai link (thiếu ?quiz=abcde)",username:"—",correctCount:0,totalCount:0,progressPercent:0,attemptTimes:null});
+    document.getElementById("summary").innerHTML=`<div class="muted">Sai link.</div>`;
+    document.getElementById("wrongCard").style.display="none";
+    document.getElementById("lb").innerHTML=`<div class="muted">Sai link.</div>`;
+    document.getElementById("discussion").innerHTML=`<div class="muted">Sai link.</div>`;
+    return;
+  }
+
+  const token=getToken();
+  const fallbackName=loadName();
+
+  let me=await loadMeIfAny();
+  ME=me;
+
+  let username=me?.username||fallbackName||"—";
+  let myUserId=me?.user_id||"";
+  let qTitle="",qSub="";
+  try{const qm=await loadQuizMeta();qTitle=qm.title||"";qSub=qm.sub||""}catch{}
+
+  let aScore10=0,aCorrect=0,aTotal=0,aCreatedAt="";
+  let detailsJson={};
+  CAN_VIEW_DETAILS=false;
+  let targetUserId=myUserId||"";
+
+  if(attemptId){
+    try{
+      const out=await loadAttemptPublic(attemptId,token);
+      const a=out.attempt||{};
+      const u=out.user||{};
+      const q=out.quiz||{};
+      qTitle=q.title||qTitle||"Kết quả";
+      qSub=q.sub||qSub||"";
+      username=u.username||username||"—";
+      if(me?.user_id)myUserId=me.user_id;
+      if(!targetUserId)targetUserId=String(u.user_id||u.id||"");
+      aScore10=Number(a.score10||0);
+      aCorrect=Number(a.correct_count||0);
+      aTotal=Number(a.total_count||0);
+      aCreatedAt=a.created_at||"";
+      CAN_VIEW_DETAILS=!!out.can_view_details;
+      detailsJson=(a.details_json&&typeof a.details_json==="object")?a.details_json:{};
+    }catch(e){toast("Không load được attempt: "+(e?.message||"error"))}
+  }else{
+    try{
+      const cached=JSON.parse(sessionStorage.getItem(`tk_last_result::${quizId}`)||"null");
+      if(cached&&cached.result){
+        aScore10=Number(cached.result.score10||0);
+        aCorrect=Number(cached.result.fullCorrectCount||cached.result.correctCount||0);
+        aTotal=Number(cached.result.totalCount||0);
+        detailsJson=(cached.result&&typeof cached.result==="object")?cached.result:{};
+        username=cached?.me?.username||username;
+        targetUserId=String(cached?.me?.user_id||cached?.me?.id||targetUserId||"");
+        CAN_VIEW_DETAILS=true;
+      }
+    }catch{}
+  }
+
+  const prog=aTotal?(aCorrect/aTotal)*100:(aScore10*10);
+  setTopbar({title:qTitle||"Kết quả",sub:qSub||"",username:username||"—",correctCount:aCorrect,totalCount:aTotal,progressPercent:prog,attemptTimes:ATTEMPT_TIMES});
+
+  if(targetUserId){
+    try{
+      ATTEMPT_TIMES=await loadAttemptCount(targetUserId);
+      document.getElementById("attemptTimes").textContent=String(ATTEMPT_TIMES);
+    }catch{
+      ATTEMPT_TIMES=null;
+      document.getElementById("attemptTimes").textContent="—";
+    }
+  }
+
+  let wrongCountForUI=Math.max(0,(aTotal||0)-(aCorrect||0));
+  let okCount=0,badCount=wrongCountForUI,totalCount=aTotal||0;
+
+  REVIEW_HAS_DATA=false;
+  if(CAN_VIEW_DETAILS){
+    try{
+      QUESTIONS=await loadQuestionsPublic();
+      const perList=Array.isArray(detailsJson?.per)?detailsJson.per:[];
+      const answersMap=(detailsJson&&detailsJson.answers&&typeof detailsJson.answers==="object")?detailsJson.answers:null;
+      if(QUESTIONS.length&&(perList.length||answersMap)){
+        buildReviewFromAttempt({perList,answersMap});
+        REVIEW_HAS_DATA=true;
+        okCount=REVIEW_ITEMS.filter(x=>x.ok).length;
+        badCount=REVIEW_ITEMS.length-okCount;
+        totalCount=REVIEW_ITEMS.length||aTotal||0;
+      }else{
+        REVIEW_ITEMS=[];REVIEW_HAS_DATA=false;
+      }
+    }catch{
+      REVIEW_ITEMS=[];REVIEW_HAS_DATA=false;
+    }
+  }
+
+  renderSummaryCard({score10:aScore10,correctCount:aCorrect,totalCount:aTotal,wrongCount:wrongCountForUI,createdAt:aCreatedAt,canViewDetails:CAN_VIEW_DETAILS});
+  renderReviewCard({canViewDetails:CAN_VIEW_DETAILS,okCount,badCount,totalCount,hasData:REVIEW_HAS_DATA});
+
+  try{
+    const lbRows=await loadLeaderboard();
+    renderLeaderboard(lbRows,myUserId,"");
+  }catch(e){
+    renderLeaderboard([], "", e?.message||"RPC error");
+  }
+
+  const discussionEl=document.getElementById("discussion");
+  discussionEl.innerHTML=discussionHtml(username||fallbackName||"—");
+  const rootInput=document.getElementById("rootInput");
+  const rootCount=document.getElementById("rootCount");
+  const btnPostRoot=document.getElementById("btnPostRoot");
+
+  rootInput.addEventListener("input",()=>{rootCount.textContent=String((rootInput.value||"").length)},{passive:true});
+
+  const meForUI=me||{username:username||fallbackName||"",role:"user"};
+  ME=meForUI;
+
+  try{await loadComments();renderDiscussion(meForUI)}catch(e){discussionEl.innerHTML+=`<div class="muted" style="margin-top:10px">Không load được comments: <b>${escapeHtml(e?.message||String(e))}</b></div>`}
+
+  btnPostRoot.addEventListener("click",async()=>{
+    const text=String(rootInput.value||"").trim();
+    if(!text||text.length>DISCUSS_MAX){toast("Tối đa 120 ký tự");return}
+    const author=String(meForUI.username||"").trim();
+    if(!author){toast("Thiếu tên");return}
+    rootInput.value="";
+    rootCount.textContent="0";
+    try{await addComment({text,parent_id:null,author});await loadComments();renderDiscussion(meForUI);toast("Đã gửi")}catch{toast("Gửi lỗi (có thể do RLS)")}
+  });
 })();
 </script>
 </body>
