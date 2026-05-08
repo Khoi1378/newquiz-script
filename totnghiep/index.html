@@ -1,1 +1,1204 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no">
+<title>tuankhoi.site - Tính điểm tốt nghiệp</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800;900&display=swap" rel="stylesheet">
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5021811980022317"
+crossorigin="anonymous"></script>
+
+<style>
+:root{
+  --bg1:#ffecd2;
+  --bg2:#fcb69f;
+  --card:#fff;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --primary:#7c3aed;
+  --ok:#16a34a;
+  --bad:#dc2626;
+  --warn:#f59e0b;
+  --border:#e5e7eb;
+  --soft:#f8fafc;
+  --shadow:0 14px 40px rgba(0,0,0,.10);
+  --radius:18px;
+  --admin:#2563eb;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(1200px 600px at 20% 10%,#fff 0%,rgba(255,255,255,0) 55%),
+    linear-gradient(120deg,var(--bg1) 0%,var(--bg2) 100%);
+  overflow:hidden;
+  touch-action:pan-x pan-y;
+}
+
+button,input,select,textarea{
+  font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+button{font-synthesis:none}
+a{color:inherit;text-decoration:none}
+a:hover,a:active,a:visited{text-decoration:none}
+a:focus-visible{
+  outline:3px solid rgba(124,58,237,.25);
+  outline-offset:3px;
+  border-radius:14px;
+}
+
+#shell{
+  height:100vh;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:12px 0 110px;
+  touch-action:pan-y;
+}
+
+.wrap{
+  max-width:980px;
+  margin:0 auto;
+  padding:0 14px;
+}
+
+.userCorner{
+  position:fixed;
+  top:10px;
+  left:12px;
+  z-index:10010;
+  display:none;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  border-radius:999px;
+  background:rgba(255,255,255,.55);
+  border:1px solid rgba(229,231,235,.65);
+  backdrop-filter:blur(6px);
+  box-shadow:0 10px 22px rgba(0,0,0,.06);
+  user-select:none;
+  max-width:calc(100vw - 24px);
+}
+
+.userCorner .name{
+  font-weight:900;
+  font-size:.88rem;
+  color:rgba(31,41,55,.55);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:58vw;
+}
+
+.btn{
+  border:0;
+  cursor:pointer;
+  border-radius:999px;
+  padding:10px 14px;
+  font-weight:900;
+  font-size:.9rem;
+  transition:transform .16s ease,filter .16s ease;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  user-select:none;
+  white-space:nowrap;
+  box-shadow:0 12px 24px rgba(0,0,0,.12);
+  background:#fff;
+  color:#111827;
+  border:1px solid #e5e7eb;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.btn:hover{transform:translateY(-1px);filter:brightness(.98)}
+.btn:active{transform:translateY(0)}
+.btn-primary{
+  background:linear-gradient(135deg,#7c3aed,#fb7185);
+  color:#fff;
+  border:0;
+  box-shadow:0 12px 24px rgba(124,58,237,.18);
+}
+.btn-ghost{
+  background:#fff;
+  color:#111827;
+  border:1px solid #e5e7eb;
+  box-shadow:none;
+}
+.btn-danger{
+  background:var(--bad);
+  color:#fff;
+  border:0;
+}
+.btn[disabled]{
+  opacity:.6;
+  cursor:not-allowed;
+  transform:none!important;
+  filter:none!important;
+}
+
+.topbar{
+  margin-top:10px;
+  background:rgba(255,255,255,.86);
+  border:1px solid rgba(229,231,235,.9);
+  border-radius:18px;
+  box-shadow:0 10px 30px rgba(0,0,0,.06);
+  padding:14px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+}
+
+.titlebox{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex:1 1 360px;
+  min-width:240px;
+}
+
+.logo{
+  width:42px;
+  height:42px;
+  border-radius:16px;
+  background:linear-gradient(135deg,#a78bfa,#fb7185);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-weight:900;
+  box-shadow:0 10px 22px rgba(124,58,237,.18);
+  user-select:none;
+}
+
+.titles h1{
+  font-size:1.02rem;
+  margin:0;
+  font-weight:800;
+}
+
+.titles .tiny{
+  margin-top:3px;
+  font-size:.86rem;
+  color:var(--muted);
+  font-weight:700;
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:flex-end;
+  flex:1 1 320px;
+  flex-wrap:wrap;
+}
+
+.statusPill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:9px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.75);
+  border:1px solid rgba(229,231,235,.9);
+  color:rgba(31,41,55,.8);
+  font-weight:800;
+  font-size:.9rem;
+  box-shadow:0 10px 22px rgba(0,0,0,.05);
+  user-select:none;
+  max-width:72vw;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.content{padding:12px 0 0}
+
+.card{
+  background:var(--card);
+  border:2px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:14px;
+  margin:12px 0;
+}
+
+.row1{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.vi{
+  margin:0;
+  font-weight:900;
+  font-size:1.04rem;
+  line-height:1.25;
+}
+
+.muted{
+  color:var(--muted);
+  font-weight:700;
+}
+
+.idx{
+  font-size:.78rem;
+  font-weight:900;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#eff6ff;
+  color:#1d4ed8;
+  border:1px solid #dbeafe;
+  white-space:nowrap;
+}
+
+.badge-ok{
+  background:#ecfdf5;
+  color:#065f46;
+  border-color:#a7f3d0;
+}
+
+.badge-bad{
+  background:#fef2f2;
+  color:#991b1b;
+  border-color:#fecaca;
+}
+
+.badge-warn{
+  background:#fff7ed;
+  color:#9a3412;
+  border-color:#fed7aa;
+}
+
+.grid2{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.grid4{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+
+@media(max-width:760px){
+  .grid4{grid-template-columns:1fr 1fr}
+}
+@media(max-width:520px){
+  .grid2,.grid4{grid-template-columns:1fr}
+}
+
+.field{
+  display:grid;
+  gap:6px;
+}
+
+.field label{
+  font-weight:900;
+  font-size:.9rem;
+}
+
+.input{
+  width:100%;
+  border-radius:14px;
+  border:2px solid #e5e7eb;
+  padding:11px 12px;
+  font-size:.95rem;
+  font-weight:800;
+  outline:none;
+  background:var(--soft);
+  transition:border-color .15s ease,box-shadow .15s ease;
+  font-synthesis:none;
+}
+
+.input:focus{
+  border-color:rgba(124,58,237,.55);
+  box-shadow:0 0 0 5px rgba(124,58,237,.10);
+  background:#fff;
+}
+
+.input.error{
+  border-color:rgba(220,38,38,.6);
+  background:#fff7f7;
+}
+
+.help{
+  font-size:.78rem;
+  font-weight:800;
+  color:var(--muted);
+  line-height:1.35;
+}
+
+.resultBox{
+  display:none;
+  border-radius:18px;
+  padding:14px;
+  border:2px solid #e5e7eb;
+  background:#fff;
+}
+
+.resultBox.show{display:block}
+
+.resultScore{
+  font-size:2rem;
+  line-height:1;
+  font-weight:900;
+  margin:8px 0;
+}
+
+.resultOk{
+  border-color:#a7f3d0;
+  background:linear-gradient(135deg,#ecfdf5,#fff);
+}
+
+.resultBad{
+  border-color:#fecaca;
+  background:linear-gradient(135deg,#fef2f2,#fff);
+}
+
+.resultWarn{
+  border-color:#fed7aa;
+  background:linear-gradient(135deg,#fff7ed,#fff);
+}
+
+.formula{
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:16px;
+  padding:12px;
+  color:#374151;
+  font-weight:700;
+  font-size:.88rem;
+  line-height:1.45;
+}
+
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  background:rgba(17,24,39,.92);
+  color:#fff;
+  padding:10px 12px;
+  border-radius:14px;
+  font-weight:800;
+  font-size:.9rem;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .18s ease,transform .18s ease;
+  max-width:calc(100% - 28px);
+  z-index:20050;
+  text-align:center;
+}
+
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(-4px);
+}
+
+.saveState{
+  font-size:.82rem;
+  font-weight:900;
+  color:rgba(31,41,55,.62);
+}
+
+.smallList{
+  margin:8px 0 0;
+  padding-left:18px;
+  color:var(--muted);
+  font-weight:700;
+  font-size:.84rem;
+  line-height:1.45;
+}
+</style>
+</head>
+
+<body>
+<div class="userCorner" id="userCorner">
+  <span class="name" id="userCornerName">—</span>
+</div>
+
+<div id="shell">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="titlebox">
+        <div class="logo">TN</div>
+        <div class="titles">
+          <h1>Tính điểm tốt nghiệp</h1>
+          <div class="tiny">THPT 2026</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <div class="statusPill" id="statusPill">Đang kiểm tra đăng nhập…</div>
+        <a href="/">
+          <button class="btn btn-ghost">Trang chủ</button>
+        </a>
+      </div>
+    </div>
+
+    <div class="content" id="content">
+      <div class="card">
+        <p class="vi">Đang tải dữ liệu…</p>
+        <div class="muted" style="margin-top:8px">Nếu chưa đăng nhập, trang sẽ tự chuyển về trang chủ.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = "https://aidvlydhbdtwunyreqak.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpZHZseWRoYmR0d3VueXJlcWFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MzM5NzYsImV4cCI6MjA4NDIwOTk3Nn0.LMKGjKlUbC5qoY7hqDpaDFQrFWfwKemBTpxjTNp_L8o";
+
+const TOKEN_KEYS = ["tk_token_v2","tk_token_v1","tk_token"];
+const TOKEN_COOKIES = ["tk_token_v2","tk_token_v1","tk_token"];
+const ME_KEY = "tk_me_v2";
+const PAGE_PATH = "/totnghiep";
+
+const content = document.getElementById("content");
+const statusPill = document.getElementById("statusPill");
+const userCorner = document.getElementById("userCorner");
+const userCornerName = document.getElementById("userCornerName");
+
+let ME = null;
+let TOKEN = "";
+let SAVE_TIMER = null;
+let LAST_SAVE_JSON = "";
+let LOADED_DATA = {};
+
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = String(msg || "");
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1400);
+}
+
+function escapeHtml(s){
+  return String(s ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
+
+function getCookie(name){
+  const cs = document.cookie ? document.cookie.split(";") : [];
+  let found = "";
+  for(const raw of cs){
+    const s = raw.trim();
+    if(!s) continue;
+    const eq = s.indexOf("=");
+    const k = (eq >= 0 ? s.slice(0,eq) : s).trim();
+    if(k === name) found = eq >= 0 ? s.slice(eq + 1) : "";
+  }
+  try{return found ? decodeURIComponent(found) : ""}
+  catch{return found || ""}
+}
+
+function getToken(){
+  let t = "";
+
+  for(const k of TOKEN_KEYS){
+    try{
+      t = (localStorage.getItem(k) || "").trim();
+      if(t) break;
+    }catch{}
+  }
+
+  if(!t){
+    for(const k of TOKEN_KEYS){
+      try{
+        t = (sessionStorage.getItem(k) || "").trim();
+        if(t) break;
+      }catch{}
+    }
+  }
+
+  if(!t){
+    for(const c of TOKEN_COOKIES){
+      t = (getCookie(c) || "").trim();
+      if(t) break;
+    }
+  }
+
+  if(!t){
+    const wn = String(window.name || "");
+    if(wn.startsWith("tk:")) t = wn.slice(3).trim();
+  }
+
+  try{
+    const u = new URL(location.href);
+    if(!t){
+      const q = (u.searchParams.get("tk") || u.searchParams.get("token") || "").trim();
+      if(q) t = q;
+    }
+    if(!t && u.hash){
+      const hs = u.hash.replace(/^#/,"");
+      const p = new URLSearchParams(hs);
+      const q2 = (p.get("tk") || p.get("token") || "").trim();
+      if(q2) t = q2;
+    }
+  }catch{}
+
+  return t;
+}
+
+function getMeCache(){
+  try{
+    const raw = localStorage.getItem(ME_KEY);
+    if(!raw) return null;
+    const obj = JSON.parse(raw);
+    if(obj && obj.username) return obj;
+  }catch{}
+  return null;
+}
+
+function setMeCache(me){
+  try{
+    if(!me) localStorage.removeItem(ME_KEY);
+    else localStorage.setItem(ME_KEY, JSON.stringify(me));
+  }catch{}
+}
+
+function sbHeaders(){
+  return {
+    "apikey": SUPABASE_ANON_KEY,
+    "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+    "Content-Type": "application/json",
+    "Accept": "application/json"
+  };
+}
+
+async function rpc(fn,args){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    headers: sbHeaders(),
+    body: JSON.stringify(args || {})
+  });
+
+  const txt = await res.text();
+  let data = null;
+
+  try{data = txt ? JSON.parse(txt) : null}catch{}
+
+  if(!res.ok){
+    const msg = data && (data.message || data.error || data.hint)
+      ? (data.message || data.error || data.hint)
+      : txt;
+    throw new Error(msg || `RPC failed: ${fn}`);
+  }
+
+  return data;
+}
+
+async function rpcTry(fns,argsList){
+  let lastErr = null;
+  const list = Array.isArray(fns) ? fns : [fns];
+  const aList = Array.isArray(argsList) && argsList.length ? argsList : [{}];
+
+  for(const fn of list){
+    for(const args of aList){
+      try{
+        return await rpc(fn,args || {});
+      }catch(e){
+        lastErr = e;
+      }
+    }
+  }
+
+  throw lastErr || new Error("RPC failed");
+}
+
+function firstObj(x){
+  if(Array.isArray(x)) return x[0] || null;
+  if(x && typeof x === "object") return x;
+  return null;
+}
+
+function pickMe(out){
+  const o = firstObj(out) || {};
+  let me = o.me || o.user || o.profile || o.data || null;
+
+  if(Array.isArray(me)) me = me[0] || null;
+
+  if(me && typeof me === "object"){
+    return {
+      username: me.username || me.name || me.user || me.handle || "",
+      role: me.role || me.user_role || me.userRole || "user"
+    };
+  }
+
+  if(o.username){
+    return {
+      username: o.username,
+      role: o.role || "user"
+    };
+  }
+
+  return null;
+}
+
+function asOk(out){
+  const o = firstObj(out) || {};
+  if(typeof o.ok === "boolean") return o.ok;
+  if(pickMe(out)) return true;
+  return false;
+}
+
+async function apiMe(token){
+  const t = String(token || "").trim();
+  const out = await rpcTry(
+    ["api_me","me","app_me","api_whoami","api_profile","whoami"],
+    [
+      {p_token:t},
+      {token:t},
+      {p_session:t},
+      {session:t},
+      {session_token:t},
+      {p_session_token:t}
+    ]
+  );
+
+  return {
+    ok: asOk(out),
+    me: pickMe(out)
+  };
+}
+
+async function apiLoadProgress(token){
+  return await rpc("api_totnghiep_get", {
+    p_token: token
+  });
+}
+
+async function apiSaveProgress(token,data){
+  return await rpc("api_totnghiep_save", {
+    p_token: token,
+    p_data: data
+  });
+}
+
+function redirectLogin(){
+  const next = encodeURIComponent(PAGE_PATH);
+  location.href = `/?next=${next}`;
+}
+
+function updateUserUI(){
+  if(!ME || !ME.username){
+    statusPill.textContent = "Chưa đăng nhập";
+    userCorner.style.display = "none";
+    return;
+  }
+
+  statusPill.innerHTML = `Xin chào <b>${escapeHtml(ME.username)}</b>`;
+  userCornerName.textContent = ME.username;
+  userCorner.style.display = "inline-flex";
+}
+
+function rawValue(id){
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : "";
+}
+
+function smartNumber(raw, required){
+  let s = String(raw ?? "").trim().replace(",", ".");
+
+  if(!s){
+    if(required){
+      return {ok:false, empty:true, value:null, text:"Chưa nhập"};
+    }
+    return {ok:true, empty:true, value:0, text:""};
+  }
+
+  if(/^\d{2}$/.test(s) && s !== "10"){
+    s = s[0] + "." + s[1];
+  }
+
+  if(!/^\d+(\.\d+)?$/.test(s)){
+    return {ok:false, empty:false, value:null, text:"Điểm không hợp lệ"};
+  }
+
+  const n = Number(s);
+
+  if(!Number.isFinite(n)){
+    return {ok:false, empty:false, value:null, text:"Điểm không hợp lệ"};
+  }
+
+  if(n < 0 || n > 10){
+    return {ok:false, empty:false, value:null, text:"Điểm phải từ 0 đến 10"};
+  }
+
+  return {ok:true, empty:false, value:n, text:""};
+}
+
+function round2(n){
+  return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+}
+
+function fmt(n){
+  if(!Number.isFinite(Number(n))) return "—";
+  return round2(n).toFixed(2);
+}
+
+function setFieldError(id, hasError){
+  const el = document.getElementById(id);
+  if(el) el.classList.toggle("error", !!hasError);
+}
+
+function collectRawData(){
+  return {
+    math: rawValue("math"),
+    literature: rawValue("literature"),
+    elective1: rawValue("elective1"),
+    elective2: rawValue("elective2"),
+    grade10: rawValue("grade10"),
+    grade11: rawValue("grade11"),
+    grade12: rawValue("grade12"),
+    bonus: rawValue("bonus"),
+    priority: rawValue("priority")
+  };
+}
+
+function validateAndCalc(showErrors){
+  const idsRequired = [
+    "math",
+    "literature",
+    "elective1",
+    "elective2",
+    "grade10",
+    "grade11",
+    "grade12"
+  ];
+
+  const parsed = {};
+  let ok = true;
+  let firstError = "";
+
+  for(const id of idsRequired){
+    const p = smartNumber(rawValue(id), true);
+    parsed[id] = p.value;
+    if(!p.ok){
+      ok = false;
+      if(!firstError) firstError = `${fieldName(id)}: ${p.text}`;
+    }
+    if(showErrors) setFieldError(id,!p.ok);
+  }
+
+  for(const id of ["bonus","priority"]){
+    const p = smartNumber(rawValue(id), false);
+    parsed[id] = p.value;
+    if(!p.ok){
+      ok = false;
+      if(!firstError) firstError = `${fieldName(id)}: ${p.text}`;
+    }
+    if(showErrors) setFieldError(id,!p.ok);
+  }
+
+  if(!ok){
+    return {
+      ok:false,
+      error:firstError || "Vui lòng kiểm tra lại điểm."
+    };
+  }
+
+  const examScores = [
+    parsed.math,
+    parsed.literature,
+    parsed.elective1,
+    parsed.elective2
+  ];
+
+  const hasDeadScore = examScores.some(x => Number(x) <= 1);
+
+  const examAvg = round2((parsed.math + parsed.literature + parsed.elective1 + parsed.elective2) / 4);
+  const schoolAvg = round2((parsed.grade10 + parsed.grade11 + parsed.grade12) / 3);
+
+  const graduationScore = round2(
+    examAvg * 0.5 +
+    schoolAvg * 0.5 +
+    parsed.priority +
+    parsed.bonus
+  );
+
+  const passByScore = graduationScore >= 5;
+  const pass = passByScore && !hasDeadScore;
+
+  return {
+    ok:true,
+    parsed,
+    examAvg,
+    schoolAvg,
+    graduationScore,
+    hasDeadScore,
+    passByScore,
+    pass
+  };
+}
+
+function fieldName(id){
+  const map = {
+    math:"Toán",
+    literature:"Văn",
+    elective1:"Tự chọn 1",
+    elective2:"Tự chọn 2",
+    grade10:"Điểm TB lớp 10",
+    grade11:"Điểm TB lớp 11",
+    grade12:"Điểm TB lớp 12",
+    bonus:"Điểm khuyến khích",
+    priority:"Điểm ưu tiên"
+  };
+  return map[id] || id;
+}
+
+function renderResult(){
+  const box = document.getElementById("resultBox");
+  const calc = validateAndCalc(true);
+
+  if(!box) return;
+
+  if(!calc.ok){
+    box.className = "resultBox show resultWarn";
+    box.innerHTML = `
+      <div class="row1">
+        <p class="vi">Chưa thể tính</p>
+        <span class="idx badge-warn">THIẾU / SAI DỮ LIỆU</span>
+      </div>
+      <div class="muted" style="margin-top:8px">${escapeHtml(calc.error)}</div>
+    `;
+    toast(calc.error);
+    return;
+  }
+
+  const badge = calc.pass
+    ? `<span class="idx badge-ok">ĐẬU TỐT NGHIỆP</span>`
+    : `<span class="idx badge-bad">CHƯA ĐẬU</span>`;
+
+  const cls = calc.pass ? "resultOk" : "resultBad";
+
+  let note = "";
+
+  if(calc.hasDeadScore){
+    note = `Có môn thi đạt ≤ 1.0 điểm nên bị tính là điểm liệt. Dù ĐXTN là ${fmt(calc.graduationScore)}, vẫn chưa đủ điều kiện công nhận tốt nghiệp.`;
+  }else if(calc.graduationScore >= 5){
+    note = "Điểm xét tốt nghiệp từ 5.00 trở lên và không có điểm liệt.";
+  }else{
+    note = "Điểm xét tốt nghiệp dưới 5.00.";
+  }
+
+  box.className = `resultBox show ${cls}`;
+  box.innerHTML = `
+    <div class="row1">
+      <p class="vi">Điểm xét tốt nghiệp của bạn là</p>
+      ${badge}
+    </div>
+
+    <div class="resultScore">${fmt(calc.graduationScore)}</div>
+
+    <div class="muted" style="line-height:1.45">
+      ${escapeHtml(note)}
+    </div>
+
+    <div style="height:1px;background:#e5e7eb;margin:12px 0"></div>
+
+    <div class="grid2">
+      <div class="formula">
+        <b>Điểm thi:</b> ${fmt(calc.examAvg)}<br>
+        Trung bình 4 môn thi.
+      </div>
+      <div class="formula">
+        <b>ĐTB 3 năm:</b> ${fmt(calc.schoolAvg)}<br>
+        Trung bình lớp 10, 11, 12.
+      </div>
+    </div>
+  `;
+}
+
+function scheduleSave(){
+  const state = document.getElementById("saveState");
+  if(state) state.textContent = "Đang chờ lưu…";
+
+  clearTimeout(SAVE_TIMER);
+  SAVE_TIMER = setTimeout(saveNow, 450);
+}
+
+async function saveNow(){
+  const state = document.getElementById("saveState");
+  const data = collectRawData();
+  data.savedAtClient = new Date().toISOString();
+
+  const json = JSON.stringify(data);
+
+  if(json === LAST_SAVE_JSON){
+    if(state) state.textContent = "Đã lưu";
+    return;
+  }
+
+  LAST_SAVE_JSON = json;
+
+  try{
+    if(state) state.textContent = "Đang lưu…";
+    const out = await apiSaveProgress(TOKEN,data);
+
+    if(!out || out.ok === false){
+      throw new Error(out && out.error ? out.error : "save_failed");
+    }
+
+    if(state) state.textContent = "Đã lưu";
+  }catch(e){
+    if(state) state.textContent = "Lưu lỗi";
+    console.warn(e);
+  }
+}
+
+function setInputValues(data){
+  const ids = [
+    "math",
+    "literature",
+    "elective1",
+    "elective2",
+    "grade10",
+    "grade11",
+    "grade12",
+    "bonus",
+    "priority"
+  ];
+
+  for(const id of ids){
+    const el = document.getElementById(id);
+    if(el && data && data[id] != null){
+      el.value = String(data[id]);
+    }
+  }
+}
+
+function normalizeInputOnBlur(e){
+  const el = e.target;
+  const required = !["bonus","priority"].includes(el.id);
+  const p = smartNumber(el.value, required);
+
+  if(p.ok && !p.empty){
+    el.value = String(p.value);
+  }
+
+  scheduleSave();
+}
+
+function bindInputs(){
+  const inputs = document.querySelectorAll(".scoreInput");
+
+  inputs.forEach(el => {
+    el.addEventListener("input", () => {
+      el.value = el.value.replace(",", ".");
+      setFieldError(el.id,false);
+      scheduleSave();
+    });
+
+    el.addEventListener("blur", normalizeInputOnBlur);
+
+    el.addEventListener("keydown", e => {
+      if(e.key === "Enter"){
+        e.preventDefault();
+        renderResult();
+      }
+    });
+  });
+
+  const btn = document.getElementById("btnCalc");
+  if(btn) btn.onclick = () => {
+    saveNow();
+    renderResult();
+  };
+
+  window.addEventListener("beforeunload", () => {
+    const data = collectRawData();
+    try{
+      navigator.sendBeacon;
+    }catch{}
+  });
+}
+
+function renderPage(data){
+  content.innerHTML = `
+    <div class="card">
+      <div class="row1">
+        <div>
+          <p class="vi">Tính điểm thi tốt nghiệp</p>
+          <div class="muted" style="margin-top:6px;line-height:1.35">
+            Nhập điểm theo thang 10. Có thể nhập tắt: <b>58</b> sẽ hiểu là <b>5.8</b>, dấu phẩy tự đổi thành dấu chấm, còn <b>10</b> giữ nguyên.
+          </div>
+        </div>
+        <div class="saveState" id="saveState">Đã tải</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Điểm thi THPT QG</p>
+        <span class="idx">BẮT BUỘC</span>
+      </div>
+
+      <div class="grid4" style="margin-top:12px">
+        <div class="field">
+          <label for="math">Toán</label>
+          <input class="input scoreInput" id="math" inputmode="decimal" placeholder="vd: 8.2">
+        </div>
+
+        <div class="field">
+          <label for="literature">Văn</label>
+          <input class="input scoreInput" id="literature" inputmode="decimal" placeholder="vd: 7.5">
+        </div>
+
+        <div class="field">
+          <label for="elective1">Tự chọn 1</label>
+          <input class="input scoreInput" id="elective1" inputmode="decimal" placeholder="vd: 8">
+        </div>
+
+        <div class="field">
+          <label for="elective2">Tự chọn 2</label>
+          <input class="input scoreInput" id="elective2" inputmode="decimal" placeholder="vd: 6.8">
+        </div>
+      </div>
+
+      <ul class="smallList">
+        <li>Nếu có môn thi nào ≤ 1.0 điểm thì bị tính là điểm liệt.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Điểm học bạ THPT</p>
+        <span class="idx">BẮT BUỘC</span>
+      </div>
+
+      <div class="grid4" style="margin-top:12px">
+        <div class="field">
+          <label for="grade10">Điểm trung bình cả năm 10</label>
+          <input class="input scoreInput" id="grade10" inputmode="decimal" placeholder="vd: 7.8">
+        </div>
+
+        <div class="field">
+          <label for="grade11">Điểm trung bình cả năm 11</label>
+          <input class="input scoreInput" id="grade11" inputmode="decimal" placeholder="vd: 8.1">
+        </div>
+
+        <div class="field">
+          <label for="grade12">Điểm trung bình cả năm 12</label>
+          <input class="input scoreInput" id="grade12" inputmode="decimal" placeholder="vd: 8.4">
+        </div>
+
+        <div class="formula">
+          <b>ĐTB 3 năm</b><br>
+          = lớp 10 + lớp 11 + lớp 12, chia 3.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row1">
+        <p class="vi">Điểm cộng thêm</p>
+        <span class="idx badge-warn">KHÔNG BẮT BUỘC</span>
+      </div>
+
+      <div class="grid2" style="margin-top:12px">
+        <div class="field">
+          <label for="bonus">Điểm khuyến khích nếu có</label>
+          <input class="input scoreInput" id="bonus" inputmode="decimal" placeholder="Bỏ trống nếu không có">
+          <div class="help">Ví dụ: 1, 1.5, 2</div>
+        </div>
+
+        <div class="field">
+          <label for="priority">Điểm ưu tiên nếu có</label>
+          <input class="input scoreInput" id="priority" inputmode="decimal" placeholder="Bỏ trống nếu không có">
+          <div class="help">Ví dụ: 0.75, 1, 2</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <button class="btn btn-primary" id="btnCalc" style="width:100%;padding:13px 16px;font-size:1rem">
+        Xem kết quả
+      </button>
+
+      <div id="resultBox" class="resultBox" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <p class="vi">Cách tính</p>
+      <div class="formula" style="margin-top:10px">
+        <b>ĐXTN</b> = Điểm thi × 50% + ĐTB 3 năm × 50% + Điểm ưu tiên + Điểm khuyến khích
+        <br><br>
+        <b>Điểm thi</b> = trung bình 4 môn: Toán, Văn, Tự chọn 1, Tự chọn 2.
+        <br>
+        <b>ĐTB 3 năm</b> = trung bình điểm cả năm lớp 10, 11, 12.
+        <br>
+        Kết quả được làm tròn đến 2 chữ số thập phân.
+      </div>
+    </div>
+  `;
+
+  setInputValues(data || {});
+  LAST_SAVE_JSON = JSON.stringify(collectRawData());
+  bindInputs();
+}
+
+async function boot(){
+  TOKEN = getToken();
+  ME = getMeCache();
+  updateUserUI();
+
+  if(!TOKEN){
+    redirectLogin();
+    return;
+  }
+
+  try{
+    const meOut = await apiMe(TOKEN);
+
+    if(!meOut || !meOut.ok || !meOut.me || !meOut.me.username){
+      redirectLogin();
+      return;
+    }
+
+    ME = meOut.me;
+    setMeCache(ME);
+    updateUserUI();
+
+    const progress = await apiLoadProgress(TOKEN);
+
+    if(!progress || progress.ok === false){
+      redirectLogin();
+      return;
+    }
+
+    LOADED_DATA = progress.data || {};
+    renderPage(LOADED_DATA);
+  }catch(e){
+    console.warn(e);
+    redirectLogin();
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
