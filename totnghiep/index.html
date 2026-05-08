@@ -33,6 +33,7 @@ crossorigin="anonymous"></script>
 *{box-sizing:border-box}
 html,body{height:100%}
 html{-webkit-text-size-adjust:100%}
+
 body{
   margin:0;
   font-family:"Montserrat",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
@@ -51,8 +52,10 @@ button,input,select,textarea{
 }
 
 button{font-synthesis:none}
+
 a{color:inherit;text-decoration:none}
 a:hover,a:active,a:visited{text-decoration:none}
+
 a:focus-visible{
   outline:3px solid rgba(124,58,237,.25);
   outline-offset:3px;
@@ -125,23 +128,27 @@ a:focus-visible{
 
 .btn:hover{transform:translateY(-1px);filter:brightness(.98)}
 .btn:active{transform:translateY(0)}
+
 .btn-primary{
   background:linear-gradient(135deg,#7c3aed,#fb7185);
   color:#fff;
   border:0;
   box-shadow:0 12px 24px rgba(124,58,237,.18);
 }
+
 .btn-ghost{
   background:#fff;
   color:#111827;
   border:1px solid #e5e7eb;
   box-shadow:none;
 }
+
 .btn-danger{
   background:var(--bad);
   color:#fff;
   border:0;
 }
+
 .btn[disabled]{
   opacity:.6;
   cursor:not-allowed;
@@ -268,18 +275,6 @@ a:focus-visible{
   white-space:nowrap;
 }
 
-.badge-ok{
-  background:#ecfdf5;
-  color:#065f46;
-  border-color:#a7f3d0;
-}
-
-.badge-bad{
-  background:#fef2f2;
-  color:#991b1b;
-  border-color:#fecaca;
-}
-
 .badge-warn{
   background:#fff7ed;
   color:#9a3412;
@@ -301,6 +296,7 @@ a:focus-visible{
 @media(max-width:760px){
   .grid4{grid-template-columns:1fr 1fr}
 }
+
 @media(max-width:520px){
   .grid2,.grid4{grid-template-columns:1fr}
 }
@@ -377,6 +373,15 @@ a:focus-visible{
   border-color:#fed7aa;
   background:linear-gradient(135deg,#fff7ed,#fff);
 }
+
+.passText{
+  font-weight:900;
+  font-size:1.08rem;
+  line-height:1.35;
+}
+
+.passText.ok{color:var(--ok)}
+.passText.bad{color:var(--bad)}
 
 .formula{
   background:#f8fafc;
@@ -720,14 +725,33 @@ function rawValue(id){
   return el ? el.value.trim() : "";
 }
 
+function cleanScoreInput(v){
+  v = String(v || "");
+
+  v = v.replace(/,/g, ".");
+
+  v = v.replace(/[^0-9.]/g, "");
+
+  const firstDot = v.indexOf(".");
+  if(firstDot !== -1){
+    v = v.slice(0, firstDot + 1) + v.slice(firstDot + 1).replace(/\./g, "");
+  }
+
+  return v;
+}
+
 function smartNumber(raw, required){
-  let s = String(raw ?? "").trim().replace(",", ".");
+  let s = cleanScoreInput(raw).trim();
 
   if(!s){
     if(required){
       return {ok:false, empty:true, value:null, text:"Chưa nhập"};
     }
     return {ok:true, empty:true, value:0, text:""};
+  }
+
+  if(s === "."){
+    return {ok:false, empty:false, value:null, text:"Điểm không hợp lệ"};
   }
 
   if(/^\d{2}$/.test(s) && s !== "10"){
@@ -797,20 +821,24 @@ function validateAndCalc(showErrors){
   for(const id of idsRequired){
     const p = smartNumber(rawValue(id), true);
     parsed[id] = p.value;
+
     if(!p.ok){
       ok = false;
       if(!firstError) firstError = `${fieldName(id)}: ${p.text}`;
     }
+
     if(showErrors) setFieldError(id,!p.ok);
   }
 
   for(const id of ["bonus","priority"]){
     const p = smartNumber(rawValue(id), false);
     parsed[id] = p.value;
+
     if(!p.ok){
       ok = false;
       if(!firstError) firstError = `${fieldName(id)}: ${p.text}`;
     }
+
     if(showErrors) setFieldError(id,!p.ok);
   }
 
@@ -828,9 +856,10 @@ function validateAndCalc(showErrors){
     parsed.elective2
   ];
 
+  const examTotal = round2(parsed.math + parsed.literature + parsed.elective1 + parsed.elective2);
   const hasDeadScore = examScores.some(x => Number(x) <= 1);
 
-  const examAvg = round2((parsed.math + parsed.literature + parsed.elective1 + parsed.elective2) / 4);
+  const examAvg = round2(examTotal / 4);
   const schoolAvg = round2((parsed.grade10 + parsed.grade11 + parsed.grade12) / 3);
 
   const graduationScore = round2(
@@ -846,6 +875,7 @@ function validateAndCalc(showErrors){
   return {
     ok:true,
     parsed,
+    examTotal,
     examAvg,
     schoolAvg,
     graduationScore,
@@ -867,6 +897,7 @@ function fieldName(id){
     bonus:"Điểm khuyến khích",
     priority:"Điểm ưu tiên"
   };
+
   return map[id] || id;
 }
 
@@ -881,7 +912,6 @@ function renderResult(){
     box.innerHTML = `
       <div class="row1">
         <p class="vi">Chưa thể tính</p>
-        <span class="idx badge-warn">THIẾU / SAI DỮ LIỆU</span>
       </div>
       <div class="muted" style="margin-top:8px">${escapeHtml(calc.error)}</div>
     `;
@@ -889,11 +919,9 @@ function renderResult(){
     return;
   }
 
-  const badge = calc.pass
-    ? `<span class="idx badge-ok">ĐẬU TỐT NGHIỆP</span>`
-    : `<span class="idx badge-bad">CHƯA ĐẬU</span>`;
-
   const cls = calc.pass ? "resultOk" : "resultBad";
+  const passClass = calc.pass ? "ok" : "bad";
+  const passText = calc.pass ? "Đậu tốt nghiệp" : "Chưa đậu tốt nghiệp";
 
   let note = "";
 
@@ -907,28 +935,22 @@ function renderResult(){
 
   box.className = `resultBox show ${cls}`;
   box.innerHTML = `
-    <div class="row1">
-      <p class="vi">Điểm xét tốt nghiệp của bạn là</p>
-      ${badge}
-    </div>
+    <p class="vi">Điểm xét tốt nghiệp của bạn là</p>
 
     <div class="resultScore">${fmt(calc.graduationScore)}</div>
 
-    <div class="muted" style="line-height:1.45">
+    <div class="passText ${passClass}">
+      ${escapeHtml(passText)}
+    </div>
+
+    <div class="muted" style="line-height:1.45;margin-top:8px">
       ${escapeHtml(note)}
     </div>
 
     <div style="height:1px;background:#e5e7eb;margin:12px 0"></div>
 
-    <div class="grid2">
-      <div class="formula">
-        <b>Điểm thi:</b> ${fmt(calc.examAvg)}<br>
-        Trung bình 4 môn thi.
-      </div>
-      <div class="formula">
-        <b>ĐTB 3 năm:</b> ${fmt(calc.schoolAvg)}<br>
-        Trung bình lớp 10, 11, 12.
-      </div>
+    <div class="formula">
+      <b>Tổng điểm 4 môn thi:</b> ${fmt(calc.examTotal)}
     </div>
   `;
 }
@@ -957,6 +979,7 @@ async function saveNow(){
 
   try{
     if(state) state.textContent = "Đang lưu…";
+
     const out = await apiSaveProgress(TOKEN,data);
 
     if(!out || out.ok === false){
@@ -986,13 +1009,15 @@ function setInputValues(data){
   for(const id of ids){
     const el = document.getElementById(id);
     if(el && data && data[id] != null){
-      el.value = String(data[id]);
+      el.value = cleanScoreInput(String(data[id]));
     }
   }
 }
 
 function normalizeInputOnBlur(e){
   const el = e.target;
+  el.value = cleanScoreInput(el.value);
+
   const required = !["bonus","priority"].includes(el.id);
   const p = smartNumber(el.value, required);
 
@@ -1007,8 +1032,40 @@ function bindInputs(){
   const inputs = document.querySelectorAll(".scoreInput");
 
   inputs.forEach(el => {
+    el.addEventListener("beforeinput", e => {
+      if(e.inputType && e.inputType.startsWith("delete")) return;
+      if(e.data == null) return;
+
+      if(!/^[0-9,.]+$/.test(e.data)){
+        e.preventDefault();
+      }
+    });
+
+    el.addEventListener("paste", e => {
+      e.preventDefault();
+
+      const text = (e.clipboardData || window.clipboardData).getData("text") || "";
+      const cleaned = cleanScoreInput(text);
+
+      const start = el.selectionStart ?? el.value.length;
+      const end = el.selectionEnd ?? el.value.length;
+
+      el.value = cleanScoreInput(
+        el.value.slice(0,start) + cleaned + el.value.slice(end)
+      );
+
+      setFieldError(el.id,false);
+      scheduleSave();
+    });
+
     el.addEventListener("input", () => {
-      el.value = el.value.replace(",", ".");
+      const old = el.value;
+      const cleaned = cleanScoreInput(old);
+
+      if(old !== cleaned){
+        el.value = cleaned;
+      }
+
       setFieldError(el.id,false);
       scheduleSave();
     });
@@ -1016,6 +1073,11 @@ function bindInputs(){
     el.addEventListener("blur", normalizeInputOnBlur);
 
     el.addEventListener("keydown", e => {
+      if(e.key === "-" || e.key === "+" || e.key.toLowerCase() === "e"){
+        e.preventDefault();
+        return;
+      }
+
       if(e.key === "Enter"){
         e.preventDefault();
         renderResult();
@@ -1024,17 +1086,13 @@ function bindInputs(){
   });
 
   const btn = document.getElementById("btnCalc");
-  if(btn) btn.onclick = () => {
-    saveNow();
-    renderResult();
-  };
 
-  window.addEventListener("beforeunload", () => {
-    const data = collectRawData();
-    try{
-      navigator.sendBeacon;
-    }catch{}
-  });
+  if(btn){
+    btn.onclick = () => {
+      saveNow();
+      renderResult();
+    };
+  }
 }
 
 function renderPage(data){
@@ -1060,22 +1118,22 @@ function renderPage(data){
       <div class="grid4" style="margin-top:12px">
         <div class="field">
           <label for="math">Toán</label>
-          <input class="input scoreInput" id="math" inputmode="decimal" placeholder="vd: 8.2">
+          <input class="input scoreInput" id="math" type="text" inputmode="decimal" autocomplete="off">
         </div>
 
         <div class="field">
           <label for="literature">Văn</label>
-          <input class="input scoreInput" id="literature" inputmode="decimal" placeholder="vd: 7.5">
+          <input class="input scoreInput" id="literature" type="text" inputmode="decimal" autocomplete="off">
         </div>
 
         <div class="field">
           <label for="elective1">Tự chọn 1</label>
-          <input class="input scoreInput" id="elective1" inputmode="decimal" placeholder="vd: 8">
+          <input class="input scoreInput" id="elective1" type="text" inputmode="decimal" autocomplete="off">
         </div>
 
         <div class="field">
           <label for="elective2">Tự chọn 2</label>
-          <input class="input scoreInput" id="elective2" inputmode="decimal" placeholder="vd: 6.8">
+          <input class="input scoreInput" id="elective2" type="text" inputmode="decimal" autocomplete="off">
         </div>
       </div>
 
@@ -1093,22 +1151,22 @@ function renderPage(data){
       <div class="grid4" style="margin-top:12px">
         <div class="field">
           <label for="grade10">Điểm trung bình cả năm 10</label>
-          <input class="input scoreInput" id="grade10" inputmode="decimal" placeholder="vd: 7.8">
+          <input class="input scoreInput" id="grade10" type="text" inputmode="decimal" autocomplete="off">
         </div>
 
         <div class="field">
           <label for="grade11">Điểm trung bình cả năm 11</label>
-          <input class="input scoreInput" id="grade11" inputmode="decimal" placeholder="vd: 8.1">
+          <input class="input scoreInput" id="grade11" type="text" inputmode="decimal" autocomplete="off">
         </div>
 
         <div class="field">
           <label for="grade12">Điểm trung bình cả năm 12</label>
-          <input class="input scoreInput" id="grade12" inputmode="decimal" placeholder="vd: 8.4">
+          <input class="input scoreInput" id="grade12" type="text" inputmode="decimal" autocomplete="off">
         </div>
 
         <div class="formula">
           <b>ĐTB 3 năm</b><br>
-          = lớp 10 + lớp 11 + lớp 12, chia 3.
+          ĐTB 3 Năm tính bằng (Lớp 10 + Lớp 11 + Lớp 12)/3
         </div>
       </div>
     </div>
@@ -1122,14 +1180,14 @@ function renderPage(data){
       <div class="grid2" style="margin-top:12px">
         <div class="field">
           <label for="bonus">Điểm khuyến khích nếu có</label>
-          <input class="input scoreInput" id="bonus" inputmode="decimal" placeholder="Bỏ trống nếu không có">
-          <div class="help">Ví dụ: 1, 1.5, 2</div>
+          <input class="input scoreInput" id="bonus" type="text" inputmode="decimal" autocomplete="off">
+          <div class="help">Bỏ trống nếu không có.</div>
         </div>
 
         <div class="field">
           <label for="priority">Điểm ưu tiên nếu có</label>
-          <input class="input scoreInput" id="priority" inputmode="decimal" placeholder="Bỏ trống nếu không có">
-          <div class="help">Ví dụ: 0.75, 1, 2</div>
+          <input class="input scoreInput" id="priority" type="text" inputmode="decimal" autocomplete="off">
+          <div class="help">Bỏ trống nếu không có.</div>
         </div>
       </div>
     </div>
@@ -1149,7 +1207,7 @@ function renderPage(data){
         <br><br>
         <b>Điểm thi</b> = trung bình 4 môn: Toán, Văn, Tự chọn 1, Tự chọn 2.
         <br>
-        <b>ĐTB 3 năm</b> = trung bình điểm cả năm lớp 10, 11, 12.
+        <b>ĐTB 3 năm</b> = (Lớp 10 + Lớp 11 + Lớp 12)/3.
         <br>
         Kết quả được làm tròn đến 2 chữ số thập phân.
       </div>
