@@ -149,6 +149,13 @@ a:focus-visible{
   border:0;
 }
 
+.btn-clear{
+  background:#fff;
+  color:var(--bad);
+  border:1px solid #fecaca;
+  box-shadow:none;
+}
+
 .btn[disabled]{
   opacity:.6;
   cursor:not-allowed;
@@ -432,6 +439,13 @@ a:focus-visible{
   font-size:.84rem;
   line-height:1.45;
 }
+
+.resultActions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
 </style>
 </head>
 
@@ -509,15 +523,24 @@ function escapeHtml(s){
 function getCookie(name){
   const cs = document.cookie ? document.cookie.split(";") : [];
   let found = "";
+
   for(const raw of cs){
     const s = raw.trim();
     if(!s) continue;
+
     const eq = s.indexOf("=");
     const k = (eq >= 0 ? s.slice(0,eq) : s).trim();
-    if(k === name) found = eq >= 0 ? s.slice(eq + 1) : "";
+
+    if(k === name){
+      found = eq >= 0 ? s.slice(eq + 1) : "";
+    }
   }
-  try{return found ? decodeURIComponent(found) : ""}
-  catch{return found || ""}
+
+  try{
+    return found ? decodeURIComponent(found) : "";
+  }catch{
+    return found || "";
+  }
 }
 
 function getToken(){
@@ -553,10 +576,12 @@ function getToken(){
 
   try{
     const u = new URL(location.href);
+
     if(!t){
       const q = (u.searchParams.get("tk") || u.searchParams.get("token") || "").trim();
       if(q) t = q;
     }
+
     if(!t && u.hash){
       const hs = u.hash.replace(/^#/,"");
       const p = new URLSearchParams(hs);
@@ -572,9 +597,11 @@ function getMeCache(){
   try{
     const raw = localStorage.getItem(ME_KEY);
     if(!raw) return null;
+
     const obj = JSON.parse(raw);
     if(obj && obj.username) return obj;
   }catch{}
+
   return null;
 }
 
@@ -604,12 +631,15 @@ async function rpc(fn,args){
   const txt = await res.text();
   let data = null;
 
-  try{data = txt ? JSON.parse(txt) : null}catch{}
+  try{
+    data = txt ? JSON.parse(txt) : null;
+  }catch{}
 
   if(!res.ok){
     const msg = data && (data.message || data.error || data.hint)
       ? (data.message || data.error || data.hint)
       : txt;
+
     throw new Error(msg || `RPC failed: ${fn}`);
   }
 
@@ -665,13 +695,16 @@ function pickMe(out){
 
 function asOk(out){
   const o = firstObj(out) || {};
+
   if(typeof o.ok === "boolean") return o.ok;
   if(pickMe(out)) return true;
+
   return false;
 }
 
 async function apiMe(token){
   const t = String(token || "").trim();
+
   const out = await rpcTry(
     ["api_me","me","app_me","api_whoami","api_profile","whoami"],
     [
@@ -727,9 +760,7 @@ function rawValue(id){
 
 function cleanScoreInput(v){
   v = String(v || "");
-
   v = v.replace(/,/g, ".");
-
   v = v.replace(/[^0-9.]/g, "");
 
   const firstDot = v.indexOf(".");
@@ -747,6 +778,7 @@ function smartNumber(raw, required){
     if(required){
       return {ok:false, empty:true, value:null, text:"Chưa nhập"};
     }
+
     return {ok:true, empty:true, value:0, text:""};
   }
 
@@ -915,6 +947,7 @@ function renderResult(){
       </div>
       <div class="muted" style="margin-top:8px">${escapeHtml(calc.error)}</div>
     `;
+
     toast(calc.error);
     return;
   }
@@ -953,6 +986,45 @@ function renderResult(){
       <b>Tổng điểm 4 môn thi:</b> ${fmt(calc.examTotal)}
     </div>
   `;
+}
+
+async function clearAllScores(){
+  const ok = confirm("Xóa tất cả điểm đã nhập?");
+  if(!ok) return;
+
+  const ids = [
+    "math",
+    "literature",
+    "elective1",
+    "elective2",
+    "grade10",
+    "grade11",
+    "grade12",
+    "bonus",
+    "priority"
+  ];
+
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+
+    if(el){
+      el.value = "";
+      el.classList.remove("error");
+    }
+  });
+
+  const box = document.getElementById("resultBox");
+
+  if(box){
+    box.className = "resultBox";
+    box.innerHTML = "";
+  }
+
+  LAST_SAVE_JSON = "";
+
+  await saveNow();
+
+  toast("Đã xoá tất cả");
 }
 
 function scheduleSave(){
@@ -1008,6 +1080,7 @@ function setInputValues(data){
 
   for(const id of ids){
     const el = document.getElementById(id);
+
     if(el && data && data[id] != null){
       el.value = cleanScoreInput(String(data[id]));
     }
@@ -1092,6 +1165,12 @@ function bindInputs(){
       saveNow();
       renderResult();
     };
+  }
+
+  const btnClearAll = document.getElementById("btnClearAll");
+
+  if(btnClearAll){
+    btnClearAll.onclick = clearAllScores;
   }
 }
 
@@ -1193,9 +1272,15 @@ function renderPage(data){
     </div>
 
     <div class="card">
-      <button class="btn btn-primary" id="btnCalc" style="width:100%;padding:13px 16px;font-size:1rem">
-        Xem kết quả
-      </button>
+      <div class="resultActions">
+        <button class="btn btn-primary" id="btnCalc" style="flex:1 1 220px;padding:13px 16px;font-size:1rem">
+          Xem kết quả
+        </button>
+
+        <button class="btn btn-clear" id="btnClearAll" style="flex:1 1 180px;padding:13px 16px;font-size:1rem">
+          Xóa tất cả
+        </button>
+      </div>
 
       <div id="resultBox" class="resultBox" style="margin-top:12px"></div>
     </div>
